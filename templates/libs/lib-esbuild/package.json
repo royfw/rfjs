@@ -1,0 +1,85 @@
+{
+  "name": "lib-esbuild",
+  "version": "0.0.0",
+  "description": "A project created by starter-ts-lib",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "private": true,
+  "scripts": {
+    "clean": "npx npm-run-all --parallel clean:dist clean:types",
+    "clean:types": "npx rimraf ./types",
+    "clean:dist": "npx rimraf ./dist",
+    "dev": "npx npm-run-all --parallel dev:esbuild typecheck:watch",
+    "dev:esbuild": "npm run clean && npx tsx esbuild.dev.ts",
+    "build": "npm run build:esbuild",
+    "build:esbuild": "npm run clean && npx tsx esbuild.build.ts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "lint-staged": "npx lint-staged",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "npm run vitest:run",
+    "vitest": "vitest --passWithNoTests",
+    "vitest:run": "vitest --passWithNoTests --run",
+    "vitest:ui": "vitest --passWithNoTests --ui",
+    "vitest:e2e": "vitest --config vitest.config.e2e.mts --passWithNoTests",
+    "vitest:e2e:ui": "vitest --config vitest.config.e2e.mts --passWithNoTests --ui",
+    "commit": "npx cz",
+    "prepare": "npx husky",
+    "preinstall": "npx -y only-allow pnpm",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "npx vitest related --run",
+      "npx prettier --write",
+      "npx eslint --fix"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "keywords": [],
+  "author": "Roy Chuang",
+  "license": "ISC",
+  "packageManager": "pnpm@10.24.0",
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=10.24.0 <11.0.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@commitlint/cz-commitlint": "^19.6.1",
+    "@eslint/js": "^9.20.0",
+    "@types/supertest": "^6.0.2",
+    "@vitest/coverage-istanbul": "^3.2.3",
+    "@vitest/ui": "^3.2.3",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "dts-bundle-generator": "^9.5.1",
+    "esbuild": "0.25.1",
+    "esbuild-plugin-tsc": "^0.5.0",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "husky": "^9.1.7",
+    "inquirer": "9",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.5.1",
+    "rimraf": "^6.0.1",
+    "supertest": "^7.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vitepress": "^1.6.3",
+    "vitest": "^3.2.3"
+  },
+  "dependencies": {
+    "tslib": "^2.8.1"
+  }
+}

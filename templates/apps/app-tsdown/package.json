@@ -1,0 +1,95 @@
+{
+  "name": "app-tsdown",
+  "version": "0.0.0",
+  "description": "A project created by starter-ts-app",
+  "private": "true",
+  "scripts": {
+    "clean": "npx rimraf ./dist",
+    "dev": "npx cross-env NODE_OPTIONS=--enable-source-maps npm run dev:tsdown",
+    "dev:tsx": "npx npm-run-all --parallel tsx:watch typecheck:watch",
+    "dev:tsdown": "npx cross-env NODE_ENV=local npx npm-run-all --parallel build:tsdown:watch typecheck:watch",
+    "dev:tsc": "NODE_ENV=local npm run build:tsc:watch -- --onSuccess \"npm start\"",
+    "tsx": "npx cross-env NODE_ENV=local npx tsx src/main.ts",
+    "tsx:watch": "npx cross-env NODE_ENV=local npx tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "start:watch1": "npx nodemon dist/main.js",
+    "start:watch": "npx nodemon --ext js --exec \"node dist/main.js\"",
+    "start:tsc": "npx npm-run-all --parallel build:tsc start",
+    "build": "npm run build:tsdown",
+    "build:tsdown": "npm run clean && tsdown --config-loader unrun",
+    "build:tsdown:watch": "npm run clean && tsdown --config-loader unrun --watch",
+    "build:tsc": "npm run clean && npx tsc -p tsconfig.build.json",
+    "build:tsc:watch": "npm run clean && npx tsc-watch -p tsconfig.app.json",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "lint-staged": "npx lint-staged",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "npm run vitest:run",
+    "test:e2e": "npm run vitest:e2e:run",
+    "vitest": "vitest --passWithNoTests",
+    "vitest:run": "vitest --passWithNoTests --run",
+    "vitest:ui": "vitest --passWithNoTests --ui",
+    "vitest:e2e": "vitest --config vitest.config.e2e.mts --passWithNoTests",
+    "vitest:e2e:run": "vitest --config vitest.config.e2e.mts --passWithNoTests --run",
+    "vitest:e2e:ui": "vitest --config vitest.config.e2e.mts --passWithNoTests --ui",
+    "commit": "npx cz",
+    "prepare": "npx husky",
+    "preinstall": "npx -y only-allow pnpm",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "_moduleAliases": {
+    "@": "./dist"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "npx vitest related --run",
+      "npx prettier --write",
+      "npx eslint --fix"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "keywords": [],
+  "author": "Roy Chuang",
+  "license": "ISC",
+  "packageManager": "pnpm@10.24.0",
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=10.24.0 <11.0.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@commitlint/cz-commitlint": "^19.6.1",
+    "@eslint/js": "^9.20.0",
+    "@types/dotenv-flow": "^3.3.3",
+    "@types/supertest": "^6.0.2",
+    "@vitest/coverage-istanbul": "^3.2.3",
+    "@vitest/ui": "^3.2.3",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "husky": "^9.1.7",
+    "inquirer": "9",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.5.1",
+    "rimraf": "^6.0.1",
+    "supertest": "^7.0.0",
+    "ts-node": "^10.9.2",
+    "tsdown": "^0.17.3",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vitepress": "^1.6.3",
+    "vitest": "^3.2.3"
+  },
+  "dependencies": {
+    "dotenv-flow": "^4.1.0"
+  }
+}
