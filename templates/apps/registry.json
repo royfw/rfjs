@@ -1,25 +1,25 @@
 {
-    "repo": "royfw/rfjs/templates",
+    "repo": "royfw/rfjs",
     "defaultRef": "main",
     "templates": [
         {
             "id": "apps/app-esbuild",
-            "path": "apps/app-esbuild",
+            "path": "templates/apps/app-esbuild",
             "title": "App (esbuild)"
         },
         {
             "id": "apps/app-tsdown",
-            "path": "apps/app-tsdown",
+            "path": "templates/apps/app-tsdown",
             "title": "App (tsdown)"
         },
         {
             "id": "apps/fastify-esbuild",
-            "path": "apps/fastify-esbuild",
+            "path": "templates/apps/fastify-esbuild",
             "title": "Fastify (esbuild)"
         },
         {
             "id": "apps/koa-esbuild",
-            "path": "apps/koa-esbuild",
+            "path": "templates/apps/koa-esbuild",
             "title": "Koa (esbuild)"
         }
     ]

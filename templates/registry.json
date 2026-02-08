@@ -1,65 +1,65 @@
 {
-    "repo": "royfw/rfjs/templates",
+    "repo": "royfw/rfjs",
     "defaultRef": "main",
     "templates": [
         {
             "id": "apps/app-esbuild",
-            "path": "apps/app-esbuild",
+            "path": "templates/apps/app-esbuild",
             "title": "App (esbuild)"
         },
         {
             "id": "apps/app-tsdown",
-            "path": "apps/app-tsdown",
+            "path": "templates/apps/app-tsdown",
             "title": "App (tsdown)"
         },
         {
             "id": "apps/fastify-esbuild",
-            "path": "apps/fastify-esbuild",
+            "path": "templates/apps/fastify-esbuild",
             "title": "Fastify (esbuild)"
         },
         {
             "id": "apps/koa-esbuild",
-            "path": "apps/koa-esbuild",
+            "path": "templates/apps/koa-esbuild",
             "title": "Koa (esbuild)"
         },
         {
             "id": "libs/lib-esbuild",
-            "path": "libs/lib-esbuild",
+            "path": "templates/libs/lib-esbuild",
             "title": "Library (esbuild)"
         },
         {
             "id": "libs/lib-rolldown",
-            "path": "libs/lib-rolldown",
+            "path": "templates/libs/lib-rolldown",
             "title": "Library (Rolldown)"
         },
         {
             "id": "libs/lib-rollup",
-            "path": "libs/lib-rollup",
+            "path": "templates/libs/lib-rollup",
             "title": "Library (Rollup)"
         },
         {
             "id": "libs/lib-tsdown",
-            "path": "libs/lib-tsdown",
+            "path": "templates/libs/lib-tsdown",
             "title": "Library (tsdown)"
         },
         {
             "id": "bins/bin-tsdown",
-            "path": "bins/bin-tsdown",
+            "path": "templates/bins/bin-tsdown",
             "title": "Binary (tsdown)"
         },
         {
             "id": "docs/docs-docsify",
-            "path": "docs/docs-docsify",
+            "path": "templates/docs/docs-docsify",
             "title": "Docs (Docsify)"
         },
         {
             "id": "docs/docs-vitepress",
-            "path": "docs/docs-vitepress",
+            "path": "templates/docs/docs-vitepress",
             "title": "Docs (VitePress)"
         },
         {
             "id": "monorepo/turbo/stack/base",
-            "path": "monorepo/turbo/stack/base",
+            "path": "templates/monorepo/turbo/stack/base",
             "title": "Turbo Monorepo (base)"
         }
     ]
