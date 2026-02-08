@@ -1,0 +1,66 @@
+{
+    "repo": "royfw/rfjs/templates",
+    "defaultRef": "main",
+    "templates": [
+        {
+            "id": "apps/app-esbuild",
+            "path": "apps/app-esbuild",
+            "title": "App (esbuild)"
+        },
+        {
+            "id": "apps/app-tsdown",
+            "path": "apps/app-tsdown",
+            "title": "App (tsdown)"
+        },
+        {
+            "id": "apps/fastify-esbuild",
+            "path": "apps/fastify-esbuild",
+            "title": "Fastify (esbuild)"
+        },
+        {
+            "id": "apps/koa-esbuild",
+            "path": "apps/koa-esbuild",
+            "title": "Koa (esbuild)"
+        },
+        {
+            "id": "libs/lib-esbuild",
+            "path": "libs/lib-esbuild",
+            "title": "Library (esbuild)"
+        },
+        {
+            "id": "libs/lib-rolldown",
+            "path": "libs/lib-rolldown",
+            "title": "Library (Rolldown)"
+        },
+        {
+            "id": "libs/lib-rollup",
+            "path": "libs/lib-rollup",
+            "title": "Library (Rollup)"
+        },
+        {
+            "id": "libs/lib-tsdown",
+            "path": "libs/lib-tsdown",
+            "title": "Library (tsdown)"
+        },
+        {
+            "id": "bins/bin-tsdown",
+            "path": "bins/bin-tsdown",
+            "title": "Binary (tsdown)"
+        },
+        {
+            "id": "docs/docs-docsify",
+            "path": "docs/docs-docsify",
+            "title": "Docs (Docsify)"
+        },
+        {
+            "id": "docs/docs-vitepress",
+            "path": "docs/docs-vitepress",
+            "title": "Docs (VitePress)"
+        },
+        {
+            "id": "monorepo/turbo/stack/base",
+            "path": "monorepo/turbo/stack/base",
+            "title": "Turbo Monorepo (base)"
+        }
+    ]
+}
