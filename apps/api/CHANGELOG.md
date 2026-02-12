@@ -1,5 +1,11 @@
 # api
 
+## 0.0.2-alpha.5
+
+### Patch Changes
+
+- e550401: test gitlab deploy
+
 ## 0.0.2-alpha.4
 
 ### Patch Changes
