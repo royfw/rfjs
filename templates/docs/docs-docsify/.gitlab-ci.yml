@@ -1,0 +1,40 @@
+stages:
+  - test
+  - deploy
+
+test:
+  stage: test
+  image: node:20.18.1-alpine3.20
+  before_script:
+    - npm install ts-node ts-jest jest-html-reporter
+  script:
+    - npx jest --verbose --coverage
+  artifacts:
+    reports:
+      junit: test-results/jest/results.xml
+      cobertura: coverage/cobertura-coverage.xml
+
+
+pages:
+  stage: deploy
+  image: node:20.18.1-alpine3.20
+  before_script:
+    - npm install ts-node ts-jest jest-html-reporter
+  script:
+    - echo "Starting jest test"
+    # 先跑測試並產生 cobertura.xml
+    - npx jest --verbose --coverage
+    - echo "Building documentation..."
+    - echo "This is a placeholder for the documentation build step."
+    - echo "Copying documentation to public directory..."
+    - mkdir public
+    - cp -r ./docs/* public
+    - cp CHANGELOG.md public
+    - cp -r test-results public
+    - cp -r coverage/lcov-report public
+    - ls -la public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main

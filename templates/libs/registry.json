@@ -1,0 +1,26 @@
+{
+    "repo": "royfw/rfjs",
+    "defaultRef": "main",
+    "templates": [
+        {
+            "id": "libs/lib-esbuild",
+            "path": "templates/libs/lib-esbuild",
+            "title": "Library (esbuild)"
+        },
+        {
+            "id": "libs/lib-rolldown",
+            "path": "templates/libs/lib-rolldown",
+            "title": "Library (Rolldown)"
+        },
+        {
+            "id": "libs/lib-rollup",
+            "path": "templates/libs/lib-rollup",
+            "title": "Library (Rollup)"
+        },
+        {
+            "id": "libs/lib-tsdown",
+            "path": "templates/libs/lib-tsdown",
+            "title": "Library (tsdown)"
+        }
+    ]
+}

@@ -1,0 +1,60 @@
+stages:
+  - test
+  - deploy
+
+test:
+  stage: test
+  image: node:20.18.1-alpine3.20
+  before_script:
+    - npm i vitest @vitest/coverage-istanbul @vitest/ui
+  script:
+    - echo $CI_PROJECT_NAME
+    - echo $CI_PROJECT_ROOT_NAMESPACE
+    - echo $CI_PROJECT_NAMESPACE
+    - echo $CI_PROJECT_PATH
+    - echo $CI_COMMIT_REF_NAME
+    - export VITEST_COV_PATH=../${CI_PROJECT_PATH#${CI_PROJECT_ROOT_NAMESPACE}/}/vitest/coverage
+    - echo $VITEST_COV_PATH
+    - npx vitest --passWithNoTests
+  artifacts:
+    reports:
+      junit: .test/vitest/results.xml
+      cobertura: .test/vitest/coverage/cobertura-coverage.xml
+
+
+pages:
+  stage: deploy
+  image: node:20.18.1-alpine3.20
+  before_script:
+    - npm i vitest @vitest/coverage-istanbul @vitest/ui
+    - npm i -D vitepress
+  script:
+    - echo "Starting vitest tests..."
+    - export REPO_GROUP_PATH=${CI_PROJECT_PATH#${CI_PROJECT_ROOT_NAMESPACE}/}
+    - export VITEST_COV_PATH=../$REPO_GROUP_PATH/vitest/coverage
+    - export VITEPRESS_BASE=/$REPO_GROUP_PATH
+    - echo $VITEST_COV_PATH
+    - echo $VITEPRESS_BASE
+    # 先跑測試並產生 cobertura.xml
+    - npm run test
+    - npm run test:e2e
+    # build vitepress start
+    - cp CHANGELOG.md docs
+    - npx vitepress build docs
+    # build vitepress end
+    - echo "Building documentation..."
+    - echo "This is a placeholder for the documentation build step."
+    - echo "Copying documentation to public directory..."
+    - mkdir public
+    - mkdir public/vitest
+    - mkdir public/vitest-e2e
+    - cp -r ./docs/.vitepress/dist/* public
+    - cp -r .test/vitest/html/* public/vitest
+    - cp -r .test/vitest/html/$VITEST_COV_PATH public/vitest
+    - cp -r .test/vitest-e2e/html/* public/vitest-e2e
+    - ls -la public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main

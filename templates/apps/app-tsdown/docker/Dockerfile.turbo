@@ -1,0 +1,81 @@
+# syntax=docker/dockerfile:1
+
+ARG TURBO_APP_PATH=apps/api  # 專案路徑
+
+ARG NODE_VERSION=22.21
+ARG NODE_IMAGE=node:${NODE_VERSION}-slim
+# ARG NODE_IMAGE_BUILD=node:${NODE_VERSION}
+ARG NODE_IMAGE_BUILD=node:${NODE_VERSION}-slim
+
+#############################
+# Base image
+#############################
+FROM $NODE_IMAGE AS base
+
+# Enable pnpm via Corepack
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+ARG TURBO_APP_PATH
+
+RUN corepack enable && pnpm -v
+
+WORKDIR /app
+
+#########################################
+# 1. Install dependencies (turbo + pnpm)
+#########################################
+FROM base AS deps
+
+# 安裝相依，只複製需要的檔案（有 turbo.json 的話一起複製）
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json* ./
+COPY $TURBO_APP_PATH/package.json $TURBO_APP_PATH/
+COPY packages ./packages
+
+# 安裝整個 monorepo 的依賴（dev + prod）
+RUN pnpm install --frozen-lockfile
+
+############################
+# 2. Build ONLY $TURBO_APP_PATH
+############################
+FROM base AS build
+
+# 把完整專案丟進來（包含 src 等）
+COPY . .
+# 把已安裝好的 node_modules 從 deps 拷貝過來
+COPY --from=deps /app/node_modules ./node_modules
+
+# 只 build 指定 APP
+RUN pnpm turbo run build --filter=./$TURBO_APP_PATH...
+
+############################
+# 3. Production image
+############################
+FROM $NODE_IMAGE_BUILD AS runner
+
+ARG TURBO_APP_PATH
+
+# Configure the timezone
+ENV TZ=Asia/Taipei
+RUN ln -sf /usr/share/zoneinfo/$TZ /etc/localtime \
+  && echo $TZ > /etc/timezone
+
+WORKDIR /app/$TURBO_APP_PATH
+ENV NODE_ENV=production
+ENV NODE_OPTIONS=--enable-source-maps
+
+# 拷貝 build 好的程式碼
+COPY --from=build /app/$TURBO_APP_PATH/dist ./dist
+COPY --from=build /app/$TURBO_APP_PATH/package.json ./package.json
+COPY --from=build /app/$TURBO_APP_PATH/node_modules ./node_modules
+
+# 拷貝整個 node_modules（由 pnpm 建好的 workspace 結構）
+# 注意：目標路徑是 /app/node_modules，不是在 /app/apps/api
+COPY --from=deps /app/node_modules /app/node_modules
+
+# 如果有用到 .env 或其他設定檔，可以在這裡再 COPY 對應的檔案
+# COPY apps/api/.env.production ./ .env
+
+EXPOSE 3000
+
+# ⬇⬇⬇ 這裡改成精準的 Node 啟動指令 ⬇⬇⬇
+CMD ["node", "dist/main.js"]
