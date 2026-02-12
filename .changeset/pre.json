@@ -15,7 +15,9 @@
     "@repo/ui": "0.0.0"
   },
   "changesets": [
+    "five-rabbits-chew",
     "grumpy-baboons-think",
+    "many-donkeys-talk",
     "salty-drinks-fry",
     "tiny-birds-switch",
     "twelve-flowers-wave"

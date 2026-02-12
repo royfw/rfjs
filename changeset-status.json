@@ -5,34 +5,21 @@
         {
           "name": "api",
           "type": "patch"
-        },
-        {
-          "name": "orm-app",
-          "type": "patch"
         }
       ],
-      "summary": "test ci",
-      "id": "twelve-flowers-wave"
+      "summary": "test deploy",
+      "id": "five-rabbits-chew"
     }
   ],
   "releases": [
     {
       "name": "api",
       "type": "patch",
-      "oldVersion": "0.0.2-alpha.2",
+      "oldVersion": "0.0.2-alpha.3",
       "changesets": [
-        "twelve-flowers-wave"
+        "five-rabbits-chew"
       ],
-      "newVersion": "0.0.2-alpha.3"
-    },
-    {
-      "name": "orm-app",
-      "type": "patch",
-      "oldVersion": "0.0.2-alpha.1",
-      "changesets": [
-        "twelve-flowers-wave"
-      ],
-      "newVersion": "0.0.2-alpha.2"
+      "newVersion": "0.0.2-alpha.4"
     }
   ],
   "preState": {
@@ -52,6 +39,7 @@
       "@repo/ui": "0.0.0"
     },
     "changesets": [
+      "five-rabbits-chew",
       "grumpy-baboons-think",
       "salty-drinks-fry",
       "tiny-birds-switch",
