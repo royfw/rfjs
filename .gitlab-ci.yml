@@ -1,0 +1,70 @@
+include:
+  - project: shared/devops-toolkit
+    ref: main
+    file:
+      - /gitlab-ci/_test/echo.yml
+      - /gitlab-ci/detect_apps_base/detect-and-build-deploy.yml # 改用整合版
+      - /gitlab-ci/changesets_version_channel/changesets-version-channel.yml
+
+stages:
+  - echo
+  - version
+  - docker_build
+  - deploy_trigger
+
+workflow:
+  rules:
+    - if: '$CI_COMMIT_MESSAGE =~ /(\[skip ci\]|\[ci skip\])/i'
+      when: never
+    - when: always
+
+echo:
+  stage: echo
+  extends: .echo
+
+version_stable:
+  stage: version
+  extends: .changesets_version_channel
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "release/stable"'
+  variables:
+    REF: "release/stable"
+    CHANNEL: "stable"
+    # PUSH_VERSION: "true"
+
+version_prerelease:
+  stage: version
+  extends: .changesets_version_channel
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH =~ /^release\/(alpha|beta|rc)$/'
+  variables:
+    REF: "$CI_COMMIT_BRANCH"
+    # PUSH_VERSION: "false"
+
+# 1. 執行偵測：產出 dynamic-apps-pipeline.yml
+detect_apps:
+  stage: deploy_trigger
+  extends: .detect_apps_base
+  variables:
+    BASE_BRANCH: "$CI_COMMIT_BRANCH"
+    DEPLOY_NAMESPACE: "${CI_PROJECT_NAME}-dev"
+    DEPLOY_ENV: "royfw-dev"
+  artifacts:
+    paths:
+      - dynamic-apps-pipeline.yml
+      - deploy-k8s/
+      - .deploy/
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^deploy\/(dev|prod)$/'
+
+# 2. 觸發動態產生的 Jobs (Child Pipeline)
+trigger_docker_builds:
+  stage: deploy_trigger
+  needs: [detect_apps]
+  extends: .trigger_apps_base
+  variables:
+    DEPLOY_NAMESPACE: "${CI_PROJECT_NAME}-dev"
+    DEPLOY_ENV: "royfw-dev"
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^deploy\/(dev|prod)$/'
