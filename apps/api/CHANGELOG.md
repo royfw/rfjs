@@ -1,5 +1,11 @@
 # api
 
+## 0.0.2-alpha.6
+
+### Patch Changes
+
+- 502d358: test deploy toolkit
+
 ## 0.0.2-alpha.5
 
 ### Patch Changes
