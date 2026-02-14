@@ -2,7 +2,7 @@ name: CD NPM Publish
 
 on:
   pull_request_target:
-    branches: [npm_publish]
+    branches: [publish/npmjs]
     types: [closed]
 
 permissions:

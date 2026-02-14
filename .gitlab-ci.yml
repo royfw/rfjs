@@ -52,7 +52,6 @@ detect_apps:
   artifacts:
     paths:
       - dynamic-apps-pipeline.yml
-      - deploy-k8s/
       - .deploy/
     expire_in: 1 hour
   rules:

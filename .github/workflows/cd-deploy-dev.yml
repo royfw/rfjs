@@ -2,7 +2,7 @@ name: CD Deploy (Local K8S)
 
 on:
   pull_request_target:
-    branches: [deploy_local]
+    branches: [deploy/dev]
     types: [closed]
 
 permissions:
