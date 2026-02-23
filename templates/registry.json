@@ -23,6 +23,26 @@
             "title": "Koa (esbuild)"
         },
         {
+            "id": "orm/orm-drizzle",
+            "path": "templates/orm/orm-drizzle",
+            "title": "ORM (drizzle)"
+        },
+        {
+            "id": "orm/orm-kysely",
+            "path": "templates/orm/orm-kysely",
+            "title": "ORM (kysely)"
+        },
+        {
+            "id": "orm/orm-prisma",
+            "path": "templates/orm/orm-prisma",
+            "title": "ORM (prisma)"
+        },
+        {
+            "id": "orm/orm-typeorm",
+            "path": "templates/orm/orm-typeorm",
+            "title": "ORM (typeorm)"
+        },
+        {
             "id": "libs/lib-esbuild",
             "path": "templates/libs/lib-esbuild",
             "title": "Library (esbuild)"

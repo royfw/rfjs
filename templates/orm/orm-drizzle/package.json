@@ -1,0 +1,92 @@
+{
+  "name": "@rfjs/orm-drizzle",
+  "version": "0.0.0",
+  "description": "A project created by lib-tsdown",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "private": true,
+  "scripts": {
+    "clean": "pnpm --parallel clean:dist clean:types",
+    "clean:types": "pnpm exec rimraf ./types",
+    "clean:dist": "pnpm exec rimraf ./dist",
+    "dev": "pnpm --parallel dev:tsdown typecheck:watch",
+    "dev:tsdown": "npm run clean && tsdown --config-loader unrun --watch",
+    "build": "npm run build:tsdown",
+    "build:tsdown": "npm run clean && tsdown --config-loader unrun",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "lint-staged": "pnpm exec lint-staged",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "migrate": "tsx scripts/migrate.ts",
+    "seed": "npm run seed:gen-index && npm run seed:run",
+    "seed:gen-index": "pnpm exec tsx scripts/gen-seeds-index.ts",
+    "seed:run": "pnpm exec tsx scripts/seed.ts",
+    "generate": "pnpm exec drizzle-kit generate",
+    "test": "npm run vitest:run",
+    "vitest": "vitest --passWithNoTests",
+    "vitest:run": "vitest --passWithNoTests --run",
+    "vitest:ui": "vitest --passWithNoTests --ui",
+    "vitest:e2e": "vitest --config vitest.config.e2e.mts --passWithNoTests",
+    "vitest:e2e:ui": "vitest --config vitest.config.e2e.mts --passWithNoTests --ui",
+    "commit": "pnpm exec cz",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "pnpm exec vitest related --run",
+      "pnpm exec prettier --write",
+      "pnpm exec eslint --fix"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "keywords": [],
+  "author": "Roy Chuang",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=10.24.0 <11.0.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@commitlint/cz-commitlint": "^19.6.1",
+    "@eslint/js": "^9.20.0",
+    "@types/pg": "^8.16.0",
+    "@types/pg-connection-string": "^2.0.0",
+    "@types/supertest": "^6.0.2",
+    "@vitest/coverage-istanbul": "^3.2.3",
+    "@vitest/ui": "^3.2.3",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "drizzle-kit": "^0.31.8",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "husky": "^9.1.7",
+    "inquirer": "9",
+    "lint-staged": "^15.4.3",
+    "pg-connection-string": "^2.9.1",
+    "prettier": "^3.5.1",
+    "rimraf": "^6.0.1",
+    "supertest": "^7.0.0",
+    "ts-node": "^10.9.2",
+    "tsdown": "0.17.0-beta.6",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vitepress": "^1.6.3",
+    "vitest": "^3.2.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.45.1",
+    "pg": "^8.16.3",
+    "tslib": "^2.8.1"
+  }
+}
