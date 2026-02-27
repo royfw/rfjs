@@ -7,10 +7,10 @@
   "types": "dist/index.d.ts",
   "private": true,
   "scripts": {
-    "clean": "pnpm --parallel clean:dist clean:types",
+    "clean": "pnpm --filter . --parallel clean:dist clean:types",
     "clean:types": "pnpm exec rimraf ./types",
     "clean:dist": "pnpm exec rimraf ./dist",
-    "dev": "pnpm --parallel dev:tsdown typecheck:watch",
+    "dev": "pnpm --filter . --parallel dev:tsdown typecheck:watch",
     "dev:tsdown": "npm run clean && tsdown --config-loader unrun --watch",
     "build": "npm run build:tsdown",
     "build:tsdown": "npm run clean && tsdown --config-loader unrun",
@@ -54,6 +54,9 @@
     "node": ">=18",
     "pnpm": ">=10.24.0 <11.0.0"
   },
+  "files": [
+    "dist/**"
+  ],
   "devDependencies": {
     "@commitlint/cli": "^19.7.1",
     "@commitlint/config-conventional": "^19.7.1",
@@ -70,7 +73,6 @@
     "eslint": "^9.20.1",
     "eslint-config-prettier": "^10.0.1",
     "husky": "^9.1.7",
-    "inquirer": "9",
     "lint-staged": "^15.4.3",
     "pg-connection-string": "^2.9.1",
     "prettier": "^3.5.1",

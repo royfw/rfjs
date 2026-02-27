@@ -55,6 +55,9 @@
     "node": ">=18",
     "pnpm": ">=10.24.0 <11.0.0"
   },
+  "files": [
+    "dist/**"
+  ],
   "devDependencies": {
     "@commitlint/cli": "^19.7.1",
     "@commitlint/config-conventional": "^19.7.1",
