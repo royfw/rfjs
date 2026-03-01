@@ -5,15 +5,20 @@ include:
       - /gitlab-ci/_test/echo.yml
       - /gitlab-ci/detect_apps_base/detect-and-build-deploy.yml # 改用整合版
       - /gitlab-ci/changesets_version_channel/changesets-version-channel.yml
+      - /gitlab-ci/changesets_publish/changesets-publish.yml
 
 stages:
   - echo
   - version
   - docker_build
   - deploy_trigger
+  - publish
 
 workflow:
   rules:
+    # 讓 publish/npmjs 分支不受 [skip ci] 影響（避免 merge 時被跳）
+    - if: '$CI_COMMIT_BRANCH == "publish/npmjs"'
+      when: always
     - if: '$CI_COMMIT_MESSAGE =~ /(\[skip ci\]|\[ci skip\])/i'
       when: never
     - when: always
@@ -32,14 +37,33 @@ version_stable:
     CHANNEL: "stable"
     # PUSH_VERSION: "true"
 
-version_prerelease:
+# ----------------------------
+# release/*：只做 version（commit + push 回 release/*）
+# ----------------------------
+version_release:
   stage: version
   extends: .changesets_version_channel
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH =~ /^release\/(alpha|beta|rc)$/'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH =~ /^release\/(stable|alpha|beta|rc)$/'
   variables:
     REF: "$CI_COMMIT_BRANCH"
-    # PUSH_VERSION: "false"
+    PUSH_VERSION: "true"
+
+# ----------------------------
+# publish/npmjs：只做 npm publish（不再改 repo）
+# ----------------------------
+publish_npmjs:
+  stage: publish
+  extends: .changesets_publish
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "publish/npmjs"'
+      when: manual
+      allow_failure: false
+  variables:
+    CHANNEL: "auto" # ✅ 讓 toolkit 自動從 MR 來源分支推導 stable/alpha/beta/rc
+    PUSH_TAGS: "true"
 
 # 1. 執行偵測：產出 dynamic-apps-pipeline.yml
 detect_apps:
