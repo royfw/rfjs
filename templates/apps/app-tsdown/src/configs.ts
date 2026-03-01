@@ -1,4 +1,5 @@
 import dotenvFlow from 'dotenv-flow';
+import pkg from '../package.json';
 
 const flowEnv = dotenvFlow.config({
   node_env: process.env.NODE_ENV,
@@ -13,7 +14,9 @@ process.env = {
 const configs = {
   env: process.env.NODE_ENV,
   tz: process.env.TZ,
-  name: process.env.APP_NAME,
+  name: pkg.name,
+  description: pkg.description,
+  version: pkg.version,
 };
 
 export { configs };

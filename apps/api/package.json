@@ -1,20 +1,20 @@
 {
   "name": "api",
-  "version": "0.0.2-alpha.6",
+  "version": "0.0.2-alpha.7",
   "description": "A project created by starter-ts-fastify",
   "private": "true",
   "scripts": {
     "clean": "pnpm exec rimraf ./dist",
     "dev": "pnpm exec cross-env NODE_OPTIONS=--enable-source-maps npm run dev:esbuild",
-    "dev:tsx": "pnpm --parallel tsx:watch typecheck:watch",
-    "dev:esbuild": "pnpm exec cross-env NODE_ENV=local pnpm --parallel build:esbuild:watch typecheck:watch",
+    "dev:tsx": "pnpm --filter . --parallel tsx:watch typecheck:watch",
+    "dev:esbuild": "pnpm exec cross-env NODE_ENV=local pnpm --filter . --parallel build:esbuild:watch typecheck:watch",
     "dev:tsc": "pnpm exec cross-env NODE_ENV=local npm run build:tsc:watch -- --onSuccess \"npm start\"",
     "tsx": "pnpm exec cross-env NODE_ENV=local pnpm exec tsx src/main.ts",
     "tsx:watch": "pnpm exec cross-env NODE_ENV=local pnpm exec tsx watch src/main.ts",
     "start": "pnpm exec cross-env NODE_OPTIONS=--enable-source-maps node dist/main.js",
     "start:watch1": "pnpm exec nodemon dist/main.js",
     "start:watch": "pnpm exec nodemon --ext js --exec \"node dist/main.js\"",
-    "start:tsc": "pnpm --parallel build:tsc start",
+    "start:tsc": "pnpm --filter . --parallel build:tsc start",
     "build": "npm run build:esbuild",
     "build:esbuild": "npm run clean && pnpm exec tsx esbuild.build.ts",
     "build:esbuild:watch": "npm run clean && pnpm exec tsx esbuild.dev.ts",
@@ -56,6 +56,9 @@
   "keywords": [],
   "author": "Roy Chuang",
   "license": "ISC",
+  "files": [
+    "dist/**"
+  ],
   "devDependencies": {
     "@commitlint/cli": "^19.7.1",
     "@commitlint/config-conventional": "^19.7.1",
@@ -72,7 +75,6 @@
     "eslint": "^9.20.1",
     "eslint-config-prettier": "^10.0.1",
     "husky": "^9.1.7",
-    "inquirer": "9",
     "lint-staged": "^15.4.3",
     "prettier": "^3.5.1",
     "rimraf": "^6.0.1",
