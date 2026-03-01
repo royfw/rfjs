@@ -1,5 +1,11 @@
 # orm-app
 
+## 0.0.2-alpha.4
+
+### Patch Changes
+
+- 2a29672: deploy royfw-dev
+
 ## 0.0.2-alpha.3
 
 ### Patch Changes
