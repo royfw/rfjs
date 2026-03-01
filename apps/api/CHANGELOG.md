@@ -1,5 +1,11 @@
 # api
 
+## 0.0.2-alpha.7
+
+### Patch Changes
+
+- 2a29672: deploy royfw-dev
+
 ## 0.0.2-alpha.6
 
 ### Patch Changes
