@@ -3,6 +3,7 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
+  injectWorkspacePackages: true
 
 importers:
 
@@ -152,7 +153,7 @@ importers:
         version: 8.48.0(eslint@9.39.1(jiti@2.4.2))(typescript@5.8.3)
       vitepress:
         specifier: ^1.6.3
-        version: 1.6.4(@algolia/client-search@5.45.0)(@types/node@24.0.3)(postcss@8.5.6)(search-insights@2.17.3)(typescript@5.8.3)
+        version: 1.6.4(@algolia/client-search@5.45.0)(@types/node@24.0.3)(@types/react@19.0.8)(postcss@8.5.6)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(search-insights@2.17.3)(typescript@5.8.3)
       vitest:
         specifier: ^3.2.3
         version: 3.2.4(@types/node@24.0.3)(@vitest/ui@3.2.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.8.2)
@@ -471,7 +472,7 @@ importers:
         version: 8.48.0(eslint@9.39.1(jiti@2.4.2))(typescript@5.8.3)
       vitepress:
         specifier: ^1.6.3
-        version: 1.6.4(@algolia/client-search@5.45.0)(@types/node@24.0.3)(postcss@8.5.6)(search-insights@2.17.3)(typescript@5.8.3)
+        version: 1.6.4(@algolia/client-search@5.45.0)(@types/node@24.0.3)(@types/react@19.0.8)(postcss@8.5.6)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(search-insights@2.17.3)(typescript@5.8.3)
       vitest:
         specifier: ^3.2.3
         version: 3.2.4(@types/node@24.0.3)(@vitest/ui@3.2.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.8.2)
@@ -665,7 +666,7 @@ importers:
         version: 8.48.0(eslint@9.39.1(jiti@2.4.2))(typescript@5.8.3)
       vitepress:
         specifier: ^1.6.3
-        version: 1.6.4(@algolia/client-search@5.45.0)(@types/node@24.0.3)(postcss@8.5.6)(search-insights@2.17.3)(typescript@5.8.3)
+        version: 1.6.4(@algolia/client-search@5.45.0)(@types/node@24.0.3)(@types/react@19.0.8)(postcss@8.5.6)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(search-insights@2.17.3)(typescript@5.8.3)
       vitest:
         specifier: ^3.2.3
         version: 3.2.4(@types/node@24.0.3)(@vitest/ui@3.2.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.8.2)
@@ -786,7 +787,7 @@ importers:
         version: 8.48.0(eslint@9.39.1(jiti@2.4.2))(typescript@5.8.3)
       vitepress:
         specifier: ^1.6.3
-        version: 1.6.4(@algolia/client-search@5.45.0)(@types/node@24.0.3)(postcss@8.5.6)(search-insights@2.17.3)(typescript@5.8.3)
+        version: 1.6.4(@algolia/client-search@5.45.0)(@types/node@24.0.3)(@types/react@19.0.8)(postcss@8.5.6)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(search-insights@2.17.3)(typescript@5.8.3)
       vitest:
         specifier: ^3.2.3
         version: 3.2.4(@types/node@24.0.3)(@vitest/ui@3.2.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.8.2)
@@ -823,100 +824,6 @@ importers:
       typescript:
         specifier: 5.7.3
         version: 5.7.3
-
-  templates/orm/orm-drizzle:
-    dependencies:
-      dotenv:
-        specifier: ^17.2.3
-        version: 17.2.3
-      drizzle-orm:
-        specifier: ^0.45.1
-        version: 0.45.1(@electric-sql/pglite@0.3.2)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.0.8)(magicast@0.3.5)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.8.3))(typescript@5.8.3))(@types/pg@8.16.0)(kysely@0.28.9)(mysql2@3.15.3)(pg@8.16.3)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.0.8)(magicast@0.3.5)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.8.3))
-      pg:
-        specifier: ^8.16.3
-        version: 8.16.3
-      tslib:
-        specifier: ^2.8.1
-        version: 2.8.1
-    devDependencies:
-      '@commitlint/cli':
-        specifier: ^19.7.1
-        version: 19.8.1(@types/node@24.0.3)(typescript@5.8.3)
-      '@commitlint/config-conventional':
-        specifier: ^19.7.1
-        version: 19.8.1
-      '@commitlint/cz-commitlint':
-        specifier: ^19.6.1
-        version: 19.8.1(@types/node@24.0.3)(commitizen@4.3.1(@types/node@24.0.3)(typescript@5.8.3))(inquirer@12.6.3(@types/node@24.0.3))(typescript@5.8.3)
-      '@eslint/js':
-        specifier: ^9.20.0
-        version: 9.39.1
-      '@types/pg':
-        specifier: ^8.16.0
-        version: 8.16.0
-      '@types/pg-connection-string':
-        specifier: ^2.0.0
-        version: 2.0.0
-      '@types/supertest':
-        specifier: ^6.0.2
-        version: 6.0.3
-      '@vitest/coverage-istanbul':
-        specifier: ^3.2.3
-        version: 3.2.4(vitest@3.2.4)
-      '@vitest/ui':
-        specifier: ^3.2.3
-        version: 3.2.4(vitest@3.2.4)
-      commitizen:
-        specifier: ^4.3.1
-        version: 4.3.1(@types/node@24.0.3)(typescript@5.8.3)
-      cz-conventional-changelog:
-        specifier: ^3.3.0
-        version: 3.3.0(@types/node@24.0.3)(typescript@5.8.3)
-      drizzle-kit:
-        specifier: ^0.31.8
-        version: 0.31.8
-      eslint:
-        specifier: ^9.20.1
-        version: 9.39.1(jiti@2.4.2)
-      eslint-config-prettier:
-        specifier: ^10.0.1
-        version: 10.0.1(eslint@9.39.1(jiti@2.4.2))
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
-      lint-staged:
-        specifier: ^15.4.3
-        version: 15.5.2
-      pg-connection-string:
-        specifier: ^2.9.1
-        version: 2.9.1
-      prettier:
-        specifier: ^3.5.1
-        version: 3.5.3
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.1.2
-      supertest:
-        specifier: ^7.0.0
-        version: 7.1.4
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@types/node@24.0.3)(typescript@5.8.3)
-      tsdown:
-        specifier: 0.17.0-beta.6
-        version: 0.17.0-beta.6(typescript@5.8.3)
-      typescript:
-        specifier: ^5.7.3
-        version: 5.8.3
-      typescript-eslint:
-        specifier: ^8.24.0
-        version: 8.48.0(eslint@9.39.1(jiti@2.4.2))(typescript@5.8.3)
-      vitepress:
-        specifier: ^1.6.3
-        version: 1.6.4(@algolia/client-search@5.45.0)(@types/node@24.0.3)(@types/react@19.0.8)(postcss@8.5.6)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(search-insights@2.17.3)(typescript@5.8.3)
-      vitest:
-        specifier: ^3.2.3
-        version: 3.2.4(@types/node@24.0.3)(@vitest/ui@3.2.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.8.2)
 
 packages:
 
@@ -7288,17 +7195,6 @@ snapshots:
       - react-dom
       - search-insights
 
-  '@docsearch/js@3.8.2(@algolia/client-search@5.45.0)(search-insights@2.17.3)':
-    dependencies:
-      '@docsearch/react': 3.8.2(@algolia/client-search@5.45.0)(search-insights@2.17.3)
-      preact: 10.27.2
-    transitivePeerDependencies:
-      - '@algolia/client-search'
-      - '@types/react'
-      - react
-      - react-dom
-      - search-insights
-
   '@docsearch/react@3.8.2(@algolia/client-search@5.45.0)(@types/react@19.0.8)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(search-insights@2.17.3)':
     dependencies:
       '@algolia/autocomplete-core': 1.17.7(@algolia/client-search@5.45.0)(algoliasearch@5.45.0)(search-insights@2.17.3)
@@ -7309,17 +7205,6 @@ snapshots:
       '@types/react': 19.0.8
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
-      search-insights: 2.17.3
-    transitivePeerDependencies:
-      - '@algolia/client-search'
-
-  '@docsearch/react@3.8.2(@algolia/client-search@5.45.0)(search-insights@2.17.3)':
-    dependencies:
-      '@algolia/autocomplete-core': 1.17.7(@algolia/client-search@5.45.0)(algoliasearch@5.45.0)(search-insights@2.17.3)
-      '@algolia/autocomplete-preset-algolia': 1.17.7(@algolia/client-search@5.45.0)(algoliasearch@5.45.0)
-      '@docsearch/css': 3.8.2
-      algoliasearch: 5.45.0
-    optionalDependencies:
       search-insights: 2.17.3
     transitivePeerDependencies:
       - '@algolia/client-search'
@@ -12476,7 +12361,7 @@ snapshots:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
       '@types/node': 22.13.0
-      acorn: 8.14.0
+      acorn: 8.15.0
       acorn-walk: 8.3.4
       arg: 4.1.3
       create-require: 1.1.1
@@ -12841,55 +12726,6 @@ snapshots:
     dependencies:
       '@docsearch/css': 3.8.2
       '@docsearch/js': 3.8.2(@algolia/client-search@5.45.0)(@types/react@19.0.8)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(search-insights@2.17.3)
-      '@iconify-json/simple-icons': 1.2.60
-      '@shikijs/core': 2.5.0
-      '@shikijs/transformers': 2.5.0
-      '@shikijs/types': 2.5.0
-      '@types/markdown-it': 14.1.2
-      '@vitejs/plugin-vue': 5.2.4(vite@5.4.21(@types/node@24.0.3))(vue@3.5.25(typescript@5.8.3))
-      '@vue/devtools-api': 7.7.9
-      '@vue/shared': 3.5.25
-      '@vueuse/core': 12.8.2(typescript@5.8.3)
-      '@vueuse/integrations': 12.8.2(focus-trap@7.6.6)(typescript@5.8.3)
-      focus-trap: 7.6.6
-      mark.js: 8.11.1
-      minisearch: 7.2.0
-      shiki: 2.5.0
-      vite: 5.4.21(@types/node@24.0.3)
-      vue: 3.5.25(typescript@5.8.3)
-    optionalDependencies:
-      postcss: 8.5.6
-    transitivePeerDependencies:
-      - '@algolia/client-search'
-      - '@types/node'
-      - '@types/react'
-      - async-validator
-      - axios
-      - change-case
-      - drauu
-      - fuse.js
-      - idb-keyval
-      - jwt-decode
-      - less
-      - lightningcss
-      - nprogress
-      - qrcode
-      - react
-      - react-dom
-      - sass
-      - sass-embedded
-      - search-insights
-      - sortablejs
-      - stylus
-      - sugarss
-      - terser
-      - typescript
-      - universal-cookie
-
-  vitepress@1.6.4(@algolia/client-search@5.45.0)(@types/node@24.0.3)(postcss@8.5.6)(search-insights@2.17.3)(typescript@5.8.3):
-    dependencies:
-      '@docsearch/css': 3.8.2
-      '@docsearch/js': 3.8.2(@algolia/client-search@5.45.0)(search-insights@2.17.3)
       '@iconify-json/simple-icons': 1.2.60
       '@shikijs/core': 2.5.0
       '@shikijs/transformers': 2.5.0
