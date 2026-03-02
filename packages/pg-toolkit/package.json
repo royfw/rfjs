@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/pg-toolkit",
-  "version": "0.0.7",
+  "version": "0.0.8-alpha.0",
   "description": "Shared PostgreSQL utilities and management scripts for Drizzle, Prisma, Kysely, and TypeORM",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

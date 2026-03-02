@@ -1,6 +1,6 @@
 {
   "name": "api",
-  "version": "0.0.2-alpha.7",
+  "version": "0.0.2-alpha.8",
   "description": "A project created by starter-ts-fastify",
   "private": "true",
   "scripts": {
@@ -91,7 +91,7 @@
     "@fastify/multipart": "^9.3.0",
     "@fastify/sensible": "^6.0.3",
     "@fastify/swagger": "^9.6.1",
-    "@fastify/swagger-ui": "^5.2.3",
+    "@fastify/swagger-ui": "^5.2.5",
     "dotenv-flow": "^4.1.0",
     "fastify": "^5.6.2",
     "fastify-plugin": "^5.1.0",

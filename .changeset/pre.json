@@ -15,9 +15,11 @@
     "@repo/ui": "0.0.0"
   },
   "changesets": [
+    "clean-keys-spend",
     "crisp-walls-tickle",
     "five-rabbits-chew",
     "grumpy-baboons-think",
+    "happy-games-matter",
     "many-donkeys-talk",
     "many-seals-wave",
     "salty-drinks-fry",
