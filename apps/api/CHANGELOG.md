@@ -1,5 +1,11 @@
 # api
 
+## 0.0.2-alpha.8
+
+### Patch Changes
+
+- 145ed67: Update npm package @fastify/swagger-ui
+
 ## 0.0.2-alpha.7
 
 ### Patch Changes
