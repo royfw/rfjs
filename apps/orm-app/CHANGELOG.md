@@ -1,5 +1,17 @@
 # orm-app
 
+## 0.0.2-alpha.4
+
+### Patch Changes
+
+- 2a29672: deploy royfw-dev
+
+## 0.0.2-alpha.3
+
+### Patch Changes
+
+- e550401: test gitlab deploy
+
 ## 0.0.2-alpha.2
 
 ### Patch Changes

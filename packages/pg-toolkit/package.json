@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/pg-toolkit",
-  "version": "0.0.7",
+  "version": "0.0.8-alpha.0",
   "description": "Shared PostgreSQL utilities and management scripts for Drizzle, Prisma, Kysely, and TypeORM",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -26,10 +26,10 @@
     }
   },
   "scripts": {
-    "clean": "pnpm --parallel clean:dist clean:types",
+    "clean": "pnpm --filter . --parallel clean:dist clean:types",
     "clean:types": "pnpm exec rimraf ./types",
     "clean:dist": "pnpm exec rimraf ./dist",
-    "dev": "pnpm --parallel dev:tsdown typecheck:watch",
+    "dev": "pnpm --filter . --parallel dev:tsdown typecheck:watch",
     "dev:tsdown": "npm run clean && tsdown --config-loader unrun --watch",
     "build": "npm run build:tsdown",
     "build:tsdown": "npm run clean && tsdown --config-loader unrun",
@@ -84,7 +84,6 @@
     "eslint": "^9.20.1",
     "eslint-config-prettier": "^10.0.1",
     "husky": "^9.1.7",
-    "inquirer": "9",
     "lint-staged": "^15.4.3",
     "prettier": "^3.5.1",
     "rimraf": "^6.0.1",

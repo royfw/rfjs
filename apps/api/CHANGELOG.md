@@ -1,5 +1,29 @@
 # api
 
+## 0.0.2-alpha.7
+
+### Patch Changes
+
+- 2a29672: deploy royfw-dev
+
+## 0.0.2-alpha.6
+
+### Patch Changes
+
+- 502d358: test deploy toolkit
+
+## 0.0.2-alpha.5
+
+### Patch Changes
+
+- e550401: test gitlab deploy
+
+## 0.0.2-alpha.4
+
+### Patch Changes
+
+- 69fab66: test deploy
+
 ## 0.0.2-alpha.3
 
 ### Patch Changes

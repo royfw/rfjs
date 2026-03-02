@@ -1,5 +1,11 @@
 # @rfjs/pg-toolkit
 
+## 0.0.8-alpha.0
+
+### Patch Changes
+
+- 07ff8ff: test publish npmjs from gitlab
+
 ## 0.0.7
 
 ### Patch Changes

@@ -1,0 +1,76 @@
+# syntax=docker/dockerfile:1
+
+ARG TURBO_SCOPE=public-api          # package name
+
+ARG NODE_VERSION=22.21
+ARG NODE_IMAGE=node:${NODE_VERSION}-slim
+# ARG NODE_IMAGE_BUILD=node:${NODE_VERSION}
+ARG NODE_IMAGE_BUILD=node:${NODE_VERSION}-slim
+
+#############################
+# Base image
+#############################
+FROM $NODE_IMAGE AS base
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN corepack enable
+
+WORKDIR /app
+
+#########################################
+# 1. turbo prune
+#########################################
+FROM base AS prune
+
+ARG TURBO_SCOPE
+
+COPY . .
+
+RUN pnpm dlx turbo prune --scope=${TURBO_SCOPE} --docker
+
+#########################################
+# 2. build：裝 dev 相依 + build
+#########################################
+FROM base AS build
+
+ARG TURBO_SCOPE
+ENV CI=true
+
+WORKDIR /app
+
+COPY --from=prune /app/out/full/ ./
+COPY --from=prune /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# 一樣關掉 scripts，build 不需要跑 husky 等
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+# RUN pnpm turbo run build --force
+RUN pnpm turbo run build --force --summarize
+
+RUN test -f /app/libs/modules/dist/index.js
+RUN test -f /app/libs/common/dist/index.js
+
+RUN rm -rf /app/deploy \
+    && mkdir -p /app/deploy \
+    && pnpm --filter ${TURBO_SCOPE} deploy --prod /app/deploy
+
+#########################################
+# 3) runtime
+#########################################
+FROM ${NODE_IMAGE} AS runner
+
+ENV TZ=Asia/Taipei
+RUN ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
+    && echo ${TZ} > /etc/timezone
+
+ENV NODE_ENV=production
+ENV NODE_OPTIONS=--enable-source-maps
+WORKDIR /app
+
+# Copy the deployed app only (no workspace root, no libs tree, no pnpm link hell)
+COPY --from=build /app/deploy/ ./
+
+EXPOSE 3000
+CMD ["node", "dist/main.js"]

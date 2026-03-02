@@ -1,3 +1,4 @@
+import { configs } from '@/configs';
 import { FastifyInstance } from 'fastify';
 
 /**
@@ -7,7 +8,11 @@ export async function registerApiDocs(app: FastifyInstance) {
   app.log.info('API documentation will be implemented in OpenAPI task');
   await app.register(import('@fastify/swagger'), {
     openapi: {
-      info: { title: 'API Documentation', version: '1.0.0' },
+      info: {
+        title: configs.name + ' API Documentation',
+        version: configs.version,
+        description: configs.description,
+      },
     },
   });
   await app.register(import('@fastify/swagger-ui'), {
