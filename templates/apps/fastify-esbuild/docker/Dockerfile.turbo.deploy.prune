@@ -49,9 +49,6 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 # RUN pnpm turbo run build --force
 RUN pnpm turbo run build --force --summarize
 
-RUN test -f /app/libs/modules/dist/index.js
-RUN test -f /app/libs/common/dist/index.js
-
 RUN rm -rf /app/deploy \
     && mkdir -p /app/deploy \
     && pnpm --filter ${TURBO_SCOPE} deploy --prod /app/deploy
