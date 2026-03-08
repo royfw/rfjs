@@ -3,7 +3,7 @@ include:
     ref: main
     file:
       - /gitlab-ci/_test/echo.yml
-      - /gitlab-ci/detect_apps_base/detect-and-build-deploy.yml # 改用整合版
+      - /gitlab-ci/build_deploy/monorepo-build-deploy.yml
       - /gitlab-ci/changesets_version_channel/changesets-version-channel.yml
       - /gitlab-ci/changesets_publish/changesets-publish.yml
 
@@ -68,7 +68,7 @@ publish_npmjs:
 # 1. 執行偵測：產出 dynamic-apps-pipeline.yml
 detect_apps:
   stage: deploy_trigger
-  extends: .detect_apps_base
+  extends: .monorepo_build_deploy:detect
   variables:
     BASE_BRANCH: "$CI_COMMIT_BRANCH"
     DEPLOY_NAMESPACE: "${CI_PROJECT_NAME}-dev"
@@ -82,10 +82,10 @@ detect_apps:
     - if: '$CI_COMMIT_BRANCH =~ /^deploy\/(dev|prod)$/'
 
 # 2. 觸發動態產生的 Jobs (Child Pipeline)
-trigger_docker_builds:
+trigger_apps:
   stage: deploy_trigger
   needs: [detect_apps]
-  extends: .trigger_apps_base
+  extends: .monorepo_build_deploy:trigger
   variables:
     DEPLOY_NAMESPACE: "${CI_PROJECT_NAME}-dev"
     DEPLOY_ENV: "royfw-dev"
