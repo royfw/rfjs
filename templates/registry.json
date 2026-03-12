@@ -81,6 +81,16 @@
             "id": "monorepo/turbo/stack/base",
             "path": "templates/monorepo/turbo/stack/base",
             "title": "Turbo Monorepo (base)"
+        },
+        {
+            "id": "bullmq/bull-api",
+            "path": "templates/bullmq/bull-api",
+            "title": "BullMQ API (Fastify + BullMQ)"
+        },
+        {
+            "id": "bullmq/lib-queue",
+            "path": "templates/bullmq/lib-queue",
+            "title": "BullMQ Library (Queue Library with BullMQ)"
         }
     ]
 }
