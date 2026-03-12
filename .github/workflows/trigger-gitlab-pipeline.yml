@@ -10,14 +10,31 @@ on:
 
 jobs:
   deploy:
-    uses: royfw/devops-toolkit/.github/workflows/gitlab-sync-trigger-and-wait.yml@main
-    with:
-      deploy_env: royfw-dev
-      poll_interval: 10
-    secrets:
-      gitlab_push_host: ${{ secrets.GITLAB_PUSH_HOST }}
-      gitlab_project_path: ${{ secrets.GITLAB_PROJECT_PATH }}
-      gitlab_project_id: ${{ secrets.GITLAB_PROJECT_ID }}
-      gitlab_push_token: ${{ secrets.GITLAB_PUSH_TOKEN }}
-      gitlab_trigger_token: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
-      gitlab_api_token: ${{ secrets.GITLAB_API_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Sync to GitLab
+        id: sync
+        uses: royfw/gitlab-sync-action@v1
+        with:
+          gitlab_push_host: ${{ secrets.GITLAB_PUSH_HOST }}
+          gitlab_project_path: ${{ secrets.GITLAB_PROJECT_PATH }}
+          gitlab_project_id: ${{ secrets.GITLAB_PROJECT_ID }}
+          gitlab_ref: main
+          deploy_env: royfw-dev
+          gitlab_push_token: ${{ secrets.GITLAB_PUSH_TOKEN }}
+          gitlab_trigger_token: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+          gitlab_api_token: ${{ secrets.GITLAB_API_TOKEN }}
+
+      - name: Display Pipeline Info
+        run: |
+          echo "Pipeline ID: ${{ steps.sync.outputs.pipeline_id }}"
+          echo "Pipeline Status: ${{ steps.sync.outputs.pipeline_status }}"
+          echo "Pipeline URL: ${{ steps.sync.outputs.pipeline_web_url }}"
+
+      - name: Deploy if Pipeline Succeeded
+        if: steps.sync.outputs.pipeline_status == 'success'
+        run: |
+          echo "Pipeline succeeded! Proceeding with deployment..."
