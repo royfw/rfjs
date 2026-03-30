@@ -10,21 +10,21 @@
     "clean": "pnpm --filter . --parallel clean:dist clean:types",
     "clean:types": "pnpm exec rimraf ./types",
     "clean:dist": "pnpm exec rimraf ./dist",
-    "dev": "pnpm --filter . --parallel dev:tsdown typecheck:watch",
-    "dev:tsdown": "npm run clean && tsdown --config-loader unrun --watch",
-    "build": "npm run build:tsdown",
-    "build:tsdown": "npm run clean && tsdown --config-loader unrun",
+    "dev": "pnpm exec npm-run-all --parallel dev:tsdown typecheck:watch",
+    "dev:tsdown": "pnpm run clean && tsdown --config-loader unrun --watch",
+    "build": "pnpm run build:tsdown",
+    "build:tsdown": "pnpm run clean && tsdown --config-loader unrun",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "lint-staged": "pnpm exec lint-staged",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "migrate": "tsx scripts/migrate.ts",
-    "seed": "npm run seed:gen-index && npm run seed:run",
+    "seed": "pnpm run seed:gen-index && pnpm run seed:run",
     "seed:gen-index": "pnpm exec tsx scripts/gen-seeds-index.ts",
     "seed:run": "pnpm exec tsx scripts/seed.ts",
     "generate": "pnpm exec drizzle-kit generate",
-    "test": "npm run vitest:run",
+    "test": "pnpm run vitest:run",
     "vitest": "vitest --passWithNoTests",
     "vitest:run": "vitest --passWithNoTests --run",
     "vitest:ui": "vitest --passWithNoTests --ui",
@@ -41,11 +41,6 @@
       "pnpm exec prettier --write",
       "pnpm exec eslint --fix"
     ]
-  },
-  "config": {
-    "commitizen": {
-      "path": "cz-conventional-changelog"
-    }
   },
   "keywords": [],
   "author": "Roy Chuang",
@@ -74,6 +69,7 @@
     "eslint-config-prettier": "^10.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^15.4.3",
+    "npm-run-all": "^4.1.5",
     "pg-connection-string": "^2.9.1",
     "prettier": "^3.5.1",
     "rimraf": "^6.0.1",

@@ -26,7 +26,7 @@ const devNodemonFn = (options: DevNodemonFnOptions = {}) => {
     `"node ${entry}"`,
   ];
 
-  nodemonProcess = spawn('npx', ['nodemon', ...nodemonArgs], {
+  nodemonProcess = spawn('pnpm', ['exec', 'nodemon', ...nodemonArgs], {
     stdio: 'inherit',
     shell: true,
   });

@@ -9,17 +9,12 @@
     "lint-staged": "turbo lint-staged",
     "typecheck": "turbo typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "commit": "npx cz",
+    "commit": "pnpm exec cz",
     "changeset:add": "pnpm exec changeset",
     "changeset:status": "pnpm exec changeset status",
     "changeset:version": "pnpm exec changeset version",
     "prepare": "husky",
-    "preinstall": "npx -y only-allow pnpm"
-  },
-  "config": {
-    "commitizen": {
-      "path": "cz-conventional-changelog"
-    }
+    "preinstall": "pnpm exec only-allow pnpm"
   },
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
@@ -32,6 +27,7 @@
     "cz-conventional-changelog": "^3.3.0",
     "husky": "^9.1.7",
     "npm-run-all": "^4.1.5",
+    "only-allow": "^1.2.1",
     "prettier": "^3.5.3",
     "tsx": "^4.21.0",
     "turbo": "^2.6.1",
