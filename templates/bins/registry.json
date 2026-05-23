@@ -1,0 +1,11 @@
+{
+    "repo": "royfw/rfjs",
+    "defaultRef": "main",
+    "templates": [
+        {
+            "id": "bins/bin-tsdown",
+            "path": "templates/bins/bin-tsdown",
+            "title": "Binary (tsdown)"
+        }
+    ]
+}

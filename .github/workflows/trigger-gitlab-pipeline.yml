@@ -1,0 +1,40 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+      - deploy/*
+      - publish/*
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Sync to GitLab
+        id: sync
+        uses: royfw/gitlab-sync-action@v1
+        with:
+          gitlab_push_host: ${{ secrets.GITLAB_PUSH_HOST }}
+          gitlab_project_path: royfw/apps/rfjs
+          gitlab_project_id: 5
+          gitlab_ref: ${{ github.ref_name }}
+          deploy_env: royfw-dev
+          gitlab_push_token: ${{ secrets.GITLAB_API_TOKEN }}
+          gitlab_trigger_token: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+          gitlab_api_token: ${{ secrets.GITLAB_API_TOKEN }}
+
+      - name: Display Pipeline Info
+        run: |
+          echo "Pipeline ID: ${{ steps.sync.outputs.pipeline_id }}"
+          echo "Pipeline Status: ${{ steps.sync.outputs.pipeline_status }}"
+          echo "Pipeline URL: ${{ steps.sync.outputs.pipeline_web_url }}"
+
+      - name: Deploy if Pipeline Succeeded
+        if: steps.sync.outputs.pipeline_status == 'success'
+        run: |
+          echo "Pipeline succeeded! Proceeding with deployment..."

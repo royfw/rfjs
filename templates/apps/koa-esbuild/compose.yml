@@ -1,0 +1,37 @@
+
+services:
+  postgres:
+    image: postgres:17.5
+    restart: always
+    container_name: ${POSTGRES_CONTAINER_NAME:-postgres}
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+      - POSTGRES_NON_ROOT_USER
+      - POSTGRES_NON_ROOT_PASSWORD
+    volumes:
+      - ./.data/pg-data:/var/lib/postgresql/data
+      - ./scripts/init-pg-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  
+  redis:
+    image: redis:8-alpine
+    container_name: ${REDIS_CONTAINER_NAME:-redis}
+    restart: always
+    volumes:
+      - ./.data/redis-data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10

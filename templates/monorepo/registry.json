@@ -1,0 +1,11 @@
+{
+    "repo": "royfw/rfjs",
+    "defaultRef": "main",
+    "templates": [
+        {
+            "id": "monorepo/turbo/stack/base",
+            "path": "templates/monorepo/turbo/stack/base",
+            "title": "Turbo Monorepo (base)"
+        }
+    ]
+}
