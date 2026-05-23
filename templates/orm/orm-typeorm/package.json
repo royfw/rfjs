@@ -26,19 +26,14 @@
     "migration:generate": "pnpm typeorm migration:generate -d src/data-source.ts",
     "migration:create": "pnpm typeorm migration:create",
     "migration:run": "pnpm typeorm migration:run -d src/data-source.ts",
-    "lint-staged": "pnpm exec lint-staged",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "pnpm run vitest:run",
-    "vitest": "vitest --passWithNoTests",
     "vitest:run": "vitest --passWithNoTests --run",
     "vitest:ui": "vitest --passWithNoTests --ui",
-    "vitest:e2e": "vitest --config vitest.config.e2e.mts --passWithNoTests",
-    "vitest:e2e:ui": "vitest --config vitest.config.e2e.mts --passWithNoTests --ui",
     "commit": "pnpm exec cz",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "preinstall": "pnpm exec only-allow pnpm",
+    "prepare": "pnpm exec husky"
   },
   "lint-staged": {
     "*.ts": [
