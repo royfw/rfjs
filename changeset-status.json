@@ -5,21 +5,64 @@
         {
           "name": "api",
           "type": "patch"
+        },
+        {
+          "name": "@rfjs/pg-toolkit",
+          "type": "patch"
         }
       ],
       "summary": "test deploy",
-      "id": "five-rabbits-chew"
+      "id": "metal-rules-hide"
+    },
+    {
+      "releases": [
+        {
+          "name": "@rfjs/tpl-toolkit",
+          "type": "patch"
+        }
+      ],
+      "summary": "feat: add @rfjs/tpl-toolkit package for shared template utilities\n\n- createVitestConfig() factory for Vitest configuration\n- defaultLintStagedConfig exports for lint-staged setup\n- Three export paths: ., ./vitest, ./lint-staged",
+      "id": "tpl-toolkit-init"
+    },
+    {
+      "releases": [
+        {
+          "name": "api",
+          "type": "patch"
+        }
+      ],
+      "summary": "refactor(templates): simplify tsconfig structure across all templates\n\n- Remove intermediate tsconfig files (tsconfig.app.json, tsconfig.lib.json, tsconfig.spec.json)\n- Unify each template to tsconfig.json + tsconfig.build.json (2 files)\n- Upgrade koa-esbuild and docs templates from legacy tsconfig (NodeNext/ES2021) to modern (ES2023/bundler)\n- Fix koa-esbuild isolatedModules + emitDecoratorMetadata compatibility (import type)\n- Remove Jest configuration from docs templates (standardize on Vitest)",
+      "id": "tsconfig-simplify-refactor"
     }
   ],
   "releases": [
     {
       "name": "api",
       "type": "patch",
-      "oldVersion": "0.0.2-alpha.3",
+      "oldVersion": "0.0.2-alpha.8",
       "changesets": [
-        "five-rabbits-chew"
+        "metal-rules-hide",
+        "tsconfig-simplify-refactor"
       ],
-      "newVersion": "0.0.2-alpha.4"
+      "newVersion": "0.0.2-alpha.9"
+    },
+    {
+      "name": "@rfjs/pg-toolkit",
+      "type": "patch",
+      "oldVersion": "0.0.8-alpha.0",
+      "changesets": [
+        "metal-rules-hide"
+      ],
+      "newVersion": "0.0.8-alpha.1"
+    },
+    {
+      "name": "@rfjs/tpl-toolkit",
+      "type": "patch",
+      "oldVersion": "0.0.1-alpha.0",
+      "changesets": [
+        "tpl-toolkit-init"
+      ],
+      "newVersion": "0.0.1-alpha.1"
     }
   ],
   "preState": {
@@ -36,13 +79,22 @@
       "@repo/eslint-config": "0.0.0",
       "@rfjs/pg-toolkit": "0.0.7",
       "@repo/typescript-config": "0.0.0",
-      "@repo/ui": "0.0.0"
+      "@repo/ui": "0.0.0",
+      "@rfjs/tpl-toolkit": "0.0.1-alpha.0"
     },
     "changesets": [
+      "clean-keys-spend",
+      "crisp-walls-tickle",
       "five-rabbits-chew",
       "grumpy-baboons-think",
+      "happy-games-matter",
+      "many-donkeys-talk",
+      "many-seals-wave",
+      "metal-rules-hide",
       "salty-drinks-fry",
       "tiny-birds-switch",
+      "tpl-toolkit-init",
+      "tsconfig-simplify-refactor",
       "twelve-flowers-wave"
     ]
   }
