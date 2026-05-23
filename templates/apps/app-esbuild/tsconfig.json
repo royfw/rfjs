@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2023",
     "module": "ESNext",
@@ -18,10 +19,18 @@
     "outDir": "./dist",
     "incremental": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true, // esbuild 不支援
+    "emitDecoratorMetadata": true,
     "sourceMap": true,
     "paths": {
       "@/*": ["./src/*"]
     }
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist*",
+    "test",
+    "**/*(spec|test).ts",
+    "**/*e2e-(spec|test).ts",
+    "*.config.*"
+  ]
 }

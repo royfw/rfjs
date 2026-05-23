@@ -19,7 +19,7 @@
     "build:tsdown": "pnpm run clean && tsdown --config-loader unrun",
     "build:tsdown:watch": "pnpm run clean && tsdown --config-loader unrun --watch",
     "build:tsc": "pnpm run clean && pnpm exec tsc -p tsconfig.build.json",
-    "build:tsc:watch": "pnpm run clean && pnpm exec tsc-watch -p tsconfig.app.json",
+    "build:tsc:watch": "pnpm run clean && pnpm exec tsc-watch -p tsconfig.json",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "lint-staged": "pnpm exec lint-staged",

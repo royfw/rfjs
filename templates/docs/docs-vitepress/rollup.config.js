@@ -13,7 +13,7 @@ export default {
   input: 'src/main.ts',
   plugins: [
     json(),
-    typescript({ tsconfig: './tsconfig.rollup.json' }),
+    typescript({ tsconfig: './tsconfig.json' }),
     resolve({
       extensions: ['.js', '.ts', '.json'],
     }),

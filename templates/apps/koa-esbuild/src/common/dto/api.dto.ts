@@ -83,7 +83,6 @@ export class ApiResErrorDTO implements ApiResError {
     this.timestamp = timestamp;
     this.method = method;
   }
-  code: number;
   @JSONSchema({ description: '請求結果' })
   @IsBoolean()
   success: boolean;

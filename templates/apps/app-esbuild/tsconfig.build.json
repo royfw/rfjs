@@ -1,4 +1,4 @@
 {
-  "extends": "./tsconfig.app.json",
-  "compilerOptions": {}
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "dist", "test", "*.config.*"]
 }
