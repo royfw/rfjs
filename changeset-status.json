@@ -7,166 +7,43 @@
           "type": "patch"
         }
       ],
-      "summary": "test deploy local",
-      "id": "afraid-turkeys-shave"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        },
-        {
-          "name": "orm-app",
-          "type": "patch"
-        }
-      ],
-      "summary": "test docker build",
-      "id": "four-shirts-joke"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        }
-      ],
-      "summary": "update package scripts to remove recursive flag and release command",
-      "id": "funky-things-occur"
-    },
-    {
-      "releases": [
-        {
-          "name": "orm-app",
-          "type": "patch"
-        }
-      ],
-      "summary": "- chore(libs): refine build scripts and remove unused release command\n- chore(apps): update package scripts to remove recursive flag and release command",
-      "id": "funny-eyes-lick"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        }
-      ],
-      "summary": "test release",
-      "id": "great-feet-talk"
-    },
-    {
-      "releases": [
-        {
-          "name": "@rfjs/pg-toolkit",
-          "type": "patch"
-        }
-      ],
-      "summary": "chore(pkg): Update author and references in pg-toolkit\n\n- Update package author to 'Roy Chuang'.\n- Update organization references in documentation to 'royfw'.",
-      "id": "lemon-garlics-mate"
-    },
-    {
-      "releases": [
-        {
-          "name": "orm-app",
-          "type": "patch"
-        }
-      ],
-      "summary": "ci(orm-app): enable npmrc secret mount in Docker builds\n\nAdd restricted cache mount for .npmrc to allow secure dependency installation during Docker builds.\nApply changes to both main Dockerfile and Turbo-specific Dockerfiles.",
-      "id": "many-brooms-joke"
-    },
-    {
-      "releases": [
-        {
-          "name": "orm-app",
-          "type": "patch"
-        }
-      ],
-      "summary": "test deploy local",
-      "id": "many-zebras-stop"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        },
-        {
-          "name": "orm-app",
-          "type": "patch"
-        },
-        {
-          "name": "@rfjs/pg-toolkit",
-          "type": "patch"
-        }
-      ],
-      "summary": "test release",
-      "id": "social-trains-chew"
+      "summary": "test deploy",
+      "id": "five-rabbits-chew"
     }
   ],
   "releases": [
     {
       "name": "api",
       "type": "patch",
-      "oldVersion": "0.0.1-alpha.3",
+      "oldVersion": "0.0.2-alpha.3",
       "changesets": [
-        "afraid-turkeys-shave",
-        "four-shirts-joke",
-        "funky-things-occur",
-        "great-feet-talk",
-        "social-trains-chew"
+        "five-rabbits-chew"
       ],
-      "newVersion": "0.0.1"
-    },
-    {
-      "name": "orm-app",
-      "type": "patch",
-      "oldVersion": "0.0.1-alpha.3",
-      "changesets": [
-        "four-shirts-joke",
-        "funny-eyes-lick",
-        "many-brooms-joke",
-        "many-zebras-stop",
-        "social-trains-chew"
-      ],
-      "newVersion": "0.0.1"
-    },
-    {
-      "name": "@rfjs/pg-toolkit",
-      "type": "patch",
-      "oldVersion": "0.0.7-alpha.0",
-      "changesets": [
-        "lemon-garlics-mate",
-        "social-trains-chew"
-      ],
-      "newVersion": "0.0.7"
+      "newVersion": "0.0.2-alpha.4"
     }
   ],
   "preState": {
-    "mode": "exit",
+    "mode": "pre",
     "tag": "alpha",
     "initialVersions": {
-      "api": "0.0.0",
-      "orm-app": "0.0.0",
+      "api": "0.0.1",
+      "orm-app": "0.0.1",
       "web": "0.1.0",
       "@rfjs/orm-drizzle": "0.0.0",
       "@rfjs/orm-kysely": "0.0.0",
       "@rfjs/orm-prisma": "0.0.0",
       "@rfjs/orm-typeorm": "0.0.0",
       "@repo/eslint-config": "0.0.0",
-      "@rfjs/pg-toolkit": "0.0.6",
+      "@rfjs/pg-toolkit": "0.0.7",
       "@repo/typescript-config": "0.0.0",
       "@repo/ui": "0.0.0"
     },
     "changesets": [
-      "afraid-turkeys-shave",
-      "four-shirts-joke",
-      "funky-things-occur",
-      "funny-eyes-lick",
-      "great-feet-talk",
-      "lemon-garlics-mate",
-      "many-brooms-joke",
-      "many-zebras-stop",
-      "social-trains-chew"
+      "five-rabbits-chew",
+      "grumpy-baboons-think",
+      "salty-drinks-fry",
+      "tiny-birds-switch",
+      "twelve-flowers-wave"
     ]
   }
 }

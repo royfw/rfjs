@@ -1,0 +1,29 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "api": "0.0.1",
+    "orm-app": "0.0.1",
+    "web": "0.1.0",
+    "@rfjs/orm-drizzle": "0.0.0",
+    "@rfjs/orm-kysely": "0.0.0",
+    "@rfjs/orm-prisma": "0.0.0",
+    "@rfjs/orm-typeorm": "0.0.0",
+    "@repo/eslint-config": "0.0.0",
+    "@rfjs/pg-toolkit": "0.0.7",
+    "@repo/typescript-config": "0.0.0",
+    "@repo/ui": "0.0.0"
+  },
+  "changesets": [
+    "clean-keys-spend",
+    "crisp-walls-tickle",
+    "five-rabbits-chew",
+    "grumpy-baboons-think",
+    "happy-games-matter",
+    "many-donkeys-talk",
+    "many-seals-wave",
+    "salty-drinks-fry",
+    "tiny-birds-switch",
+    "twelve-flowers-wave"
+  ]
+}
