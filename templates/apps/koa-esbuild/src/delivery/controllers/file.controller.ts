@@ -1,7 +1,7 @@
 import { JsonController, Post, UploadedFiles } from 'routing-controllers';
 import { UploadFileDTO, UploadFileInfoDTO } from '@/common/dto/file.dto';
 import { ApiResDataListSchema } from '@/common/decorators';
-import { ApiResData } from '@/common/types';
+import type { ApiResData } from '@/common/types';
 import { ApiResDataDTO } from '@/common/dto';
 import { fileUploadOptions } from '@/helpers';
 import { plainToInstance } from 'class-transformer';

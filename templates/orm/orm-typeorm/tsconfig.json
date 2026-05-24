@@ -29,5 +29,6 @@
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["ESNext"]
-  }
+  },
+  "exclude": ["node_modules", "dist*", "test", "types", "**/*(spec|test).ts", "**/*e2e-(spec|test).ts", "*.config.*"]
 }

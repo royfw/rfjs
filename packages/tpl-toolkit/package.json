@@ -1,0 +1,88 @@
+{
+  "name": "@rfjs/tpl-toolkit",
+  "version": "0.0.1-alpha.2",
+  "description": "Shared configuration factories and build helpers for rfjs project templates",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./vitest": {
+      "types": "./dist/vitest/index.d.ts",
+      "import": "./dist/vitest/index.mjs",
+      "require": "./dist/vitest/index.js"
+    },
+    "./lint-staged": {
+      "types": "./dist/lint-staged/index.d.ts",
+      "import": "./dist/lint-staged/index.mjs",
+      "require": "./dist/lint-staged/index.js"
+    }
+  },
+  "scripts": {
+    "clean": "pnpm --filter . --parallel clean:dist clean:types",
+    "clean:types": "pnpm exec rimraf ./types",
+    "clean:dist": "pnpm exec rimraf ./dist",
+    "dev": "pnpm --filter . --parallel dev:tsdown typecheck:watch",
+    "dev:tsdown": "pnpm run clean && tsdown --config-loader unrun --watch",
+    "build": "pnpm run build:tsdown",
+    "build:tsdown": "pnpm run clean && tsdown --config-loader unrun",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "pnpm run vitest:run",
+    "vitest:run": "vitest --passWithNoTests --run",
+    "vitest:ui": "vitest --passWithNoTests --ui",
+    "commit": "pnpm exec cz"
+  },
+  "keywords": [],
+  "author": "Roy Chuang",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@commitlint/cz-commitlint": "^19.6.1",
+    "@eslint/js": "^9.20.0",
+    "@types/node": "^22.10.0",
+    "@vitest/coverage-istanbul": "^3.2.3",
+    "@vitest/ui": "^3.2.3",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.5.1",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "tsdown": "0.17.0-beta.6",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vitepress": "^1.6.3",
+    "vitest": "^3.2.3"
+  },
+  "peerDependencies": {
+    "vitest": "^3.2.3"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "tslib": "^2.8.1"
+  }
+}

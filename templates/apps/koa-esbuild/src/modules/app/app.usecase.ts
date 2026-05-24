@@ -1,6 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 import { INJECT_SVC_APP_SERVICE } from '@/ioc';
-import { IAppService } from './types';
+import type { IAppService } from './types';
 
 @injectable()
 export class AppUseCase {

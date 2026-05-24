@@ -6,7 +6,7 @@ import {
   ApiResPaginatedSchema,
 } from '@/common/decorators/api.decorator';
 import { AppDataDTO, AppInfoDTO, AppPostBodyDTO } from '@/modules/app/dto';
-import { AppData, AppInfo } from '@/modules/app/types';
+import type { AppData, AppInfo } from '@/modules/app/types';
 import { AppUseCase } from '@/modules/app/app.usecase';
 import { ResponseSchema } from 'routing-controllers-openapi';
 import { inject, injectable } from 'tsyringe';

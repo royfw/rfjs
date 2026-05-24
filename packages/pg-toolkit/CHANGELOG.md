@@ -1,5 +1,11 @@
 # @rfjs/pg-toolkit
 
+## 0.0.8-alpha.1
+
+### Patch Changes
+
+- 2cdde0c: test deploy
+
 ## 0.0.8-alpha.0
 
 ### Patch Changes

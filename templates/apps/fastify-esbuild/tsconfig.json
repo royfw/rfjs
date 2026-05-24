@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2023",
     "module": "ESNext",
@@ -23,5 +24,13 @@
     "paths": {
       "@/*": ["./src/*"]
     }
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist*",
+    "test",
+    "**/*(spec|test).ts",
+    "**/*e2e-(spec|test).ts",
+    "*.config.*"
+  ]
 }

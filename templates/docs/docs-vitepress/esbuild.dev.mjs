@@ -20,7 +20,7 @@ const sharedConfig = {
   platform: 'node', // library 通常 neutral, 或 browser/node 看需求
   sourcemap: true, // 是否需要 sourcemap
   // external: externalDeps, // 不要把相依套件打包進來
-  tsconfig: './tsconfig.esbuild.json', // 使用 tsconfig.json 設定
+  tsconfig: './tsconfig.json',
   // minify: true,       // 需壓縮可開啟
 };
 
