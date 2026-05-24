@@ -1,5 +1,11 @@
 # @rfjs/tpl-toolkit
 
+## 0.0.1-alpha.2
+
+### Patch Changes
+
+- ccb5c4f: fix: remove preinstall/prepare scripts that blocked installation via npm/yarn
+
 ## 0.0.1-alpha.1
 
 ### Patch Changes
