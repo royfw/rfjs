@@ -1,6 +1,6 @@
 {
   "name": "api",
-  "version": "0.0.2-alpha.9",
+  "version": "0.0.2",
   "description": "A project created by starter-ts-fastify",
   "private": "true",
   "scripts": {
