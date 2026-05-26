@@ -7,19 +7,19 @@
           "type": "patch"
         }
       ],
-      "summary": "fix: remove preinstall/prepare scripts that blocked installation via npm/yarn",
-      "id": "fix-tpl-toolkit-install"
+      "summary": "feat: add build plugins and tsdown config factory\n\n- copyFilesPlugin, tsdownDevNodemonPlugin, copyPackageJsonPlugin exports via ./plugins\n- createTsdownConfig() factory via ./tsdown-config for app/lib/bin/orm/bullmq template types",
+      "id": "tpl-toolkit-plugins-and-tsdown-config"
     }
   ],
   "releases": [
     {
       "name": "@rfjs/tpl-toolkit",
       "type": "patch",
-      "oldVersion": "0.0.1-alpha.1",
+      "oldVersion": "0.0.1-alpha.2",
       "changesets": [
-        "fix-tpl-toolkit-install"
+        "tpl-toolkit-plugins-and-tsdown-config"
       ],
-      "newVersion": "0.0.1-alpha.2"
+      "newVersion": "0.0.1-alpha.3"
     }
   ],
   "preState": {
@@ -52,6 +52,7 @@
       "salty-drinks-fry",
       "tiny-birds-switch",
       "tpl-toolkit-init",
+      "tpl-toolkit-plugins-and-tsdown-config",
       "tsconfig-simplify-refactor",
       "twelve-flowers-wave"
     ]
