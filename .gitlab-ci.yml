@@ -27,16 +27,6 @@ echo:
   stage: echo
   extends: .echo
 
-version_stable:
-  stage: version
-  extends: .changesets_version_channel
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "release/stable"'
-  variables:
-    REF: "release/stable"
-    CHANNEL: "stable"
-    # PUSH_VERSION: "true"
-
 # ----------------------------
 # release/*：只做 version（commit + push 回 release/*）
 # ----------------------------
@@ -44,7 +34,18 @@ version_release:
   stage: version
   extends: .changesets_version_channel
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH =~ /^release\/(stable|alpha|beta|rc)$/'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "release/stable"'
+      variables:
+        CHANNEL: "stable"
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "release/alpha"'
+      variables:
+        CHANNEL: "alpha"
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "release/beta"'
+      variables:
+        CHANNEL: "beta"
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "release/rc"'
+      variables:
+        CHANNEL: "rc"
   variables:
     REF: "$CI_COMMIT_BRANCH"
     PUSH_VERSION: "true"
