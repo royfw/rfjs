@@ -5,6 +5,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@rfjs/orm-drizzle': path.resolve(__dirname, '../../libs/orm-drizzle/src/index.ts'),
+      '@rfjs/orm-kysely': path.resolve(__dirname, '../../libs/orm-kysely/src/index.ts'),
+      '@rfjs/orm-prisma': path.resolve(__dirname, '../../libs/orm-prisma/src/index.ts'),
+      '@rfjs/orm-typeorm': path.resolve(__dirname, '../../libs/orm-typeorm/src/index.ts'),
     },
   },
   test: {
