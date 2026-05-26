@@ -12,18 +12,23 @@
     "@repo/eslint-config": "0.0.0",
     "@rfjs/pg-toolkit": "0.0.7",
     "@repo/typescript-config": "0.0.0",
-    "@repo/ui": "0.0.0"
+    "@repo/ui": "0.0.0",
+    "@rfjs/tpl-toolkit": "0.0.1-alpha.0"
   },
   "changesets": [
     "clean-keys-spend",
     "crisp-walls-tickle",
     "five-rabbits-chew",
+    "fix-tpl-toolkit-install",
     "grumpy-baboons-think",
     "happy-games-matter",
     "many-donkeys-talk",
     "many-seals-wave",
+    "metal-rules-hide",
     "salty-drinks-fry",
     "tiny-birds-switch",
+    "tpl-toolkit-init",
+    "tsconfig-simplify-refactor",
     "twelve-flowers-wave"
   ]
 }

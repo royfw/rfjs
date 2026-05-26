@@ -12,6 +12,8 @@ export default defineConfig({
     'src/index.ts',
     'src/vitest/index.ts',
     'src/lint-staged/index.ts',
+    'src/plugins/index.ts',
+    'src/tsdown-config.ts',
   ],
   outDir: 'dist',
   external: externalDeps,

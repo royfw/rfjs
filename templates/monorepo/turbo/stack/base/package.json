@@ -39,5 +39,10 @@
     "pnpm": ">=10.24.0 <11.0.0"
   },
   "description": "A project created by turbo-template",
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  }
 }

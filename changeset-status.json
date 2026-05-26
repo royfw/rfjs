@@ -3,23 +3,23 @@
     {
       "releases": [
         {
-          "name": "api",
+          "name": "@rfjs/tpl-toolkit",
           "type": "patch"
         }
       ],
-      "summary": "test deploy",
-      "id": "five-rabbits-chew"
+      "summary": "fix: remove preinstall/prepare scripts that blocked installation via npm/yarn",
+      "id": "fix-tpl-toolkit-install"
     }
   ],
   "releases": [
     {
-      "name": "api",
+      "name": "@rfjs/tpl-toolkit",
       "type": "patch",
-      "oldVersion": "0.0.2-alpha.3",
+      "oldVersion": "0.0.1-alpha.1",
       "changesets": [
-        "five-rabbits-chew"
+        "fix-tpl-toolkit-install"
       ],
-      "newVersion": "0.0.2-alpha.4"
+      "newVersion": "0.0.1-alpha.2"
     }
   ],
   "preState": {
@@ -36,13 +36,23 @@
       "@repo/eslint-config": "0.0.0",
       "@rfjs/pg-toolkit": "0.0.7",
       "@repo/typescript-config": "0.0.0",
-      "@repo/ui": "0.0.0"
+      "@repo/ui": "0.0.0",
+      "@rfjs/tpl-toolkit": "0.0.1-alpha.0"
     },
     "changesets": [
+      "clean-keys-spend",
+      "crisp-walls-tickle",
       "five-rabbits-chew",
+      "fix-tpl-toolkit-install",
       "grumpy-baboons-think",
+      "happy-games-matter",
+      "many-donkeys-talk",
+      "many-seals-wave",
+      "metal-rules-hide",
       "salty-drinks-fry",
       "tiny-birds-switch",
+      "tpl-toolkit-init",
+      "tsconfig-simplify-refactor",
       "twelve-flowers-wave"
     ]
   }
