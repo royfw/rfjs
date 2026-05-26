@@ -1,5 +1,14 @@
 # @rfjs/tpl-toolkit
 
+## 0.0.1-alpha.3
+
+### Patch Changes
+
+- 3e988a5: feat: add build plugins and tsdown config factory
+
+  - copyFilesPlugin, tsdownDevNodemonPlugin, copyPackageJsonPlugin exports via ./plugins
+  - createTsdownConfig() factory via ./tsdown-config for app/lib/bin/orm/bullmq template types
+
 ## 0.0.1-alpha.2
 
 ### Patch Changes
