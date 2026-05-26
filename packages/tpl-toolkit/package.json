@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/tpl-toolkit",
-  "version": "0.0.1-alpha.3",
+  "version": "0.0.1",
   "description": "Shared configuration factories and build helpers for rfjs project templates",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
