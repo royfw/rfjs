@@ -51,6 +51,9 @@ importers:
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.20.0
+      '@rfjs/tpl-toolkit':
+        specifier: ^0.0.1
+        version: 0.0.1(tsdown@0.17.3(typescript@5.7.3))(vitest@3.2.3)
       '@types/dotenv-flow':
         specifier: ^3.3.3
         version: 3.3.3
@@ -754,6 +757,18 @@ packages:
 
   '@quansync/fs@1.0.0':
     resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
+
+  '@rfjs/tpl-toolkit@0.0.1':
+    resolution: {integrity: sha512-2tDul1+fCTJZ/kmllwuybBHffJtLBqOF9Ou//ldkzqrDveP8qbg0q1874fhczyRI4M1ULwl6zCsxTaX0Q+Di0w==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      tsdown: '>=0.17.0'
+      vitest: ^3.2.3
+    peerDependenciesMeta:
+      tsdown:
+        optional: true
+      vitest:
+        optional: true
 
   '@rolldown/binding-android-arm64@1.0.0-beta.53':
     resolution: {integrity: sha512-Ok9V8o7o6YfSdTTYA/uHH30r3YtOxLD6G3wih/U9DO0ucBBFq8WPt/DslU53OgfteLRHITZny9N/qCUxMf9kjQ==}
@@ -4639,6 +4654,13 @@ snapshots:
   '@quansync/fs@1.0.0':
     dependencies:
       quansync: 1.0.0
+
+  '@rfjs/tpl-toolkit@0.0.1(tsdown@0.17.3(typescript@5.7.3))(vitest@3.2.3)':
+    dependencies:
+      tslib: 2.8.1
+    optionalDependencies:
+      tsdown: 0.17.3(typescript@5.7.3)
+      vitest: 3.2.3(@types/node@22.13.2)(@vitest/ui@3.2.3)(terser@5.39.0)
 
   '@rolldown/binding-android-arm64@1.0.0-beta.53':
     optional: true
