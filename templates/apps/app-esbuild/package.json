@@ -82,5 +82,10 @@
   },
   "dependencies": {
     "dotenv-flow": "^4.1.0"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
   }
 }

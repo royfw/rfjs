@@ -26,6 +26,16 @@
       "types": "./dist/lint-staged/index.d.ts",
       "import": "./dist/lint-staged/index.mjs",
       "require": "./dist/lint-staged/index.js"
+    },
+    "./plugins": {
+      "types": "./dist/plugins/index.d.ts",
+      "import": "./dist/plugins/index.mjs",
+      "require": "./dist/plugins/index.js"
+    },
+    "./tsdown-config": {
+      "types": "./dist/tsdown-config.d.ts",
+      "import": "./dist/tsdown-config.mjs",
+      "require": "./dist/tsdown-config.js"
     }
   },
   "scripts": {
@@ -75,9 +85,13 @@
     "vitest": "^3.2.3"
   },
   "peerDependencies": {
+    "tsdown": ">=0.17.0",
     "vitest": "^3.2.3"
   },
   "peerDependenciesMeta": {
+    "tsdown": {
+      "optional": true
+    },
     "vitest": {
       "optional": true
     }
