@@ -1,63 +1,69 @@
-# lib-tsdown
+# @rfjs/jsonb-query
 
-A modern TypeScript library template built with tsdown for zero-config, lightning-fast builds.
+PostgreSQL JSONB SQL query builder. Generates `FROM` and `WHERE` clauses for querying JSONB columns.
 
-## ✨ Features
-
-- **⚡ Zero Config** - Works out of the box with sensible defaults
-- **🚀 Ultra-Fast** - Powered by Oxc for blazing performance
-- **📦 Dual Output** - ESM and CJS formats automatically
-- **🔷 TypeScript** - Full TypeScript support with isolated declarations
-- **✅ Testing Ready** - Vitest configured for comprehensive testing
-- **📝 Code Quality** - ESLint, Prettier, Husky, and lint-staged pre-configured
-
-## 🚀 Quick Start
+## Installation
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Development with watch mode
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Run tests
-pnpm test
+npm install @rfjs/jsonb-query
 ```
 
-## 📁 Project Structure
+## API
 
+### `toJsonbQuery(jsonb, field, operator, dataType, value)`
+
+Generate a SQL query fragment for a single JSONB field condition.
+
+```typescript
+import { toJsonbQuery } from '@rfjs/jsonb-query';
+
+const query = toJsonbQuery(
+  'data::jsonb',    // jsonb expression
+  'settings.theme', // field path
+  'eq',             // operator
+  'string',         // dataType
+  'dark'            // value
+);
+// { from: 'data::jsonb', fromAlias: 'j', where: "(data::jsonb -> 'settings' -> 'theme') = 'dark'" }
 ```
-lib-tsdown/
-├── src/
-│   ├── index.ts              # Library entry point
-│   └── utils/                # Utility functions
-├── dist/                     # Build output
-│   ├── index.js             # CJS bundle
-│   ├── index.mjs            # ESM bundle
-│   └── index.d.ts           # Type declarations
-├── tsdown.config.ts         # tsdown configuration
-└── package.json             # Package configuration
+
+### `genFilterQueryMetadata(jsonb, filterQuery)`
+
+Generate complete SQL `WHERE` and `FROM` clauses from a nested filter metadata tree.
+
+```typescript
+import { genFilterQueryMetadata } from '@rfjs/jsonb-query';
+
+const filter: FilterQueryMetadata = {
+  logic: 'and',
+  filters: [
+    {
+      field: 'name',
+      dataType: 'string',
+      operator: 'eq',
+      value: 'test',
+    },
+    {
+      logic: 'or',
+      filters: [
+        { field: 'age', dataType: 'numeric', operator: 'gte', value: 18 },
+        { field: 'active', dataType: 'boolean', operator: 'eq', value: true },
+      ],
+    },
+  ],
+};
+
+const { where, from } = genFilterQueryMetadata('payload::jsonb', filter);
 ```
 
-## 📚 Documentation
+### `metadetaListToJsonbQuery(jsonb, metadataList)`
 
-For detailed documentation, see [docs/README.md](./docs/README.md) or [繁體中文文檔](./docs/README.zh-TW.md).
+Convert a list of filter metadata into an array of SQL query objects.
 
-## 🛠️ Tech Stack
+## Operators
 
-- **Build Tool**: tsdown 0.17+
-- **Language**: TypeScript 5.7+
-- **Testing**: Vitest 3.2+
-- **Package Manager**: pnpm 10.24+
-- **Node.js**: 18+
+`eq`, `neq`, `isnull`, `isnotnull`, `contains`, `startswith`, `endswith`, `terms`, `gt`, `gte`, `lt`, `lte`, `range`
 
-## 📄 License
+## Data Types
 
-ISC
-
----
-
-**Created with** [rfjs/templates](https://github.com/royfw/rfjs)
+All 16 `JsonbDataType` variants: `string`, `numeric`, `date`, `boolean`, and their `object*` / `array*` / `arrayObject*` forms.

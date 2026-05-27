@@ -1,63 +1,48 @@
-# lib-tsdown
+# @rfjs/retry
 
-A modern TypeScript library template built with tsdown for zero-config, lightning-fast builds.
+Retry helper with configurable delay and max attempts.
 
-## ✨ Features
-
-- **⚡ Zero Config** - Works out of the box with sensible defaults
-- **🚀 Ultra-Fast** - Powered by Oxc for blazing performance
-- **📦 Dual Output** - ESM and CJS formats automatically
-- **🔷 TypeScript** - Full TypeScript support with isolated declarations
-- **✅ Testing Ready** - Vitest configured for comprehensive testing
-- **📝 Code Quality** - ESLint, Prettier, Husky, and lint-staged pre-configured
-
-## 🚀 Quick Start
+## Installation
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Development with watch mode
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Run tests
-pnpm test
+npm install @rfjs/retry
 ```
 
-## 📁 Project Structure
+## API
 
+### `retry(job, periodMs, maxRetryTimes)`
+
+Retry an async or sync function on failure.
+
+```typescript
+import { retry } from '@rfjs/retry';
+
+async function fetchData() {
+  // may throw
+}
+
+const result = await retry(fetchData, 100, 5);
+// periodMs: 100ms (default), maxRetryTimes: 5 (default)
 ```
-lib-tsdown/
-├── src/
-│   ├── index.ts              # Library entry point
-│   └── utils/                # Utility functions
-├── dist/                     # Build output
-│   ├── index.js             # CJS bundle
-│   ├── index.mjs            # ESM bundle
-│   └── index.d.ts           # Type declarations
-├── tsdown.config.ts         # tsdown configuration
-└── package.json             # Package configuration
+
+### `RetryHelper.createRetry()`
+
+Create a bound retry instance from a helper class.
+
+```typescript
+import { RetryHelper } from '@rfjs/retry';
+
+const helper = new RetryHelper();
+const retryFn = helper.createRetry();
+const result = await retryFn(fetchData, 200, 3);
 ```
 
-## 📚 Documentation
+### `delay(ms)`
 
-For detailed documentation, see [docs/README.md](./docs/README.md) or [繁體中文文檔](./docs/README.zh-TW.md).
+Pause execution for a specified number of milliseconds.
 
-## 🛠️ Tech Stack
+```typescript
+import { delay } from '@rfjs/retry';
 
-- **Build Tool**: tsdown 0.17+
-- **Language**: TypeScript 5.7+
-- **Testing**: Vitest 3.2+
-- **Package Manager**: pnpm 10.24+
-- **Node.js**: 18+
-
-## 📄 License
-
-ISC
-
----
-
-**Created with** [rfjs/templates](https://github.com/royfw/rfjs)
+await delay(1000); // wait 1 second
+```

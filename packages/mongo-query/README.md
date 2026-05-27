@@ -1,63 +1,69 @@
-# lib-tsdown
+# @rfjs/mongo-query
 
-A modern TypeScript library template built with tsdown for zero-config, lightning-fast builds.
+MongoDB query builder. Generates MongoDB query documents from structured filter metadata.
 
-## ✨ Features
-
-- **⚡ Zero Config** - Works out of the box with sensible defaults
-- **🚀 Ultra-Fast** - Powered by Oxc for blazing performance
-- **📦 Dual Output** - ESM and CJS formats automatically
-- **🔷 TypeScript** - Full TypeScript support with isolated declarations
-- **✅ Testing Ready** - Vitest configured for comprehensive testing
-- **📝 Code Quality** - ESLint, Prettier, Husky, and lint-staged pre-configured
-
-## 🚀 Quick Start
+## Installation
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Development with watch mode
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Run tests
-pnpm test
+npm install @rfjs/mongo-query
 ```
 
-## 📁 Project Structure
+## API
 
+### `toQuery(field, type, condition, value)`
+
+Generate a MongoDB query for a single field condition.
+
+```typescript
+import { toQuery } from '@rfjs/mongo-query';
+
+toQuery('name', 'string', 'eq', 'Alice');
+// { name: { '$eq': 'Alice' } }
+
+toQuery('age', 'number', 'gte', 18);
+// { age: { '$gte': 18 } }
+
+toQuery('tags', 'string', 'terms', ['admin', 'active']);
+// { tags: { '$in': ['admin', 'active'] } }
 ```
-lib-tsdown/
-├── src/
-│   ├── index.ts              # Library entry point
-│   └── utils/                # Utility functions
-├── dist/                     # Build output
-│   ├── index.js             # CJS bundle
-│   ├── index.mjs            # ESM bundle
-│   └── index.d.ts           # Type declarations
-├── tsdown.config.ts         # tsdown configuration
-└── package.json             # Package configuration
+
+Conditions: `'eq' | 'neq' | 'nin' | 'terms' | 'term' | 'gt' | 'gte' | 'lt' | 'lte' | 'range' | 'regex'`
+
+### `genFilterQuery(filterMetadata)`
+
+Build a nested MongoDB query from a filter metadata tree.
+
+```typescript
+import { genFilterQuery } from '@rfjs/mongo-query';
+
+const result = genFilterQuery({
+  logic: 'and',
+  filters: [
+    { field: 'name', condition: 'eq', dataType: 'string', value: 'test' },
+    {
+      logic: 'or',
+      filters: [
+        { field: 'age', condition: 'gt', dataType: 'number', value: 18 },
+        { field: 'address', condition: 'eq', dataType: 'string', value: null },
+      ],
+    },
+  ],
+});
+// { '$and': [ { name: { '$eq': 'test' } }, { '$or': [ { age: { '$gt': 18 } }, { address: { '$eq': null } } ] } ] }
 ```
 
-## 📚 Documentation
+## Types
 
-For detailed documentation, see [docs/README.md](./docs/README.md) or [繁體中文文檔](./docs/README.zh-TW.md).
+```typescript
+interface MgoFieldCondition {
+  field: string;
+  condition: MgoConditionType;
+  dataType: MgoDataType;
+  value: ValueType;
+}
 
-## 🛠️ Tech Stack
-
-- **Build Tool**: tsdown 0.17+
-- **Language**: TypeScript 5.7+
-- **Testing**: Vitest 3.2+
-- **Package Manager**: pnpm 10.24+
-- **Node.js**: 18+
-
-## 📄 License
-
-ISC
-
----
-
-**Created with** [rfjs/templates](https://github.com/royfw/rfjs)
+interface MgoFilterMetadata {
+  logic: 'and' | 'or' | 'nor';
+  filters: Array<MgoFieldCondition | MgoFilterMetadata>;
+}
+```

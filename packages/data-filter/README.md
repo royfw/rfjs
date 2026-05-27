@@ -1,63 +1,94 @@
-# lib-tsdown
+# @rfjs/data-filter
 
-A modern TypeScript library template built with tsdown for zero-config, lightning-fast builds.
+In-memory data filtering with JSONPath wildcard support, alias substitution, and filter mapping.
 
-## ✨ Features
-
-- **⚡ Zero Config** - Works out of the box with sensible defaults
-- **🚀 Ultra-Fast** - Powered by Oxc for blazing performance
-- **📦 Dual Output** - ESM and CJS formats automatically
-- **🔷 TypeScript** - Full TypeScript support with isolated declarations
-- **✅ Testing Ready** - Vitest configured for comprehensive testing
-- **📝 Code Quality** - ESLint, Prettier, Husky, and lint-staged pre-configured
-
-## 🚀 Quick Start
+## Installation
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Development with watch mode
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Run tests
-pnpm test
+npm install @rfjs/data-filter
 ```
 
-## 📁 Project Structure
+## API
 
+### Filter Matching
+
+#### `filterMatchQueryData(data, filterQuery)`
+
+Check if a single data object matches a filter query. Returns `boolean`.
+
+```typescript
+import { filterMatchQueryData } from '@rfjs/data-filter';
+
+const filter: FilterMatchQuery = {
+  logic: 'and',
+  filters: [
+    { field: 'name', dataType: 'string', operator: 'eq', value: 'Alice' },
+    { field: 'age', dataType: 'numeric', operator: 'gte', value: 18 },
+  ],
+};
+
+filterMatchQueryData({ name: 'Alice', age: 25 }, filter); // true
 ```
-lib-tsdown/
-├── src/
-│   ├── index.ts              # Library entry point
-│   └── utils/                # Utility functions
-├── dist/                     # Build output
-│   ├── index.js             # CJS bundle
-│   ├── index.mjs            # ESM bundle
-│   └── index.d.ts           # Type declarations
-├── tsdown.config.ts         # tsdown configuration
-└── package.json             # Package configuration
+
+#### `filterMatchQueryArrayData(data, filters)`
+
+Filter an array of objects against multiple filter queries.
+
+```typescript
+import { filterMatchQueryArrayData } from '@rfjs/data-filter';
+
+const results = filterMatchQueryArrayData(items, [filter]);
 ```
 
-## 📚 Documentation
+### Filter Mapping
 
-For detailed documentation, see [docs/README.md](./docs/README.md) or [繁體中文文檔](./docs/README.zh-TW.md).
+#### `filterMappingMatchQueryData(data, mappings, extraData, dataKey)`
 
-## 🛠️ Tech Stack
+Filter and map data using alias substitution. Supports dynamic field resolution via `{{field.path}}` placeholders.
 
-- **Build Tool**: tsdown 0.17+
-- **Language**: TypeScript 5.7+
-- **Testing**: Vitest 3.2+
-- **Package Manager**: pnpm 10.24+
-- **Node.js**: 18+
+```typescript
+import { filterMappingMatchQueryData } from '@rfjs/data-filter';
 
-## 📄 License
+const results = filterMappingMatchQueryData<T>(
+  items,
+  [{ filter, mappings }],
+  extraData,
+  'data'
+);
+```
 
-ISC
+### Path Resolution
 
----
+#### `resolvePathWithWildcard(data, path, options)`
 
-**Created with** [rfjs/templates](https://github.com/royfw/rfjs)
+Resolve a path in an object with JSONPath wildcard support. Falls back to lodash `_.get` for plain paths.
+
+```typescript
+import { resolvePathWithWildcard } from '@rfjs/data-filter';
+
+resolvePathWithWildcard(data, 'users[*].name');  // JSONPath wildcard
+resolvePathWithWildcard(data, 'a.b.c');           // plain path
+```
+
+### Operators
+
+**Text**: `eq`, `neq`, `isnull`, `isnotnull`, `contains`, `startswith`, `endswith`, `terms`
+**Numeric**: `eq`, `neq`, `isnull`, `isnotnull`, `gt`, `gte`, `lt`, `lte`, `range`, `terms`
+**Boolean**: `eq`, `neq`, `isnull`, `isnotnull`
+**Logic**: `and`, `or`, `nor`, `not`
+
+## Types
+
+```typescript
+type FilterMatchQuery = {
+  logic: 'and' | 'or' | 'nor' | 'not';
+  filters: (MatchQueryMetadata | FilterMatchQuery)[];
+};
+
+type MatchQueryMetadata = {
+  field: string;
+  dataType: 'string' | 'numeric' | 'boolean';
+  operator: string;
+  value: any;
+};
+```

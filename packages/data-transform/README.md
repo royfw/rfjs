@@ -1,63 +1,65 @@
-# lib-tsdown
+# @rfjs/data-transform
 
-A modern TypeScript library template built with tsdown for zero-config, lightning-fast builds.
+Data type transformation utilities for converting between string, number, boolean, and date types.
 
-## ✨ Features
-
-- **⚡ Zero Config** - Works out of the box with sensible defaults
-- **🚀 Ultra-Fast** - Powered by Oxc for blazing performance
-- **📦 Dual Output** - ESM and CJS formats automatically
-- **🔷 TypeScript** - Full TypeScript support with isolated declarations
-- **✅ Testing Ready** - Vitest configured for comprehensive testing
-- **📝 Code Quality** - ESLint, Prettier, Husky, and lint-staged pre-configured
-
-## 🚀 Quick Start
+## Installation
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Development with watch mode
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Run tests
-pnpm test
+npm install @rfjs/data-transform
 ```
 
-## 📁 Project Structure
+## API
 
+### `typeTransfer(value, type)`
+
+Convert a value to the specified data type.
+
+```typescript
+import { typeTransfer } from '@rfjs/data-transform';
+
+typeTransfer('42', 'number');       // 42
+typeTransfer('true', 'boolean');    // true
+typeTransfer('2024-01-01', 'date'); // Date object
+typeTransfer('hello', 'string');    // 'hello'
 ```
-lib-tsdown/
-├── src/
-│   ├── index.ts              # Library entry point
-│   └── utils/                # Utility functions
-├── dist/                     # Build output
-│   ├── index.js             # CJS bundle
-│   ├── index.mjs            # ESM bundle
-│   └── index.d.ts           # Type declarations
-├── tsdown.config.ts         # tsdown configuration
-└── package.json             # Package configuration
+
+Supported types: `'string' | 'number' | 'integer' | 'boolean' | 'date' | 'any'`
+
+### `jsonbTypeTransfer(value, type)`
+
+Convert a value for PostgreSQL JSONB query contexts. Supports 16 type variants covering plain, object, and array forms.
+
+```typescript
+import { jsonbTypeTransfer } from '@rfjs/data-transform';
+
+jsonbTypeTransfer('42', 'numeric');         // 42
+jsonbTypeTransfer('2024-01-01', 'date');    // '2024-01-01T00:00:00...'
+jsonbTypeTransfer('true', 'boolean');       // true
+jsonbTypeTransfer('42', 'arrayNumeric');    // 42
 ```
 
-## 📚 Documentation
+Supported types: `'string' | 'numeric' | 'date' | 'boolean'` and their `object*` / `array*` / `arrayObject*` variants.
 
-For detailed documentation, see [docs/README.md](./docs/README.md) or [繁體中文文檔](./docs/README.zh-TW.md).
+### `toBoolean(value)`
 
-## 🛠️ Tech Stack
+Parse boolean values from strings or pass through existing booleans.
 
-- **Build Tool**: tsdown 0.17+
-- **Language**: TypeScript 5.7+
-- **Testing**: Vitest 3.2+
-- **Package Manager**: pnpm 10.24+
-- **Node.js**: 18+
+```typescript
+import { toBoolean } from '@rfjs/data-transform';
 
-## 📄 License
+toBoolean('true');    // true
+toBoolean('false');   // false
+toBoolean(true);      // true
+toBoolean('');        // false
+```
 
-ISC
+### `toDateString(value)`
 
----
+Convert a date string or timestamp to an ISO format string.
 
-**Created with** [rfjs/templates](https://github.com/royfw/rfjs)
+```typescript
+import { toDateString } from '@rfjs/data-transform';
+
+toDateString('2024-01-15');      // '2024-01-15T00:00:00.000Z'
+toDateString(1705276800000);     // '2024-01-15T00:00:00.000Z'
+```
