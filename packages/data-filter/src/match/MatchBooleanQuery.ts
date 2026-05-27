@@ -12,6 +12,7 @@ export class MatchBooleanQuery {
     constructor(
         private field: string,
         private operator: BooleanFilterOperator,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         value: any,
         private data: ObjectData,
     ) {

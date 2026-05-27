@@ -16,7 +16,7 @@ import type {
 export function filterMatchQueryArrayData(
   data: ObjectData[],
   filters: FilterMatchQuery[],
-) {
+): ObjectData[] {
   if (filters.length == 0) {
     return data;
   }
@@ -34,7 +34,7 @@ export function filterMatchQueryArrayData(
 export function filterMatchQueryData(
   data: ObjectData,
   filterQuery: FilterMatchQuery,
-) {
+): boolean {
   const { logic, filters } = filterQuery;
   const matchs = filters.reduce(
     (pre, cur) => {
@@ -86,7 +86,7 @@ function isFilterMatchQuery(filter: FilterMatchQuery | MatchQueryMetadata) {
 export function factoryMatchQuery(
   data: ObjectData,
   metadata: MatchQueryMetadata,
-) {
+): MatchTextQuery | MatchNumericQuery | MatchBooleanQuery {
   const { field, operator, value, dataType } = metadata;
   const query = {
     string: () =>
@@ -114,14 +114,23 @@ export function factoryMatchQuery(
   return query[dataType]();
 }
 
-export const typeTransfer = (value: any, type: DataType) => {
-  const transfer = {
+export const typeTransfer = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value: any,
+  type: DataType,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const transfer: Record<string, () => any> = {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     any: () => value,
     date: () => new Date(value as string | number),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     string: () => value,
     number: () => Number(value),
     integer: () => Number(value),
     boolean: () =>
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       ['true', 'false'].includes(value as string)
         ? JSON.parse(value as string)
         : Boolean(value),

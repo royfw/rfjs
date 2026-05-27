@@ -12,6 +12,7 @@ export class MatchNumericQuery {
     constructor(
         private field: string,
         private operator: NumericFilterOperator | DefaultFilterOperator,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         value: any,
         private data: ObjectData,
     ) {

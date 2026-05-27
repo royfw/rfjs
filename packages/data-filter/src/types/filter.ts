@@ -11,8 +11,7 @@ export type MatchQueryMetadata = {
   operator:
     | DefaultFilterOperator
     | TextFilterOperator
-    | NumericFilterOperator
-    | BooleanFilterOperator;
+    | NumericFilterOperator;
   value: ValueType;
 };
 
@@ -55,8 +54,7 @@ export type ValueType =
   | Date
   | Date[]
   | boolean
-  | boolean[]
-  | any;
+  | boolean[];
 
 export type DataType =
   | 'string'
@@ -76,7 +74,7 @@ export interface PathResolveOptions {
 }
 
 export interface PathResolveResult {
-  value: any;
+  value: unknown;
   usedJsonPath: boolean;
   isWildcardResult: boolean;
 }

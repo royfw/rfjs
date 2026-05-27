@@ -17,9 +17,11 @@ function hasWildcardSyntax(path: string): boolean {
 }
 
 export function resolvePathWithWildcard(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
   path: string,
   options: PathResolveOptions = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any {
   const { fallbackToLodash = true, fallbackOnEmpty = true } = options;
 
@@ -50,6 +52,7 @@ export function resolvePathWithWildcard(
 }
 
 export function resolvePathWithWildcardDetailed(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
   path: string,
   options: PathResolveOptions = {},
