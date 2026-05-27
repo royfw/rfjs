@@ -63,6 +63,11 @@
             "title": "Library (tsdown)"
         },
         {
+            "id": "libs/data-filter",
+            "path": "templates/libs/data-filter",
+            "title": "Data Filter (JSONPath match query library)"
+        },
+        {
             "id": "bins/bin-tsdown",
             "path": "templates/bins/bin-tsdown",
             "title": "Binary (tsdown)"

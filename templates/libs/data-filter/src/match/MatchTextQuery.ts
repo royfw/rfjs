@@ -12,18 +12,18 @@ export class MatchTextQuery {
     constructor(
         private field: string,
         private operator: TextFilterOperator | DefaultFilterOperator,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         value: any,
         private data: ObjectData,
     ) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const target = resolvePathWithWildcard(this.data, this.field);
         if (_.isUndefined(target)) {
             this.validPath = false;
         }
-        const targetVals = []
-            .concat(value)
-            .map((i) => typeTransfer(i, 'string')) as string[];
+        const targetVals: string[] = (Array.isArray(value) ? value : [value]).map((i) => typeTransfer(i, 'string') as string);
         this.values = targetVals;
-        const targets = [].concat(target).map((i) => typeTransfer(i, 'string'));
+        const targets: string[] = (Array.isArray(target) ? target : [target]).map((i) => typeTransfer(i, 'string') as string);
         this.targets = targets;
         if (_.isNull(target) || _.isUndefined(target)) {
             this.targets = [];
