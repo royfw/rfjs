@@ -1,0 +1,79 @@
+{
+  "name": "@rfjs/mongo-query",
+  "version": "0.0.0",
+  "description": "MongoDB query builder — generate MongoDB queries from filter metadata",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "private": false,
+  "scripts": {
+    "clean": "pnpm exec npm-run-all --parallel clean:dist clean:types",
+    "clean:types": "pnpm exec rimraf ./types",
+    "clean:dist": "pnpm exec rimraf ./dist",
+    "dev": "pnpm exec npm-run-all --parallel dev:tsdown typecheck:watch",
+    "dev:tsdown": "pnpm run clean && tsdown --config-loader unrun --watch",
+    "build": "pnpm run build:tsdown",
+    "build:tsdown": "pnpm run clean && tsdown --config-loader unrun",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "pnpm run vitest:run",
+    "vitest:run": "vitest --passWithNoTests --run",
+    "vitest:ui": "vitest --passWithNoTests --ui",
+    "commit": "pnpm exec cz",
+    "prepare": "pnpm exec husky",
+    "preinstall": "pnpm exec only-allow pnpm"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "pnpm exec vitest related --run",
+      "pnpm exec prettier --write",
+      "pnpm exec eslint --fix"
+    ]
+  },
+  "keywords": [],
+  "author": "Roy Chuang",
+  "license": "ISC",
+  "packageManager": "pnpm@10.24.0",
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=10.24.0 <11.0.0"
+  },
+  "files": [
+    "dist/**"
+  ],
+  "devDependencies": {
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@commitlint/cz-commitlint": "^19.6.1",
+    "@eslint/js": "^9.20.0",
+    "@rfjs/tpl-toolkit": "^0.0.1",
+    "@vitest/coverage-istanbul": "^3.2.3",
+    "@vitest/ui": "^3.2.3",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "npm-run-all": "^4.1.5",
+    "only-allow": "^1.2.2",
+    "prettier": "^3.5.1",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "tsdown": "0.17.0-beta.6",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vitest": "^3.2.3"
+  },
+  "dependencies": {
+    "@rfjs/data-transform": "workspace:*",
+    "tslib": "^2.8.1"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  }
+}
