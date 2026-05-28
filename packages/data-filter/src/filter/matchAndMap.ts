@@ -1,11 +1,11 @@
 import * as _ from 'lodash';
-import { filterMatchQueryData } from './filterMatchQueryData';
+import { matchQuery } from './matchQuery';
 import { FilterMatchQuery } from '../types';
 import { aliasData } from '../alias/aliasData';
 
 type AnyObjectData = { [key: string]: any };
 
-export function filterMappingMatchQueryData<T>(
+export function matchAndMap<T>(
   filterData: any[],
   filterMetadatas: FilterMappingMetadata[],
   exData: AnyObjectData = {},
@@ -30,7 +30,7 @@ export function filterMappingMatchQueryData<T>(
         _.cloneDeep(mappings ?? []),
         data,
       );
-      if (filterMatchQueryData(data, convertFilter)) {
+      if (matchQuery(data, convertFilter)) {
         const matchData = genItemMappingData(dataKey, data, convertMapping);
         pre.set(_item, matchData as T);
       }

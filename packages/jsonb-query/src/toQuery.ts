@@ -1,4 +1,4 @@
-import { jsonbTypeTransfer, JsonbDataType, ValueType } from '@rfjs/data-transform';
+import { jsonbTransfer, JsonbDataType, ValueType } from '@rfjs/data-transform';
 import { JsonbOperatorQuery, filterOperator } from './jsonbOperatorQuery';
 import { FilterOperator, ISqlQuery } from './type';
 
@@ -11,7 +11,7 @@ export const toJsonbQuery = (
 ): ISqlQuery | null => {
   const values = []
     .concat(value)
-    .map((el) => jsonbTypeTransfer(el, dataType));
+    .map((el) => jsonbTransfer(el, dataType));
   if (!Object.keys(filterOperator).includes(filter)) {
     return null;
   }

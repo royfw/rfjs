@@ -1,2 +1,2 @@
-export * from './filterMatchQueryData';
-export * from './filterMappingMatchQueryData';
+export * from './matchQuery';
+export * from './matchAndMap';

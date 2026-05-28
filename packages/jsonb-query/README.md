@@ -27,12 +27,12 @@ const query = toJsonbQuery(
 // { from: 'data::jsonb', fromAlias: 'j', where: "(data::jsonb -> 'settings' -> 'theme') = 'dark'" }
 ```
 
-### `genFilterQueryMetadata(jsonb, filterQuery)`
+### `genJsonbQuery(jsonb, filterQuery)`
 
 Generate complete SQL `WHERE` and `FROM` clauses from a nested filter metadata tree.
 
 ```typescript
-import { genFilterQueryMetadata } from '@rfjs/jsonb-query';
+import { genJsonbQuery } from '@rfjs/jsonb-query';
 
 const filter: FilterQueryMetadata = {
   logic: 'and',
@@ -53,10 +53,10 @@ const filter: FilterQueryMetadata = {
   ],
 };
 
-const { where, from } = genFilterQueryMetadata('payload::jsonb', filter);
+const { where, from } = genJsonbQuery('payload::jsonb', filter);
 ```
 
-### `metadetaListToJsonbQuery(jsonb, metadataList)`
+### `toJsonbQueryList(jsonb, metadataList)`
 
 Convert a list of filter metadata into an array of SQL query objects.
 

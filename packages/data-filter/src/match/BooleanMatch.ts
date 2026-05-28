@@ -1,9 +1,9 @@
 import * as _ from 'lodash';
-import { typeTransfer } from '../filter/filterMatchQueryData';
+import { typeTransfer } from '../filter/matchQuery';
 import type { BooleanFilterOperator, ObjectData } from '../types';
-import { resolvePathWithWildcard } from '../path/resolve';
+import { resolvePath } from '../path/resolve';
 
-export class MatchBooleanQuery {
+export class BooleanMatch {
     isMatch = false;
     validPath = true;
     matchs: boolean[] = [];
@@ -17,7 +17,7 @@ export class MatchBooleanQuery {
         private data: ObjectData,
     ) {
         // 使用共用的 JSONPath 解析函數
-        const target = resolvePathWithWildcard(this.data, this.field);
+        const target = resolvePath(this.data, this.field);
         if (_.isUndefined(target)) {
             this.validPath = false;
         }

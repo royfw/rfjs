@@ -1,9 +1,9 @@
 import * as _ from 'lodash';
-import { typeTransfer } from '../filter/filterMatchQueryData';
+import { typeTransfer } from '../filter/matchQuery';
 import type { NumericFilterOperator, DefaultFilterOperator, ObjectData } from '../types';
-import { resolvePathWithWildcard } from '../path/resolve';
+import { resolvePath } from '../path/resolve';
 
-export class MatchNumericQuery {
+export class NumericMatch {
     isMatch = false;
     validPath = true;
     matchs: number[] = [];
@@ -16,7 +16,7 @@ export class MatchNumericQuery {
         value: any,
         private data: ObjectData,
     ) {
-        const target = resolvePathWithWildcard(this.data, this.field);
+        const target = resolvePath(this.data, this.field);
         if (_.isUndefined(target)) {
             this.validPath = false;
         }

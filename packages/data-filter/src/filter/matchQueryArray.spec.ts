@@ -1,7 +1,7 @@
-import { filterMatchQueryArrayData } from '../filter/filterMatchQueryData';
+import { matchQueryArray } from '../filter/matchQuery';
 import { FilterMatchQuery } from '../types';
 
-describe('null, undefined object filterMatchQueryArrayData', () => {
+describe('null, undefined object matchQueryArray', () => {
     const testData = [
         {
             id: 1,
@@ -50,7 +50,7 @@ describe('null, undefined object filterMatchQueryArrayData', () => {
     describe('empty filter', () => {
         it('empty filterQueries', () => {
             const filterQueries: FilterMatchQuery[] = [];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
@@ -62,7 +62,7 @@ describe('null, undefined object filterMatchQueryArrayData', () => {
                     filters: [],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
@@ -97,7 +97,7 @@ describe('null, undefined object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1, 2, 4, 6, 7, 8]);
@@ -128,7 +128,7 @@ describe('null, undefined object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1, 2, 6, 7, 8]);
@@ -169,7 +169,7 @@ describe('null, undefined object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([]);
@@ -209,14 +209,14 @@ describe('null, undefined object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1, 2, 5, 6, 7]);
         });
     });
 });
-describe('object filterMatchQueryArrayData', () => {
+describe('object matchQueryArray', () => {
     const testData = [
         {
             id: 1,
@@ -288,7 +288,7 @@ describe('object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1, 2, 6, 7]);
@@ -319,7 +319,7 @@ describe('object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1, 2, 7]);
@@ -360,7 +360,7 @@ describe('object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([6]);
@@ -400,7 +400,7 @@ describe('object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1, 2, 5, 6, 7]);
@@ -430,7 +430,7 @@ describe('object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([5, 6]);
@@ -456,7 +456,7 @@ describe('object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1]);
@@ -482,7 +482,7 @@ describe('object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1, 2]);
@@ -527,7 +527,7 @@ describe('object filterMatchQueryArrayData', () => {
                     ],
                 },
             ];
-            const data = filterMatchQueryArrayData(testData, filterQueries);
+            const data = matchQueryArray(testData, filterQueries);
             const result = data.map((i) => i['id']);
 
             expect(result).toEqual([1, 2]);
@@ -574,7 +574,7 @@ describe('JSONPath 進階查詢測試', () => {
                 ]
             }
         ];
-        const result = filterMatchQueryArrayData(testDataWithNested, filterQueries);
+        const result = matchQueryArray(testDataWithNested, filterQueries);
         expect(result.map(i => i.id)).toEqual([1]);
     });
 
@@ -592,7 +592,7 @@ describe('JSONPath 進階查詢測試', () => {
                 ]
             }
         ];
-        const result = filterMatchQueryArrayData(testDataWithNested, filterQueries);
+        const result = matchQueryArray(testDataWithNested, filterQueries);
         expect(result.map(i => i.id)).toEqual([2]);
     });
 
@@ -610,7 +610,7 @@ describe('JSONPath 進階查詢測試', () => {
                 ]
             }
         ];
-        const result = filterMatchQueryArrayData(testDataWithNested, filterQueries);
+        const result = matchQueryArray(testDataWithNested, filterQueries);
         expect(result.map(i => i.id)).toEqual([1]);
     });
 
@@ -628,7 +628,7 @@ describe('JSONPath 進階查詢測試', () => {
                 ]
             }
         ];
-        const result = filterMatchQueryArrayData(testDataWithNested, filterQueries);
+        const result = matchQueryArray(testDataWithNested, filterQueries);
         expect(result.map(i => i.id)).toEqual([1, 2]);
     });
 
@@ -646,7 +646,7 @@ describe('JSONPath 進階查詢測試', () => {
                 ]
             }
         ];
-        const result = filterMatchQueryArrayData(testDataWithNested, filterQueries);
+        const result = matchQueryArray(testDataWithNested, filterQueries);
         expect(result.map(i => i.id)).toEqual([2]);
     });
 
@@ -664,7 +664,7 @@ describe('JSONPath 進階查詢測試', () => {
                 ]
             }
         ];
-        const result = filterMatchQueryArrayData(testDataWithNested, filterQueries);
+        const result = matchQueryArray(testDataWithNested, filterQueries);
         expect(result.map(i => i.id)).toEqual([1]);
     });
 
@@ -688,7 +688,7 @@ describe('JSONPath 進階查詢測試', () => {
                 ]
             }
         ];
-        const result = filterMatchQueryArrayData(testDataWithNested, filterQueries);
+        const result = matchQueryArray(testDataWithNested, filterQueries);
         expect(result.map(i => i.id)).toEqual([1, 2]);
     });
 
@@ -712,7 +712,7 @@ describe('JSONPath 進階查詢測試', () => {
                 ]
             }
         ];
-        const result = filterMatchQueryArrayData(testDataWithNested, filterQueries);
+        const result = matchQueryArray(testDataWithNested, filterQueries);
         expect(result.map(i => i.id)).toEqual([2, 3]);
     });
 });

@@ -25,17 +25,17 @@ typeTransfer('hello', 'string');    // 'hello'
 
 Supported types: `'string' | 'number' | 'integer' | 'boolean' | 'date' | 'any'`
 
-### `jsonbTypeTransfer(value, type)`
+### `jsonbTransfer(value, type)`
 
 Convert a value for PostgreSQL JSONB query contexts. Supports 16 type variants covering plain, object, and array forms.
 
 ```typescript
-import { jsonbTypeTransfer } from '@rfjs/data-transform';
+import { jsonbTransfer } from '@rfjs/data-transform';
 
-jsonbTypeTransfer('42', 'numeric');         // 42
-jsonbTypeTransfer('2024-01-01', 'date');    // '2024-01-01T00:00:00...'
-jsonbTypeTransfer('true', 'boolean');       // true
-jsonbTypeTransfer('42', 'arrayNumeric');    // 42
+jsonbTransfer('42', 'numeric');         // 42
+jsonbTransfer('2024-01-01', 'date');    // '2024-01-01T00:00:00...'
+jsonbTransfer('true', 'boolean');       // true
+jsonbTransfer('42', 'arrayNumeric');    // 42
 ```
 
 Supported types: `'string' | 'numeric' | 'date' | 'boolean'` and their `object*` / `array*` / `arrayObject*` variants.

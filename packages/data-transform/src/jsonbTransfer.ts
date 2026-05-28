@@ -13,7 +13,7 @@ export type JsonbValueTransfer = {
   [key in JsonbDataType]: (value: JsonbValueType) => JsonbValueType;
 };
 
-export const jsonbTypeTransfer = (value: JsonbValueType, type: JsonbDataType): JsonbValueType => {
+export const jsonbTransfer = (value: JsonbValueType, type: JsonbDataType): JsonbValueType => {
   const transfer: JsonbValueTransfer = {
     string: () => value,
     numeric: () => Number(value),

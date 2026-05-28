@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
-import { MatchBooleanQuery } from '../match/MatchBooleanQuery';
-import { MatchNumericQuery } from '../match/MatchNumericQuery';
-import { MatchTextQuery } from '../match/MatchTextQuery';
+import { BooleanMatch } from '../match/BooleanMatch';
+import { NumericMatch } from '../match/NumericMatch';
+import { TextMatch } from '../match/TextMatch';
 import type {
   DataType,
   ObjectData,
@@ -13,7 +13,7 @@ import type {
   BooleanFilterOperator,
 } from '../types';
 
-export function filterMatchQueryArrayData(
+export function matchQueryArray(
   data: ObjectData[],
   filters: FilterMatchQuery[],
 ): ObjectData[] {
@@ -22,7 +22,7 @@ export function filterMatchQueryArrayData(
   }
   const set = filters.reduce((pre, cur) => {
     for (const val of data) {
-      if (filterMatchQueryData(val, cur)) {
+      if (matchQuery(val, cur)) {
         pre.add(val);
       }
     }
@@ -31,7 +31,7 @@ export function filterMatchQueryArrayData(
   return Array.from(set.values());
 }
 
-export function filterMatchQueryData(
+export function matchQuery(
   data: ObjectData,
   filterQuery: FilterMatchQuery,
 ): boolean {
@@ -39,18 +39,18 @@ export function filterMatchQueryData(
   const matchs = filters.reduce(
     (pre, cur) => {
       if (isFilterMatchQuery(cur)) {
-        const nestedMatch = filterMatchQueryData(
+        const nestedMatch = matchQuery(
           data,
           cur as FilterMatchQuery,
         );
         pre.push(nestedMatch);
         return pre;
       }
-      const matchQuery = factoryMatchQuery(
+      const query = createMatchQuery(
         data,
         cur as MatchQueryMetadata,
       );
-      const isMatch = matchQuery.isMatch;
+      const isMatch = query.isMatch;
       pre.push(isMatch);
       return pre;
     },
@@ -83,28 +83,28 @@ function isFilterMatchQuery(filter: FilterMatchQuery | MatchQueryMetadata) {
   return _.has(filter, 'logic');
 }
 
-export function factoryMatchQuery(
+export function createMatchQuery(
   data: ObjectData,
   metadata: MatchQueryMetadata,
-): MatchTextQuery | MatchNumericQuery | MatchBooleanQuery {
+): TextMatch | NumericMatch | BooleanMatch {
   const { field, operator, value, dataType } = metadata;
   const query = {
     string: () =>
-      new MatchTextQuery(
+      new TextMatch(
         field,
         operator as TextFilterOperator,
         value,
         data,
       ),
     numeric: () =>
-      new MatchNumericQuery(
+      new NumericMatch(
         field,
         operator as NumericFilterOperator,
         value,
         data,
       ),
     boolean: () =>
-      new MatchBooleanQuery(
+      new BooleanMatch(
         field,
         operator as BooleanFilterOperator,
         value,

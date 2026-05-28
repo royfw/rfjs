@@ -1,7 +1,7 @@
 import { toJsonbQuery } from './toQuery';
 import { ISqlQuery, QueryMetadata } from './type';
 
-export const metadetaListToJsonbQuery = (
+export const toJsonbQueryList = (
   jsonb: string,
   queryMetadataList: QueryMetadata[],
 ): ISqlQuery[] => {

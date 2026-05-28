@@ -1,4 +1,4 @@
 export * from './boolean';
 export * from './date';
 export * from './typeTransfer';
-export * from './jsonbTypeTransfer';
+export * from './jsonbTransfer';

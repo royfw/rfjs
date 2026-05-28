@@ -12,12 +12,12 @@ npm install @rfjs/data-filter
 
 ### Filter Matching
 
-#### `filterMatchQueryData(data, filterQuery)`
+#### `matchQuery(data, filterQuery)`
 
 Check if a single data object matches a filter query. Returns `boolean`.
 
 ```typescript
-import { filterMatchQueryData } from '@rfjs/data-filter';
+import { matchQuery } from '@rfjs/data-filter';
 
 const filter: FilterMatchQuery = {
   logic: 'and',
@@ -27,29 +27,29 @@ const filter: FilterMatchQuery = {
   ],
 };
 
-filterMatchQueryData({ name: 'Alice', age: 25 }, filter); // true
+matchQuery({ name: 'Alice', age: 25 }, filter); // true
 ```
 
-#### `filterMatchQueryArrayData(data, filters)`
+#### `matchQueryArray(data, filters)`
 
 Filter an array of objects against multiple filter queries.
 
 ```typescript
-import { filterMatchQueryArrayData } from '@rfjs/data-filter';
+import { matchQueryArray } from '@rfjs/data-filter';
 
-const results = filterMatchQueryArrayData(items, [filter]);
+const results = matchQueryArray(items, [filter]);
 ```
 
 ### Filter Mapping
 
-#### `filterMappingMatchQueryData(data, mappings, extraData, dataKey)`
+#### `matchAndMap(data, mappings, extraData, dataKey)`
 
 Filter and map data using alias substitution. Supports dynamic field resolution via `{{field.path}}` placeholders.
 
 ```typescript
-import { filterMappingMatchQueryData } from '@rfjs/data-filter';
+import { matchAndMap } from '@rfjs/data-filter';
 
-const results = filterMappingMatchQueryData<T>(
+const results = matchAndMap<T>(
   items,
   [{ filter, mappings }],
   extraData,
@@ -59,15 +59,15 @@ const results = filterMappingMatchQueryData<T>(
 
 ### Path Resolution
 
-#### `resolvePathWithWildcard(data, path, options)`
+#### `resolvePath(data, path, options)`
 
 Resolve a path in an object with JSONPath wildcard support. Falls back to lodash `_.get` for plain paths.
 
 ```typescript
-import { resolvePathWithWildcard } from '@rfjs/data-filter';
+import { resolvePath } from '@rfjs/data-filter';
 
-resolvePathWithWildcard(data, 'users[*].name');  // JSONPath wildcard
-resolvePathWithWildcard(data, 'a.b.c');           // plain path
+resolvePath(data, 'users[*].name');  // JSONPath wildcard
+resolvePath(data, 'a.b.c');           // plain path
 ```
 
 ### Operators

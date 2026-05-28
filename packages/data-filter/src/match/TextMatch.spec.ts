@@ -1,4 +1,4 @@
-import { MatchTextQuery } from './MatchTextQuery';
+import { TextMatch } from './TextMatch';
 
 describe('arrayQuery', () => {
     const testData1 = {
@@ -17,10 +17,10 @@ describe('arrayQuery', () => {
         },
     };
 
-    describe('MatchTextQuery', () => {
+    describe('TextMatch', () => {
         describe('isnotnull', () => {
             it('undefined key: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a2.string',
                     'isnotnull',
                     null,
@@ -30,7 +30,7 @@ describe('arrayQuery', () => {
             });
 
             it('null key: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.nullText',
                     'isnotnull',
                     null,
@@ -40,7 +40,7 @@ describe('arrayQuery', () => {
             });
 
             it('string: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.string',
                     'isnotnull',
                     null,
@@ -52,7 +52,7 @@ describe('arrayQuery', () => {
 
         describe('isnull', () => {
             it('undefined key: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a2.number',
                     'isnull',
                     null,
@@ -62,7 +62,7 @@ describe('arrayQuery', () => {
             });
 
             it('nullText: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.nullText',
                     'isnull',
                     null,
@@ -74,7 +74,7 @@ describe('arrayQuery', () => {
 
         describe('endswith', () => {
             it('undefined key: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a2.number',
                     'endswith',
                     ['la', 'jour'],
@@ -84,7 +84,7 @@ describe('arrayQuery', () => {
             });
 
             it('nullText: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.nullText',
                     'endswith',
                     ['la', 'jour'],
@@ -94,7 +94,7 @@ describe('arrayQuery', () => {
             });
 
             it('textArray item 2 - 2ture: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.textArray',
                     'endswith',
                     ['la', 'jour'],
@@ -104,7 +104,7 @@ describe('arrayQuery', () => {
             });
 
             it('textArray item 2 - 2false: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.textArray',
                     'endswith',
                     ['he', 'ho'],
@@ -114,7 +114,7 @@ describe('arrayQuery', () => {
             });
 
             it('textArray item 2 - 1true 1false: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.textArray',
                     'endswith',
                     ['ho', 'la'],
@@ -124,7 +124,7 @@ describe('arrayQuery', () => {
             });
 
             it('text item 2 - 1true 1false: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.text',
                     'endswith',
                     ['ho', 'la'],
@@ -134,7 +134,7 @@ describe('arrayQuery', () => {
             });
 
             it('text item 2: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.text',
                     'endswith',
                     ['hola', 'a'],
@@ -144,7 +144,7 @@ describe('arrayQuery', () => {
             });
 
             it('text item 1: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.text',
                     'endswith',
                     ['ho'],
@@ -154,7 +154,7 @@ describe('arrayQuery', () => {
             });
 
             it('text item 1: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.text',
                     'endswith',
                     ['la'],
@@ -166,7 +166,7 @@ describe('arrayQuery', () => {
 
         describe('startswith', () => {
             it('undefined key: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a2.number',
                     'startswith',
                     ['hel', 'bon'],
@@ -176,7 +176,7 @@ describe('arrayQuery', () => {
             });
 
             it('nullText: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.nullText',
                     'startswith',
                     ['hel', 'bon'],
@@ -186,7 +186,7 @@ describe('arrayQuery', () => {
             });
 
             it('textArray item 2 - 2ture: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.textArray',
                     'startswith',
                     ['hel', 'bon'],
@@ -196,7 +196,7 @@ describe('arrayQuery', () => {
             });
 
             it('textArray item 2 - 2false: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.textArray',
                     'startswith',
                     ['lo', 'la'],
@@ -206,7 +206,7 @@ describe('arrayQuery', () => {
             });
 
             it('textArray item 2 - 1true 1false: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.textArray',
                     'startswith',
                     ['ho', 'la'],
@@ -216,7 +216,7 @@ describe('arrayQuery', () => {
             });
 
             it('text item 2 - 1true 1false: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.text',
                     'startswith',
                     ['ho', 'la'],
@@ -226,7 +226,7 @@ describe('arrayQuery', () => {
             });
 
             it('text item 2: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.text',
                     'startswith',
                     ['hola', 'h'],
@@ -236,7 +236,7 @@ describe('arrayQuery', () => {
             });
 
             it('text item 1: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.text',
                     'startswith',
                     ['la'],
@@ -246,7 +246,7 @@ describe('arrayQuery', () => {
             });
 
             it('text item 1: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.text',
                     'startswith',
                     ['ho'],
@@ -258,7 +258,7 @@ describe('arrayQuery', () => {
 
         describe('contains', () => {
             it('undefined key: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a2.number',
                     'contains',
                     ['Z'],
@@ -268,7 +268,7 @@ describe('arrayQuery', () => {
             });
 
             it('nullText: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.nullText',
                     'contains',
                     ['Z'],
@@ -278,7 +278,7 @@ describe('arrayQuery', () => {
             });
 
             it('stringArray 1 item: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.stringArray',
                     'contains',
                     ['Z'],
@@ -288,7 +288,7 @@ describe('arrayQuery', () => {
             });
 
             it('stringArray 1 item: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.stringArray',
                     'contains',
                     ['C'],
@@ -298,7 +298,7 @@ describe('arrayQuery', () => {
             });
 
             it('string: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.contains',
                     'contains',
                     ['con'],
@@ -308,7 +308,7 @@ describe('arrayQuery', () => {
             });
 
             it('string: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.contains',
                     'contains',
                     ['cn'],
@@ -320,7 +320,7 @@ describe('arrayQuery', () => {
 
         describe('terms', () => {
             it('undefined key: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a2.number',
                     'terms',
                     'D2',
@@ -330,7 +330,7 @@ describe('arrayQuery', () => {
             });
 
             it('nullText: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.nullText',
                     'terms',
                     'D2',
@@ -340,7 +340,7 @@ describe('arrayQuery', () => {
             });
 
             it('stringArray 0 match: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.stringArray',
                     'terms',
                     'X',
@@ -350,7 +350,7 @@ describe('arrayQuery', () => {
             });
 
             it('stringArray 1 match: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.stringArray',
                     'terms',
                     'D2',
@@ -360,7 +360,7 @@ describe('arrayQuery', () => {
             });
 
             it('stringArray 2 items - 2false: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.stringArray',
                     'terms',
                     ['W', 'Z'],
@@ -370,7 +370,7 @@ describe('arrayQuery', () => {
             });
 
             it('stringArray 2 items - 1 true, 1false: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.stringArray',
                     'terms',
                     ['C1', 'Z'],
@@ -380,7 +380,7 @@ describe('arrayQuery', () => {
             });
 
             it('string 2 items - 1true, 1false: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.string',
                     'terms',
                     ['b', 'z'],
@@ -390,7 +390,7 @@ describe('arrayQuery', () => {
             });
 
             it('string 1: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.string',
                     'terms',
                     ['b'],
@@ -400,7 +400,7 @@ describe('arrayQuery', () => {
             });
 
             it('string 2: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'string',
                     'terms',
                     ['a'],
@@ -410,7 +410,7 @@ describe('arrayQuery', () => {
             });
 
             it('string 1: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.string',
                     'terms',
                     ['a'],
@@ -420,7 +420,7 @@ describe('arrayQuery', () => {
             });
 
             it('string 2 items: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.string',
                     'terms',
                     ['a', 'z'],
@@ -432,7 +432,7 @@ describe('arrayQuery', () => {
 
         describe('eq', () => {
             it('undefined key: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a2.number',
                     'eq',
                     'D2',
@@ -442,7 +442,7 @@ describe('arrayQuery', () => {
             });
 
             it('nullText: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.nullText',
                     'eq',
                     'D2',
@@ -452,7 +452,7 @@ describe('arrayQuery', () => {
             });
 
             it('stringArray 0 match: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.stringArray',
                     'eq',
                     'Z',
@@ -462,7 +462,7 @@ describe('arrayQuery', () => {
             });
 
             it('stringArray 1 match: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.stringArray',
                     'eq',
                     'D2',
@@ -472,7 +472,7 @@ describe('arrayQuery', () => {
             });
 
             it('string 2 items - 2false: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.string',
                     'eq',
                     ['z', 'c'],
@@ -482,7 +482,7 @@ describe('arrayQuery', () => {
             });
 
             it('string 2 items - 1true, 1false: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.string',
                     'eq',
                     ['b', 'c'],
@@ -492,7 +492,7 @@ describe('arrayQuery', () => {
             });
 
             it('string 1: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.string',
                     'eq',
                     ['b'],
@@ -502,7 +502,7 @@ describe('arrayQuery', () => {
             });
 
             it('string 2: true', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'string',
                     'eq',
                     ['a'],
@@ -512,7 +512,7 @@ describe('arrayQuery', () => {
             });
 
             it('string 1: false', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.string',
                     'eq',
                     ['a'],
@@ -524,7 +524,7 @@ describe('arrayQuery', () => {
 
         describe('valid path', () => {
             it('error path', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a2.string',
                     'eq',
                     ['a'],
@@ -534,7 +534,7 @@ describe('arrayQuery', () => {
             });
 
             it('valid path', () => {
-                const query = new MatchTextQuery(
+                const query = new TextMatch(
                     'a1.string',
                     'eq',
                     ['a'],
@@ -552,7 +552,7 @@ describe('arrayQuery', () => {
                         { userId: 2, userCode: "L1787", tags: ["Z1", "Z2"] }
                     ]
                 };
-                const query = new MatchTextQuery('users[*].userCode', 'terms', 'L1786', data);
+                const query = new TextMatch('users[*].userCode', 'terms', 'L1786', data);
                 // 應該找到至少一個匹配的
                 expect(query.isMatch).toBe(true);
             });
@@ -564,7 +564,7 @@ describe('arrayQuery', () => {
                         { userId: 2, userCode: "L1787", tags: ["Z1", "Z2"] }
                     ]
                 };
-                const query = new MatchTextQuery('users[*].tags[*]', 'terms', 'A', data);
+                const query = new TextMatch('users[*].tags[*]', 'terms', 'A', data);
                 // 應該在所有標籤中找到 'A'
                 expect(query.isMatch).toBe(true);
             });
@@ -576,7 +576,7 @@ describe('arrayQuery', () => {
                         { userId: 2, userCode: "L1787", tags: ["Z1", "Z2"] }
                     ]
                 };
-                const query = new MatchTextQuery('users[1].tags[*]', 'terms', 'Z1', data);
+                const query = new TextMatch('users[1].tags[*]', 'terms', 'Z1', data);
                 // 應該在第二個使用者的標籤中找到 'Z1'
                 expect(query.isMatch).toBe(true);
             });
@@ -588,7 +588,7 @@ describe('arrayQuery', () => {
                         { userId: 2, userCode: "L1787", tags: ["Z1", "Z2"] }
                     ]
                 };
-                const query = new MatchTextQuery('users[0].tags[*]', 'terms', 'B', data);
+                const query = new TextMatch('users[0].tags[*]', 'terms', 'B', data);
                 // 應該在第一個使用者的標籤中找到 'B'
                 expect(query.isMatch).toBe(true);
             });
@@ -602,7 +602,7 @@ describe('arrayQuery', () => {
                         ]
                     }
                 };
-                const query = new MatchTextQuery('data.users[*].profile.name', 'terms', 'Alice', data);
+                const query = new TextMatch('data.users[*].profile.name', 'terms', 'Alice', data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -618,7 +618,7 @@ describe('arrayQuery', () => {
                         }
                     ]
                 };
-                const query = new MatchTextQuery('categories[0].items[*].name', 'startswith', 'Item', data);
+                const query = new TextMatch('categories[0].items[*].name', 'startswith', 'Item', data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -640,7 +640,7 @@ describe('arrayQuery', () => {
                         }
                     ]
                 };
-                const query = new MatchTextQuery('departments[*].teams[*].name', 'contains', 'Dev', data);
+                const query = new TextMatch('departments[*].teams[*].name', 'contains', 'Dev', data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -651,7 +651,7 @@ describe('arrayQuery', () => {
                         { userId: 2, emails: ['bob@example.com'] }
                     ]
                 };
-                const query = new MatchTextQuery('users[*].emails[*]', 'endswith', '@work.com', data);
+                const query = new TextMatch('users[*].emails[*]', 'endswith', '@work.com', data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -659,7 +659,7 @@ describe('arrayQuery', () => {
                 const data = {
                     emptyArray: []
                 };
-                const query = new MatchTextQuery('emptyArray[*].text', 'eq', 'test', data);
+                const query = new TextMatch('emptyArray[*].text', 'eq', 'test', data);
                 expect(query.isMatch).toBe(false);
             });
 
@@ -670,7 +670,7 @@ describe('arrayQuery', () => {
                         { id: 2, comments: [{ author: 'User2' }, { author: 'User3' }] }
                     ]
                 };
-                const query = new MatchTextQuery('posts[1].comments[*].author', 'terms', 'User3', data);
+                const query = new TextMatch('posts[1].comments[*].author', 'terms', 'User3', data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -691,7 +691,7 @@ describe('arrayQuery', () => {
                         }
                     ]
                 };
-                const query = new MatchTextQuery('organizations[*].departments[*].teams[*].name', 'startswith', 'Team', data);
+                const query = new TextMatch('organizations[*].departments[*].teams[*].name', 'startswith', 'Team', data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -702,7 +702,7 @@ describe('arrayQuery', () => {
                         { userId: 2, roles: ['guest', 'viewer'] }
                     ]
                 };
-                const query = new MatchTextQuery('users[1].roles[0]', 'eq', 'guest', data);
+                const query = new TextMatch('users[1].roles[0]', 'eq', 'guest', data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -718,7 +718,7 @@ describe('arrayQuery', () => {
                         }
                     ]
                 };
-                const query = new MatchTextQuery('projects[0].tasks[*].assignees[*]', 'terms', 'Charlie', data);
+                const query = new TextMatch('projects[0].tasks[*].assignees[*]', 'terms', 'Charlie', data);
                 expect(query.isMatch).toBe(true);
             });
         });
@@ -734,7 +734,7 @@ describe('arrayQuery', () => {
                     { name: 'David' }
                 ]
             };
-            const query = new MatchTextQuery('users[0:2].name', 'terms', 'Alice', data);
+            const query = new TextMatch('users[0:2].name', 'terms', 'Alice', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -746,7 +746,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie' }
                 ]
             };
-            const query = new MatchTextQuery('users[-1:].name', 'eq', 'Charlie', data);
+            const query = new TextMatch('users[-1:].name', 'eq', 'Charlie', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -758,7 +758,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie' }
                 ]
             };
-            const query = new MatchTextQuery('users[-2:].name', 'terms', 'Bob', data);
+            const query = new TextMatch('users[-2:].name', 'terms', 'Bob', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -771,7 +771,7 @@ describe('arrayQuery', () => {
                     { name: 'David' }
                 ]
             };
-            const query = new MatchTextQuery('users[0,2].name', 'terms', ['Alice', 'Charlie'], data);
+            const query = new TextMatch('users[0,2].name', 'terms', ['Alice', 'Charlie'], data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -783,7 +783,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie', status: 'active' }
                 ]
             };
-            const query = new MatchTextQuery("users[?(@.status=='active')].name", 'terms', 'Alice', data);
+            const query = new TextMatch("users[?(@.status=='active')].name", 'terms', 'Alice', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -796,7 +796,7 @@ describe('arrayQuery', () => {
                     { name: 'David', age: 35, status: 'active' }
                 ]
             };
-            const query = new MatchTextQuery("users[?(@.age>20 && @.status=='active')].name", 'terms', 'Alice', data);
+            const query = new TextMatch("users[?(@.age>20 && @.status=='active')].name", 'terms', 'Alice', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -807,7 +807,7 @@ describe('arrayQuery', () => {
                     { users: [{ name: 'Charlie' }] }
                 ]
             };
-            const query = new MatchTextQuery('$..name', 'terms', 'Alice', data);
+            const query = new TextMatch('$..name', 'terms', 'Alice', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -818,7 +818,7 @@ describe('arrayQuery', () => {
                     { users: [{ email: 'charlie@work.com' }] }
                 ]
             };
-            const query = new MatchTextQuery('$..email', 'endswith', '@work.com', data);
+            const query = new TextMatch('$..email', 'endswith', '@work.com', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -829,7 +829,7 @@ describe('arrayQuery', () => {
                     { users: [{ name: 'Charlie' }] }
                 ]
             };
-            const query = new MatchTextQuery('departments[*].users[*].name', 'terms', 'Alice', data);
+            const query = new TextMatch('departments[*].users[*].name', 'terms', 'Alice', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -842,7 +842,7 @@ describe('arrayQuery', () => {
                     { name: 'User4' }
                 ]
             };
-            const query = new MatchTextQuery('users[0:4:2].name', 'terms', ['User1', 'User3'], data);
+            const query = new TextMatch('users[0:4:2].name', 'terms', ['User1', 'User3'], data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -853,7 +853,7 @@ describe('arrayQuery', () => {
                     { name: 'Bob' }
                 ]
             };
-            const query = new MatchTextQuery('$.users[0].name', 'eq', 'Alice', data);
+            const query = new TextMatch('$.users[0].name', 'eq', 'Alice', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -865,7 +865,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie', email: 'charlie@example.com' }
                 ]
             };
-            const query = new MatchTextQuery('users[?(@.email)].name', 'terms', 'Alice', data);
+            const query = new TextMatch('users[?(@.email)].name', 'terms', 'Alice', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -877,7 +877,7 @@ describe('arrayQuery', () => {
                     item3: { value: 'C' }
                 }
             };
-            const query = new MatchTextQuery('data.*.value', 'terms', 'B', data);
+            const query = new TextMatch('data.*.value', 'terms', 'B', data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -889,7 +889,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie' }
                 ]
             };
-            const query = new MatchTextQuery('users[(@.length-1)].name', 'eq', 'Charlie', data);
+            const query = new TextMatch('users[(@.length-1)].name', 'eq', 'Charlie', data);
             expect(query.isMatch).toBe(true);
         });
     });

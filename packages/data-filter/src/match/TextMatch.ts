@@ -1,9 +1,9 @@
 import * as _ from 'lodash';
-import { typeTransfer } from '../filter/filterMatchQueryData';
+import { typeTransfer } from '../filter/matchQuery';
 import type { TextFilterOperator, DefaultFilterOperator, ObjectData } from '../types';
-import { resolvePathWithWildcard } from '../path/resolve';
+import { resolvePath } from '../path/resolve';
 
-export class MatchTextQuery {
+export class TextMatch {
     isMatch = false;
     validPath = true;
     matchs: string[] = [];
@@ -17,7 +17,7 @@ export class MatchTextQuery {
         private data: ObjectData,
     ) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const target = resolvePathWithWildcard(this.data, this.field);
+        const target = resolvePath(this.data, this.field);
         if (_.isUndefined(target)) {
             this.validPath = false;
         }

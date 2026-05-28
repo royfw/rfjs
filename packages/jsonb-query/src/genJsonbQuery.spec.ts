@@ -1,21 +1,21 @@
-import { genFilterQueryMetadata } from './genFilterQueryMetadata';
+import { genJsonbQuery } from './genJsonbQuery';
 import { FilterQueryMetadata } from './type';
-describe('genFilterQueryMetadata', () => {
+describe('genJsonbQuery', () => {
   it('should work', () => {
-    expect('genFilterQueryMetadata').toEqual('genFilterQueryMetadata');
+    expect('genJsonbQuery').toEqual('genJsonbQuery');
   });
 
-  it('genFilterQueryMetadata empty', () => {
+  it('genJsonbQuery empty', () => {
     const filterQuery: FilterQueryMetadata = {
       logic: 'and',
       filters: [],
     };
-    const query = genFilterQueryMetadata('properties', filterQuery);
+    const query = genJsonbQuery('properties', filterQuery);
     console.log(query);
-    expect('genFilterQueryMetadata').toEqual('genFilterQueryMetadata');
+    expect('genJsonbQuery').toEqual('genJsonbQuery');
   });
 
-  it('genFilterQueryMetadata filter err operator', () => {
+  it('genJsonbQuery filter err operator', () => {
     const filterQuery = {
       logic: 'and',
       filters: [
@@ -27,15 +27,15 @@ describe('genFilterQueryMetadata', () => {
         },
       ],
     };
-    const query = genFilterQueryMetadata(
+    const query = genJsonbQuery(
       'properties',
       filterQuery as FilterQueryMetadata,
     );
     console.log(query);
-    expect('genFilterQueryMetadata').toEqual('genFilterQueryMetadata');
+    expect('genJsonbQuery').toEqual('genJsonbQuery');
   });
 
-  // it('genFilterQueryMetadata filter err dataType', () => {
+  // it('genJsonbQuery filter err dataType', () => {
   //     const filterQuery = {
   //         logic: 'and',
   //         filters: [
@@ -47,12 +47,12 @@ describe('genFilterQueryMetadata', () => {
   //             }
   //         ],
   //     }
-  //     const query = genFilterQueryMetadata('properties', filterQuery as FilterQueryMetadata);
+  //     const query = genJsonbQuery('properties', filterQuery as FilterQueryMetadata);
   //     console.log(query);
-  //     expect('genFilterQueryMetadata').toEqual('genFilterQueryMetadata');
+  //     expect('genJsonbQuery').toEqual('genJsonbQuery');
   // })
 
-  it('genFilterQueryMetadata filter 1', () => {
+  it('genJsonbQuery filter 1', () => {
     const filterQuery: FilterQueryMetadata = {
       logic: 'and',
       filters: [
@@ -64,12 +64,12 @@ describe('genFilterQueryMetadata', () => {
         },
       ],
     };
-    const query = genFilterQueryMetadata('properties', filterQuery);
+    const query = genJsonbQuery('properties', filterQuery);
     console.log(query);
-    expect('genFilterQueryMetadata').toEqual('genFilterQueryMetadata');
+    expect('genJsonbQuery').toEqual('genJsonbQuery');
   });
 
-  it('genFilterQueryMetadata filter 1 string', () => {
+  it('genJsonbQuery filter 1 string', () => {
     const filterQuery: FilterQueryMetadata = {
       logic: 'and',
       filters: [
@@ -82,12 +82,12 @@ describe('genFilterQueryMetadata', () => {
         },
       ],
     };
-    const query = genFilterQueryMetadata('properties', filterQuery);
+    const query = genJsonbQuery('properties', filterQuery);
     console.log(query);
-    expect('genFilterQueryMetadata').toEqual('genFilterQueryMetadata');
+    expect('genJsonbQuery').toEqual('genJsonbQuery');
   });
 
-  it('genFilterQueryMetadata filter 2', () => {
+  it('genJsonbQuery filter 2', () => {
     const filterQuery: FilterQueryMetadata = {
       logic: 'and',
       filters: [
@@ -105,12 +105,12 @@ describe('genFilterQueryMetadata', () => {
         },
       ],
     };
-    const query = genFilterQueryMetadata('properties', filterQuery);
+    const query = genJsonbQuery('properties', filterQuery);
     console.log(query);
-    expect('genFilterQueryMetadata').toEqual('genFilterQueryMetadata');
+    expect('genJsonbQuery').toEqual('genJsonbQuery');
   });
 
-  it('genFilterQueryMetadata filter 0, FilterQueryMetadata 2', () => {
+  it('genJsonbQuery filter 0, FilterQueryMetadata 2', () => {
     const filterQuery: FilterQueryMetadata = {
       logic: 'and',
       filters: [
@@ -133,12 +133,12 @@ describe('genFilterQueryMetadata', () => {
         },
       ],
     };
-    const query = genFilterQueryMetadata('properties', filterQuery);
+    const query = genJsonbQuery('properties', filterQuery);
     console.log(query);
-    expect('genFilterQueryMetadata').toEqual('genFilterQueryMetadata');
+    expect('genJsonbQuery').toEqual('genJsonbQuery');
   });
 
-  it('genFilterQueryMetadata filter 1, FilterQueryMetadata 2', () => {
+  it('genJsonbQuery filter 1, FilterQueryMetadata 2', () => {
     const filterQuery: FilterQueryMetadata = {
       logic: 'and',
       filters: [
@@ -167,8 +167,8 @@ describe('genFilterQueryMetadata', () => {
         },
       ],
     };
-    const query = genFilterQueryMetadata('properties', filterQuery);
+    const query = genJsonbQuery('properties', filterQuery);
     console.log(query);
-    expect('genFilterQueryMetadata').toEqual('genFilterQueryMetadata');
+    expect('genJsonbQuery').toEqual('genJsonbQuery');
   });
 });

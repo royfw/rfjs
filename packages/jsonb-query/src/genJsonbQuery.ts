@@ -1,7 +1,7 @@
 import { toJsonbQuery } from './toQuery';
 import { FilterQueryMetadata, QueryMetadata } from './type';
 
-export const genFilterQueryMetadata = (
+export const genJsonbQuery = (
   jsonb: string,
   filterQuery: FilterQueryMetadata,
   from: string[] = [],
@@ -12,7 +12,7 @@ export const genFilterQueryMetadata = (
       (cur as FilterQueryMetadata).logic &&
       (cur as FilterQueryMetadata).filters.length > 0
     ) {
-      const getNestedQuery = genFilterQueryMetadata(
+      const getNestedQuery = genJsonbQuery(
         jsonb,
         cur as FilterQueryMetadata,
         from,

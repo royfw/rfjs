@@ -1,4 +1,4 @@
-import { MatchNumericQuery } from './MatchNumericQuery';
+import { NumericMatch } from './NumericMatch';
 
 describe('arrayQuery', () => {
     const testData1 = {
@@ -17,10 +17,10 @@ describe('arrayQuery', () => {
         },
     };
 
-    describe('MatchNumericQuery', () => {
+    describe('NumericMatch', () => {
         describe('range', () => {
             it('numberArray 1 match: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'range',
                     [60, 120],
@@ -30,7 +30,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray all unmatch: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'range',
                     [5, 10],
@@ -40,7 +40,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray all match: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'range',
                     [50, 1000],
@@ -50,7 +50,7 @@ describe('arrayQuery', () => {
             });
 
             it('number: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'range',
                     [50, 120],
@@ -60,7 +60,7 @@ describe('arrayQuery', () => {
             });
 
             it('number 2: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'range',
                     [100, 120],
@@ -70,7 +70,7 @@ describe('arrayQuery', () => {
             });
 
             it('number: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'range',
                     [110, 120],
@@ -82,7 +82,7 @@ describe('arrayQuery', () => {
 
         describe('lt', () => {
             it('numberArray 2 items - 2false: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'lt',
                     [15, 19],
@@ -92,7 +92,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray 2 items - 1true 1false: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'lt',
                     [1500, 10],
@@ -102,7 +102,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray 2 items - 2true: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'lt',
                     [500, 120],
@@ -112,7 +112,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray 1match: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'lt',
                     500,
@@ -122,7 +122,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray all unmatch: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'lt',
                     15,
@@ -132,7 +132,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray all match: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'lt',
                     5000,
@@ -142,7 +142,7 @@ describe('arrayQuery', () => {
             });
 
             it('number 2 items - 2true: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'lt',
                     [5000, 1500],
@@ -152,7 +152,7 @@ describe('arrayQuery', () => {
             });
 
             it('number 2 items - 2false: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'lt',
                     [25, 15],
@@ -162,7 +162,7 @@ describe('arrayQuery', () => {
             });
 
             it('number 2 items - 1true 1false: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'lt',
                     [50, 150],
@@ -172,7 +172,7 @@ describe('arrayQuery', () => {
             });
 
             it('number: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'lt',
                     500,
@@ -182,7 +182,7 @@ describe('arrayQuery', () => {
             });
 
             it('number: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'lt',
                     15,
@@ -194,7 +194,7 @@ describe('arrayQuery', () => {
 
         describe('gt', () => {
             it('numberArray 2 items - 2false: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'gt',
                     [1500, 1900],
@@ -204,7 +204,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray 2 items - 1true 1false: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'gt',
                     [1500, 100],
@@ -214,7 +214,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray 2 items - 2true: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'gt',
                     [500, 100],
@@ -224,7 +224,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray 1match: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'gt',
                     500,
@@ -234,7 +234,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray all unmatch: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'gt',
                     1500,
@@ -244,7 +244,7 @@ describe('arrayQuery', () => {
             });
 
             it('numberArray all match: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.numberArray',
                     'gt',
                     50,
@@ -254,7 +254,7 @@ describe('arrayQuery', () => {
             });
 
             it('number 2 items - 2true: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'gt',
                     [50, 15],
@@ -264,7 +264,7 @@ describe('arrayQuery', () => {
             });
 
             it('number 2 items - 2false: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'gt',
                     [250, 150],
@@ -274,7 +274,7 @@ describe('arrayQuery', () => {
             });
 
             it('number 2 items - 1true 1false: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'gt',
                     [50, 150],
@@ -284,7 +284,7 @@ describe('arrayQuery', () => {
             });
 
             it('number: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'gt',
                     50,
@@ -294,7 +294,7 @@ describe('arrayQuery', () => {
             });
 
             it('number: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'gt',
                     150,
@@ -306,7 +306,7 @@ describe('arrayQuery', () => {
 
         describe('isnotnull', () => {
             it('undefined key: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a2.number',
                     'isnotnull',
                     null,
@@ -316,7 +316,7 @@ describe('arrayQuery', () => {
             });
 
             it('null key: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.nullText',
                     'isnotnull',
                     null,
@@ -326,7 +326,7 @@ describe('arrayQuery', () => {
             });
 
             it('number: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'isnotnull',
                     null,
@@ -338,7 +338,7 @@ describe('arrayQuery', () => {
 
         describe('isnull', () => {
             it('nullText: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.nullText',
                     'isnull',
                     null,
@@ -350,7 +350,7 @@ describe('arrayQuery', () => {
 
         describe('eq', () => {
             it('number 1: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'eq',
                     100,
@@ -360,7 +360,7 @@ describe('arrayQuery', () => {
             });
 
             it('number 2: true', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'number',
                     'eq',
                     [1000],
@@ -370,7 +370,7 @@ describe('arrayQuery', () => {
             });
 
             it('number 1: false', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'eq',
                     999,
@@ -381,7 +381,7 @@ describe('arrayQuery', () => {
         });
         describe('path', () => {
             it('error path', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a2.number',
                     'eq',
                     null,
@@ -391,7 +391,7 @@ describe('arrayQuery', () => {
             });
 
             it('valid path', () => {
-                const query = new MatchNumericQuery(
+                const query = new NumericMatch(
                     'a1.number',
                     'eq',
                     ['a'],
@@ -409,7 +409,7 @@ describe('arrayQuery', () => {
                         { userId: 2, age: 25, tags: ["Z1", "Z2"] }
                     ]
                 };
-                const query = new MatchNumericQuery('users[*].age', 'terms', 30, data);
+                const query = new NumericMatch('users[*].age', 'terms', 30, data);
                 // 應該找到至少一個匹配 30 的
                 expect(query.isMatch).toBe(true);
             });
@@ -421,7 +421,7 @@ describe('arrayQuery', () => {
                         { userId: 2, age: 25 }
                     ]
                 };
-                const query = new MatchNumericQuery('users[1].age', 'eq', 25, data);
+                const query = new NumericMatch('users[1].age', 'eq', 25, data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -432,7 +432,7 @@ describe('arrayQuery', () => {
                         { userId: 2, age: 25 }
                     ]
                 };
-                const query = new MatchNumericQuery('users[*].userId', 'terms', [1, 2], data);
+                const query = new NumericMatch('users[*].userId', 'terms', [1, 2], data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -445,7 +445,7 @@ describe('arrayQuery', () => {
                         ]
                     }
                 };
-                const query = new MatchNumericQuery('data.users[*].profile.score', 'gt', 80, data);
+                const query = new NumericMatch('data.users[*].profile.score', 'gt', 80, data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -462,7 +462,7 @@ describe('arrayQuery', () => {
                         }
                     ]
                 };
-                const query = new MatchNumericQuery('products[0].prices[*]', 'range', [150, 250], data);
+                const query = new NumericMatch('products[0].prices[*]', 'range', [150, 250], data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -484,7 +484,7 @@ describe('arrayQuery', () => {
                         }
                     ]
                 };
-                const query = new MatchNumericQuery('departments[*].employees[*].salary', 'gt', 70000, data);
+                const query = new NumericMatch('departments[*].employees[*].salary', 'gt', 70000, data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -495,7 +495,7 @@ describe('arrayQuery', () => {
                         { userId: 2, scores: [70, 75, 80] }
                     ]
                 };
-                const query = new MatchNumericQuery('users[*].scores[*]', 'terms', 95, data);
+                const query = new NumericMatch('users[*].scores[*]', 'terms', 95, data);
                 expect(query.isMatch).toBe(true);
             });
 
@@ -503,7 +503,7 @@ describe('arrayQuery', () => {
                 const data = {
                     emptyArray: []
                 };
-                const query = new MatchNumericQuery('emptyArray[*].value', 'eq', 100, data);
+                const query = new NumericMatch('emptyArray[*].value', 'eq', 100, data);
                 expect(query.isMatch).toBe(false);
             });
 
@@ -515,7 +515,7 @@ describe('arrayQuery', () => {
                         { id: 3, items: [{ quantity: 3 }, { quantity: 5 }] }
                     ]
                 };
-                const query = new MatchNumericQuery('orders[2].items[*].quantity', 'gt', 4, data);
+                const query = new NumericMatch('orders[2].items[*].quantity', 'gt', 4, data);
                 expect(query.isMatch).toBe(true);
             });
         });
@@ -531,7 +531,7 @@ describe('arrayQuery', () => {
                     { age: 28 }
                 ]
             };
-            const query = new MatchNumericQuery('users[0:2].age', 'terms', 30, data);
+            const query = new NumericMatch('users[0:2].age', 'terms', 30, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -543,7 +543,7 @@ describe('arrayQuery', () => {
                     { age: 35 }
                 ]
             };
-            const query = new MatchNumericQuery('users[-1:].age', 'eq', 35, data);
+            const query = new NumericMatch('users[-1:].age', 'eq', 35, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -555,7 +555,7 @@ describe('arrayQuery', () => {
                     { age: 35 }
                 ]
             };
-            const query = new MatchNumericQuery('users[-2:].age', 'terms', 25, data);
+            const query = new NumericMatch('users[-2:].age', 'terms', 25, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -568,7 +568,7 @@ describe('arrayQuery', () => {
                     { age: 28 }
                 ]
             };
-            const query = new MatchNumericQuery('users[0,2].age', 'terms', [30, 35], data);
+            const query = new NumericMatch('users[0,2].age', 'terms', [30, 35], data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -580,7 +580,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie', age: 28 }
                 ]
             };
-            const query = new MatchNumericQuery('users[?(@.age>25)].age', 'terms', 30, data);
+            const query = new NumericMatch('users[?(@.age>25)].age', 'terms', 30, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -592,7 +592,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie', age: 28 }
                 ]
             };
-            const query = new MatchNumericQuery('users[?(@.age>25)].age', 'range', [25, 30], data);
+            const query = new NumericMatch('users[?(@.age>25)].age', 'range', [25, 30], data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -603,7 +603,7 @@ describe('arrayQuery', () => {
                     { users: [{ age: 35 }] }
                 ]
             };
-            const query = new MatchNumericQuery('$..age', 'terms', 30, data);
+            const query = new NumericMatch('$..age', 'terms', 30, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -614,7 +614,7 @@ describe('arrayQuery', () => {
                     { users: [{ score: 95 }] }
                 ]
             };
-            const query = new MatchNumericQuery('$..score', 'gt', 88, data);
+            const query = new NumericMatch('$..score', 'gt', 88, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -625,7 +625,7 @@ describe('arrayQuery', () => {
                     { users: [{ name: 'Charlie', salary: 55000 }] }
                 ]
             };
-            const query = new MatchNumericQuery('departments[*].users[*].salary', 'gt', 70000, data);
+            const query = new NumericMatch('departments[*].users[*].salary', 'gt', 70000, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -638,7 +638,7 @@ describe('arrayQuery', () => {
                     { age: 40 }
                 ]
             };
-            const query = new MatchNumericQuery('users[0:4:2].age', 'terms', [25, 35], data);
+            const query = new NumericMatch('users[0:4:2].age', 'terms', [25, 35], data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -649,7 +649,7 @@ describe('arrayQuery', () => {
                     { name: 'Bob', age: 25 }
                 ]
             };
-            const query = new MatchNumericQuery('$.users[0].age', 'eq', 30, data);
+            const query = new NumericMatch('$.users[0].age', 'eq', 30, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -661,7 +661,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie' }
                 ]
             };
-            const query = new MatchNumericQuery('$.users.length', 'eq', 3, data);
+            const query = new NumericMatch('$.users.length', 'eq', 3, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -673,7 +673,7 @@ describe('arrayQuery', () => {
                     { score: 95 }
                 ]
             };
-            const query = new MatchNumericQuery('users[(@.length-1)].score', 'eq', 95, data);
+            const query = new NumericMatch('users[(@.length-1)].score', 'eq', 95, data);
             expect(query.isMatch).toBe(true);
         });
     });

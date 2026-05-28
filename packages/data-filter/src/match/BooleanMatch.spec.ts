@@ -1,4 +1,4 @@
-import { MatchBooleanQuery } from './MatchBooleanQuery';
+import { BooleanMatch } from './BooleanMatch';
 
 describe('arrayQuery', () => {
     const testData1 = {
@@ -19,10 +19,10 @@ describe('arrayQuery', () => {
         },
     };
 
-    describe('MatchBooleanQuery', () => {
+    describe('BooleanMatch', () => {
         describe('isnotnull', () => {
             it('undefined key: false', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a2.number',
                     'isnotnull',
                     null,
@@ -32,7 +32,7 @@ describe('arrayQuery', () => {
             });
 
             it('null key: false', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.nullText',
                     'isnotnull',
                     null,
@@ -42,7 +42,7 @@ describe('arrayQuery', () => {
             });
 
             it('number: true', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.number',
                     'isnotnull',
                     null,
@@ -54,7 +54,7 @@ describe('arrayQuery', () => {
 
         describe('isnull', () => {
             it('boolean undefined: true', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.boolean2',
                     'isnull',
                     true,
@@ -64,7 +64,7 @@ describe('arrayQuery', () => {
             });
 
             it('nullText: true', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.nullText',
                     'isnull',
                     null,
@@ -76,7 +76,7 @@ describe('arrayQuery', () => {
 
         describe('neq', () => {
             it('boolean undefined: true', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.boolean2',
                     'neq',
                     true,
@@ -86,7 +86,7 @@ describe('arrayQuery', () => {
             });
 
             it('boolean null: true', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.nullText',
                     'neq',
                     true,
@@ -96,7 +96,7 @@ describe('arrayQuery', () => {
             });
 
             it('booleanArray bool: true', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.booleanArray',
                     'neq',
                     false,
@@ -106,7 +106,7 @@ describe('arrayQuery', () => {
             });
 
             it('boolean bool: true', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.boolean',
                     'neq',
                     false,
@@ -116,7 +116,7 @@ describe('arrayQuery', () => {
             });
 
             it('boolean bool: false', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.boolean',
                     'neq',
                     true,
@@ -127,7 +127,7 @@ describe('arrayQuery', () => {
         });
         describe('eq', () => {
             it('boolean undefined: false', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.boolean2',
                     'eq',
                     true,
@@ -137,7 +137,7 @@ describe('arrayQuery', () => {
             });
 
             it('boolean null: false', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.nullText',
                     'eq',
                     true,
@@ -147,7 +147,7 @@ describe('arrayQuery', () => {
             });
 
             it('boolean bool: true', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.boolean',
                     'eq',
                     true,
@@ -157,7 +157,7 @@ describe('arrayQuery', () => {
             });
 
             it('boolean stringbool: true', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.boolean',
                     'eq',
                     'true',
@@ -167,7 +167,7 @@ describe('arrayQuery', () => {
             });
 
             it('boolean boolean: false', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.boolean',
                     'eq',
                     false,
@@ -179,7 +179,7 @@ describe('arrayQuery', () => {
 
         describe('path', () => {
             it('error path', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a2.number',
                     'eq',
                     null,
@@ -189,7 +189,7 @@ describe('arrayQuery', () => {
             });
 
             it('valid path', () => {
-                const query = new MatchBooleanQuery(
+                const query = new BooleanMatch(
                     'a1.number',
                     'eq',
                     ['a'],
@@ -208,7 +208,7 @@ describe('arrayQuery', () => {
                     { userId: 2, active: false, tags: ["Z1", "Z2"] }
                 ]
             };
-            const query = new MatchBooleanQuery('users[*].active', 'eq', true, data);
+            const query = new BooleanMatch('users[*].active', 'eq', true, data);
             // 應該匹配第一個使用者的 active: true
             expect(query.isMatch).toBe(false); // 因為不是所有都是 true
         });
@@ -220,7 +220,7 @@ describe('arrayQuery', () => {
                     { userId: 2, active: false }
                 ]
             };
-            const query = new MatchBooleanQuery('users[0].active', 'eq', true, data);
+            const query = new BooleanMatch('users[0].active', 'eq', true, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -231,7 +231,7 @@ describe('arrayQuery', () => {
                     { userId: 2, active: false }
                 ]
             };
-            const query = new MatchBooleanQuery('users[1].active', 'eq', false, data);
+            const query = new BooleanMatch('users[1].active', 'eq', false, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -244,7 +244,7 @@ describe('arrayQuery', () => {
                     ]
                 }
             };
-            const query = new MatchBooleanQuery('data.users[*].profile.verified', 'eq', true, data);
+            const query = new BooleanMatch('data.users[*].profile.verified', 'eq', true, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -260,7 +260,7 @@ describe('arrayQuery', () => {
                     }
                 ]
             };
-            const query = new MatchBooleanQuery('organizations[0].members[*].isAdmin', 'neq', false, data);
+            const query = new BooleanMatch('organizations[0].members[*].isAdmin', 'neq', false, data);
             // 應該找到至少一個不是 false 的(即 true)
             expect(query.isMatch).toBe(true);
         });
@@ -283,7 +283,7 @@ describe('arrayQuery', () => {
                     }
                 ]
             };
-            const query = new MatchBooleanQuery('departments[*].teams[*].active', 'neq', false, data);
+            const query = new BooleanMatch('departments[*].teams[*].active', 'neq', false, data);
             // 應該找到至少一個不是 false 的(即 true)
             expect(query.isMatch).toBe(true);
         });
@@ -292,7 +292,7 @@ describe('arrayQuery', () => {
             const data = {
                 emptyArray: []
             };
-            const query = new MatchBooleanQuery('emptyArray[*].active', 'eq', true, data);
+            const query = new BooleanMatch('emptyArray[*].active', 'eq', true, data);
             expect(query.isMatch).toBe(false);
         });
     });
@@ -306,7 +306,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie', active: true }
                 ]
             };
-            const query = new MatchBooleanQuery('users[?(@.active==true)].active', 'eq', true, data);
+            const query = new BooleanMatch('users[?(@.active==true)].active', 'eq', true, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -317,7 +317,7 @@ describe('arrayQuery', () => {
                     { users: [{ active: true }] }
                 ]
             };
-            const query = new MatchBooleanQuery('$..active', 'neq', false, data);
+            const query = new BooleanMatch('$..active', 'neq', false, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -330,7 +330,7 @@ describe('arrayQuery', () => {
                     { name: 'David', verified: true }
                 ]
             };
-            const query = new MatchBooleanQuery('users[0:2].verified', 'eq', true, data);
+            const query = new BooleanMatch('users[0:2].verified', 'eq', true, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -342,7 +342,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie', active: true }
                 ]
             };
-            const query = new MatchBooleanQuery('users[-1:].active', 'eq', true, data);
+            const query = new BooleanMatch('users[-1:].active', 'eq', true, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -354,7 +354,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie', isAdmin: true }
                 ]
             };
-            const query = new MatchBooleanQuery('users[0,2].isAdmin', 'eq', true, data);
+            const query = new BooleanMatch('users[0,2].isAdmin', 'eq', true, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -365,7 +365,7 @@ describe('arrayQuery', () => {
                     { users: [{ name: 'Charlie', active: true }] }
                 ]
             };
-            const query = new MatchBooleanQuery('departments[*].users[*].active', 'neq', false, data);
+            const query = new BooleanMatch('departments[*].users[*].active', 'neq', false, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -377,7 +377,7 @@ describe('arrayQuery', () => {
                     { name: 'Charlie', email: 'charlie@example.com', verified: true }
                 ]
             };
-            const query = new MatchBooleanQuery('users[?(@.email)].verified', 'eq', true, data);
+            const query = new BooleanMatch('users[?(@.email)].verified', 'eq', true, data);
             expect(query.isMatch).toBe(true);
         });
 
@@ -388,7 +388,7 @@ describe('arrayQuery', () => {
                     { name: 'Bob', active: false }
                 ]
             };
-            const query = new MatchBooleanQuery('$.users[0].active', 'eq', true, data);
+            const query = new BooleanMatch('$.users[0].active', 'eq', true, data);
             expect(query.isMatch).toBe(true);
         });
     });
