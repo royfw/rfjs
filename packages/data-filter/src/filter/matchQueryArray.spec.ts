@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { matchQueryArray } from '../filter/matchQuery';
 import { FilterMatchQuery } from '../types';
 

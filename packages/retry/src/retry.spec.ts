@@ -1,3 +1,4 @@
+import { it, expect } from 'vitest';
 import { retry } from './retry';
 
 it('Test retry', async () => {

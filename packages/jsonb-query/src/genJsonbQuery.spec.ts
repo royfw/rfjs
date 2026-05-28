@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { genJsonbQuery } from './genJsonbQuery';
 import { FilterQueryMetadata } from './type';
 describe('genJsonbQuery', () => {
