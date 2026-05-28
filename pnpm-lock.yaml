@@ -710,21 +710,9 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
     devDependencies:
-      '@commitlint/cli':
-        specifier: ^19.7.1
-        version: 19.8.1(@types/node@25.9.1)(typescript@5.8.3)
-      '@commitlint/config-conventional':
-        specifier: ^19.7.1
-        version: 19.8.1
-      '@commitlint/cz-commitlint':
-        specifier: ^19.6.1
-        version: 19.8.1(@types/node@25.9.1)(commitizen@4.3.1(@types/node@25.9.1)(typescript@5.8.3))(inquirer@12.6.3(@types/node@25.9.1))(typescript@5.8.3)
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.39.1
-      '@rfjs/tpl-toolkit':
-        specifier: ^0.0.1
-        version: 0.0.1(tsdown@0.17.0-beta.6(typescript@5.8.3))(vitest@3.2.4)
       '@types/jsonpath-plus':
         specifier: ^5.0.5
         version: 5.0.5
@@ -737,30 +725,15 @@ importers:
       '@vitest/ui':
         specifier: ^3.2.3
         version: 3.2.4(vitest@3.2.4)
-      commitizen:
-        specifier: ^4.3.1
-        version: 4.3.1(@types/node@25.9.1)(typescript@5.8.3)
-      cz-conventional-changelog:
-        specifier: ^3.3.0
-        version: 3.3.0(@types/node@25.9.1)(typescript@5.8.3)
       eslint:
         specifier: ^9.20.1
         version: 9.39.1(jiti@2.4.2)
       eslint-config-prettier:
         specifier: ^10.0.1
         version: 10.0.1(eslint@9.39.1(jiti@2.4.2))
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
-      lint-staged:
-        specifier: ^15.4.3
-        version: 15.5.2
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      only-allow:
-        specifier: ^1.2.2
-        version: 1.2.2
       prettier:
         specifier: ^3.5.1
         version: 3.5.3
@@ -792,21 +765,9 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
     devDependencies:
-      '@commitlint/cli':
-        specifier: ^19.7.1
-        version: 19.8.1(@types/node@25.9.1)(typescript@5.8.3)
-      '@commitlint/config-conventional':
-        specifier: ^19.7.1
-        version: 19.8.1
-      '@commitlint/cz-commitlint':
-        specifier: ^19.6.1
-        version: 19.8.1(@types/node@25.9.1)(commitizen@4.3.1(@types/node@25.9.1)(typescript@5.8.3))(inquirer@12.6.3(@types/node@25.9.1))(typescript@5.8.3)
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.39.1
-      '@rfjs/tpl-toolkit':
-        specifier: ^0.0.1
-        version: 0.0.1(tsdown@0.17.0-beta.6(typescript@5.8.3))(vitest@3.2.4)
       '@types/lodash':
         specifier: ^4.17.15
         version: 4.17.24
@@ -816,30 +777,15 @@ importers:
       '@vitest/ui':
         specifier: ^3.2.3
         version: 3.2.4(vitest@3.2.4)
-      commitizen:
-        specifier: ^4.3.1
-        version: 4.3.1(@types/node@25.9.1)(typescript@5.8.3)
-      cz-conventional-changelog:
-        specifier: ^3.3.0
-        version: 3.3.0(@types/node@25.9.1)(typescript@5.8.3)
       eslint:
         specifier: ^9.20.1
         version: 9.39.1(jiti@2.4.2)
       eslint-config-prettier:
         specifier: ^10.0.1
         version: 10.0.1(eslint@9.39.1(jiti@2.4.2))
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
-      lint-staged:
-        specifier: ^15.4.3
-        version: 15.5.2
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      only-allow:
-        specifier: ^1.2.2
-        version: 1.2.2
       prettier:
         specifier: ^3.5.1
         version: 3.5.3
@@ -910,21 +856,9 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
     devDependencies:
-      '@commitlint/cli':
-        specifier: ^19.7.1
-        version: 19.8.1(@types/node@25.9.1)(typescript@5.8.3)
-      '@commitlint/config-conventional':
-        specifier: ^19.7.1
-        version: 19.8.1
-      '@commitlint/cz-commitlint':
-        specifier: ^19.6.1
-        version: 19.8.1(@types/node@25.9.1)(commitizen@4.3.1(@types/node@25.9.1)(typescript@5.8.3))(inquirer@12.6.3(@types/node@25.9.1))(typescript@5.8.3)
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.39.1
-      '@rfjs/tpl-toolkit':
-        specifier: ^0.0.1
-        version: 0.0.1(tsdown@0.17.0-beta.6(typescript@5.8.3))(vitest@3.2.4)
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
@@ -934,30 +868,15 @@ importers:
       '@vitest/ui':
         specifier: ^3.2.3
         version: 3.2.4(vitest@3.2.4)
-      commitizen:
-        specifier: ^4.3.1
-        version: 4.3.1(@types/node@25.9.1)(typescript@5.8.3)
-      cz-conventional-changelog:
-        specifier: ^3.3.0
-        version: 3.3.0(@types/node@25.9.1)(typescript@5.8.3)
       eslint:
         specifier: ^9.20.1
         version: 9.39.1(jiti@2.4.2)
       eslint-config-prettier:
         specifier: ^10.0.1
         version: 10.0.1(eslint@9.39.1(jiti@2.4.2))
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
-      lint-staged:
-        specifier: ^15.4.3
-        version: 15.5.2
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      only-allow:
-        specifier: ^1.2.2
-        version: 1.2.2
       prettier:
         specifier: ^3.5.1
         version: 3.5.3
@@ -989,21 +908,9 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
     devDependencies:
-      '@commitlint/cli':
-        specifier: ^19.7.1
-        version: 19.8.1(@types/node@25.9.1)(typescript@5.8.3)
-      '@commitlint/config-conventional':
-        specifier: ^19.7.1
-        version: 19.8.1
-      '@commitlint/cz-commitlint':
-        specifier: ^19.6.1
-        version: 19.8.1(@types/node@25.9.1)(commitizen@4.3.1(@types/node@25.9.1)(typescript@5.8.3))(inquirer@12.6.3(@types/node@25.9.1))(typescript@5.8.3)
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.39.1
-      '@rfjs/tpl-toolkit':
-        specifier: ^0.0.1
-        version: 0.0.1(tsdown@0.17.0-beta.6(typescript@5.8.3))(vitest@3.2.4)
       '@types/jsonwebtoken':
         specifier: ^9.0.6
         version: 9.0.10
@@ -1013,30 +920,15 @@ importers:
       '@vitest/ui':
         specifier: ^3.2.3
         version: 3.2.4(vitest@3.2.4)
-      commitizen:
-        specifier: ^4.3.1
-        version: 4.3.1(@types/node@25.9.1)(typescript@5.8.3)
-      cz-conventional-changelog:
-        specifier: ^3.3.0
-        version: 3.3.0(@types/node@25.9.1)(typescript@5.8.3)
       eslint:
         specifier: ^9.20.1
         version: 9.39.1(jiti@2.4.2)
       eslint-config-prettier:
         specifier: ^10.0.1
         version: 10.0.1(eslint@9.39.1(jiti@2.4.2))
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
-      lint-staged:
-        specifier: ^15.4.3
-        version: 15.5.2
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      only-allow:
-        specifier: ^1.2.2
-        version: 1.2.2
       prettier:
         specifier: ^3.5.1
         version: 3.5.3
@@ -1068,51 +960,24 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
     devDependencies:
-      '@commitlint/cli':
-        specifier: ^19.7.1
-        version: 19.8.1(@types/node@25.9.1)(typescript@5.8.3)
-      '@commitlint/config-conventional':
-        specifier: ^19.7.1
-        version: 19.8.1
-      '@commitlint/cz-commitlint':
-        specifier: ^19.6.1
-        version: 19.8.1(@types/node@25.9.1)(commitizen@4.3.1(@types/node@25.9.1)(typescript@5.8.3))(inquirer@12.6.3(@types/node@25.9.1))(typescript@5.8.3)
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.39.1
-      '@rfjs/tpl-toolkit':
-        specifier: ^0.0.1
-        version: 0.0.1(tsdown@0.17.0-beta.6(typescript@5.8.3))(vitest@3.2.4)
       '@vitest/coverage-istanbul':
         specifier: ^3.2.3
         version: 3.2.4(vitest@3.2.4)
       '@vitest/ui':
         specifier: ^3.2.3
         version: 3.2.4(vitest@3.2.4)
-      commitizen:
-        specifier: ^4.3.1
-        version: 4.3.1(@types/node@25.9.1)(typescript@5.8.3)
-      cz-conventional-changelog:
-        specifier: ^3.3.0
-        version: 3.3.0(@types/node@25.9.1)(typescript@5.8.3)
       eslint:
         specifier: ^9.20.1
         version: 9.39.1(jiti@2.4.2)
       eslint-config-prettier:
         specifier: ^10.0.1
         version: 10.0.1(eslint@9.39.1(jiti@2.4.2))
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
-      lint-staged:
-        specifier: ^15.4.3
-        version: 15.5.2
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      only-allow:
-        specifier: ^1.2.2
-        version: 1.2.2
       prettier:
         specifier: ^3.5.1
         version: 3.5.3
@@ -1141,51 +1006,24 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
     devDependencies:
-      '@commitlint/cli':
-        specifier: ^19.7.1
-        version: 19.8.1(@types/node@25.9.1)(typescript@5.8.3)
-      '@commitlint/config-conventional':
-        specifier: ^19.7.1
-        version: 19.8.1
-      '@commitlint/cz-commitlint':
-        specifier: ^19.6.1
-        version: 19.8.1(@types/node@25.9.1)(commitizen@4.3.1(@types/node@25.9.1)(typescript@5.8.3))(inquirer@12.6.3(@types/node@25.9.1))(typescript@5.8.3)
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.39.1
-      '@rfjs/tpl-toolkit':
-        specifier: ^0.0.1
-        version: 0.0.1(tsdown@0.17.0-beta.6(typescript@5.8.3))(vitest@3.2.4)
       '@vitest/coverage-istanbul':
         specifier: ^3.2.3
         version: 3.2.4(vitest@3.2.4)
       '@vitest/ui':
         specifier: ^3.2.3
         version: 3.2.4(vitest@3.2.4)
-      commitizen:
-        specifier: ^4.3.1
-        version: 4.3.1(@types/node@25.9.1)(typescript@5.8.3)
-      cz-conventional-changelog:
-        specifier: ^3.3.0
-        version: 3.3.0(@types/node@25.9.1)(typescript@5.8.3)
       eslint:
         specifier: ^9.20.1
         version: 9.39.1(jiti@2.4.2)
       eslint-config-prettier:
         specifier: ^10.0.1
         version: 10.0.1(eslint@9.39.1(jiti@2.4.2))
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
-      lint-staged:
-        specifier: ^15.4.3
-        version: 15.5.2
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      only-allow:
-        specifier: ^1.2.2
-        version: 1.2.2
       prettier:
         specifier: ^3.5.1
         version: 3.5.3
@@ -1299,21 +1137,9 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
     devDependencies:
-      '@commitlint/cli':
-        specifier: ^19.7.1
-        version: 19.8.1(@types/node@25.9.1)(typescript@5.8.3)
-      '@commitlint/config-conventional':
-        specifier: ^19.7.1
-        version: 19.8.1
-      '@commitlint/cz-commitlint':
-        specifier: ^19.6.1
-        version: 19.8.1(@types/node@25.9.1)(commitizen@4.3.1(@types/node@25.9.1)(typescript@5.8.3))(inquirer@12.6.3(@types/node@25.9.1))(typescript@5.8.3)
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.39.1
-      '@rfjs/tpl-toolkit':
-        specifier: ^0.0.1
-        version: 0.0.1(tsdown@0.17.0-beta.6(typescript@5.8.3))(vitest@3.2.4)
       '@types/node':
         specifier: ^25.9.1
         version: 25.9.1
@@ -1323,30 +1149,15 @@ importers:
       '@vitest/ui':
         specifier: ^3.2.3
         version: 3.2.4(vitest@3.2.4)
-      commitizen:
-        specifier: ^4.3.1
-        version: 4.3.1(@types/node@25.9.1)(typescript@5.8.3)
-      cz-conventional-changelog:
-        specifier: ^3.3.0
-        version: 3.3.0(@types/node@25.9.1)(typescript@5.8.3)
       eslint:
         specifier: ^9.20.1
         version: 9.39.1(jiti@2.4.2)
       eslint-config-prettier:
         specifier: ^10.0.1
         version: 10.0.1(eslint@9.39.1(jiti@2.4.2))
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
-      lint-staged:
-        specifier: ^15.4.3
-        version: 15.5.2
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      only-allow:
-        specifier: ^1.2.2
-        version: 1.2.2
       prettier:
         specifier: ^3.5.1
         version: 3.5.3
@@ -3037,18 +2848,6 @@ packages:
   '@rfjs/orm-typeorm@file:libs/orm-typeorm':
     resolution: {directory: libs/orm-typeorm, type: directory}
     engines: {node: '>=18', pnpm: '>=10.24.0 <11.0.0'}
-
-  '@rfjs/tpl-toolkit@0.0.1':
-    resolution: {integrity: sha512-2tDul1+fCTJZ/kmllwuybBHffJtLBqOF9Ou//ldkzqrDveP8qbg0q1874fhczyRI4M1ULwl6zCsxTaX0Q+Di0w==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      tsdown: '>=0.17.0'
-      vitest: ^3.2.3
-    peerDependenciesMeta:
-      tsdown:
-        optional: true
-      vitest:
-        optional: true
 
   '@rolldown/binding-android-arm64@1.0.0-beta.53':
     resolution: {integrity: sha512-Ok9V8o7o6YfSdTTYA/uHH30r3YtOxLD6G3wih/U9DO0ucBBFq8WPt/DslU53OgfteLRHITZny9N/qCUxMf9kjQ==}
@@ -5991,10 +5790,6 @@ packages:
   oniguruma-to-es@3.1.1:
     resolution: {integrity: sha512-bUH8SDvPkH3ho3dvwJwfonjlQ4R80vjyvrU8YpxuROddv55vAEJrTuCuCVUhhsHbtlD9tGGbaNApGQckXhS8iQ==}
 
-  only-allow@1.2.2:
-    resolution: {integrity: sha512-uxyNYDsCh5YIJ780G7hC5OHjVUr9reHsbZNMM80L9tZlTpb3hUzb36KXgW4ZUGtJKQnGA3xegmWg1BxhWV0jJA==}
-    hasBin: true
-
   openapi-types@12.1.3:
     resolution: {integrity: sha512-N4YtSYJqghVu4iek2ZUvcN/0aqH1kRDuNqzcycDxhOUpg7GdvLa2F3DgS6yBNhInhv2r/6I0Flkn7CqL8+nIcw==}
 
@@ -7567,10 +7362,6 @@ packages:
   which-collection@1.0.2:
     resolution: {integrity: sha512-K4jVyjnBdgvc86Y6BkaLZEN933SwYOuBFkdmBu9ZfkcAbdVbpITnDmjvZ/aQjRXQrv5EPkTnD1s39GiiqbngCw==}
     engines: {node: '>= 0.4'}
-
-  which-pm-runs@1.1.0:
-    resolution: {integrity: sha512-n1brCuqClxfFfq/Rb0ICg9giSZqCS+pLtccdag6C2HyufBrh3fBOiy9nb6ggRMvWOVH5GrdJskj5iGTZNxd7SA==}
-    engines: {node: '>=4'}
 
   which-typed-array@1.1.18:
     resolution: {integrity: sha512-qEcY+KJYlWyLH9vNbsr6/5j59AXk5ni5aakf8ldzBvGde6Iz4sxZGkJyWSAueTG7QhOvNRYb1lDdFmL5Td0QKA==}
@@ -9423,13 +9214,6 @@ snapshots:
       - supports-color
       - ts-node
       - typeorm-aurora-data-api-driver
-
-  '@rfjs/tpl-toolkit@0.0.1(tsdown@0.17.0-beta.6(typescript@5.8.3))(vitest@3.2.4)':
-    dependencies:
-      tslib: 2.8.1
-    optionalDependencies:
-      tsdown: 0.17.0-beta.6(typescript@5.8.3)
-      vitest: 3.2.4(@types/node@25.9.1)(@vitest/ui@3.2.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.8.2)
 
   '@rolldown/binding-android-arm64@1.0.0-beta.53':
     optional: true
@@ -12800,10 +12584,6 @@ snapshots:
       regex: 6.0.1
       regex-recursion: 6.0.2
 
-  only-allow@1.2.2:
-    dependencies:
-      which-pm-runs: 1.1.0
-
   openapi-types@12.1.3: {}
 
   optionator@0.9.4:
@@ -14643,8 +14423,6 @@ snapshots:
       is-set: 2.0.3
       is-weakmap: 2.0.2
       is-weakset: 2.0.4
-
-  which-pm-runs@1.1.0: {}
 
   which-typed-array@1.1.18:
     dependencies:
