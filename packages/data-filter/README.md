@@ -74,6 +74,7 @@ resolvePath(data, 'a.b.c');           // plain path
 
 **Text**: `eq`, `neq`, `isnull`, `isnotnull`, `contains`, `startswith`, `endswith`, `terms`
 **Numeric**: `eq`, `neq`, `isnull`, `isnotnull`, `gt`, `gte`, `lt`, `lte`, `range`, `terms`
+**Date**: `eq`, `neq`, `isnull`, `isnotnull`, `gt`, `gte`, `lt`, `lte`, `range`, `terms`
 **Boolean**: `eq`, `neq`, `isnull`, `isnotnull`
 **Logic**: `and`, `or`, `nor`, `not`
 
@@ -87,7 +88,7 @@ type FilterMatchQuery = {
 
 type MatchQueryMetadata = {
   field: string;
-  dataType: 'string' | 'numeric' | 'boolean';
+  dataType: 'string' | 'numeric' | 'boolean' | 'date';
   operator: string;
   value: any;
 };

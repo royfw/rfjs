@@ -2,6 +2,7 @@ import * as _ from 'lodash';
 import { BooleanMatch } from '../match/BooleanMatch';
 import { NumericMatch } from '../match/NumericMatch';
 import { TextMatch } from '../match/TextMatch';
+import { DateMatch } from '../match/DateMatch';
 import type {
   DataType,
   ObjectData,
@@ -11,6 +12,7 @@ import type {
   TextFilterOperator,
   NumericFilterOperator,
   BooleanFilterOperator,
+  DateFilterOperator,
 } from '../types';
 
 export function matchQueryArray(
@@ -86,7 +88,7 @@ function isFilterMatchQuery(filter: FilterMatchQuery | MatchQueryMetadata) {
 export function createMatchQuery(
   data: ObjectData,
   metadata: MatchQueryMetadata,
-): TextMatch | NumericMatch | BooleanMatch {
+): TextMatch | NumericMatch | BooleanMatch | DateMatch {
   const { field, operator, value, dataType } = metadata;
   const query = {
     string: () =>
@@ -107,6 +109,13 @@ export function createMatchQuery(
       new BooleanMatch(
         field,
         operator as BooleanFilterOperator,
+        value,
+        data,
+      ),
+    date: () =>
+      new DateMatch(
+        field,
+        operator as DateFilterOperator,
         value,
         data,
       ),
