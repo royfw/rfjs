@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 import { flatten } from './flatten';
 
 /**
@@ -13,12 +14,12 @@ import { flatten } from './flatten';
 export function toFlatString(obj: object) {
   return Object.entries(flatten(obj))
     .reduce(
-      (pre, cur) => {
+      (pre: string[], cur: [string, any]) => {
         const [key, value] = cur;
-        pre.push(`${key}: ${value}`);
+        pre.push(`${key}: ${String(value)}`);
         return pre;
       },
-      <string[]>[],
+      [],
     )
     .join(', ');
 }
