@@ -1,33 +1,33 @@
 # @rfjs/data-transform
 
-Data type transformation utilities for converting between string, number, boolean, and date types.
+資料型別轉換工具，用於在字串、數值、布林、日期之間進行轉換。
 
-## Installation
+## 安裝
 
 ```bash
 npm install @rfjs/data-transform
 ```
 
-## Usage
+## 使用方式
 
 ### `typeTransfer(value, type)`
 
-Convert a value to the specified data type.
+將數值轉換為指定的資料型別。
 
 ```typescript
 import { typeTransfer } from '@rfjs/data-transform';
 
 typeTransfer('42', 'number');       // 42
 typeTransfer('true', 'boolean');    // true
-typeTransfer('2024-01-01', 'date'); // Date object
+typeTransfer('2024-01-01', 'date'); // Date 物件
 typeTransfer('hello', 'string');    // 'hello'
 ```
 
-Supported types: `'string' | 'number' | 'integer' | 'boolean' | 'date' | 'any'`
+支援型別：`'string' | 'number' | 'integer' | 'boolean' | 'date' | 'any'`
 
 ### `jsonbTransfer(value, type)`
 
-Convert a value for PostgreSQL JSONB query contexts. Supports 16 type variants covering plain, object, and array forms.
+為 PostgreSQL JSONB 查詢情境轉換數值。支援 16 種型別變體，涵蓋一般、物件、陣列形式。
 
 ```typescript
 import { jsonbTransfer } from '@rfjs/data-transform';
@@ -38,11 +38,11 @@ jsonbTransfer('true', 'boolean');       // true
 jsonbTransfer('42', 'arrayNumeric');    // 42
 ```
 
-Supported types: `'string' | 'numeric' | 'date' | 'boolean'` and their `object*` / `array*` / `arrayObject*` variants.
+支援型別：`'string' | 'numeric' | 'date' | 'boolean'` 及其 `object*` / `array*` / `arrayObject*` 變體。
 
 ### `toBoolean(value)`
 
-Parse boolean values from strings or pass through existing booleans.
+從字串解析布林值，或直接透過已存在的布林值。
 
 ```typescript
 import { toBoolean } from '@rfjs/data-transform';
@@ -55,7 +55,7 @@ toBoolean('');        // false
 
 ### `toDateString(value)`
 
-Convert a date string or timestamp to an ISO format string.
+將日期字串或時間戳轉換為 ISO 格式字串。
 
 ```typescript
 import { toDateString } from '@rfjs/data-transform';

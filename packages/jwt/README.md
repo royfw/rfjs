@@ -8,7 +8,7 @@ JWT (JSON Web Token) sign, verify, and decode helper.
 npm install @rfjs/jwt
 ```
 
-## API
+## Usage
 
 ### `Jwt.initial(secret, options)`
 
@@ -51,3 +51,12 @@ if (result.success) {
 ```
 
 Returns `{ success: boolean, payload: T, err?, errMsg? }`.
+
+### Error Messages
+
+| Error | Message |
+|-------|---------|
+| Expired token | `jwt expired` |
+| Invalid signature | `invalid signature` |
+| Not yet valid | `jwt not active` |
+| Invalid token format | `invalid token` |

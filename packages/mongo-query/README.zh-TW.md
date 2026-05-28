@@ -1,18 +1,18 @@
 # @rfjs/mongo-query
 
-MongoDB query builder. Generates MongoDB query documents from structured filter metadata.
+MongoDB 查詢建構器，從結構化的過濾條件產生 MongoDB 查詢文件。
 
-## Installation
+## 安裝
 
 ```bash
 npm install @rfjs/mongo-query
 ```
 
-## Usage
+## 使用方式
 
 ### `toQuery(field, type, condition, value)`
 
-Generate a MongoDB query for a single field condition.
+為單一欄位條件產生 MongoDB 查詢。
 
 ```typescript
 import { toQuery } from '@rfjs/mongo-query';
@@ -27,11 +27,11 @@ toQuery('tags', 'string', 'terms', ['admin', 'active']);
 // { tags: { '$in': ['admin', 'active'] } }
 ```
 
-Conditions: `'eq' | 'neq' | 'nin' | 'terms' | 'term' | 'gt' | 'gte' | 'lt' | 'lte' | 'range' | 'regex'`
+條件：`'eq' | 'neq' | 'nin' | 'terms' | 'term' | 'gt' | 'gte' | 'lt' | 'lte' | 'range' | 'regex'`
 
 ### `genFilterQuery(filterMetadata)`
 
-Build a nested MongoDB query from a filter metadata tree.
+從過濾條件樹建立巢狀 MongoDB 查詢。
 
 ```typescript
 import { genFilterQuery } from '@rfjs/mongo-query';
@@ -52,16 +52,16 @@ const result = genFilterQuery({
 // { '$and': [ { name: { '$eq': 'test' } }, { '$or': [ { age: { '$gt': 18 } }, { address: { '$eq': null } } ] } ] }
 ```
 
-### Query Classes
+### 查詢類別
 
-Pre-built query classes for common operations:
+內建的查詢類別，用於常見操作：
 
-- `EqQuery`, `NeQuery`, `NinQuery`, `TermsQuery` — equality and membership
-- `GTQuery`, `GTEQuery`, `LTQuery`, `LTEQuery`, `RangeQuery` — range comparison
-- `RegexQuery` — pattern matching
-- `LogicalQuery` — `$and`, `$or`, `$nor` composition
+- `EqQuery`、`NeQuery`、`NinQuery`、`TermsQuery` — 相等與成員比對
+- `GTQuery`、`GTEQuery`、`LTQuery`、`LTEQuery`、`RangeQuery` — 範圍比較
+- `RegexQuery` — 正規表示式比對
+- `LogicalQuery` — `$and`、`$or`、`$nor` 組合
 
-## Types
+## 型別
 
 ```typescript
 interface MgoFieldCondition {
