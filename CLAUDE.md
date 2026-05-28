@@ -51,14 +51,6 @@ pnpm -F <pkg> vitest:e2e:run  # run E2E tests for a package
 pnpm -F <pkg> vitest      # interactive watch mode
 ```
 
-### Docs
-
-Each app/lib has VitePress docs in its `docs/` folder:
-```bash
-pnpm -F <pkg> docs:dev    # start docs dev server
-pnpm -F <pkg> docs:build  # build docs static site
-```
-
 ## Repository Structure
 
 ```
@@ -68,10 +60,18 @@ apps/                     # Demo applications
   web/                    # Next.js web app (turbopack)
 
 packages/                 # Shared internal packages + publishable libs
-  eslint-config/          # Shared ESLint config (@repo/eslint-config)
-  typescript-config/      # Shared tsconfig (@repo/typescript-config)
-  ui/                     # Shared React component library (@repo/ui)
-  pg-toolkit/             # PostgreSQL utilities — published to npm (@rfjs/pg-toolkit)
+  eslint-config/          # Shared ESLint config (@repo/eslint-config, private)
+  typescript-config/      # Shared tsconfig (@repo/typescript-config, private)
+  ui/                     # Shared React component library (@repo/ui, private)
+  data-filter/            # Data filtering with JSONPath — npm (@rfjs/data-filter)
+  data-transform/         # Data type transformation utilities — npm (@rfjs/data-transform)
+  jsonb-query/            # PostgreSQL JSONB query builder — npm (@rfjs/jsonb-query)
+  jwt/                    # JWT sign/verify/decode helper — npm (@rfjs/jwt)
+  mongo-query/            # MongoDB query builder — npm (@rfjs/mongo-query)
+  object-utils/           # Object manipulation utilities — npm (@rfjs/object-utils)
+  pg-toolkit/             # PostgreSQL utilities — npm (@rfjs/pg-toolkit)
+  retry/                  # Retry helper with configurable delay — npm (@rfjs/retry)
+  tpl-toolkit/            # Shared config factories for project templates — npm (@rfjs/tpl-toolkit)
 
 libs/                     # ORM wrapper libraries (private, consumed by orm-app)
   orm-drizzle/            # Drizzle ORM wrapper

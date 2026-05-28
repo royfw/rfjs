@@ -1,7 +1,7 @@
 {
   "name": "@rfjs/data-transform",
   "version": "0.0.0",
-  "description": "Data type transformation utilities — typeTransfer, jsonbTypeTransfer, toBoolean, toDateString",
+  "description": "Data type transformation utilities — typeTransfer, jsonbTransfer, toBoolean, toDateString",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
