@@ -16,7 +16,7 @@ function hasWildcardSyntax(path: string): boolean {
   );
 }
 
-export function resolvePathWithWildcard(
+export function resolvePath(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
   path: string,
@@ -51,7 +51,7 @@ export function resolvePathWithWildcard(
   }
 }
 
-export function resolvePathWithWildcardDetailed(
+export function resolvePathDetail(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
   path: string,

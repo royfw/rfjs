@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 /**
  * convert string[] keys to nested object
  * @example
@@ -9,14 +10,7 @@
  * @param value nested value
  * @returns nested object
  */
-export function keysToNested(
-  keys: string[],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  target: any = {},
-  depth = 0,
-) {
+export function keysToNested(keys: string[], value: any, target: any = {}, depth = 0): any {
   const isLastDepth = depth == keys.length - 1;
   const key = keys[depth];
   if (!isLastDepth) {

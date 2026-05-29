@@ -8,7 +8,7 @@ Retry helper with configurable delay and max attempts.
 npm install @rfjs/retry
 ```
 
-## API
+## Usage
 
 ### `retry(job, periodMs, maxRetryTimes)`
 
@@ -25,7 +25,7 @@ const result = await retry(fetchData, 100, 5);
 // periodMs: 100ms (default), maxRetryTimes: 5 (default)
 ```
 
-### `RetryHelper.createRetry()`
+### `RetryHelper`
 
 Create a bound retry instance from a helper class.
 

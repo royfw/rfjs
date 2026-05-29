@@ -1,4 +1,5 @@
-export type ValueType = string | number | boolean | null | undefined | object | any[];
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
+export type ValueType = string | number | boolean | null | undefined | { [key: string]: any } | any[];
 
 /**
  * convert nested object to flat object
@@ -25,17 +26,20 @@ export type ValueType = string | number | boolean | null | undefined | object | 
  * @param prefix optional
  * @returns
  */
-export function flatten(nestedObj: object, prefix?: string) {
-  return Object.entries(nestedObj).reduce((target, cur) => {
-    const [key, value] = cur;
-    const thisKey = prefix ? [prefix, key].join('.') : key;
-    if (value === null || value === undefined || Array.isArray(value)) {
-      Object.assign(target, { [`${thisKey}`]: value });
-    } else if (typeof value === 'object') {
-      Object.assign(target, flatten(value, thisKey));
-    } else {
-      Object.assign(target, { [`${thisKey}`]: value });
-    }
-    return target;
-  }, <{[key:string]: ValueType}>{});
+export function flatten(nestedObj: object, prefix?: string): any {
+  return Object.entries(nestedObj).reduce(
+    (target, cur: [string, any]) => {
+      const [key, value] = cur;
+      const thisKey = prefix ? [prefix, key].join('.') : key;
+      if (value === null || value === undefined || Array.isArray(value)) {
+        Object.assign(target, { [`${thisKey}`]: value });
+      } else if (typeof value === 'object') {
+        Object.assign(target, flatten(value as object, thisKey));
+      } else {
+        Object.assign(target, { [`${thisKey}`]: value });
+      }
+      return target;
+    },
+    {} as Record<string, ValueType>,
+  );
 }

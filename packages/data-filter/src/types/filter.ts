@@ -3,7 +3,7 @@ export type FilterMatchQuery = {
   filters: (MatchQueryMetadata | FilterMatchQuery)[];
 };
 
-export type MatchQueryDataType = 'string' | 'numeric' | 'boolean';
+export type MatchQueryDataType = 'string' | 'numeric' | 'boolean' | 'date';
 
 export type MatchQueryMetadata = {
   field: string;
@@ -11,7 +11,8 @@ export type MatchQueryMetadata = {
   operator:
     | DefaultFilterOperator
     | TextFilterOperator
-    | NumericFilterOperator;
+    | NumericFilterOperator
+    | DateFilterOperator;
   value: ValueType;
 };
 

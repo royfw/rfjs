@@ -1,3 +1,4 @@
-export * from './MatchBooleanQuery';
-export * from './MatchNumericQuery';
-export * from './MatchTextQuery';
+export * from './BooleanMatch';
+export * from './NumericMatch';
+export * from './TextMatch';
+export * from './DateMatch';

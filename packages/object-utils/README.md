@@ -8,7 +8,7 @@ Object manipulation utilities for TypeScript/JavaScript projects.
 npm install @rfjs/object-utils
 ```
 
-## API
+## Usage
 
 ### `flatten(nestedObj, prefix?)`
 
@@ -26,7 +26,7 @@ const result = flatten({
 
 ### `keysToNested(keys, value, target, depth)`
 
-Convert an array of strings into a nested object.
+Convert an array of strings into a nested object structure.
 
 ```typescript
 import { keysToNested } from '@rfjs/object-utils';
@@ -37,7 +37,7 @@ const result = keysToNested(['a', 'b'], 10);
 
 ### `toJSONString(obj, pretty)`
 
-Convert an object to a JSON string.
+Convert an object to a JSON string. Optionally format with indentation.
 
 ```typescript
 import { toJSONString } from '@rfjs/object-utils';
@@ -48,7 +48,7 @@ toJSONString({ a: 1 }, true);  // '{\n  "a": 1\n}'
 
 ### `toFlatString(obj)`
 
-Convert a nested object to a flat, human-readable string.
+Convert a nested object to a flat, human-readable string with dot-notation keys.
 
 ```typescript
 import { toFlatString } from '@rfjs/object-utils';

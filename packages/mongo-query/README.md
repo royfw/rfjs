@@ -8,7 +8,7 @@ MongoDB query builder. Generates MongoDB query documents from structured filter 
 npm install @rfjs/mongo-query
 ```
 
-## API
+## Usage
 
 ### `toQuery(field, type, condition, value)`
 
@@ -51,6 +51,15 @@ const result = genFilterQuery({
 });
 // { '$and': [ { name: { '$eq': 'test' } }, { '$or': [ { age: { '$gt': 18 } }, { address: { '$eq': null } } ] } ] }
 ```
+
+### Query Classes
+
+Pre-built query classes for common operations:
+
+- `EqQuery`, `NeQuery`, `NinQuery`, `TermsQuery` — equality and membership
+- `GTQuery`, `GTEQuery`, `LTQuery`, `LTEQuery`, `RangeQuery` — range comparison
+- `RegexQuery` — pattern matching
+- `LogicalQuery` — `$and`, `$or`, `$nor` composition
 
 ## Types
 

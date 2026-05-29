@@ -8,7 +8,7 @@ PostgreSQL JSONB SQL query builder. Generates `FROM` and `WHERE` clauses for que
 npm install @rfjs/jsonb-query
 ```
 
-## API
+## Usage
 
 ### `toJsonbQuery(jsonb, field, operator, dataType, value)`
 
@@ -27,14 +27,14 @@ const query = toJsonbQuery(
 // { from: 'data::jsonb', fromAlias: 'j', where: "(data::jsonb -> 'settings' -> 'theme') = 'dark'" }
 ```
 
-### `genFilterQueryMetadata(jsonb, filterQuery)`
+### `genJsonbQuery(jsonb, filterQuery)`
 
 Generate complete SQL `WHERE` and `FROM` clauses from a nested filter metadata tree.
 
 ```typescript
-import { genFilterQueryMetadata } from '@rfjs/jsonb-query';
+import { genJsonbQuery } from '@rfjs/jsonb-query';
 
-const filter: FilterQueryMetadata = {
+const filter = {
   logic: 'and',
   filters: [
     {
@@ -53,12 +53,25 @@ const filter: FilterQueryMetadata = {
   ],
 };
 
-const { where, from } = genFilterQueryMetadata('payload::jsonb', filter);
+const { where, from } = genJsonbQuery('payload::jsonb', filter);
 ```
 
-### `metadetaListToJsonbQuery(jsonb, metadataList)`
+### `toJsonbQueryList(jsonb, metadataList)`
 
 Convert a list of filter metadata into an array of SQL query objects.
+
+### `JsonbOperatorQuery`
+
+Class-based SQL query builder for JSONB. Build queries step by step:
+
+```typescript
+import { JsonbOperatorQuery } from '@rfjs/jsonb-query';
+
+const query = new JsonbOperatorQuery('payload::jsonb');
+query.eq('name', 'test', 'string');
+query.and().gte('age', 18, 'numeric');
+// query.getWhere(), query.getFrom()
+```
 
 ## Operators
 
@@ -66,4 +79,4 @@ Convert a list of filter metadata into an array of SQL query objects.
 
 ## Data Types
 
-All 16 `JsonbDataType` variants: `string`, `numeric`, `date`, `boolean`, and their `object*` / `array*` / `arrayObject*` forms.
+All `JsonbDataType` variants: `string`, `numeric`, `date`, `boolean`, and their `object*` / `array*` / `arrayObject*` forms.
