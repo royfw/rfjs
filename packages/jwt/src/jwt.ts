@@ -2,12 +2,18 @@ import {
   sign,
   verify,
   decode,
+  JwtPayload,
   VerifyErrors,
   SignOptions,
   VerifyOptions,
 } from 'jsonwebtoken';
 
 export type Secret = string | Buffer;
+
+/** Payload accepted by {@link Jwt.createToken}. Note: a `string`/`Buffer`
+ * payload is incompatible with the `expiresIn`/`notBefore`/`audience` claims
+ * and `jsonwebtoken` will throw if they are combined. */
+export type SignPayload = string | Buffer | object;
 
 /**
  * https://github.com/auth0/node-jsonwebtoken?tab=readme-ov-file#jsonwebtokenerror
@@ -47,15 +53,18 @@ export type NotBeforeErrorMessages = 'jwt not active';
  */
 export type TokenExpiredErrorMessages = 'jwt expired';
 
-export interface VerifyJWTResult<T = any> {
-  success: boolean;
-  payload: T;
-  err?: VerifyErrors | null;
-  errMsg?:
-    | JsonWebTokenErrorMessages
-    | NotBeforeErrorMessages
-    | TokenExpiredErrorMessages;
-}
+/**
+ * Result of {@link Jwt.verifyToken}, modelled as a discriminated union on
+ * `success`. On failure the token could not be verified, so `payload` is the
+ * best-effort decoded value and may be `null` (e.g. for a malformed token).
+ *
+ * `errMsg` is the raw `Error.message` from `jsonwebtoken`; the documented
+ * messages above are a guide, but messages such as audience/issuer/subject
+ * errors embed the expected value at runtime, so the type is `string`.
+ */
+export type VerifyJWTResult<T = JwtPayload> =
+  | { success: true; payload: T; err?: undefined; errMsg?: undefined }
+  | { success: false; payload: T | null; err: VerifyErrors; errMsg: string };
 
 export class Jwt {
   constructor(
@@ -70,7 +79,7 @@ export class Jwt {
   }
 
   createToken(
-    payload: any,
+    payload: SignPayload,
     options: SignOptions = { expiresIn: this.option.expiresIn },
   ): string {
     return sign(payload, this.secret, {
@@ -79,12 +88,11 @@ export class Jwt {
     });
   }
 
-  decodeToken<T = any>(token: string): T {
-    const payload = decode(token) as T;
-    return payload;
+  decodeToken<T = JwtPayload>(token: string): T | null {
+    return decode(token) as T | null;
   }
 
-  verifyToken<T = any>(
+  verifyToken<T = JwtPayload>(
     token: string,
     option?: VerifyOptions,
   ): VerifyJWTResult<T> {
@@ -94,13 +102,13 @@ export class Jwt {
         success: true,
         payload,
       };
-    } catch (err: any) {
+    } catch (err) {
       const payload = this.decodeToken<T>(token);
       return {
         success: false,
         payload,
-        err,
-        errMsg: err.message,
+        err: err as VerifyErrors,
+        errMsg: (err as Error).message,
       };
     }
   }
