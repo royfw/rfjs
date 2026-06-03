@@ -1,4 +1,11 @@
-export type ValueType = string | number | boolean | Date | RegExp | null | undefined | any;
+export type ValueType =
+  | string
+  | number
+  | boolean
+  | Date
+  | RegExp
+  | null
+  | undefined;
 
 export enum EnumMgoLogicalOperator {
   AND = '$and',
@@ -13,7 +20,9 @@ export class LogicalQuery {
 }
 
 export class EqQuery {
-  [field: string]: ValueType;
+  [field: string]: {
+    $eq: ValueType;
+  };
   constructor(field: string, value: ValueType) {
     this[field] = {
       $eq: value,
