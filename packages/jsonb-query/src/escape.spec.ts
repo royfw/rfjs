@@ -5,6 +5,7 @@ describe('escapeJsonpathString', () => {
   it('escapes backslash then double quote', () => {
     expect(escapeJsonpathString('a"b')).toBe('a\\"b');
     expect(escapeJsonpathString('a\\b')).toBe('a\\\\b');
+    expect(escapeJsonpathString('a\\"')).toBe('a\\\\\\"');
   });
 });
 

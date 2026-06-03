@@ -9,6 +9,6 @@ export class ParamBuilder {
   }
 
   get values(): unknown[] {
-    return this._values;
+    return [...this._values];
   }
 }

@@ -41,9 +41,12 @@ export function assertArrayValue(
   value: JsonbValue | JsonbValue[] | undefined,
   exactLength?: number,
 ): JsonbValue[] {
-  if (!Array.isArray(value) || (exactLength !== undefined && value.length !== exactLength)) {
+  if (!Array.isArray(value)) {
     const need = exactLength !== undefined ? `${exactLength} values` : 'a non-empty array';
     throw new Error(`Operator "${operator}" requires ${need}`);
+  }
+  if (exactLength !== undefined && value.length !== exactLength) {
+    throw new Error(`Operator "${operator}" requires ${exactLength} values`);
   }
   if (exactLength === undefined && value.length === 0) {
     throw new Error(`Operator "${operator}" requires a non-empty array`);

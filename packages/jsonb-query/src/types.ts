@@ -36,6 +36,7 @@ export interface JsonbFilterGroup {
 export interface JsonbQueryResult {
   where: string;
   values: unknown[];
+  /** FROM-clause fragments. Always `[]` in Phase 1. Reserved for Phase 2 (non-scalar types). */
   from: string[];
 }
 
