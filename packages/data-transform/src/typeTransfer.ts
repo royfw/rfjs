@@ -1,4 +1,3 @@
-import * as _ from 'lodash';
 import { toBoolean } from './boolean';
 
 export type DataType = 'string' | 'number' | 'boolean' | 'any' | 'integer' | 'date';
@@ -15,6 +14,6 @@ export const typeTransfer = (value: ValueType, type: MgoDataType | DataType): Va
     boolean: () => toBoolean(value as boolean | string),
     regex: () => new RegExp(value as string),
   };
-  if (!_.has(transfer, type)) type = 'any';
+  if (!Object.prototype.hasOwnProperty.call(transfer, type)) type = 'any';
   return transfer[type]();
 };
