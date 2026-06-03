@@ -40,6 +40,8 @@ describe('jsonpathDialect', () => {
   it('comparisons', () => {
     expect(run('age', 'numeric', 'gt', 1).values[0]).toBe('$."age" ? (@ > $v)');
     expect(run('age', 'numeric', 'lte', 1).values[0]).toBe('$."age" ? (@ <= $v)');
+    expect(run('age', 'numeric', 'gte', 1).values[0]).toBe('$."age" ? (@ >= $v)');
+    expect(run('age', 'numeric', 'lt', 1).values[0]).toBe('$."age" ? (@ < $v)');
   });
 
   it('range', () => {
@@ -79,6 +81,10 @@ describe('jsonpathDialect', () => {
   it('isnull / isnotnull fall back to the dialect-independent null check', () => {
     expect(run('name', 'string', 'isnull')).toEqual({
       where: '(("data" #>> $1) is null)',
+      values: [['name']],
+    });
+    expect(run('name', 'string', 'isnotnull')).toEqual({
+      where: '(("data" #>> $1) is not null)',
       values: [['name']],
     });
   });

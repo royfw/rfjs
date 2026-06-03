@@ -74,14 +74,18 @@ export const jsonpathDialect: ScalarDialect = {
           .join(' || ');
         return withVars(predicate, vars);
       }
+      // startswith/contains/endswith are string predicates: they operate on the
+      // text form (`@`), never `.datetime()`. `lhs` is intentionally unused here.
       case 'startswith':
         return withVars('@ starts with $v', { v: assertScalarValue(operator, value) });
       case 'contains': {
-        const lit = escapeJsonpathString(escapeRegexLiteral(String(assertScalarValue(operator, value))));
+        const raw = String(assertScalarValue(operator, value));
+        const lit = escapeJsonpathString(escapeRegexLiteral(raw));
         return withoutVars(`@ like_regex "${lit}"`);
       }
       case 'endswith': {
-        const lit = escapeJsonpathString(escapeRegexLiteral(String(assertScalarValue(operator, value))) + '$');
+        const raw = String(assertScalarValue(operator, value));
+        const lit = escapeJsonpathString(escapeRegexLiteral(raw) + '$');
         return withoutVars(`@ like_regex "${lit}"`);
       }
       default:
