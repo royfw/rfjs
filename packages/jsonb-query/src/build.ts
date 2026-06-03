@@ -1,5 +1,6 @@
 import type {
   JsonbCondition,
+  JsonbDialect,
   JsonbFilterGroup,
   JsonbQueryResult,
   BuildJsonbOptions,
@@ -10,10 +11,10 @@ import type { ScalarDialect } from './dialect';
 import { legacyDialect } from './dialect-legacy';
 import { jsonpathDialect } from './dialect-jsonpath';
 
-const DIALECTS: Record<string, ScalarDialect> = {
+const DIALECTS = {
   legacy: legacyDialect,
   jsonpath: jsonpathDialect,
-};
+} satisfies Record<JsonbDialect, ScalarDialect>;
 
 function isGroup(
   node: JsonbCondition | JsonbFilterGroup,
@@ -54,7 +55,11 @@ export function buildJsonbQuery(
   options: BuildJsonbOptions = {},
 ): JsonbQueryResult {
   const quoted = quoteJsonbColumn(column);
-  const dialect = DIALECTS[options.dialect ?? 'legacy'];
+  const dialectName = options.dialect ?? 'legacy';
+  const dialect = DIALECTS[dialectName];
+  if (!dialect) {
+    throw new Error(`Unknown JSONB dialect: "${dialectName}"`);
+  }
   const params = new ParamBuilder(options.paramOffset ?? 0);
   const where = buildGroup(filter, quoted, dialect, params);
   return { where, values: params.values, from: [] };

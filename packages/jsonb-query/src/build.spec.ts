@@ -96,4 +96,39 @@ describe('buildJsonbQuery', () => {
       buildJsonbQuery('data; DROP', { logic: 'and', filters: [] }),
     ).toThrow(/invalid jsonb column/i);
   });
+
+  it('throws for an unknown dialect', () => {
+    expect(() =>
+      buildJsonbQuery('data', { logic: 'and', filters: [] }, {
+        dialect: 'nope' as never,
+      }),
+    ).toThrow(/unknown jsonb dialect/i);
+  });
+
+  it('composes three levels of nesting with contiguous params', () => {
+    const r = buildJsonbQuery('data', {
+      logic: 'and',
+      filters: [
+        { field: 'a', dataType: 'string', operator: 'eq', value: 'x' },
+        {
+          logic: 'or',
+          filters: [
+            { field: 'b', dataType: 'numeric', operator: 'gt', value: 1 },
+            {
+              logic: 'and',
+              filters: [
+                { field: 'c', dataType: 'string', operator: 'eq', value: 'y' },
+                { field: 'd', dataType: 'boolean', operator: 'eq', value: true },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    // params run $1..$8 in order; each nested group is wrapped exactly once
+    expect(r.where).toBe(
+      '(("data" #>> $1) = $2) and ((("data" #>> $3)::numeric > $4) or ((("data" #>> $5) = $6) and (("data" #>> $7)::boolean = $8)))',
+    );
+    expect(r.values).toEqual([['a'], 'x', ['b'], 1, ['c'], 'y', ['d'], true]);
+  });
 });
