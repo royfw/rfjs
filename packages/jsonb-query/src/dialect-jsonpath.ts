@@ -1,11 +1,10 @@
-import type { JsonbScalarType, JsonbScalarOperator, JsonbValue } from './types';
+import type { JsonbScalarOperator, JsonbValue } from './types';
 import {
   type ScalarDialect,
   fieldSegments,
   assertScalarValue,
   assertArrayValue,
 } from './dialect';
-import type { ParamBuilder } from './param-builder';
 import { escapeJsonpathString, escapeRegexLiteral } from './escape';
 
 function basePath(field: string): string {

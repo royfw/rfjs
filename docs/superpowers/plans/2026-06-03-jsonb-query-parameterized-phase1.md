@@ -682,14 +682,13 @@ Expected: FAIL — cannot find module `./dialect-jsonpath`.
 - [ ] **Step 3: Write the implementation**
 
 ```ts
-import type { JsonbScalarType, JsonbScalarOperator, JsonbValue } from './types';
+import type { JsonbScalarOperator, JsonbValue } from './types';
 import {
   type ScalarDialect,
   fieldSegments,
   assertScalarValue,
   assertArrayValue,
 } from './dialect';
-import type { ParamBuilder } from './param-builder';
 import { escapeJsonpathString, escapeRegexLiteral } from './escape';
 
 function basePath(field: string): string {
