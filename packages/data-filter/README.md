@@ -44,7 +44,7 @@ const results = matchQueryArray(items, [filter]);
 
 #### `matchAndMap(data, mappings, extraData, dataKey)`
 
-Filter and map data using alias substitution. Supports dynamic field resolution via `{{field.path}}` placeholders.
+Filter and map data using alias substitution. Supports dynamic field resolution via `${field.path}` (or `$field.path`) placeholders, resolved against the source data.
 
 ```typescript
 import { matchAndMap } from '@rfjs/data-filter';

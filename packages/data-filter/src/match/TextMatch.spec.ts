@@ -894,4 +894,34 @@ describe('arrayQuery', () => {
             expect(query.isMatch).toBe(true);
         });
     });
+
+    describe('TextMatch regex-safe prefix/suffix matching', () => {
+        it('startswith treats a regex metacharacter literally', () => {
+            // value "a." must match a literal "a." prefix, not "a" + any char
+            expect(
+                new TextMatch('s', 'startswith', 'a.', { s: 'a.bc' }).isMatch,
+            ).toBe(true);
+            expect(
+                new TextMatch('s', 'startswith', 'a.', { s: 'aXbc' }).isMatch,
+            ).toBe(false);
+        });
+
+        it('endswith treats a regex metacharacter literally', () => {
+            expect(
+                new TextMatch('s', 'endswith', '.c', { s: 'ab.c' }).isMatch,
+            ).toBe(true);
+            expect(
+                new TextMatch('s', 'endswith', '.c', { s: 'abXc' }).isMatch,
+            ).toBe(false);
+        });
+
+        it('does not throw on a value that is an invalid regex', () => {
+            expect(
+                () => new TextMatch('s', 'startswith', '(', { s: 'test' }).isMatch,
+            ).not.toThrow();
+            expect(
+                () => new TextMatch('s', 'endswith', '(', { s: 'test' }).isMatch,
+            ).not.toThrow();
+        });
+    });
 });
