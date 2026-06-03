@@ -13,6 +13,13 @@ const CASTS: Record<JsonbScalarType, string> = {
   boolean: '::boolean',
 };
 
+const ARRAY_CASTS: Record<JsonbScalarType, string> = {
+  string: '::text[]',
+  numeric: '::numeric[]',
+  date: '::timestamptz[]',
+  boolean: '::boolean[]',
+};
+
 export const legacyDialect: ScalarDialect = {
   render(column, field, dataType, operator, value, params) {
     const fParam = params.add(fieldSegments(field));
@@ -41,7 +48,7 @@ export const legacyDialect: ScalarDialect = {
         return `(${Fc} between ${params.add(lo)} and ${params.add(hi)})`;
       }
       case 'terms':
-        return `(${Fc} = ANY(${params.add(assertArrayValue(operator, value))}))`;
+        return `(${Fc} = ANY(${params.add(assertArrayValue(operator, value))}${ARRAY_CASTS[dataType]}))`;
       case 'contains':
         return `(position(${params.add(assertScalarValue(operator, value))} in ${F}) > 0)`;
       case 'startswith': {

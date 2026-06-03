@@ -436,10 +436,18 @@ describe('legacyDialect', () => {
     });
   });
 
-  it('terms uses = ANY with an array param', () => {
+  it('terms uses = ANY with a type-cast array param', () => {
     expect(run('tag', 'string', 'terms', ['a', 'b'])).toEqual({
-      where: '(("data" #>> $1) = ANY($2))',
+      where: '(("data" #>> $1) = ANY($2::text[]))',
       values: [['tag'], ['a', 'b']],
+    });
+    expect(run('age', 'numeric', 'terms', [1, 2])).toEqual({
+      where: '(("data" #>> $1)::numeric = ANY($2::numeric[]))',
+      values: [['age'], [1, 2]],
+    });
+    expect(run('d', 'date', 'terms', ['2020-01-01', '2021-01-01'])).toEqual({
+      where: '(("data" #>> $1)::timestamptz = ANY($2::timestamptz[]))',
+      values: [['d'], ['2020-01-01', '2021-01-01']],
     });
   });
 
@@ -497,6 +505,13 @@ const CASTS: Record<JsonbScalarType, string> = {
   boolean: '::boolean',
 };
 
+const ARRAY_CASTS: Record<JsonbScalarType, string> = {
+  string: '::text[]',
+  numeric: '::numeric[]',
+  date: '::timestamptz[]',
+  boolean: '::boolean[]',
+};
+
 export const legacyDialect: ScalarDialect = {
   render(column, field, dataType, operator, value, params) {
     const fParam = params.add(fieldSegments(field));
@@ -525,7 +540,7 @@ export const legacyDialect: ScalarDialect = {
         return `(${Fc} between ${params.add(lo)} and ${params.add(hi)})`;
       }
       case 'terms':
-        return `(${Fc} = ANY(${params.add(assertArrayValue(operator, value))}))`;
+        return `(${Fc} = ANY(${params.add(assertArrayValue(operator, value))}${ARRAY_CASTS[dataType]}))`;
       case 'contains':
         return `(position(${params.add(assertScalarValue(operator, value))} in ${F}) > 0)`;
       case 'startswith': {

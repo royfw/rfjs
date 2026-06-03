@@ -224,7 +224,7 @@ null check (robust across both): `(F is null)` / `(F is not null)`.
 | isnotnull | all | `(F is not null)` |
 | gt / gte / lt / lte | numeric, date | `(Fc > $v)` / `>=` / `<` / `<=` |
 | range | numeric, date | `(Fc between $lo and $hi)` |
-| terms | string, numeric, date | `(Fc = ANY($v))` — `$v` is an array param |
+| terms | string, numeric, date | `(Fc = ANY($v::<type>[]))` — `$v` is an array param cast to the matching element-array type (e.g. `::text[]`, `::numeric[]`, `::timestamptz[]`) |
 | contains | string | `(position($v in F) > 0)` |
 | startswith | string | `(left(F, char_length($v)) = $v)` |
 | endswith | string | `(right(F, char_length($v)) = $v)` |
