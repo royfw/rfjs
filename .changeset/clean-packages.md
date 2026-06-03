@@ -1,7 +1,6 @@
 ---
 "@rfjs/data-filter": minor
 "@rfjs/data-transform": patch
-"@rfjs/jsonb-query": patch
 "@rfjs/mongo-query": patch
 "@rfjs/jwt": patch
 "@rfjs/retry": patch

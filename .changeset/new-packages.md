@@ -2,7 +2,6 @@
 "@rfjs/object-utils": minor
 "@rfjs/data-transform": minor
 "@rfjs/data-filter": minor
-"@rfjs/jsonb-query": minor
 "@rfjs/mongo-query": minor
 "@rfjs/jwt": minor
 "@rfjs/retry": minor

@@ -1,7 +1,6 @@
 ---
 "@rfjs/data-filter": patch
 "@rfjs/data-transform": patch
-"@rfjs/jsonb-query": patch
 "@rfjs/jwt": patch
 "@rfjs/mongo-query": patch
 "@rfjs/object-utils": patch
