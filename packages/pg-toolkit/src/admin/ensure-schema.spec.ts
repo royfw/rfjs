@@ -53,4 +53,12 @@ describe('checkAndCreateSchema', () => {
     expect(mockQuery).not.toHaveBeenCalled();
     expect(mockEnd).toHaveBeenCalled();
   });
+
+  it('escapes a malicious schema name', async () => {
+    mockConnect.mockResolvedValue(undefined);
+    mockQuery.mockResolvedValue({});
+    await checkAndCreateSchema('postgres://abc', ['evil"; DROP SCHEMA public; --']);
+    const sql = mockQuery.mock.calls[0][0] as string;
+    expect(sql).toBe('CREATE SCHEMA IF NOT EXISTS "evil""; DROP SCHEMA public; --"');
+  });
 });

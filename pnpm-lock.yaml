@@ -1019,6 +1019,9 @@ importers:
 
   packages/pg-toolkit:
     dependencies:
+      '@types/pg':
+        specifier: ^8.16.0
+        version: 8.16.0
       pg:
         specifier: ^8.16.3
         version: 8.16.3
@@ -1041,9 +1044,6 @@ importers:
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.39.1
-      '@types/pg':
-        specifier: ^8.16.0
-        version: 8.16.0
       '@types/pg-connection-string':
         specifier: ^2.0.0
         version: 2.0.0

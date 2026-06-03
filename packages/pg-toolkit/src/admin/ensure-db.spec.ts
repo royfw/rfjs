@@ -78,12 +78,49 @@ describe('checkAndCreateDB', () => {
 
     await checkAndCreateDB('postgres://user:pass@localhost:5432/target_db');
 
-    // Verify Client was initialized with postgres db, not target_db
+    // Admin connection targets the `postgres` database, derived from the parsed
+    // fields rather than a hand-rebuilt connection string.
     expect(Client).toHaveBeenCalledWith(
       expect.objectContaining({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        connectionString: expect.stringMatching(/\/postgres$/),
+        host: 'localhost',
+        port: 5432,
+        user: 'user',
+        password: 'pass',
+        database: 'postgres',
       }),
     );
+  });
+
+  it('preserves a password containing URL-special characters', async () => {
+    mockConnect.mockResolvedValue(undefined);
+    mockQuery.mockResolvedValueOnce({ rowCount: 1 });
+
+    // password decodes to `p@ss:word` — rebuilding a URL string would corrupt it
+    await checkAndCreateDB('postgres://user:p%40ss%3Aword@localhost:5432/target_db');
+
+    expect(Client).toHaveBeenCalledWith(
+      expect.objectContaining({ password: 'p@ss:word', database: 'postgres' }),
+    );
+  });
+
+  it('omits the port when the connection string has none', async () => {
+    mockConnect.mockResolvedValue(undefined);
+    mockQuery.mockResolvedValueOnce({ rowCount: 1 });
+
+    await checkAndCreateDB('postgres://user:pass@localhost/target_db');
+
+    const cfg = vi.mocked(Client).mock.calls[0][0] as { port?: number };
+    expect(cfg.port).toBeUndefined();
+  });
+
+  it('escapes a malicious target database name in CREATE DATABASE', async () => {
+    mockConnect.mockResolvedValue(undefined);
+    mockQuery
+      .mockResolvedValueOnce({ rowCount: 0 })
+      .mockResolvedValueOnce({ rowCount: 1 });
+
+    await checkAndCreateDB('postgres://user:pass@localhost:5432/ev%22il');
+
+    expect(mockQuery).toHaveBeenNthCalledWith(2, 'CREATE DATABASE "ev""il"');
   });
 });

@@ -1,4 +1,5 @@
 import { Client, Pool } from 'pg';
+import { quoteIdent } from '../pure/identifier';
 
 const DEFAULT_TABLE_NAME = '__seed_history';
 
@@ -12,7 +13,7 @@ export async function ensureSeedHistoryTable(
   tableName: string = DEFAULT_TABLE_NAME,
 ): Promise<void> {
   await client.query(`
-    CREATE TABLE IF NOT EXISTS "${tableName}" (
+    CREATE TABLE IF NOT EXISTS ${quoteIdent(tableName)} (
       "id" SERIAL PRIMARY KEY,
       "name" VARCHAR(255) NOT NULL UNIQUE,
       "executed_at" TIMESTAMPTZ DEFAULT NOW()
@@ -32,9 +33,10 @@ export async function checkSeedExecuted(
   name: string,
   tableName: string = DEFAULT_TABLE_NAME,
 ): Promise<boolean> {
-  const res = await client.query(`SELECT 1 FROM "${tableName}" WHERE "name" = $1`, [
-    name,
-  ]);
+  const res = await client.query(
+    `SELECT 1 FROM ${quoteIdent(tableName)} WHERE "name" = $1`,
+    [name],
+  );
   return (res.rowCount ?? 0) > 0;
 }
 
@@ -49,5 +51,5 @@ export async function recordSeedExecution(
   name: string,
   tableName: string = DEFAULT_TABLE_NAME,
 ): Promise<void> {
-  await client.query(`INSERT INTO "${tableName}" ("name") VALUES ($1)`, [name]);
+  await client.query(`INSERT INTO ${quoteIdent(tableName)} ("name") VALUES ($1)`, [name]);
 }
