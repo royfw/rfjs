@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { BooleanMatch } from '../match/BooleanMatch';
 import { NumericMatch } from '../match/NumericMatch';
 import { TextMatch } from '../match/TextMatch';

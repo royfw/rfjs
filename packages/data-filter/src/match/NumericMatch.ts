@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
 import type { NumericFilterOperator, DefaultFilterOperator, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';

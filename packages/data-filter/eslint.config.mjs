@@ -29,6 +29,18 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-assignment': 'warn',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-return': 'warn',
+      // lodash is CommonJS and stays external in the ESM build; a namespace
+      // import (`import * as _ from 'lodash'`) resolves its methods to
+      // `undefined` at runtime in Node ESM. Force the default import.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "ImportDeclaration[source.value='lodash'] > ImportNamespaceSpecifier",
+          message:
+            "Use a default import (`import _ from 'lodash'`); a namespace import breaks in the ESM build.",
+        },
+      ],
     },
   },
 );

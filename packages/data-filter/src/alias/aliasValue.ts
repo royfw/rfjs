@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { aliasRegex } from './aliasRegex';
 import { flatten } from '@rfjs/object-utils';
 

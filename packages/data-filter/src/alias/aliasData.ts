@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { aliasValue } from './aliasValue';
 import { flatten } from '@rfjs/object-utils';
 
