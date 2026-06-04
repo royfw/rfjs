@@ -8,6 +8,7 @@ import type {
 import { ParamBuilder } from './param-builder';
 import { quoteJsonbColumn } from './column';
 import type { ScalarDialect } from './dialect';
+import { assertOperatorForType } from './dialect';
 import { legacyDialect } from './dialect-legacy';
 import { jsonpathDialect } from './dialect-jsonpath';
 
@@ -22,6 +23,16 @@ function isGroup(
   return 'logic' in node && 'filters' in node;
 }
 
+function renderCondition(
+  node: JsonbCondition,
+  column: string,
+  dialect: ScalarDialect,
+  params: ParamBuilder,
+): string {
+  assertOperatorForType(node.dataType, node.operator);
+  return dialect.render(column, node.field, node.dataType, node.operator, node.value, params);
+}
+
 function buildGroup(
   group: JsonbFilterGroup,
   column: string,
@@ -32,14 +43,7 @@ function buildGroup(
     .map((node) =>
       isGroup(node)
         ? wrap(buildGroup(node, column, dialect, params))
-        : dialect.render(
-            column,
-            node.field,
-            node.dataType,
-            node.operator,
-            node.value,
-            params,
-          ),
+        : renderCondition(node, column, dialect, params),
     )
     .filter((sql) => sql.length > 0);
   return parts.join(group.logic === 'or' ? ' or ' : ' and ');

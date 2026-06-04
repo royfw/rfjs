@@ -53,3 +53,19 @@ export function assertArrayValue(
   }
   return value;
 }
+
+const OPERATORS_BY_TYPE: Record<JsonbScalarType, ReadonlySet<JsonbScalarOperator>> = {
+  string: new Set(['eq', 'neq', 'isnull', 'isnotnull', 'contains', 'startswith', 'endswith', 'terms']),
+  numeric: new Set(['eq', 'neq', 'isnull', 'isnotnull', 'gt', 'gte', 'lt', 'lte', 'range', 'terms']),
+  date: new Set(['eq', 'neq', 'isnull', 'isnotnull', 'gt', 'gte', 'lt', 'lte', 'range', 'terms']),
+  boolean: new Set(['eq', 'neq', 'isnull', 'isnotnull']),
+};
+
+export function assertOperatorForType(
+  dataType: JsonbScalarType,
+  operator: JsonbScalarOperator,
+): void {
+  if (!OPERATORS_BY_TYPE[dataType]?.has(operator)) {
+    throw new Error(`Unsupported operator "${operator}" for type "${dataType}"`);
+  }
+}

@@ -7,6 +7,10 @@ describe('escapeJsonpathString', () => {
     expect(escapeJsonpathString('a\\b')).toBe('a\\\\b');
     expect(escapeJsonpathString('a\\"')).toBe('a\\\\\\"');
   });
+
+  it('escapes control characters', () => {
+    expect(escapeJsonpathString('a\nb')).toBe('a\\u000ab');
+  });
 });
 
 describe('escapeRegexLiteral', () => {

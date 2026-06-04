@@ -105,6 +105,17 @@ describe('buildJsonbQuery', () => {
     ).toThrow(/unknown jsonb dialect/i);
   });
 
+  it('rejects an operator that is invalid for the data type', () => {
+    const bad = (dataType: never, operator: never) =>
+      () => buildJsonbQuery('data', {
+        logic: 'and',
+        filters: [{ field: 'x', dataType, operator, value: 1 as never }],
+      });
+    expect(bad('boolean' as never, 'gt' as never)).toThrow(/unsupported operator "gt" for type "boolean"/i);
+    expect(bad('string' as never, 'range' as never)).toThrow(/unsupported operator "range" for type "string"/i);
+    expect(bad('numeric' as never, 'startswith' as never)).toThrow(/unsupported operator "startswith" for type "numeric"/i);
+  });
+
   it('composes three levels of nesting with contiguous params', () => {
     const r = buildJsonbQuery('data', {
       logic: 'and',
