@@ -60,4 +60,21 @@ describe('getConnectionStringInfo', () => {
     expect(options).toContain('-c log_min_messages=debug');
     expect(options).toContain('-c search_path=target');
   });
+
+  it('does not throw on a libpq keyword/value DSN (non-URL)', () => {
+    const cs = 'host=localhost port=5432 dbname=app';
+    const result = getConnectionStringInfo(cs, 'myschema');
+    expect(result.finalSchema).toBe('myschema');
+    expect(result.optionsSchemas).toEqual([]);
+    expect(result.hasSearchPath).toBe(false);
+    // a non-URL DSN cannot have options injected; it is returned unchanged
+    expect(result.finalConnectionString).toBe(cs);
+  });
+
+  it('does not throw on an empty connection string', () => {
+    const result = getConnectionStringInfo('');
+    expect(result.finalSchema).toBe('public');
+    expect(result.hasSearchPath).toBe(false);
+    expect(result.finalConnectionString).toBe('');
+  });
 });

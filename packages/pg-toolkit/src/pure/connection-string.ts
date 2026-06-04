@@ -22,32 +22,43 @@ export function getConnectionStringInfo(
   hasSearchPath: boolean;
 } {
   const config = parse(connectionString);
-  const url = new URL(connectionString);
+  // Only `postgres://` URLs can have their query params read/rewritten. A libpq
+  // keyword/value DSN (`host=... dbname=...`) or an empty string is not a URL —
+  // fall back to the parsed config and leave the string untouched.
+  let url: URL | null = null;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    url = null;
+  }
 
   // 這裡拿到的 options **是 decode 後的字串**（例如 "-c search_path=prisma_test"）
-  const options = url.searchParams.get('options') ?? config.options ?? undefined;
+  const options = url?.searchParams.get('options') ?? config.options ?? undefined;
 
   const optionsSchemas = getOptionsSchemas(options);
   const hasSearchPath = optionsSchemas.length > 0;
 
-  const schemaParam = url.searchParams.get('schema') ?? undefined;
+  const schemaParam = url?.searchParams.get('schema') ?? undefined;
 
   // options search_path > schema param > targetSchema > public
   const finalSchema = optionsSchemas[0] ?? schemaParam ?? targetSchema ?? 'public';
 
-  // (1) 有 schema，沒 search_path → 補 options
-  if (!hasSearchPath && finalSchema !== 'public') {
-    const merged = mergeOptions(options, finalSchema);
-    // ✅ 不要 encodeURIComponent，URLSearchParams 會自動處理
-    url.searchParams.set('options', merged);
+  // URL rewriting is only possible for URL connection strings.
+  if (url) {
+    // (1) 有 schema，沒 search_path → 補 options
+    if (!hasSearchPath && finalSchema !== 'public') {
+      const merged = mergeOptions(options, finalSchema);
+      // ✅ 不要 encodeURIComponent，URLSearchParams 會自動處理
+      url.searchParams.set('options', merged);
+    }
+
+    // (2) 有 search_path，沒 schema → 補 schema
+    if (!schemaParam && optionsSchemas.length > 0) {
+      url.searchParams.set('schema', optionsSchemas[0]);
+    }
   }
 
-  // (2) 有 search_path，沒 schema → 補 schema
-  if (!schemaParam && optionsSchemas.length > 0) {
-    url.searchParams.set('schema', optionsSchemas[0]);
-  }
-
-  const finalConnectionString = url.toString();
+  const finalConnectionString = url ? url.toString() : connectionString;
 
   return {
     optionsSchemas,
