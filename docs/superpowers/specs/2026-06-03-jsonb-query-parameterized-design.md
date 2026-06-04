@@ -258,9 +258,16 @@ Wrapper: `jsonb_path_exists(col, $p::jsonpath, $vars::jsonb)`.
 | range | date | `@.datetime() >= $lo.datetime() && @.datetime() <= $hi.datetime()` | `{lo, hi}` |
 | terms | string, numeric, date | `@ == $v0 || @ == $v1 …` (date: `@.datetime() == $vN.datetime()`) | `{v0, v1, …}` |
 | startswith | string | `@ starts with $v` | `{v}` |
-| contains | string | `@ like_regex $re` | `{re: escapeRegexLiteral(value)}` |
-| endswith | string | `@ like_regex $re` | `{re: escapeRegexLiteral(value) + '$'}` |
+| contains | string | `@ like_regex "<lit>"` — no vars (2-arg form) | — |
+| endswith | string | `@ like_regex "<lit>$"` — no vars (2-arg form) | — |
 | isnull / isnotnull | all | (legacy null check, see above) | — |
+
+`like_regex` requires a **string-literal** pattern (a jsonpath variable is not
+valid there), so `contains`/`endswith` embed the pattern in the jsonpath string
+and use the 2-arg `jsonb_path_exists(col, $p::jsonpath)`. `<lit>` is
+`escapeJsonpathString(escapeRegexLiteral(value))` (regex-escape first so the
+value matches literally, then jsonpath-string-escape); `endswith` appends the
+`$` anchor before the jsonpath-string-escape.
 
 Version note: `.datetime()` requires PostgreSQL 13+. `starts with`, `like_regex`,
 `jsonb_path_exists` require PG12+. Documented as the dialect's minimum.
