@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
-import type { NumericFilterOperator, DefaultFilterOperator, ObjectData } from '../types';
+import type { NumericFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
 
 export class NumericMatch {
@@ -11,18 +11,17 @@ export class NumericMatch {
     values: number[];
     constructor(
         private field: string,
-        private operator: NumericFilterOperator | DefaultFilterOperator,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        value: any,
+        private operator: NumericFilterOperator,
+        value: ValueType,
         private data: ObjectData,
     ) {
         const target = resolvePath(this.data, this.field);
         if (_.isUndefined(target)) {
             this.validPath = false;
         }
-        const targetVals = []
-            .concat(value)
-            .map((i) => typeTransfer(i, 'number')) as number[];
+        const targetVals = (Array.isArray(value) ? value : [value]).map((i) =>
+            typeTransfer(i, 'number'),
+        ) as number[];
         this.values = targetVals;
         const targets = [].concat(target).map((i) => typeTransfer(i, 'number'));
         this.targets = targets;

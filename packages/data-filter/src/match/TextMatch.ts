@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
-import type { TextFilterOperator, DefaultFilterOperator, ObjectData } from '../types';
+import type { TextFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
 
 export class TextMatch {
@@ -11,9 +11,8 @@ export class TextMatch {
     values: string[];
     constructor(
         private field: string,
-        private operator: TextFilterOperator | DefaultFilterOperator,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        value: any,
+        private operator: TextFilterOperator,
+        value: ValueType,
         private data: ObjectData,
     ) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
