@@ -2,7 +2,14 @@ import { toBoolean } from './boolean';
 
 export type DataType = 'string' | 'number' | 'boolean' | 'any' | 'integer' | 'date';
 export type MgoDataType = DataType;
-export type ValueType = string | number | boolean | Date | RegExp | null | undefined | any;
+export type ValueType =
+  | string
+  | number
+  | boolean
+  | Date
+  | RegExp
+  | null
+  | undefined;
 
 export const typeTransfer = (value: ValueType, type: MgoDataType | DataType): ValueType => {
   const transfer = {

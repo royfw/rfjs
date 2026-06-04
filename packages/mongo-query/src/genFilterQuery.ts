@@ -9,7 +9,7 @@ export interface MgoFieldCondition {
   field: string;
   condition: MgoConditionType;
   dataType: MgoDataType;
-  value: ValueType;
+  value: ValueType | ValueType[];
 }
 
 export interface MgoFilterMetadata {

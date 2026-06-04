@@ -13,10 +13,13 @@ export enum EnumMgoLogicalOperator {
   NOR = '$nor',
 }
 
+/** A node in a logical query: a field-condition object or a nested group. */
+export type MgoQueryNode = Record<string, unknown> | LogicalQuery;
+
 export class LogicalQuery {
-  $and?: Array<any>;
-  $or?: Array<any>;
-  $nor?: Array<any>;
+  $and?: MgoQueryNode[];
+  $or?: MgoQueryNode[];
+  $nor?: MgoQueryNode[];
 }
 
 export class EqQuery {
