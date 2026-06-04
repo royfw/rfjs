@@ -1,8 +1,9 @@
 # @rfjs/jsonb-query
 
-PostgreSQL JSONB SQL query builder. Generates `FROM` and `WHERE` clauses for querying JSONB columns.
+Parameterized PostgreSQL JSONB query builder. Turns a filter-metadata tree into
+a safe, parameterized `WHERE` expression (node-postgres `$1, $2` placeholders).
 
-## Installation
+## Install
 
 ```bash
 npm install @rfjs/jsonb-query
@@ -10,73 +11,67 @@ npm install @rfjs/jsonb-query
 
 ## Usage
 
-### `toJsonbQuery(jsonb, field, operator, dataType, value)`
-
-Generate a SQL query fragment for a single JSONB field condition.
-
 ```typescript
-import { toJsonbQuery } from '@rfjs/jsonb-query';
+import { buildJsonbQuery } from '@rfjs/jsonb-query';
 
-const query = toJsonbQuery(
-  'data::jsonb',    // jsonb expression
-  'settings.theme', // field path
-  'eq',             // operator
-  'string',         // dataType
-  'dark'            // value
-);
-// { from: 'data::jsonb', fromAlias: 'j', where: "(data::jsonb -> 'settings' -> 'theme') = 'dark'" }
-```
-
-### `genJsonbQuery(jsonb, filterQuery)`
-
-Generate complete SQL `WHERE` and `FROM` clauses from a nested filter metadata tree.
-
-```typescript
-import { genJsonbQuery } from '@rfjs/jsonb-query';
-
-const filter = {
+const { where, values } = buildJsonbQuery('data', {
   logic: 'and',
   filters: [
-    {
-      field: 'name',
-      dataType: 'string',
-      operator: 'eq',
-      value: 'test',
-    },
+    { field: 'name', dataType: 'string', operator: 'eq', value: 'bob' },
     {
       logic: 'or',
       filters: [
         { field: 'age', dataType: 'numeric', operator: 'gte', value: 18 },
-        { field: 'active', dataType: 'boolean', operator: 'eq', value: true },
+        { field: 'profile.vip', dataType: 'boolean', operator: 'eq', value: true },
       ],
     },
   ],
-};
+});
 
-const { where, from } = genJsonbQuery('payload::jsonb', filter);
+// where: (("data" #>> $1) = $2) and ((("data" #>> $3)::numeric >= $4) or (("data" #>> $5)::boolean = $6))
+// values: [['name'], 'bob', ['age'], 18, ['profile','vip'], true]
+await client.query(`SELECT * FROM t WHERE ${where}`, values);
 ```
 
-### `toJsonbQueryList(jsonb, metadataList)`
-
-Convert a list of filter metadata into an array of SQL query objects.
-
-### `JsonbOperatorQuery`
-
-Class-based SQL query builder for JSONB. Build queries step by step:
+### Dialects
 
 ```typescript
-import { JsonbOperatorQuery } from '@rfjs/jsonb-query';
-
-const query = new JsonbOperatorQuery('payload::jsonb');
-query.eq('name', 'test', 'string');
-query.and().gte('age', 18, 'numeric');
-// query.getWhere(), query.getFrom()
+buildJsonbQuery('data', filter, { dialect: 'jsonpath' });
 ```
 
-## Operators
+- `legacy` (default) — `#>>` extraction with casts. Works on all supported
+  PostgreSQL versions.
+- `jsonpath` — `jsonb_path_exists` with SQL/JSON path. Requires PostgreSQL 12+
+  (13+ for `date` comparisons, which use `.datetime()`).
 
-`eq`, `neq`, `isnull`, `isnotnull`, `contains`, `startswith`, `endswith`, `terms`, `gt`, `gte`, `lt`, `lte`, `range`
+Both dialects accept the same filter metadata.
 
-## Data Types
+### Embedding in a larger query
 
-All `JsonbDataType` variants: `string`, `numeric`, `date`, `boolean`, and their `object*` / `array*` / `arrayObject*` forms.
+Use `paramOffset` when the fragment follows existing parameters:
+
+```typescript
+const { where, values } = buildJsonbQuery('data', filter, { paramOffset: 1 });
+await client.query(`SELECT * FROM t WHERE org_id = $1 AND ${where}`, [orgId, ...values]);
+```
+
+## Safety
+
+Condition **values** and **field paths** are always parameterized — never
+interpolated into SQL. The **column** argument is a developer-provided
+identifier: it is validated and quoted (`data`, `t.payload`), and anything that
+is not a plain (optionally qualified) column reference is rejected.
+
+## Supported types & operators
+
+| dataType | operators |
+|----------|-----------|
+| `string` | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `terms` |
+| `numeric` | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms` |
+| `date` | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms` |
+| `boolean` | `eq` `neq` `isnull` `isnotnull` |
+
+`range` takes a 2-element `[lo, hi]` value; `terms` takes a non-empty array.
+
+> Nested objects, JSON arrays, and arrays of objects are planned for a later
+> release.
