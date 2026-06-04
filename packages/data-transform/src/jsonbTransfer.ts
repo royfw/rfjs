@@ -7,7 +7,13 @@ export type JsonbDataType =
   | 'arrayString' | 'arrayNumeric' | 'arrayDate' | 'arrayBoolean'
   | 'arrayObjectString' | 'arrayObjectNumeric' | 'arrayObjectDate' | 'arrayObjectBoolean';
 
-export type JsonbValueType = string | number | boolean | Date | null | undefined | any;
+export type JsonbValueType =
+  | string
+  | number
+  | boolean
+  | Date
+  | null
+  | undefined;
 
 export type JsonbValueTransfer = {
   [key in JsonbDataType]: (value: JsonbValueType) => JsonbValueType;

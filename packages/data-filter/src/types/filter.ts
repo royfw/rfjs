@@ -8,11 +8,20 @@ export type MatchQueryDataType = 'string' | 'numeric' | 'boolean' | 'date';
 export type MatchQueryMetadata = {
   field: string;
   dataType: MatchQueryDataType;
+  // Any filter operator is accepted; the runtime dispatches by `dataType`.
+  // Written as a flat union (rather than Text|Numeric|Date, which overlap on
+  // DefaultFilterOperator + `terms`) so the type carries no redundant members.
   operator:
     | DefaultFilterOperator
-    | TextFilterOperator
-    | NumericFilterOperator
-    | DateFilterOperator;
+    | 'contains'
+    | 'startswith'
+    | 'endswith'
+    | 'terms'
+    | 'gt'
+    | 'gte'
+    | 'lt'
+    | 'lte'
+    | 'range';
   value: ValueType;
 };
 

@@ -1,6 +1,6 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
-import type { TextFilterOperator, DefaultFilterOperator, ObjectData } from '../types';
+import type { TextFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
 
 export class TextMatch {
@@ -11,9 +11,8 @@ export class TextMatch {
     values: string[];
     constructor(
         private field: string,
-        private operator: TextFilterOperator | DefaultFilterOperator,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        value: any,
+        private operator: TextFilterOperator,
+        value: ValueType,
         private data: ObjectData,
     ) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -96,12 +95,11 @@ export class TextMatch {
     private startswith() {
         this.matchs = this.values.reduce(
             (pre, cur) => {
-                const replace = `^${cur}`;
-                const regex = new RegExp(replace, 'g');
                 const targetMatchs = this.targets.reduce(
                     (tarPre, target) => {
-                        const found = target.match(regex);
-                        const isTargetMatch = found ? found.length > 0 : false;
+                        // Compare literally; the value may contain regex
+                        // metacharacters and must not be treated as a pattern.
+                        const isTargetMatch = target.startsWith(cur);
                         if (isTargetMatch) tarPre.push(isTargetMatch);
                         return tarPre;
                     },
@@ -121,12 +119,11 @@ export class TextMatch {
     private endswith() {
         this.matchs = this.values.reduce(
             (pre, cur) => {
-                const replace = `${cur}$`;
-                const regex = new RegExp(replace, 'g');
                 const targetMatchs = this.targets.reduce(
                     (tarPre, target) => {
-                        const found = target.match(regex);
-                        const isTargetMatch = found ? found.length > 0 : false;
+                        // Compare literally; the value may contain regex
+                        // metacharacters and must not be treated as a pattern.
+                        const isTargetMatch = target.endsWith(cur);
                         if (isTargetMatch) tarPre.push(isTargetMatch);
                         return tarPre;
                     },

@@ -18,49 +18,57 @@ export function toQuery(
   field: string,
   type: MgoDataType,
   condition: MgoConditionType,
-  value: ValueType,
-): Record<string, any> {
-  const values = [].concat(value).map((i) => typeTransfer(i, type));
-  const terms = (_field: string, _values: Array<any>) => {
-    return new TermsQuery(_field, _values);
-  };
+  value: ValueType | ValueType[],
+): Record<string, unknown> {
+  // A field name is used directly as a query key; one starting with `$` would
+  // be interpreted by MongoDB as a top-level operator (NoSQL operator
+  // injection). MongoDB field names may not start with `$`, so reject it.
+  if (field.startsWith('$')) {
+    throw new Error(`Invalid field name: "${field}" must not start with "$"`);
+  }
+  const values: ValueType[] = (Array.isArray(value) ? value : [value]).map((i) =>
+    typeTransfer(i, type),
+  );
+  const terms = (_field: string, _values: ValueType[]) =>
+    new TermsQuery(_field, _values);
   const term = terms;
-  const range = (_field: string, _values: Array<number | Date>) => {
-    const [start, end] = _values;
+  const range = (_field: string, _values: ValueType[]) => {
+    const [start, end] = _values as Array<number | Date>;
     return new RangeQuery(_field, start, end);
   };
-  const gt = (_field: string, _values: Array<number | Date>) => {
-    const [value] = _values;
+  const gt = (_field: string, _values: ValueType[]) => {
+    const [value] = _values as Array<number | Date>;
     return new GTQuery(_field, value);
   };
-  const gte = (_field: string, _values: Array<number | Date>) => {
-    const [value] = _values;
+  const gte = (_field: string, _values: ValueType[]) => {
+    const [value] = _values as Array<number | Date>;
     return new GTEQuery(_field, value);
   };
-  const lt = (_field: string, _values: Array<number | Date>) => {
-    const [value] = _values;
+  const lt = (_field: string, _values: ValueType[]) => {
+    const [value] = _values as Array<number | Date>;
     return new LTQuery(_field, value);
   };
-  const lte = (_field: string, _values: Array<number | Date>) => {
-    const [value] = _values;
+  const lte = (_field: string, _values: ValueType[]) => {
+    const [value] = _values as Array<number | Date>;
     return new LTEQuery(_field, value);
   };
-  const regex = (_field: string, _values: Array<RegExp>) => {
+  const regex = (_field: string, _values: ValueType[]) => {
     const [_value] = _values;
-    return new RegexQuery(_field, _value);
+    // The typed data pipeline cannot yield a RegExp (MgoDataType has no
+    // 'regex'), so coerce string patterns here and pass through real RegExps.
+    const pattern = _value instanceof RegExp ? _value : new RegExp(String(_value));
+    return new RegexQuery(_field, pattern);
   };
-  const eq = (_field: string, _values: Array<any>) => {
+  const eq = (_field: string, _values: ValueType[]) => {
     const [value] = _values;
     return new EqQuery(_field, value);
   };
-  const neq = (_field: string, _values: Array<any>) => {
+  const neq = (_field: string, _values: ValueType[]) => {
     const [value] = _values;
     return new NeQuery(_field, value);
   };
-  const nin = (_field: string, _values: Array<any>) => {
-    return new NinQuery(_field, _values);
-  };
-  return {
+  const nin = (_field: string, _values: ValueType[]) => new NinQuery(_field, _values);
+  const handlers = {
     terms,
     term,
     gt,
@@ -72,5 +80,10 @@ export function toQuery(
     eq,
     neq,
     nin,
-  }[condition](field, values);
+  };
+  const handler = handlers[condition];
+  if (!handler) {
+    throw new Error(`Unknown condition: "${condition}"`);
+  }
+  return handler(field, values);
 }

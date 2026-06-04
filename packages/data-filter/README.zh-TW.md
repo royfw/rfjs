@@ -44,7 +44,7 @@ const results = matchQueryArray(items, [filter]);
 
 #### `matchAndMap(data, mappings, extraData, dataKey)`
 
-過濾資料同時進行欄位映射。支援 `{{field.path}}` 格式的動態欄位解析。
+過濾資料同時進行欄位映射。支援 `${field.path}`（或 `$field.path`）格式的動態欄位解析，會對照來源資料解析。
 
 ```typescript
 import { matchAndMap } from '@rfjs/data-filter';

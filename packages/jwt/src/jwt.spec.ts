@@ -79,5 +79,26 @@ describe('helpers jwt test', () => {
       const result = jwt2.decodeToken(token);
       expect(result).toEqual(expectPayload);
     });
+
+    it('returns null for a malformed token', () => {
+      expect(jwt1.decodeToken('not-a-jwt')).toBeNull();
+    });
+  });
+
+  describe('verifyToken on a malformed token', () => {
+    const result = jwt1.verifyToken('not-a-jwt');
+
+    it('reports failure', () => {
+      expect(result.success).toBe(false);
+    });
+
+    it('exposes a null payload when the token cannot be decoded', () => {
+      expect(result.payload).toBeNull();
+    });
+
+    it('exposes the raw jsonwebtoken error message as a string', () => {
+      expect(typeof result.errMsg).toBe('string');
+      expect(result.err).toHaveProperty('name', 'JsonWebTokenError');
+    });
   });
 });

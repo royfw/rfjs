@@ -1,6 +1,6 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
-import type { BooleanFilterOperator, ObjectData } from '../types';
+import type { BooleanFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
 
 export class BooleanMatch {
@@ -12,8 +12,7 @@ export class BooleanMatch {
     constructor(
         private field: string,
         private operator: BooleanFilterOperator,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        value: any,
+        value: ValueType,
         private data: ObjectData,
     ) {
         // 使用共用的 JSONPath 解析函數
@@ -24,9 +23,9 @@ export class BooleanMatch {
         const targets = []
             .concat(target)
             .map((i) => typeTransfer(i, 'boolean'));
-        const transVals = []
-            .concat(value)
-            .map((i) => typeTransfer(i, 'boolean'));
+        const transVals = (Array.isArray(value) ? value : [value]).map((i) =>
+            typeTransfer(i, 'boolean'),
+        );
         this.values = transVals;
         this.targets = targets;
         if (_.isNull(target) || _.isUndefined(target)) {

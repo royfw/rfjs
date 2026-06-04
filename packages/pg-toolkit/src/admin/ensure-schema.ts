@@ -1,4 +1,5 @@
 import { Client } from 'pg';
+import { quoteIdent } from '../pure/identifier';
 
 export async function checkAndCreateSchema(
   connectionString: string,
@@ -11,7 +12,7 @@ export async function checkAndCreateSchema(
     await client.connect();
     isConnected = true;
     for (const schema of schemas) {
-      await client.query(`CREATE SCHEMA IF NOT EXISTS "${schema}"`);
+      await client.query(`CREATE SCHEMA IF NOT EXISTS ${quoteIdent(schema)}`);
     }
   } catch (error) {
     // eslint-disable-next-line @typescript-eslint/restrict-template-expressions

@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { JSONPath as JSONPathQuery } from 'jsonpath-plus';
 import type { PathResolveOptions, PathResolveResult } from '../types';
 

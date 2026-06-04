@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { matchQuery } from './matchQuery';
 import { FilterMatchQuery } from '../types';
 import { aliasData } from '../alias/aliasData';
@@ -20,7 +20,9 @@ export function matchAndMap<T>(
       const _item = _.cloneDeep(item);
       const data: AnyObjectData = {
         ...exData,
-        [dataKey]: item,
+        // Use the clone so mapping writes (genMappingDataByValue) and any
+        // alias resolution never mutate the caller's original input object.
+        [dataKey]: _item,
       };
       const convertFilter = aliasData<FilterMatchQuery>(
         _.cloneDeep(filter),

@@ -15,4 +15,8 @@ describe('toDateString', () => {
   it('should return string type', () => {
     expect(typeof toDateString('2024-01-01')).toBe('string');
   });
+
+  it('throws a clear error for an unparseable date value', () => {
+    expect(() => toDateString('not a date')).toThrow(/invalid date value/i);
+  });
 });

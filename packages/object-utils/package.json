@@ -5,7 +5,18 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "pnpm exec npm-run-all --parallel clean:dist clean:types",
     "clean:types": "pnpm exec rimraf ./types",
@@ -26,7 +37,9 @@
   "author": "Roy Chuang",
   "license": "ISC",
   "files": [
-    "dist/**"
+    "dist",
+    "README.md",
+    "README.zh-TW.md"
   ],
   "devDependencies": {
     "@eslint/js": "^9.20.0",
@@ -42,8 +55,5 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.24.0",
     "vitest": "^3.2.3"
-  },
-  "dependencies": {
-    "tslib": "^2.8.1"
   }
 }

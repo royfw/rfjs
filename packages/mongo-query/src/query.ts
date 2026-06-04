@@ -1,4 +1,11 @@
-export type ValueType = string | number | boolean | Date | RegExp | null | undefined | any;
+export type ValueType =
+  | string
+  | number
+  | boolean
+  | Date
+  | RegExp
+  | null
+  | undefined;
 
 export enum EnumMgoLogicalOperator {
   AND = '$and',
@@ -6,14 +13,19 @@ export enum EnumMgoLogicalOperator {
   NOR = '$nor',
 }
 
+/** A node in a logical query: a field-condition object or a nested group. */
+export type MgoQueryNode = Record<string, unknown> | LogicalQuery;
+
 export class LogicalQuery {
-  $and?: Array<any>;
-  $or?: Array<any>;
-  $nor?: Array<any>;
+  $and?: MgoQueryNode[];
+  $or?: MgoQueryNode[];
+  $nor?: MgoQueryNode[];
 }
 
 export class EqQuery {
-  [field: string]: ValueType;
+  [field: string]: {
+    $eq: ValueType;
+  };
   constructor(field: string, value: ValueType) {
     this[field] = {
       $eq: value,

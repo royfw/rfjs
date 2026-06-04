@@ -1,6 +1,6 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
-import type { DateFilterOperator, DefaultFilterOperator, ObjectData } from '../types';
+import type { DateFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
 
 export class DateMatch {
@@ -12,8 +12,8 @@ export class DateMatch {
 
   constructor(
     private field: string,
-    private operator: DateFilterOperator | DefaultFilterOperator,
-    value: any,
+    private operator: DateFilterOperator,
+    value: ValueType,
     private data: ObjectData,
   ) {
     const target = resolvePath(this.data, this.field);
@@ -21,9 +21,9 @@ export class DateMatch {
       this.validPath = false;
     }
 
-    this.values = []
-      .concat(value)
-      .map((i) => this.toTimestamp(i));
+    this.values = (Array.isArray(value) ? value : [value]).map((i) =>
+      this.toTimestamp(i),
+    );
 
     const targets = [].concat(target).map((i) => this.toTimestamp(i));
     this.targets = targets;
@@ -37,7 +37,7 @@ export class DateMatch {
     }
   }
 
-  private toTimestamp(val: any): number {
+  private toTimestamp(val: string | number | boolean | Date): number {
     const transferred = typeTransfer(val, 'date');
     return transferred instanceof Date ? transferred.getTime() : Number(transferred);
   }

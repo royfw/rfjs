@@ -1,7 +1,4 @@
-export * from './type';
-export * from './jsonbFromWhere';
-export * from './jsonbOperator';
-export * from './jsonbOperatorQuery';
-export * from './toQuery';
-export * from './genJsonbQuery';
-export * from './toJsonbQueryList';
+export * from './types';
+export { buildJsonbQuery } from './build';
+export { quoteJsonbColumn } from './column';
+export { ParamBuilder } from './param-builder';
