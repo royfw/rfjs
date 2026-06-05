@@ -3,132 +3,216 @@
     {
       "releases": [
         {
+          "name": "@rfjs/data-filter",
+          "type": "minor"
+        },
+        {
+          "name": "@rfjs/data-transform",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/mongo-query",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/jwt",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/retry",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/object-utils",
+          "type": "patch"
+        }
+      ],
+      "summary": "chore(packages): cleanup template boilerplate, refactor names, add DateFilterOperator\n\n- Remove template docs boilerplate from 6 packages\n- Clean redundant per-package config (husky, commitlint, pnpm-lock, pnpm-workspace, tpl-toolkit)\n- Remove per-package .github, .husky, .gitignore (redundant in monorepo)\n- Fix eslint.config.mjs ignores to exclude spec files across 7 packages\n- Fix object-utils eslint errors (flatten, keysToNested, toFlatString)\n- Add missing vitest imports to 8 spec files\n- Shorten function/class names: matchQuery, matchAndMap, resolvePath, TextMatch, NumericMatch, BooleanMatch, createMatchQuery, jsonbTransfer, genJsonbQuery, toJsonbQueryList\n- Add DateFilterOperator support to data-filter with DateMatch class (eq, neq, isnull, isnotnull, gt, gte, lt, lte, range, terms)",
+      "id": "clean-packages"
+    },
+    {
+      "releases": [
+        {
+          "name": "@rfjs/data-filter",
+          "type": "patch"
+        }
+      ],
+      "summary": "fix(data-filter): literal prefix/suffix matching and no input mutation\n\n- `startswith` / `endswith` built a `RegExp` from the raw filter value, so values\n  containing regex metacharacters matched incorrectly and an invalid pattern\n  (e.g. `(`) threw `SyntaxError`. They now compare literally with\n  `String.prototype.startsWith` / `endsWith`.\n- `matchAndMap` wrote mapping results onto the caller's original objects via the\n  shared `data[dataKey]` reference; it now operates on the deep clone so input\n  is never mutated.\n- `aliasData` mutated and returned its input object; it now resolves placeholders\n  on a clone and returns a new object.\n- Fixed the README alias placeholder syntax (`${field.path}` / `$field.path`,\n  not `{{field.path}}`).",
+      "id": "data-filter-correctness"
+    },
+    {
+      "releases": [
+        {
+          "name": "@rfjs/data-filter",
+          "type": "patch"
+        }
+      ],
+      "summary": "fix(data-filter): repair ESM build crash from lodash namespace import\n\n`lodash` is CommonJS and stays external in the ESM bundle. The source used\n`import * as _ from 'lodash'`, which resolves every lodash method to\n`undefined` under Node's ESM/CJS interop — so the published `dist/index.mjs`\nthrew `TypeError: _.get is not a function` on the first lodash-backed call\n(e.g. `resolvePath` with a comma path, `matchAndMap`'s `cloneDeep`). The unit\ntests did not catch it because they run against the TypeScript source, not the\nbuilt artifact.\n\n- Switch all nine source files to the default import `import _ from 'lodash'`\n- Add an ESLint `no-restricted-syntax` rule banning the lodash namespace import so the regression cannot return",
+      "id": "data-filter-esm-lodash"
+    },
+    {
+      "releases": [
+        {
+          "name": "@rfjs/data-filter",
+          "type": "patch"
+        }
+      ],
+      "summary": "refactor(data-filter): type Match operator/value params, drop redundant unions\n\n- The public `TextMatch` / `NumericMatch` / `DateMatch` / `BooleanMatch`\n  constructors now take `value: ValueType` instead of `any`.\n- Their `operator` params drop the redundant `| DefaultFilterOperator`\n  (already included in each per-type operator union), and\n  `MatchQueryMetadata.operator` is expressed as a flat, non-overlapping union —\n  clearing the package's `no-redundant-type-constituents` lint errors. The\n  resulting types are unchanged.",
+      "id": "data-filter-match-types"
+    },
+    {
+      "releases": [
+        {
+          "name": "@rfjs/data-transform",
+          "type": "patch"
+        }
+      ],
+      "summary": "fix(data-transform): throw a clear error on invalid dates and correct toBoolean return type\n\n- `toDateString` now throws a descriptive `invalid date value` error instead of the opaque native `RangeError: Invalid time value` when given an unparseable input\n- `toBoolean` return type narrowed from `boolean | object` to `boolean` to match its runtime behaviour (it always returns a boolean)",
+      "id": "data-transform-edge-cases"
+    },
+    {
+      "releases": [
+        {
+          "name": "@rfjs/jsonb-query",
+          "type": "minor"
+        }
+      ],
+      "summary": "feat(jsonb-query)!: parameterized query builder with legacy/jsonpath dialects\n\nReplaces the string-interpolated SQL builder with `buildJsonbQuery`, which emits\nparameterized SQL (node-postgres `$1,$2`) and supports both a `legacy` (`#>>`)\nand a `jsonpath` (`jsonb_path_exists`) dialect. Scalar data types\n(string/numeric/date/boolean) are supported in this release; object/array\nsupport will follow. The previous string-returning API (`toJsonbQuery`,\n`genJsonbQuery`, `JsonbOperatorQuery`, …) is removed.",
+      "id": "jsonb-query-parameterized"
+    },
+    {
+      "releases": [
+        {
+          "name": "@rfjs/jwt",
+          "type": "patch"
+        }
+      ],
+      "summary": "fix(jwt): make decode/verify result types sound\n\n- `decodeToken` now returns `T | null`, reflecting that `jsonwebtoken.decode` returns `null` for a malformed token\n- `VerifyJWTResult` is now a discriminated union on `success`; on failure `payload` is typed `T | null` to model the case where the token could not be decoded\n- `errMsg` is typed `string` (runtime messages embed dynamic values such as the expected audience/issuer/subject, so the literal-union type was inaccurate)\n- `createToken` payload typed as `string | Buffer | object` instead of `any`\n- Default generic for decode/verify is now `JwtPayload` instead of `any`\n- Added tests covering the malformed-token decode (`null`) and verify-failure paths",
+      "id": "jwt-sound-types"
+    },
+    {
+      "releases": [
+        {
+          "name": "@rfjs/mongo-query",
+          "type": "patch"
+        }
+      ],
+      "summary": "fix(mongo-query): make regex work, block operator injection, clearer errors\n\n- The `regex` condition produced a plain string (the typed `MgoDataType`\n  pipeline can never yield a `RegExp`), so MongoDB treated it as an exact match.\n  `toQuery` now coerces string patterns to a real `RegExp` and passes existing\n  `RegExp` values through.\n- A `field` whose name starts with `$` was used directly as a query key,\n  allowing a top-level MongoDB operator to be injected. Such field names are now\n  rejected.\n- An unknown `condition` previously failed with a cryptic\n  \"... is not a function\"; it now throws `Unknown condition: \"...\"`.\n- Removed `any` from the public `ValueType`, which surfaced a latent bug:\n  `EqQuery`'s index signature was typed as the bare value instead of\n  `{ $eq: ValueType }`. Both are fixed.\n- Added a test suite for `toQuery` (previously untested).",
+      "id": "mongo-query-safety"
+    },
+    {
+      "releases": [
+        {
+          "name": "@rfjs/object-utils",
+          "type": "minor"
+        },
+        {
+          "name": "@rfjs/data-transform",
+          "type": "minor"
+        },
+        {
+          "name": "@rfjs/data-filter",
+          "type": "minor"
+        },
+        {
+          "name": "@rfjs/mongo-query",
+          "type": "minor"
+        },
+        {
+          "name": "@rfjs/jwt",
+          "type": "minor"
+        },
+        {
+          "name": "@rfjs/retry",
+          "type": "minor"
+        }
+      ],
+      "summary": "feat: add @rfjs/* packages — object-utils, data-transform, data-filter, jsonb-query, mongo-query, jwt, retry\n\n- @rfjs/object-utils: flatten, keysToNested, toJSONString, toFlatString\n- @rfjs/data-transform: typeTransfer, jsonbTypeTransfer, toBoolean, toDateString\n- @rfjs/data-filter: filter match query with JSONPath, alias substitution, filter mapping\n- @rfjs/jsonb-query: PostgreSQL JSONB SQL query builder\n- @rfjs/mongo-query: MongoDB query builder from filter metadata\n- @rfjs/jwt: JWT sign/verify/decode helper\n- @rfjs/retry: retry helper with configurable delay and max attempts",
+      "id": "new-packages"
+    },
+    {
+      "releases": [
+        {
           "name": "@rfjs/pg-toolkit",
           "type": "patch"
         }
       ],
-      "summary": "test publish npmjs from gitlab",
-      "id": "clean-keys-spend"
+      "summary": "fix(pg-toolkit): repair admin connection string and escape SQL identifiers\n\n- `checkAndCreateDB` rebuilt the admin connection string by hand\n  (`postgres://${user}:${password}@${host}:${port}/postgres`), which corrupted\n  credentials containing URL-special characters and emitted an empty port when\n  the source string had none. It now connects with structured fields and never\n  re-serialises the URL.\n- Schema, database and seed-history table names were interpolated into SQL with\n  only bare double quotes, allowing identifier injection. They are now escaped\n  with a new exported `quoteIdent` helper (doubles embedded quotes, rejects null\n  bytes).\n- Move `@types/pg` to `dependencies` — the published `admin` typings import\n  `Client`/`Pool` from `pg`, so consumers need the types at install time.\n- Drop the dangling `LICENSE` entry from `files` (no such file) and ship\n  `README.zh-TW.md` instead.",
+      "id": "pg-toolkit-admin-safety"
     },
     {
       "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        },
-        {
-          "name": "orm-app",
-          "type": "patch"
-        }
-      ],
-      "summary": "deploy royfw-dev",
-      "id": "crisp-walls-tickle"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        }
-      ],
-      "summary": "test deploy",
-      "id": "five-rabbits-chew"
-    },
-    {
-      "releases": [
-        {
-          "name": "@rfjs/tpl-toolkit",
-          "type": "patch"
-        }
-      ],
-      "summary": "fix: remove preinstall/prepare scripts that blocked installation via npm/yarn",
-      "id": "fix-tpl-toolkit-install"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        }
-      ],
-      "summary": "test deploy",
-      "id": "grumpy-baboons-think"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        }
-      ],
-      "summary": "Update npm package @fastify/swagger-ui",
-      "id": "happy-games-matter"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        },
-        {
-          "name": "orm-app",
-          "type": "patch"
-        }
-      ],
-      "summary": "test gitlab deploy",
-      "id": "many-donkeys-talk"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        }
-      ],
-      "summary": "test deploy toolkit",
-      "id": "many-seals-wave"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
-          "type": "patch"
-        },
         {
           "name": "@rfjs/pg-toolkit",
           "type": "patch"
         }
       ],
-      "summary": "test deploy",
-      "id": "metal-rules-hide"
+      "summary": "fix(pg-toolkit): tolerate non-URL DSNs and make pg an optional peer\n\n- `getConnectionStringInfo` no longer throws on a libpq keyword/value DSN\n  (`host=... dbname=...`) or an empty string. The URL parse is now optional; for\n  non-URL inputs it falls back to the parsed config and returns the connection\n  string unchanged.\n- `pg` (and `@types/pg`) moved from `dependencies` to optional\n  `peerDependencies`. Only the `./admin` entry point needs `pg`; consumers of the\n  `./pure` utilities no longer pull the driver in. Admin consumers install `pg`\n  themselves (its types are re-exported from the admin typings).",
+      "id": "pg-toolkit-dsn-and-peer"
     },
     {
       "releases": [
         {
-          "name": "api",
+          "name": "@rfjs/data-filter",
           "type": "patch"
         },
         {
-          "name": "orm-app",
+          "name": "@rfjs/data-transform",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/jwt",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/mongo-query",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/object-utils",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/retry",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/tpl-toolkit",
           "type": "patch"
         }
       ],
-      "summary": "test deploy",
-      "id": "salty-drinks-fry"
+      "summary": "docs(packages): add README.zh-TW.md and improve README.md across packages\n\n- Add Traditional Chinese README (README.zh-TW.md) for data-filter, data-transform, jsonb-query, jwt, mongo-query, object-utils, retry\n- Create initial README.md and README.zh-TW.md for tpl-toolkit\n- Improve existing README.md content with better formatting and operator tables",
+      "id": "readme-docs"
     },
     {
       "releases": [
         {
-          "name": "api",
+          "name": "@rfjs/data-filter",
           "type": "patch"
         },
         {
-          "name": "orm-app",
+          "name": "@rfjs/data-transform",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/jwt",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/mongo-query",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/object-utils",
+          "type": "patch"
+        },
+        {
+          "name": "@rfjs/retry",
           "type": "patch"
         }
       ],
-      "summary": "test deploy",
-      "id": "tiny-birds-switch"
+      "summary": "chore(packages): unify npm publish config and trim redundant runtime deps\n\n- Add `exports` map, `publishConfig.access: \"public\"`, and `sideEffects: false` to all seven packages so scoped packages publish publicly and consumers can tree-shake\n- Include README.md / README.zh-TW.md in the published `files`\n- Drop unused `tslib` runtime dependency (verified absent from built dist; pg-toolkit keeps it as it is still emitted there)\n- data-filter: remove unused `@rfjs/data-transform` dependency\n- data-transform: replace lodash `_.has` with native `Object.prototype.hasOwnProperty`, dropping `lodash` and `@types/lodash`",
+      "id": "tidy-publish-config"
     },
     {
       "releases": [
@@ -137,132 +221,135 @@
           "type": "patch"
         }
       ],
-      "summary": "feat: add @rfjs/tpl-toolkit package for shared template utilities\n\n- createVitestConfig() factory for Vitest configuration\n- defaultLintStagedConfig exports for lint-staged setup\n- Three export paths: ., ./vitest, ./lint-staged",
-      "id": "tpl-toolkit-init"
+      "summary": "fix(tpl-toolkit): resolve createVitestConfig @ alias against the consumer cwd\n\n`createVitestConfig` resolved its `@` alias with `path.resolve(__dirname, './src')`.\nIn the published ESM build `__dirname` is undefined, so consuming the factory\nfrom a template's `vitest.config.mts` threw `ReferenceError: __dirname is not\ndefined`. Even where `__dirname` was shimmed it pointed at\n`node_modules/@rfjs/tpl-toolkit/...` rather than the template's own `src`.\n\n- Resolve the `@` alias against `process.cwd()` (the template running Vitest)\n- Add tests covering the alias resolution and override behaviour (the package previously had none)\n- Add an ESLint `no-restricted-globals` rule banning `__dirname`/`__filename` in this ESM package",
+      "id": "tpl-toolkit-vitest-cwd"
     },
     {
       "releases": [
         {
-          "name": "@rfjs/tpl-toolkit",
+          "name": "@rfjs/data-transform",
           "type": "patch"
         }
       ],
-      "summary": "feat: add build plugins and tsdown config factory\n\n- copyFilesPlugin, tsdownDevNodemonPlugin, copyPackageJsonPlugin exports via ./plugins\n- createTsdownConfig() factory via ./tsdown-config for app/lib/bin/orm/bullmq template types",
-      "id": "tpl-toolkit-plugins-and-tsdown-config"
+      "summary": "docs: update root README.md and CLAUDE.md to reflect current package list\n\n- Rewrite root README.md with full package table, app list, and template registry\n- Update CLAUDE.md packages section to include all 9 publishable packages\n- Fix data-transform package.json description (jsonbTypeTransfer → jsonbTransfer)\n- Remove stale VitePress docs section from CLAUDE.md",
+      "id": "update-root-docs"
     },
     {
       "releases": [
         {
-          "name": "api",
-          "type": "patch"
-        }
-      ],
-      "summary": "refactor(templates): simplify tsconfig structure across all templates\n\n- Remove intermediate tsconfig files (tsconfig.app.json, tsconfig.lib.json, tsconfig.spec.json)\n- Unify each template to tsconfig.json + tsconfig.build.json (2 files)\n- Upgrade koa-esbuild and docs templates from legacy tsconfig (NodeNext/ES2021) to modern (ES2023/bundler)\n- Fix koa-esbuild isolatedModules + emitDecoratorMetadata compatibility (import type)\n- Remove Jest configuration from docs templates (standardize on Vitest)",
-      "id": "tsconfig-simplify-refactor"
-    },
-    {
-      "releases": [
-        {
-          "name": "api",
+          "name": "@rfjs/data-transform",
           "type": "patch"
         },
         {
-          "name": "orm-app",
+          "name": "@rfjs/mongo-query",
           "type": "patch"
         }
       ],
-      "summary": "test ci",
-      "id": "twelve-flowers-wave"
+      "summary": "refactor(types): drop `any` from the public value types\n\n- `@rfjs/data-transform`: `ValueType` and `JsonbValueType` no longer include\n  `any` (which collapsed the whole union), so consumers get the real\n  `string | number | boolean | Date | RegExp | null | undefined` surface. This\n  was unblocked now that `@rfjs/jsonb-query` no longer imports these types.\n- `@rfjs/mongo-query`: `toQuery` accepts `ValueType | ValueType[]` and threads\n  `ValueType[]` through its handlers (no more `Array<any>`); `LogicalQuery`\n  nodes are typed `MgoQueryNode` instead of `any`; `MgoFieldCondition.value`\n  accepts an array for `terms`/`nin`. This clears the package's outstanding\n  `no-unsafe-*` lint errors.",
+      "id": "value-type-any-cleanup"
     }
   ],
   "releases": [
     {
+      "name": "@rfjs/data-filter",
+      "type": "minor",
+      "oldVersion": "0.0.0",
+      "changesets": [
+        "clean-packages",
+        "data-filter-correctness",
+        "data-filter-esm-lodash",
+        "data-filter-match-types",
+        "new-packages",
+        "readme-docs",
+        "tidy-publish-config"
+      ],
+      "newVersion": "0.1.0"
+    },
+    {
+      "name": "@rfjs/data-transform",
+      "type": "minor",
+      "oldVersion": "0.0.0",
+      "changesets": [
+        "clean-packages",
+        "data-transform-edge-cases",
+        "new-packages",
+        "readme-docs",
+        "tidy-publish-config",
+        "update-root-docs",
+        "value-type-any-cleanup"
+      ],
+      "newVersion": "0.1.0"
+    },
+    {
+      "name": "@rfjs/mongo-query",
+      "type": "minor",
+      "oldVersion": "0.0.0",
+      "changesets": [
+        "clean-packages",
+        "mongo-query-safety",
+        "new-packages",
+        "readme-docs",
+        "tidy-publish-config",
+        "value-type-any-cleanup"
+      ],
+      "newVersion": "0.1.0"
+    },
+    {
+      "name": "@rfjs/jwt",
+      "type": "minor",
+      "oldVersion": "0.0.0",
+      "changesets": [
+        "clean-packages",
+        "jwt-sound-types",
+        "new-packages",
+        "readme-docs",
+        "tidy-publish-config"
+      ],
+      "newVersion": "0.1.0"
+    },
+    {
+      "name": "@rfjs/retry",
+      "type": "minor",
+      "oldVersion": "0.0.0",
+      "changesets": [
+        "clean-packages",
+        "new-packages",
+        "readme-docs",
+        "tidy-publish-config"
+      ],
+      "newVersion": "0.1.0"
+    },
+    {
+      "name": "@rfjs/object-utils",
+      "type": "minor",
+      "oldVersion": "0.0.0",
+      "changesets": [
+        "clean-packages",
+        "new-packages",
+        "readme-docs",
+        "tidy-publish-config"
+      ],
+      "newVersion": "0.1.0"
+    },
+    {
       "name": "@rfjs/pg-toolkit",
       "type": "patch",
-      "oldVersion": "0.0.8-alpha.1",
+      "oldVersion": "0.0.8",
       "changesets": [
-        "clean-keys-spend",
-        "metal-rules-hide"
+        "pg-toolkit-admin-safety",
+        "pg-toolkit-dsn-and-peer"
       ],
-      "newVersion": "0.0.8"
-    },
-    {
-      "name": "api",
-      "type": "patch",
-      "oldVersion": "0.0.2-alpha.9",
-      "changesets": [
-        "crisp-walls-tickle",
-        "five-rabbits-chew",
-        "grumpy-baboons-think",
-        "happy-games-matter",
-        "many-donkeys-talk",
-        "many-seals-wave",
-        "metal-rules-hide",
-        "salty-drinks-fry",
-        "tiny-birds-switch",
-        "tsconfig-simplify-refactor",
-        "twelve-flowers-wave"
-      ],
-      "newVersion": "0.0.2"
-    },
-    {
-      "name": "orm-app",
-      "type": "patch",
-      "oldVersion": "0.0.2-alpha.4",
-      "changesets": [
-        "crisp-walls-tickle",
-        "many-donkeys-talk",
-        "salty-drinks-fry",
-        "tiny-birds-switch",
-        "twelve-flowers-wave"
-      ],
-      "newVersion": "0.0.2"
+      "newVersion": "0.0.9"
     },
     {
       "name": "@rfjs/tpl-toolkit",
       "type": "patch",
-      "oldVersion": "0.0.1-alpha.3",
+      "oldVersion": "0.0.1",
       "changesets": [
-        "fix-tpl-toolkit-install",
-        "tpl-toolkit-init",
-        "tpl-toolkit-plugins-and-tsdown-config"
+        "readme-docs",
+        "tpl-toolkit-vitest-cwd"
       ],
-      "newVersion": "0.0.1"
+      "newVersion": "0.0.2"
     }
-  ],
-  "preState": {
-    "mode": "exit",
-    "tag": "alpha",
-    "initialVersions": {
-      "api": "0.0.1",
-      "orm-app": "0.0.1",
-      "web": "0.1.0",
-      "@rfjs/orm-drizzle": "0.0.0",
-      "@rfjs/orm-kysely": "0.0.0",
-      "@rfjs/orm-prisma": "0.0.0",
-      "@rfjs/orm-typeorm": "0.0.0",
-      "@repo/eslint-config": "0.0.0",
-      "@rfjs/pg-toolkit": "0.0.7",
-      "@repo/typescript-config": "0.0.0",
-      "@repo/ui": "0.0.0",
-      "@rfjs/tpl-toolkit": "0.0.1-alpha.0"
-    },
-    "changesets": [
-      "clean-keys-spend",
-      "crisp-walls-tickle",
-      "five-rabbits-chew",
-      "fix-tpl-toolkit-install",
-      "grumpy-baboons-think",
-      "happy-games-matter",
-      "many-donkeys-talk",
-      "many-seals-wave",
-      "metal-rules-hide",
-      "salty-drinks-fry",
-      "tiny-birds-switch",
-      "tpl-toolkit-init",
-      "tpl-toolkit-plugins-and-tsdown-config",
-      "tsconfig-simplify-refactor",
-      "twelve-flowers-wave"
-    ]
-  }
+  ]
 }

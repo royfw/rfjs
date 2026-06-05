@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/mongo-query",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "MongoDB query builder — generate MongoDB queries from filter metadata",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
