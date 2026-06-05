@@ -8,12 +8,20 @@ on:
       - deploy/*
       - publish/*
 
+# One in-flight run per branch so two pushes don't race the same GitLab branch
+# (force_push keeps the GitLab branch identical to GitHub).
+concurrency:
+  group: gitlab-sync-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history for a faithful mirror push
 
       - name: Sync to GitLab
         id: sync
@@ -24,6 +32,12 @@ jobs:
           gitlab_project_id: 5
           gitlab_ref: ${{ github.ref_name }}
           deploy_env: royfw-dev
+          # main is the mirror / single source of truth — it has no matching jobs
+          # in .gitlab-ci.yml (jobs run on release/*, publish/npmjs, deploy/*), so
+          # triggering a pipeline on main returns 400 "No stages / jobs for this
+          # pipeline". Mirror only on main; trigger + wait on the work branches.
+          trigger_pipeline: ${{ github.ref_name != 'main' }}
+          wait_for_pipeline: ${{ github.ref_name != 'main' }}
           gitlab_push_token: ${{ secrets.GITLAB_API_TOKEN }}
           gitlab_trigger_token: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
           gitlab_api_token: ${{ secrets.GITLAB_API_TOKEN }}

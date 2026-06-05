@@ -27,11 +27,14 @@ GitHub repo (royfw/rfjs)
      push to: main / release/* / deploy/* / publish/*
      └─ royfw/gitlab-sync-action@v1
           鏡像分支 → GitLab project royfw/apps/rfjs (id 5)
-          └─ 在 GitLab 跑 .gitlab-ci.yml(version / docker_build / deploy_trigger / publish)
+          ├─ main          → 只鏡像,不觸發 pipeline(mirror-only)
+          └─ 其餘工作分支  → 鏡像 + 觸發 + 等待 .gitlab-ci.yml
+                            (version / docker_build / deploy_trigger / publish)
 ```
 
 - **單一事實來源是 GitLab**。先前重複的 GitHub-native CD workflow(`cd-version-release*`、`cd-publish-npmjs`、`cd-npm-release`、`cd-deploy-dev`)已移除,避免「同一個 PR 同時被 GitHub 與 GitLab 各跑一次版本/發佈」造成雙重 commit / 雙重 publish。
 - GitHub 端只保留 `trigger-gitlab-pipeline.yml` 作為橋接。
+- **`main` 是鏡像-only**:`.gitlab-ci.yml` 的 job 只在 `release/*`、`publish/npmjs`、`deploy/*` 命中,`main` 上沒有任何 job。若對 `main` 觸發 pipeline,GitLab 會回 `400 "No stages / jobs for this pipeline"`,讓 GitHub Action 紅燈。因此 workflow 以 `trigger_pipeline: ${{ github.ref_name != 'main' }}` 對 `main` 改走 push-only,實際工作交給 release/publish/deploy 分支。
 
 ---
 
