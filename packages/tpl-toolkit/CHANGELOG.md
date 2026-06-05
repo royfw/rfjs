@@ -1,5 +1,27 @@
 # @rfjs/tpl-toolkit
 
+## 0.0.2
+
+### Patch Changes
+
+- a5ee5d7: docs(packages): add README.zh-TW.md and improve README.md across packages
+
+  - Add Traditional Chinese README (README.zh-TW.md) for data-filter, data-transform, jsonb-query, jwt, mongo-query, object-utils, retry
+  - Create initial README.md and README.zh-TW.md for tpl-toolkit
+  - Improve existing README.md content with better formatting and operator tables
+
+- 68c34ac: fix(tpl-toolkit): resolve createVitestConfig @ alias against the consumer cwd
+
+  `createVitestConfig` resolved its `@` alias with `path.resolve(__dirname, './src')`.
+  In the published ESM build `__dirname` is undefined, so consuming the factory
+  from a template's `vitest.config.mts` threw `ReferenceError: __dirname is not
+defined`. Even where `__dirname` was shimmed it pointed at
+  `node_modules/@rfjs/tpl-toolkit/...` rather than the template's own `src`.
+
+  - Resolve the `@` alias against `process.cwd()` (the template running Vitest)
+  - Add tests covering the alias resolution and override behaviour (the package previously had none)
+  - Add an ESLint `no-restricted-globals` rule banning `__dirname`/`__filename` in this ESM package
+
 ## 0.0.1
 
 ### Patch Changes

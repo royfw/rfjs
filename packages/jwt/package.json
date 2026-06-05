@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/jwt",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "JWT helper — sign, verify, decode JSON web tokens",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
