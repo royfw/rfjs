@@ -32,12 +32,13 @@ jobs:
           gitlab_project_id: 5
           gitlab_ref: ${{ github.ref_name }}
           deploy_env: royfw-dev
-          # main is the mirror / single source of truth — it has no matching jobs
-          # in .gitlab-ci.yml (jobs run on release/*, publish/npmjs, deploy/*), so
-          # triggering a pipeline on main returns 400 "No stages / jobs for this
-          # pipeline". Mirror only on main; trigger + wait on the work branches.
-          trigger_pipeline: ${{ github.ref_name != 'main' }}
-          wait_for_pipeline: ${{ github.ref_name != 'main' }}
+          # Only publish/* and deploy/* have matching jobs in .gitlab-ci.yml.
+          # main is the mirror, and release/* is versioned by GitHub Actions
+          # (cd-version-release*.yml) — GitLab has no job for either, so triggering
+          # a pipeline there returns 400 "No stages / jobs". Mirror-only on
+          # main + release/*; trigger + wait on publish/* and deploy/*.
+          trigger_pipeline: ${{ startsWith(github.ref_name, 'publish/') || startsWith(github.ref_name, 'deploy/') }}
+          wait_for_pipeline: ${{ startsWith(github.ref_name, 'publish/') || startsWith(github.ref_name, 'deploy/') }}
           gitlab_push_token: ${{ secrets.GITLAB_API_TOKEN }}
           gitlab_trigger_token: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
           gitlab_api_token: ${{ secrets.GITLAB_API_TOKEN }}

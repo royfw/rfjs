@@ -23,18 +23,24 @@
 
 ```
 GitHub repo (royfw/rfjs)
-└─ .github/workflows/trigger-gitlab-pipeline.yml
+├─ .github/workflows/cd-version-release*.yml   ← 版本(changeset version)在 GitHub Actions 算
+│     PR merged → release/stable|alpha|beta|rc
+│     └─ uses royfw/rf-devops/.github/workflows/_changesets-version-channel-turbo.yml
+│          → changeset version、push 回 release/*、開 PR 回 main
+└─ .github/workflows/trigger-gitlab-pipeline.yml   ← 橋接
      push to: main / release/* / deploy/* / publish/*
      └─ royfw/gitlab-sync-action@v1
           鏡像分支 → GitLab project royfw/apps/rfjs (id 5)
-          ├─ main          → 只鏡像,不觸發 pipeline(mirror-only)
-          └─ 其餘工作分支  → 鏡像 + 觸發 + 等待 .gitlab-ci.yml
-                            (version / docker_build / deploy_trigger / publish)
+          ├─ main / release/*   → 只鏡像,不觸發 pipeline(mirror-only)
+          └─ publish/* / deploy/* → 鏡像 + 觸發 + 等待 .gitlab-ci.yml
+                                   (publish / docker_build / deploy_trigger)
 ```
 
-- **單一事實來源是 GitLab**。先前重複的 GitHub-native CD workflow(`cd-version-release*`、`cd-publish-npmjs`、`cd-npm-release`、`cd-deploy-dev`)已移除,避免「同一個 PR 同時被 GitHub 與 GitLab 各跑一次版本/發佈」造成雙重 commit / 雙重 publish。
-- GitHub 端只保留 `trigger-gitlab-pipeline.yml` 作為橋接。
-- **`main` 是鏡像-only**:`.gitlab-ci.yml` 的 job 只在 `release/*`、`publish/npmjs`、`deploy/*` 命中,`main` 上沒有任何 job。若對 `main` 觸發 pipeline,GitLab 會回 `400 "No stages / jobs for this pipeline"`,讓 GitHub Action 紅燈。因此 workflow 以 `trigger_pipeline: ${{ github.ref_name != 'main' }}` 對 `main` 改走 push-only,實際工作交給 release/publish/deploy 分支。
+- **責任分工:GitHub 管 version,GitLab 管 publish + deploy。**
+  - **版本**在 GitHub Actions 算(merge 進 `release/*` 觸發),版本 commit 直接落在 GitHub、並自動開 PR 回 `main` —— 不需要把 commit 從 GitLab 同步回 GitHub。
+  - **npm publish 與 K8s deploy**留在 GitLab(需要 `NPM_TOKEN` / `KUBECONFIG` 等 secret)。
+- **mirror-only 分支**:`.gitlab-ci.yml` 的 job 只在 `publish/npmjs`、`deploy/dev` 命中;`main` 與 `release/*` 在 GitLab 沒有任何 job。若對它們觸發 pipeline,GitLab 會回 `400 "No stages / jobs"` 讓 Action 紅燈。因此 bridge 以 `trigger_pipeline: ${{ startsWith(ref,'publish/') || startsWith(ref,'deploy/') }}` 只對 publish/deploy 觸發,其餘 push-only。
+- rf-devops 正搬遷進 `github-toolkit`;version caller 之後會 repoint 到 github-toolkit。
 
 ---
 
@@ -42,31 +48,31 @@ GitHub repo (royfw/rfjs)
 
 | Job | Stage | 觸發分支 | 動作 |
 |-----|-------|----------|------|
-| `version_release` | `version` | `release/stable\|alpha\|beta\|rc`(push) | `changeset version`,依分支設定 `CHANNEL`,`PUSH_VERSION=true` 把版本 commit 推回 release 分支 |
 | `publish_npmjs` | `publish` | `publish/npmjs`(push,**manual** 手動觸發) | `changeset publish` 發佈到 npm,`PUSH_TAGS=true`,`CHANNEL=auto`(由來源分支推導) |
 | `detect_project` | `deploy_trigger` | `deploy/dev` | 偵測異動 app、build image 推 Harbor、產生動態 child pipeline |
 | `trigger_project` | `deploy_trigger` | `deploy/dev` | 觸發動態 child pipeline,執行 Helm 部署 |
 
+> 版本(`changeset version`)**不在 GitLab**;由 GitHub Actions `cd-version-release*.yml` 處理(見第 2 節)。
 > `docker_build` stage 由 devops-toolkit 的動態 child pipeline 使用。
 
 ---
 
 ## 4. npm 發佈流程(主要工作流程)
 
-發佈是**兩段式**:先在 `release/*` 算版本,再到 `publish/npmjs` 實際 publish。
+發佈是**兩段式**:先在 `release/*` 算版本(GitHub),再到 `publish/npmjs` 實際 publish(GitLab)。
 
 ```
 1. 建立 changeset
    pnpm changeset:add        # 選套件 + bump 等級,commit 進 main
 
-2. 版本(version)
-   merge → release/stable    # 正式版
-   或 merge → release/alpha|beta|rc   # 預發版
-   → GitLab version_release:跑 changeset version、產生 CHANGELOG、把版本 commit 推回該 release 分支
+2. 版本(version)— GitHub Actions
+   開 PR: main → release/stable(正式版)或 release/alpha|beta|rc(預發),merge
+   → cd-version-release*.yml 跑 changeset version、產生 CHANGELOG、
+     push 版本 commit 回該 release 分支,並自動開 PR 回 main(merge 後 main 同步版本)
 
-3. 發佈(publish)
-   merge → publish/npmjs
-   → GitLab publish_npmjs(手動點擊執行)→ changeset publish 到 npm + 推 git tag
+3. 發佈(publish)— GitLab
+   把版本化後的狀態 merge/push → publish/npmjs
+   → GitLab publish_npmjs(手動 ▶ 執行)→ changeset publish 到 npm + 推 git tag
 ```
 
 ### 目前發佈集合(`pnpm changeset:status`)
