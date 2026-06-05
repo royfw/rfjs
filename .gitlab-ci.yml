@@ -2,13 +2,11 @@ include:
   - project: shared/devops-toolkit
     ref: main
     file:
-      - /gitlab-ci/_test/echo.yml
       - /gitlab-ci/build_deploy/nodejs-monorepo.yml
       - /gitlab-ci/changesets_version_channel/pnpm.yml
       - /gitlab-ci/changesets_publish/changesets-publish.yml
 
 stages:
-  - echo
   - version
   - docker_build
   - deploy_trigger
@@ -22,10 +20,6 @@ workflow:
     - if: '$CI_COMMIT_MESSAGE =~ /(\[skip ci\]|\[ci skip\])/i'
       when: never
     - when: always
-
-echo:
-  stage: echo
-  extends: .echo
 
 # ----------------------------
 # release/*：只做 version（commit + push 回 release/*）
@@ -79,7 +73,7 @@ detect_project:
       - .deploy/
     expire_in: 1 hour
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^deploy\/(dev|prod)$/'
+    - if: '$CI_COMMIT_BRANCH == "deploy/dev"'
       variables:
         KUBECONFIG: ${ROYFW_KUBECONFIG}
 
@@ -89,6 +83,6 @@ trigger_project:
   needs: [detect_project]
   extends: .build_deploy:trigger
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^deploy\/(dev|prod)$/'
+    - if: '$CI_COMMIT_BRANCH == "deploy/dev"'
       variables:
         KUBECONFIG: ${ROYFW_KUBECONFIG}

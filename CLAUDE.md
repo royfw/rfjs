@@ -112,18 +112,21 @@ The `apps/api/` follows a layered Fastify architecture:
 
 ## CI/CD
 
-- **GitLab CI** (`.gitlab-ci.yml`): Includes shared DevOps toolkit for build/deploy, changeset versioning, and npm publish
-- **GitHub Actions** (`.github/workflows/`): Additional CI workflows for deploy and npm release
-- **Deploy branches**: `deploy/dev`, `deploy/prod` trigger Kubernetes deployment
-- **Release branches**: `release/stable`, `release/alpha|beta|rc` trigger versioning
-- **Publish**: `publish/npmjs` branch (manual trigger) publishes to npm
+Deploy and npm publish run on **GitLab CI** (`.gitlab-ci.yml`, shared DevOps toolkit). The repo lives on GitHub; `.github/workflows/trigger-gitlab-pipeline.yml` mirrors `main`, `release/*`, `deploy/*`, and `publish/*` pushes to the GitLab project and runs the pipeline there. (The previous GitHub-native CD workflows were retired to avoid double versioning/publishing — GitLab is the single source of truth.)
+
+- **Deploy branch**: `deploy/dev` runs build + Kubernetes deploy (`detect_project` / `trigger_project`). `deploy/prod` is not wired yet, and per-service Helm overlays under `.deploy/env/royfw-dev/helm/` are still pending (apps build to Harbor but `[skip-deploy]` until overlays exist).
+- **Release branches**: `release/stable` (stable channel) and `release/alpha|beta|rc` (prerelease channels) run changeset versioning and push the bump back.
+- **Publish**: `publish/npmjs` (manual gate) publishes the bumped packages to npm.
+
+See `GITLAB_CI.md` for the full CI variable, environment, and flow reference.
 
 ## Versioning and Changesets
 
 - Uses **Changesets** for version management (`pnpm changeset:add` to create a changeset)
-- Currently in **pre-release mode** with `alpha` tag (see `.changeset/pre.json`)
-- Changelog: `@changesets/changelog-git` (commit-message-based)
-- Release workflow: `pnpm changeset:add` → commit → push to `release/*` branch → version + publish
+- Not in pre-release mode (no `.changeset/pre.json`); `release/stable` publishes stable versions. Prerelease channels are entered per-branch by the `release/alpha|beta|rc` pipeline.
+- `@rfjs/jsonb-query` is held back from publish via the changeset `ignore` list in `.changeset/config.json` until its Phase 2 (object/array) support lands.
+- Changelog: `@changesets/cli/changelog`
+- Release workflow: `pnpm changeset:add` → commit → merge to `release/*` (version) → merge to `publish/npmjs` (publish)
 
 ## Git Hooks
 
