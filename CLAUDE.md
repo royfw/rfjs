@@ -112,21 +112,21 @@ The `apps/api/` follows a layered Fastify architecture:
 
 ## CI/CD
 
-Deploy and npm publish run on **GitLab CI** (`.gitlab-ci.yml`, shared DevOps toolkit). The repo lives on GitHub; `.github/workflows/trigger-gitlab-pipeline.yml` mirrors `main`, `release/*`, `deploy/*`, and `publish/*` pushes to the GitLab project and runs the pipeline there. (The previous GitHub-native CD workflows were retired to avoid double versioning/publishing — GitLab is the single source of truth.)
+CI/CD is split by responsibility: **GitHub Actions owns versioning**, **GitLab CI owns npm publish + Kubernetes deploy**. The repo lives on GitHub; `.github/workflows/trigger-gitlab-pipeline.yml` mirrors `main`, `release/*`, `deploy/*`, and `publish/*` to the GitLab project, but only **triggers** the GitLab pipeline for `publish/*` and `deploy/*` (mirror-only on `main` and `release/*`, which have no GitLab jobs).
 
-- **Deploy branch**: `deploy/dev` runs build + Kubernetes deploy (`detect_project` / `trigger_project`). `deploy/prod` is not wired yet, and per-service Helm overlays under `.deploy/env/royfw-dev/helm/` are still pending (apps build to Harbor but `[skip-deploy]` until overlays exist).
-- **Release branches**: `release/stable` (stable channel) and `release/alpha|beta|rc` (prerelease channels) run changeset versioning and push the bump back.
-- **Publish**: `publish/npmjs` (manual gate) publishes the bumped packages to npm.
+- **Release branches (GitHub Actions)**: merging a PR into `release/stable` or `release/alpha|beta|rc` runs `cd-version-release.yml` / `cd-version-release-prerelease.yml`, which call `royfw/rf-devops/.github/workflows/_changesets-version-channel-turbo.yml` to run changeset versioning, push the bump back to the release branch, and open a PR back to `main`. (rf-devops is being migrated into `github-toolkit`; the caller will repoint once ported.)
+- **Publish (GitLab)**: `publish/npmjs` (manual gate) runs `changeset publish` to npm and pushes git tags.
+- **Deploy branch (GitLab)**: `deploy/dev` runs build + Kubernetes deploy (`detect_project` / `trigger_project`). `deploy/prod` is not wired yet, and per-service Helm overlays under `.deploy/env/royfw-dev/helm/` are still pending (apps build to Harbor but `[skip-deploy]` until overlays exist).
 
 See `GITLAB_CI.md` for the full CI variable, environment, and flow reference.
 
 ## Versioning and Changesets
 
 - Uses **Changesets** for version management (`pnpm changeset:add` to create a changeset)
-- Not in pre-release mode (no `.changeset/pre.json`); `release/stable` publishes stable versions. Prerelease channels are entered per-branch by the `release/alpha|beta|rc` pipeline.
+- Not in pre-release mode (no `.changeset/pre.json`); `release/stable` produces stable versions. Prerelease channels are entered per-branch by the `release/alpha|beta|rc` versioning workflow.
 - `@rfjs/jsonb-query` is held back from publish via the changeset `ignore` list in `.changeset/config.json` until its Phase 2 (object/array) support lands.
 - Changelog: `@changesets/cli/changelog`
-- Release workflow: `pnpm changeset:add` → commit → merge to `release/*` (version) → merge to `publish/npmjs` (publish)
+- Release workflow: `pnpm changeset:add` → commit to `main` → PR `main → release/*` and merge (GitHub Actions versions, opens a PR back to `main`) → merge the versioned state to `publish/npmjs` (GitLab publishes to npm)
 
 ## Git Hooks
 
