@@ -51,14 +51,6 @@ pnpm -F <pkg> vitest:e2e:run  # run E2E tests for a package
 pnpm -F <pkg> vitest      # interactive watch mode
 ```
 
-### Docs
-
-Each app/lib has VitePress docs in its `docs/` folder:
-```bash
-pnpm -F <pkg> docs:dev    # start docs dev server
-pnpm -F <pkg> docs:build  # build docs static site
-```
-
 ## Repository Structure
 
 ```
@@ -68,10 +60,18 @@ apps/                     # Demo applications
   web/                    # Next.js web app (turbopack)
 
 packages/                 # Shared internal packages + publishable libs
-  eslint-config/          # Shared ESLint config (@repo/eslint-config)
-  typescript-config/      # Shared tsconfig (@repo/typescript-config)
-  ui/                     # Shared React component library (@repo/ui)
-  pg-toolkit/             # PostgreSQL utilities — published to npm (@rfjs/pg-toolkit)
+  eslint-config/          # Shared ESLint config (@repo/eslint-config, private)
+  typescript-config/      # Shared tsconfig (@repo/typescript-config, private)
+  ui/                     # Shared React component library (@repo/ui, private)
+  data-filter/            # Data filtering with JSONPath — npm (@rfjs/data-filter)
+  data-transform/         # Data type transformation utilities — npm (@rfjs/data-transform)
+  jsonb-query/            # PostgreSQL JSONB query builder — npm (@rfjs/jsonb-query)
+  jwt/                    # JWT sign/verify/decode helper — npm (@rfjs/jwt)
+  mongo-query/            # MongoDB query builder — npm (@rfjs/mongo-query)
+  object-utils/           # Object manipulation utilities — npm (@rfjs/object-utils)
+  pg-toolkit/             # PostgreSQL utilities — npm (@rfjs/pg-toolkit)
+  retry/                  # Retry helper with configurable delay — npm (@rfjs/retry)
+  tpl-toolkit/            # Shared config factories for project templates — npm (@rfjs/tpl-toolkit)
 
 libs/                     # ORM wrapper libraries (private, consumed by orm-app)
   orm-drizzle/            # Drizzle ORM wrapper
@@ -112,18 +112,21 @@ The `apps/api/` follows a layered Fastify architecture:
 
 ## CI/CD
 
-- **GitLab CI** (`.gitlab-ci.yml`): Includes shared DevOps toolkit for build/deploy, changeset versioning, and npm publish
-- **GitHub Actions** (`.github/workflows/`): Additional CI workflows for deploy and npm release
-- **Deploy branches**: `deploy/dev`, `deploy/prod` trigger Kubernetes deployment
-- **Release branches**: `release/stable`, `release/alpha|beta|rc` trigger versioning
-- **Publish**: `publish/npmjs` branch (manual trigger) publishes to npm
+CI/CD is split by responsibility: **GitHub Actions owns versioning**, **GitLab CI owns npm publish + Kubernetes deploy**. The repo lives on GitHub; `.github/workflows/trigger-gitlab-pipeline.yml` mirrors `main`, `release/*`, `deploy/*`, and `publish/*` to the GitLab project, but only **triggers** the GitLab pipeline for `publish/*` and `deploy/*` (mirror-only on `main` and `release/*`, which have no GitLab jobs).
+
+- **Release branches (GitHub Actions)**: merging a PR into `release/stable` or `release/alpha|beta|rc` runs `cd-version-release.yml` / `cd-version-release-prerelease.yml`, which call `royfw/rf-devops/.github/workflows/_changesets-version-channel-turbo.yml` to run changeset versioning, push the bump back to the release branch, and open a PR back to `main`. (rf-devops is being migrated into `github-toolkit`; the caller will repoint once ported.)
+- **Publish (GitLab)**: `publish/npmjs` (manual gate) runs `changeset publish` to npm and pushes git tags.
+- **Deploy branch (GitLab)**: `deploy/dev` runs build + Kubernetes deploy (`detect_project` / `trigger_project`). `deploy/prod` is not wired yet, and per-service Helm overlays under `.deploy/env/royfw-dev/helm/` are still pending (apps build to Harbor but `[skip-deploy]` until overlays exist).
+
+See `GITLAB_CI.md` for the full CI variable, environment, and flow reference.
 
 ## Versioning and Changesets
 
 - Uses **Changesets** for version management (`pnpm changeset:add` to create a changeset)
-- Currently in **pre-release mode** with `alpha` tag (see `.changeset/pre.json`)
-- Changelog: `@changesets/changelog-git` (commit-message-based)
-- Release workflow: `pnpm changeset:add` → commit → push to `release/*` branch → version + publish
+- Not in pre-release mode (no `.changeset/pre.json`); `release/stable` produces stable versions. Prerelease channels are entered per-branch by the `release/alpha|beta|rc` versioning workflow.
+- `@rfjs/jsonb-query` is held back from publish via the changeset `ignore` list in `.changeset/config.json` until its Phase 2 (object/array) support lands.
+- Changelog: `@changesets/cli/changelog`
+- Release workflow: `pnpm changeset:add` → commit to `main` → PR `main → release/*` and merge (GitHub Actions versions, opens a PR back to `main`) → merge the versioned state to `publish/npmjs` (GitLab publishes to npm)
 
 ## Git Hooks
 

@@ -2,14 +2,10 @@ include:
   - project: shared/devops-toolkit
     ref: main
     file:
-      - /gitlab-ci/_test/echo.yml
       - /gitlab-ci/build_deploy/nodejs-monorepo.yml
-      - /gitlab-ci/changesets_version_channel/pnpm.yml
       - /gitlab-ci/changesets_publish/changesets-publish.yml
 
 stages:
-  - echo
-  - version
   - docker_build
   - deploy_trigger
   - publish
@@ -23,32 +19,11 @@ workflow:
       when: never
     - when: always
 
-echo:
-  stage: echo
-  extends: .echo
-
 # ----------------------------
-# release/*：只做 version（commit + push 回 release/*）
+# release/*：版本(changeset version)由 GitHub Actions 處理(.github/workflows/
+# cd-version-release*.yml),不在 GitLab 跑,避免 GitHub 與 GitLab 各算一次。
+# GitLab 端對 release/* 無 job;bridge 已將 release/* 設為 mirror-only。
 # ----------------------------
-version_release:
-  stage: version
-  extends: .changesets_version_channel
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "release/stable"'
-      variables:
-        CHANNEL: "stable"
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "release/alpha"'
-      variables:
-        CHANNEL: "alpha"
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "release/beta"'
-      variables:
-        CHANNEL: "beta"
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "release/rc"'
-      variables:
-        CHANNEL: "rc"
-  variables:
-    REF: "$CI_COMMIT_BRANCH"
-    PUSH_VERSION: "true"
 
 # ----------------------------
 # publish/npmjs：只做 npm publish（不再改 repo）
@@ -79,7 +54,7 @@ detect_project:
       - .deploy/
     expire_in: 1 hour
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^deploy\/(dev|prod)$/'
+    - if: '$CI_COMMIT_BRANCH == "deploy/dev"'
       variables:
         KUBECONFIG: ${ROYFW_KUBECONFIG}
 
@@ -89,6 +64,6 @@ trigger_project:
   needs: [detect_project]
   extends: .build_deploy:trigger
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^deploy\/(dev|prod)$/'
+    - if: '$CI_COMMIT_BRANCH == "deploy/dev"'
       variables:
         KUBECONFIG: ${ROYFW_KUBECONFIG}

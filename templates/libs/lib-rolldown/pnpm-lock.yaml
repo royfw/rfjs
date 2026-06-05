@@ -24,6 +24,9 @@ importers:
       '@eslint/js':
         specifier: ^9.20.0
         version: 9.20.0
+      '@rfjs/tpl-toolkit':
+        specifier: ^0.0.1
+        version: 0.0.1(vitest@3.2.3)
       '@types/supertest':
         specifier: ^6.0.2
         version: 6.0.2
@@ -784,6 +787,18 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
+
+  '@rfjs/tpl-toolkit@0.0.1':
+    resolution: {integrity: sha512-2tDul1+fCTJZ/kmllwuybBHffJtLBqOF9Ou//ldkzqrDveP8qbg0q1874fhczyRI4M1ULwl6zCsxTaX0Q+Di0w==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      tsdown: '>=0.17.0'
+      vitest: ^3.2.3
+    peerDependenciesMeta:
+      tsdown:
+        optional: true
+      vitest:
+        optional: true
 
   '@rolldown/binding-android-arm64@1.0.0-beta.53':
     resolution: {integrity: sha512-Ok9V8o7o6YfSdTTYA/uHH30r3YtOxLD6G3wih/U9DO0ucBBFq8WPt/DslU53OgfteLRHITZny9N/qCUxMf9kjQ==}
@@ -4308,6 +4323,12 @@ snapshots:
     optional: true
 
   '@polka/url@1.0.0-next.29': {}
+
+  '@rfjs/tpl-toolkit@0.0.1(vitest@3.2.3)':
+    dependencies:
+      tslib: 2.8.1
+    optionalDependencies:
+      vitest: 3.2.3(@types/node@22.13.2)(@vitest/ui@3.2.3)(jiti@2.4.2)(terser@5.39.0)(yaml@2.7.0)
 
   '@rolldown/binding-android-arm64@1.0.0-beta.53':
     optional: true
