@@ -6,7 +6,6 @@ on:
       - main
       - release/*
       - deploy/*
-      - publish/*
 
 # One in-flight run per branch so two pushes don't race the same GitLab branch
 # (force_push keeps the GitLab branch identical to GitHub).
@@ -32,13 +31,12 @@ jobs:
           gitlab_project_id: 5
           gitlab_ref: ${{ github.ref_name }}
           deploy_env: royfw-dev
-          # Only publish/* and deploy/* have matching jobs in .gitlab-ci.yml.
-          # main is the mirror, and release/* is versioned by GitHub Actions
-          # (cd-version-release*.yml) — GitLab has no job for either, so triggering
-          # a pipeline there returns 400 "No stages / jobs". Mirror-only on
-          # main + release/*; trigger + wait on publish/* and deploy/*.
-          trigger_pipeline: ${{ startsWith(github.ref_name, 'publish/') || startsWith(github.ref_name, 'deploy/') }}
-          wait_for_pipeline: ${{ startsWith(github.ref_name, 'publish/') || startsWith(github.ref_name, 'deploy/') }}
+          # GitLab only runs deploy (deploy/dev) now — versioning and npm publish
+          # both moved to GitHub Actions (cd-version-release*.yml / cd-publish-npmjs.yml).
+          # So only deploy/* triggers a GitLab pipeline; main + release/* are
+          # mirror-only (GitLab has no job for them → triggering would 400).
+          trigger_pipeline: ${{ startsWith(github.ref_name, 'deploy/') }}
+          wait_for_pipeline: ${{ startsWith(github.ref_name, 'deploy/') }}
           gitlab_push_token: ${{ secrets.GITLAB_API_TOKEN }}
           gitlab_trigger_token: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
           gitlab_api_token: ${{ secrets.GITLAB_API_TOKEN }}
