@@ -7,7 +7,7 @@ import type {
 } from './types';
 import { ParamBuilder } from './param-builder';
 import { quoteJsonbColumn } from './column';
-import type { ScalarDialect } from './dialect';
+import type { JsonbQueryDialect } from './dialect';
 import { assertOperatorForType, isFilterGroup } from './dialect';
 import { legacyDialect } from './dialect-legacy';
 import { jsonpathDialect } from './dialect-jsonpath';
@@ -15,12 +15,12 @@ import { jsonpathDialect } from './dialect-jsonpath';
 const DIALECTS = {
   legacy: legacyDialect,
   jsonpath: jsonpathDialect,
-} satisfies Record<JsonbDialect, ScalarDialect>;
+} satisfies Record<JsonbDialect, JsonbQueryDialect>;
 
 function renderCondition(
   node: JsonbCondition,
   column: string,
-  dialect: ScalarDialect,
+  dialect: JsonbQueryDialect,
   params: ParamBuilder,
 ): string {
   if (node.dataType === 'object' || node.dataType === 'array') {
@@ -37,7 +37,7 @@ function renderCondition(
 function buildGroup(
   group: JsonbFilterGroup,
   column: string,
-  dialect: ScalarDialect,
+  dialect: JsonbQueryDialect,
   params: ParamBuilder,
 ): string {
   const parts = group.filters

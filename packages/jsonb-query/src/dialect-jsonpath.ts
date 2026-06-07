@@ -1,6 +1,6 @@
 import type { JsonbScalarOperator, JsonbValue } from './types';
 import {
-  type ScalarDialect,
+  type JsonbQueryDialect,
   fieldSegments,
   assertScalarValue,
   assertArrayValue,
@@ -26,7 +26,7 @@ const COMPARATORS: Partial<Record<JsonbScalarOperator, string>> = {
   lte: '<=',
 };
 
-export const jsonpathDialect: ScalarDialect = {
+export const jsonpathDialect: JsonbQueryDialect = {
   render(column, field, dataType, operator, value, params) {
     // isnull/isnotnull are dialect-independent.
     if (operator === 'isnull' || operator === 'isnotnull') {
@@ -90,5 +90,11 @@ export const jsonpathDialect: ScalarDialect = {
       default:
         throw new Error(`Unsupported operator "${operator as string}"`);
     }
+  },
+  renderArray() {
+    throw new Error('Not implemented');
+  },
+  renderElemMatch() {
+    throw new Error('Not implemented');
   },
 };

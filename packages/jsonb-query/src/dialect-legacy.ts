@@ -1,6 +1,6 @@
 import type { JsonbScalarType } from './types';
 import {
-  type ScalarDialect,
+  type JsonbQueryDialect,
   fieldSegments,
   assertScalarValue,
   assertArrayValue,
@@ -21,7 +21,7 @@ const ARRAY_CASTS: Record<JsonbScalarType, string> = {
   boolean: '::boolean[]',
 };
 
-export const legacyDialect: ScalarDialect = {
+export const legacyDialect: JsonbQueryDialect = {
   render(column, field, dataType, operator, value, params) {
     if (operator === 'isnull' || operator === 'isnotnull') {
       return renderNullCheck(column, field, operator, params);
@@ -62,5 +62,11 @@ export const legacyDialect: ScalarDialect = {
       default:
         throw new Error(`Unsupported operator "${operator as string}"`);
     }
+  },
+  renderArray() {
+    throw new Error('Not implemented');
+  },
+  renderElemMatch() {
+    throw new Error('Not implemented');
   },
 };

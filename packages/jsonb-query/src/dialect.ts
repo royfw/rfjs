@@ -6,13 +6,23 @@ import type {
   JsonbFilterGroup,
   JsonbObjectOperator,
   JsonbObjectValue,
+  JsonbArrayCondition,
+  JsonbElemMatchCondition,
 } from './types';
 import type { ParamBuilder } from './param-builder';
 
-export interface ScalarDialect {
+export interface RenderContext {
+  params: ParamBuilder;
+  /** Allocate a unique table alias (e1, e2, …) for EXISTS subqueries. */
+  nextAlias(): string;
+  /** Render a nested filter group against an element expression (elemmatch scope). */
+  renderGroup(group: JsonbFilterGroup, column: string): string;
+}
+
+export interface JsonbQueryDialect {
   /**
-   * Render one condition into a SQL boolean expression, pushing any parameter
-   * values onto `params`.
+   * Render one scalar condition into a SQL boolean expression, pushing any
+   * parameter values onto `params`.
    * @param column already-quoted column SQL, e.g. `"data"`
    * @param field  raw dot path, e.g. "address.city"
    */
@@ -24,6 +34,10 @@ export interface ScalarDialect {
     value: JsonbValue | JsonbValue[] | undefined,
     params: ParamBuilder,
   ): string;
+  /** Render a scalar-element array condition (∃ semantics / containsall / null checks). */
+  renderArray(column: string, condition: JsonbArrayCondition, ctx: RenderContext): string;
+  /** Render an array-of-objects condition (all sub-conditions on the same element). */
+  renderElemMatch(column: string, condition: JsonbElemMatchCondition, ctx: RenderContext): string;
 }
 
 export function fieldSegments(field: string): string[] {
