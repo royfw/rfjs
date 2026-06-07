@@ -1,6 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import { jsonpathDialect } from './dialect-jsonpath';
 import { ParamBuilder } from './param-builder';
+import type { RenderContext } from './dialect';
+import type { JsonbArrayCondition } from './types';
+
+function makeCtx(p: ParamBuilder): RenderContext {
+  let n = 0;
+  return {
+    params: p,
+    nextAlias: () => {
+      n += 1;
+      return `e${n}`;
+    },
+    renderGroup: () => {
+      throw new Error('renderGroup not used by jsonpath dialect');
+    },
+  };
+}
 
 function run(
   field: string,
@@ -91,5 +107,51 @@ describe('jsonpathDialect', () => {
 
   it('throws on an unknown operator', () => {
     expect(() => run('name', 'string', 'bogus' as never, 'x')).toThrow(/unsupported operator/i);
+  });
+});
+
+describe('jsonpathDialect.renderArray', () => {
+  function runArray(cond: Omit<JsonbArrayCondition, 'dataType'>) {
+    const p = new ParamBuilder();
+    const where = jsonpathDialect.renderArray('"data"', { ...cond, dataType: 'array' }, makeCtx(p));
+    return { where, values: p.values };
+  }
+
+  it('element eq filters over [*] with phase-1 var naming', () => {
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'eq', value: 'a' })).toEqual({
+      where: 'jsonb_path_exists("data", $1::jsonpath, $2::jsonb)',
+      values: ['$."tags"[*] ? (@ == $v)', { v: 'a' }],
+    });
+  });
+
+  it('element range / terms / date / contains', () => {
+    expect(runArray({ field: 'nums', elementType: 'numeric', operator: 'range', value: [1, 9] }).values[0]).toBe(
+      '$."nums"[*] ? (@ >= $lo && @ <= $hi)',
+    );
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'terms', value: ['a', 'b'] }).values[0]).toBe(
+      '$."tags"[*] ? (@ == $v0 || @ == $v1)',
+    );
+    expect(runArray({ field: 'dates', elementType: 'date', operator: 'eq', value: '2020-01-01' }).values[0]).toBe(
+      '$."dates"[*] ? (@.datetime() == $v.datetime())',
+    );
+    // contains embeds an escaped regex literal and emits the 2-arg form
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'contains', value: 'a.b' })).toEqual({
+      where: 'jsonb_path_exists("data", $1::jsonpath)',
+      values: ['$."tags"[*] ? (@ like_regex "a\\\\.b")'],
+    });
+  });
+
+  it('containsall falls back to @> (identical to legacy)', () => {
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'containsall', value: ['a', 'b'] })).toEqual({
+      where: '(("data" #> $1) @> $2::jsonb)',
+      values: [['tags'], '["a","b"]'],
+    });
+  });
+
+  it('isnull / isnotnull use the dialect-independent null check', () => {
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'isnull' })).toEqual({
+      where: '(("data" #>> $1) is null)',
+      values: [['tags']],
+    });
   });
 });

@@ -5,6 +5,7 @@ import {
   assertScalarValue,
   assertArrayValue,
   renderNullCheck,
+  renderJsonbContains,
 } from './dialect';
 import type { ParamBuilder } from './param-builder';
 import { escapeJsonpathString, escapeRegexLiteral } from './escape';
@@ -147,8 +148,18 @@ export const jsonpathDialect: JsonbQueryDialect = {
     const { pred } = scalarPredicate('@', dataType, operator, value, sink);
     return pathExists(column, `${memberAccessor('$', field)} ? (${pred})`, sink.vars, params);
   },
-  renderArray() {
-    throw new Error('Not implemented');
+  renderArray(column, condition, ctx) {
+    const { params } = ctx;
+    const { field, elementType, operator, value } = condition;
+    if (operator === 'isnull' || operator === 'isnotnull') {
+      return renderNullCheck(column, field, operator, params);
+    }
+    if (operator === 'containsall') {
+      return renderJsonbContains(column, field, assertArrayValue(operator, value), params);
+    }
+    const sink = namedSink();
+    const { pred } = scalarPredicate('@', elementType, operator, value, sink);
+    return pathExists(column, `${memberAccessor('$', field)}[*] ? (${pred})`, sink.vars, params);
   },
   renderElemMatch() {
     throw new Error('Not implemented');
