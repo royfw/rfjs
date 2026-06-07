@@ -113,8 +113,24 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
       }
 
       beforeAll(async () => {
-        client = new Client({ connectionString: url });
-        await client.connect();
+        // Retry the initial connection: CI service containers may accept TCP
+        // before PG is actually ready to serve queries.
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 30; attempt += 1) {
+          client = new Client({ connectionString: url });
+          try {
+            await client.connect();
+            lastError = undefined;
+            break;
+          } catch (error) {
+            lastError = error;
+            await client.end().catch(() => undefined);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        }
+        if (lastError) {
+          throw lastError;
+        }
         await client.query("set timezone to 'UTC'");
         version = Number(
           (await client.query('show server_version_num')).rows[0].server_version_num,
