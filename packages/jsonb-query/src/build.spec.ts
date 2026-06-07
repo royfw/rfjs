@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { buildJsonbQuery } from './build';
-import type { JsonbFilterGroup } from './types';
+import type {
+  JsonbArrayCondition,
+  JsonbElemMatchCondition,
+  JsonbFilterGroup,
+  JsonbObjectCondition,
+} from './types';
 
 describe('buildJsonbQuery', () => {
   it('builds a single-condition where with contiguous params (legacy default)', () => {
@@ -141,5 +146,60 @@ describe('buildJsonbQuery', () => {
       '(("data" #>> $1) = $2) and ((("data" #>> $3)::numeric > $4) or ((("data" #>> $5) = $6) and (("data" #>> $7)::boolean = $8)))',
     );
     expect(r.values).toEqual([['a'], 'x', ['b'], 1, ['c'], 'y', ['d'], true]);
+  });
+
+  // Phase 2 condition types are part of the JsonbCondition union but their
+  // rendering lands in later tasks. Until then the dispatcher must reject them
+  // explicitly rather than silently mis-render them as scalar conditions.
+  describe('phase-2 condition types', () => {
+    const object: JsonbObjectCondition = {
+      field: 'profile',
+      dataType: 'object',
+      operator: 'contains',
+      value: { vip: true },
+    };
+    const array: JsonbArrayCondition = {
+      field: 'tags',
+      dataType: 'array',
+      elementType: 'string',
+      operator: 'eq',
+      value: 'a',
+    };
+    const elemMatch: JsonbElemMatchCondition = {
+      field: 'items',
+      dataType: 'array',
+      elementType: 'object',
+      operator: 'elemmatch',
+      filters: {
+        logic: 'and',
+        filters: [{ field: 'sku', dataType: 'string', operator: 'eq', value: 'x' }],
+      },
+    };
+
+    it.each([
+      ['object', object],
+      ['scalar array', array],
+      ['array of objects (elemmatch)', elemMatch],
+    ])('rejects %s conditions instead of mis-rendering them as scalars', (_label, condition) => {
+      expect(() =>
+        buildJsonbQuery('data', { logic: 'and', filters: [condition] }),
+      ).toThrow(/datatype "(object|array)" is not yet supported/i);
+      expect(() =>
+        buildJsonbQuery('data', { logic: 'and', filters: [condition] }, { dialect: 'jsonpath' }),
+      ).toThrow(/datatype "(object|array)" is not yet supported/i);
+    });
+
+    it('still renders scalar conditions on the same field (no scalar regression)', () => {
+      expect(
+        buildJsonbQuery('data', {
+          logic: 'and',
+          filters: [{ field: 'profile', dataType: 'string', operator: 'eq', value: 'a' }],
+        }),
+      ).toEqual({
+        where: '(("data" #>> $1) = $2)',
+        values: [['profile'], 'a'],
+        from: [],
+      });
+    });
   });
 });

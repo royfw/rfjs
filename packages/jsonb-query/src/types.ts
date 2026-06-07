@@ -2,7 +2,12 @@ export type JsonbDialect = 'legacy' | 'jsonpath';
 
 export type JsonbScalarType = 'string' | 'numeric' | 'date' | 'boolean';
 
+export type JsonbDataType = JsonbScalarType | 'object' | 'array';
+
 export type JsonbValue = string | number | boolean | Date;
+
+/** Value for object-typed conditions: a plain JSON-serializable object. */
+export type JsonbObjectValue = Record<string, unknown>;
 
 export type JsonbLogicalOperator = 'and' | 'or';
 
@@ -21,12 +26,58 @@ export type JsonbScalarOperator =
   | 'range'
   | 'terms';
 
-export interface JsonbCondition {
+export type JsonbObjectOperator = 'eq' | 'neq' | 'contains' | 'isnull' | 'isnotnull';
+
+/**
+ * Operators on arrays of scalars. Scalar operators use "some element matches"
+ * (∃) semantics; `isnull`/`isnotnull` test the array field itself;
+ * `containsall` requires every listed value to be present. `neq` is excluded:
+ * its exists-vs-forall meaning is ambiguous on arrays.
+ */
+export type JsonbArrayOperator = Exclude<JsonbScalarOperator, 'neq'> | 'containsall';
+
+export interface JsonbScalarCondition {
   field: string;
   dataType: JsonbScalarType;
   operator: JsonbScalarOperator;
   value?: JsonbValue | JsonbValue[];
+  elementType?: never;
+  filters?: never;
 }
+
+export interface JsonbObjectCondition {
+  field: string;
+  dataType: 'object';
+  operator: JsonbObjectOperator;
+  value?: JsonbObjectValue;
+  elementType?: never;
+  filters?: never;
+}
+
+export interface JsonbArrayCondition {
+  field: string;
+  dataType: 'array';
+  elementType: JsonbScalarType;
+  operator: JsonbArrayOperator;
+  value?: JsonbValue | JsonbValue[];
+  filters?: never;
+}
+
+export interface JsonbElemMatchCondition {
+  field: string;
+  dataType: 'array';
+  elementType: 'object';
+  operator: 'elemmatch';
+  /** Conditions applied per element; each `field` is relative to the element. */
+  filters: JsonbFilterGroup;
+  value?: never;
+}
+
+export type JsonbCondition =
+  | JsonbScalarCondition
+  | JsonbObjectCondition
+  | JsonbArrayCondition
+  | JsonbElemMatchCondition;
 
 export interface JsonbFilterGroup {
   logic: JsonbLogicalOperator;
@@ -36,7 +87,7 @@ export interface JsonbFilterGroup {
 export interface JsonbQueryResult {
   where: string;
   values: unknown[];
-  /** FROM-clause fragments. Always `[]` in Phase 1. Reserved for Phase 2 (non-scalar types). */
+  /** Always `[]`. Array queries render as EXISTS subqueries inside `where`; reserved. */
   from: string[];
 }
 

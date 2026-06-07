@@ -29,6 +29,13 @@ function renderCondition(
   dialect: ScalarDialect,
   params: ParamBuilder,
 ): string {
+  if (node.dataType === 'object' || node.dataType === 'array') {
+    // Object / scalar-array / elemmatch rendering lands in later tasks; until
+    // then reject them explicitly rather than mis-render them as scalars.
+    throw new Error(
+      `dataType "${node.dataType}" is not yet supported by buildJsonbQuery`,
+    );
+  }
   assertOperatorForType(node.dataType, node.operator);
   return dialect.render(column, node.field, node.dataType, node.operator, node.value, params);
 }
