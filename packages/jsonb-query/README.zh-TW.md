@@ -56,6 +56,11 @@ await client.query(`SELECT * FROM t WHERE org_id = $1 AND ${where}`, [orgId, ...
 
 條件的**值**與**欄位路徑**一律透過參數化處理，永遠不會插值到 SQL 中。**column** 引數是由開發者提供的識別符：系統會對其進行驗證並加上引號（`data`、`t.payload`），任何不符合純（選擇性限定）欄位參考的輸入都會被拒絕。
 
+> **API 穩定性：**本建構器輸出的 SQL 文字細節（型別轉換、括號、別名、
+> jsonpath 變數名稱）屬於實作細節，可能在 minor 版本之間變動——穩定的只有
+> 查詢**語意**與**參數化契約**。請勿在使用端測試中對產出的字串做 snapshot
+> 斷言；應改為斷言查詢結果。
+
 ## 支援的型別與運算子
 
 | dataType                          | operators                                                                  |

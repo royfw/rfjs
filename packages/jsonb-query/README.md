@@ -63,6 +63,12 @@ interpolated into SQL. The **column** argument is a developer-provided
 identifier: it is validated and quoted (`data`, `t.payload`), and anything that
 is not a plain (optionally qualified) column reference is rejected.
 
+> **API stability:** the exact SQL text this builder emits (casts, parentheses,
+> alias names, jsonpath variable names) is an implementation detail and may
+> change between minor versions — only the query **semantics** and the
+> **parameterization contract** are stable. Don't snapshot-assert the generated
+> strings in consumer tests; assert query results instead.
+
 ## Supported types & operators
 
 | dataType                          | operators                                                                  |
