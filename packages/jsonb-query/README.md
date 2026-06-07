@@ -56,6 +56,25 @@ const { where, values } = buildJsonbQuery('data', filter, { paramOffset: 1 });
 await client.query(`SELECT * FROM t WHERE org_id = $1 AND ${where}`, [orgId, ...values]);
 ```
 
+### Named parameters (TypeORM QueryBuilder, Knex)
+
+The positional `$N` output feeds `pg`, TypeORM raw queries, Prisma
+(`$queryRawUnsafe`) and Kysely (`CompiledQuery.raw`) directly. Query layers
+with **named** bindings don't accept `$N` — convert with `toNamedParams`:
+
+```typescript
+import { buildJsonbQuery, toNamedParams } from '@rfjs/jsonb-query';
+
+const { where, params } = toNamedParams(buildJsonbQuery('data', filter));
+// where:  '(("data" #>> :p1) = :p2)'
+// params: { p1: ['name'], p2: 'bob' }
+qb.andWhere(where, params); // TypeORM QueryBuilder / knex.whereRaw(where, params)
+```
+
+Placeholder numbers are detected from the SQL, so `paramOffset` results map
+correctly, and repeated placeholder references (e.g. `startswith`) stay
+pointed at a single named param.
+
 ## Safety
 
 Condition **values** and **field paths** are always parameterized — never

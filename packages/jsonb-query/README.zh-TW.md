@@ -52,6 +52,24 @@ const { where, values } = buildJsonbQuery('data', filter, { paramOffset: 1 });
 await client.query(`SELECT * FROM t WHERE org_id = $1 AND ${where}`, [orgId, ...values]);
 ```
 
+### 具名參數（TypeORM QueryBuilder、Knex）
+
+位置型 `$N` 輸出可直接餵給 `pg`、TypeORM raw query、Prisma
+（`$queryRawUnsafe`）與 Kysely（`CompiledQuery.raw`）。使用**具名**綁定的
+查詢層不接受 `$N`——以 `toNamedParams` 轉換：
+
+```typescript
+import { buildJsonbQuery, toNamedParams } from '@rfjs/jsonb-query';
+
+const { where, params } = toNamedParams(buildJsonbQuery('data', filter));
+// where:  '(("data" #>> :p1) = :p2)'
+// params: { p1: ['name'], p2: 'bob' }
+qb.andWhere(where, params); // TypeORM QueryBuilder / knex.whereRaw(where, params)
+```
+
+佔位符編號會自動從 SQL 偵測，因此 `paramOffset` 的結果也能正確對應；同一
+佔位符被重複引用時（如 `startswith`）仍指向同一個具名參數。
+
 ## 安全性
 
 條件的**值**與**欄位路徑**一律透過參數化處理，永遠不會插值到 SQL 中。**column** 引數是由開發者提供的識別符：系統會對其進行驗證並加上引號（`data`、`t.payload`），任何不符合純（選擇性限定）欄位參考的輸入都會被拒絕。
