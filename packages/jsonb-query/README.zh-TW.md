@@ -58,13 +58,77 @@ await client.query(`SELECT * FROM t WHERE org_id = $1 AND ${where}`, [orgId, ...
 
 ## 支援的型別與運算子
 
-| dataType | operators |
-|----------|-----------|
-| `string` | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `terms` |
-| `numeric` | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms` |
-| `date` | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms` |
-| `boolean` | `eq` `neq` `isnull` `isnotnull` |
+| dataType                          | operators                                                                  |
+| --------------------------------- | -------------------------------------------------------------------------- |
+| `string`                          | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `terms` |
+| `numeric`                         | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms`      |
+| `date`                            | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms`      |
+| `boolean`                         | `eq` `neq` `isnull` `isnotnull`                                            |
+| `object`                          | `eq` `neq` `contains` `isnull` `isnotnull`                                 |
+| `array` + 純量 `elementType`      | 元素運算子（見下方）+ `containsall` + `isnull` `isnotnull`                 |
+| `array` + `elementType: 'object'` | `elemmatch`                                                                |
 
 `range` 接受 2 個元素的 `[lo, hi]` 陣列；`terms` 接受非空陣列。
 
-> 巢狀物件、JSON 陣列及物件陣列的支援規劃於後續版本推出。
+### 巢狀物件
+
+點記號路徑可存取巢狀純量（`profile.vip`）。`dataType: 'object'` 則比較物件值
+本身 — `eq`/`neq` 為 jsonb 結構相等比較，`contains` 為 jsonb 包含（`@>`）：
+
+```typescript
+{ field: 'profile', dataType: 'object', operator: 'contains', value: { vip: true } }
+// legacy 與 jsonpath 皆為: (("data" #> $1) @> $2::jsonb)   values: [['profile'], '{"vip":true}']
+```
+
+物件條件在兩種方言中產生相同 SQL（SQL/JSON path 述詞無法比較非純量值），
+且 `@>` 可使用 GIN 索引。
+
+### JSON 陣列（純量元素）
+
+宣告 `dataType: 'array'` 並以 `elementType` 指定元素型別。純量運算子採
+**「任一元素符合」**（∃）語意；`isnull`/`isnotnull` 檢查陣列欄位本身；
+`containsall`（限 string/numeric 元素）要求所有列出的值皆存在。
+元素不支援 `neq`（存在 ∃ 與全稱 ∀ 語意混淆）。
+
+```typescript
+{ field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' }
+// legacy:   (exists (select 1 from jsonb_array_elements_text(...) as e1(v) where (e1.v = $2)))
+// jsonpath: $."tags"[*] ? (@ == $v)
+
+{ field: 'tags', dataType: 'array', elementType: 'string', operator: 'containsall', value: ['a', 'b'] }
+// 兩種方言皆為: (("data" #> $1) @> $2::jsonb)
+```
+
+元素運算子：string → `eq contains startswith endswith terms`；
+numeric → `eq gt gte lt lte range terms`；date → `eq gt gte lt lte range terms`；
+boolean → `eq`。
+
+### 物件陣列（`elemmatch`）
+
+所有子條件必須在**同一個元素**上成立。子條件的 `field` 為相對於元素的路徑；
+支援巢狀 `and`/`or` 群組與巢狀 `elemmatch`。`elemmatch` 內尚不支援物件條件與
+純量陣列條件（兩種方言皆會拒絕）。
+
+```typescript
+{
+  field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+  filters: {
+    logic: 'and',
+    filters: [
+      { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+      { field: 'qty', dataType: 'numeric', operator: 'gt', value: 1 },
+    ],
+  },
+}
+// legacy:   (exists (select 1 from jsonb_array_elements(...) as e1
+//             where ((e1.value #>> $2) = $3) and ((e1.value #>> $4)::numeric > $5)))
+// jsonpath: $."items"[*] ? (@."sku" == $v0 && @."qty" > $v1)
+```
+
+### 語意注意事項
+
+- 進入 `::jsonb` 參數的陣列／物件值會由建構器自動 `JSON.stringify`；照常傳入
+  一般 JS 值即可。
+- 當儲存的值**不是**陣列時：legacy 方言視為空陣列（不符合）；jsonpath 方言
+  （lax 模式）會把純量自動包裝成單元素陣列。請保持資料形狀一致以避免差異。
+- `date` 元素不支援 `containsall`：jsonb 包含比較的是 ISO 文字而非時間值。
