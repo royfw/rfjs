@@ -4,6 +4,7 @@ import {
   fieldSegments,
   assertScalarValue,
   assertArrayValue,
+  renderNullCheck,
 } from './dialect';
 import { escapeJsonpathString, escapeRegexLiteral } from './escape';
 
@@ -29,8 +30,7 @@ export const jsonpathDialect: ScalarDialect = {
   render(column, field, dataType, operator, value, params) {
     // isnull/isnotnull are dialect-independent.
     if (operator === 'isnull' || operator === 'isnotnull') {
-      const F = `(${column} #>> ${params.add(fieldSegments(field))})`;
-      return operator === 'isnull' ? `(${F} is null)` : `(${F} is not null)`;
+      return renderNullCheck(column, field, operator, params);
     }
 
     const base = basePath(field);

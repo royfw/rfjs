@@ -2,6 +2,8 @@ import type {
   JsonbScalarType,
   JsonbScalarOperator,
   JsonbValue,
+  JsonbCondition,
+  JsonbFilterGroup,
 } from './types';
 import type { ParamBuilder } from './param-builder';
 
@@ -26,8 +28,39 @@ export function fieldSegments(field: string): string[] {
   return field.split('.');
 }
 
+export function isFilterGroup(
+  node: JsonbCondition | JsonbFilterGroup,
+): node is JsonbFilterGroup {
+  return 'logic' in node && 'filters' in node;
+}
+
+/** `field IS [NOT] NULL` via `#>>`: SQL null for both missing keys and JSON null. */
+export function renderNullCheck(
+  column: string,
+  field: string,
+  operator: 'isnull' | 'isnotnull',
+  params: ParamBuilder,
+): string {
+  const F = `(${column} #>> ${params.add(fieldSegments(field))})`;
+  return operator === 'isnull' ? `(${F} is null)` : `(${F} is not null)`;
+}
+
+/**
+ * JSONB containment (`@>`). `JSON.stringify` is required: node-postgres encodes
+ * raw JS arrays as Postgres array literals ('{a,b}'), which are not valid jsonb.
+ */
+export function renderJsonbContains(
+  column: string,
+  field: string,
+  value: unknown,
+  params: ParamBuilder,
+): string {
+  const fParam = params.add(fieldSegments(field));
+  return `((${column} #> ${fParam}) @> ${params.add(JSON.stringify(value))}::jsonb)`;
+}
+
 export function assertScalarValue(
-  operator: JsonbScalarOperator,
+  operator: string,
   value: JsonbValue | JsonbValue[] | undefined,
 ): JsonbValue {
   if (value === undefined || value === null || Array.isArray(value)) {
@@ -37,7 +70,7 @@ export function assertScalarValue(
 }
 
 export function assertArrayValue(
-  operator: JsonbScalarOperator,
+  operator: string,
   value: JsonbValue | JsonbValue[] | undefined,
   exactLength?: number,
 ): JsonbValue[] {

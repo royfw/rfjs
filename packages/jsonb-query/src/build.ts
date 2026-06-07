@@ -8,7 +8,7 @@ import type {
 import { ParamBuilder } from './param-builder';
 import { quoteJsonbColumn } from './column';
 import type { ScalarDialect } from './dialect';
-import { assertOperatorForType } from './dialect';
+import { assertOperatorForType, isFilterGroup } from './dialect';
 import { legacyDialect } from './dialect-legacy';
 import { jsonpathDialect } from './dialect-jsonpath';
 
@@ -16,12 +16,6 @@ const DIALECTS = {
   legacy: legacyDialect,
   jsonpath: jsonpathDialect,
 } satisfies Record<JsonbDialect, ScalarDialect>;
-
-function isGroup(
-  node: JsonbCondition | JsonbFilterGroup,
-): node is JsonbFilterGroup {
-  return 'logic' in node && 'filters' in node;
-}
 
 function renderCondition(
   node: JsonbCondition,
@@ -48,7 +42,7 @@ function buildGroup(
 ): string {
   const parts = group.filters
     .map((node) =>
-      isGroup(node)
+      isFilterGroup(node)
         ? wrap(buildGroup(node, column, dialect, params))
         : renderCondition(node, column, dialect, params),
     )

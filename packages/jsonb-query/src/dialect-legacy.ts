@@ -4,6 +4,7 @@ import {
   fieldSegments,
   assertScalarValue,
   assertArrayValue,
+  renderNullCheck,
 } from './dialect';
 
 const CASTS: Record<JsonbScalarType, string> = {
@@ -22,15 +23,14 @@ const ARRAY_CASTS: Record<JsonbScalarType, string> = {
 
 export const legacyDialect: ScalarDialect = {
   render(column, field, dataType, operator, value, params) {
+    if (operator === 'isnull' || operator === 'isnotnull') {
+      return renderNullCheck(column, field, operator, params);
+    }
     const fParam = params.add(fieldSegments(field));
     const F = `(${column} #>> ${fParam})`;
     const Fc = `${F}${CASTS[dataType]}`;
 
     switch (operator) {
-      case 'isnull':
-        return `(${F} is null)`;
-      case 'isnotnull':
-        return `(${F} is not null)`;
       case 'eq':
         return `(${Fc} = ${params.add(assertScalarValue(operator, value))})`;
       case 'neq':
