@@ -125,6 +125,37 @@ boolean → `eq`。
 // jsonpath: $."items"[*] ? (@."sku" == $v0 && @."qty" > $v1)
 ```
 
+### 群組邏輯（`and` / `or` / `nor` / `not`）
+
+群組的 `logic` 與 `@rfjs/data-filter` 的 `LogicalOperator` 對齊：
+
+| logic | 符合條件 | SQL |
+|-------|---------|-----|
+| `and` | 所有子條件皆符合 | `A and B` |
+| `or` | 任一子條件符合 | `A or B` |
+| `not` | NOT（所有子條件皆符合） | `not (A and B)` |
+| `nor` | NOT（任一子條件符合） | `not (A or B)` |
+
+`not` 包住單一陣列條件即可表達**「陣列不包含」**（∀ 語意），兩種方言行為一致：
+
+```typescript
+{
+  logic: 'not',
+  filters: [
+    { field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' },
+  ],
+}
+// legacy:   not ((exists (select 1 from jsonb_array_elements_text(...) where (e1.v = $2))))
+// jsonpath: not (jsonb_path_exists("data", $1::jsonpath, $2::jsonb))
+// 欄位缺失或非陣列值在兩種方言都視為「不包含」（符合條件）。
+```
+
+> **SQL 三值邏輯注意事項：**對**純量**條件取反時，若欄位**缺失**會得到 SQL
+> `NULL`，該 row **不會**符合——這與 `@rfjs/data-filter` 在記憶體中對同一個
+> `not` 的求值結果（符合）不同。若「欄位缺失」也應符合，請明確加上 `isnull`
+> 條件組合：`{ logic: 'or', filters: [{ logic: 'not', ... }, { field, dataType, operator: 'isnull' }] }`。
+> 陣列條件不受影響（空陣列 guard 讓兩種方言行為一致）。
+
 ### 語意注意事項
 
 - 進入 `::jsonb` 參數的陣列／物件值會由建構器自動 `JSON.stringify`；照常傳入

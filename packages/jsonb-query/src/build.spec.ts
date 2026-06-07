@@ -394,3 +394,101 @@ describe('buildJsonbQuery — phase 2', () => {
     ).toThrow(/use "elemmatch"/i);
   });
 });
+
+describe('buildJsonbQuery — nor/not logical operators', () => {
+  const GUARD2 = (col: string, ph: string) =>
+    `case when jsonb_typeof(${col} #> ${ph}) = 'array' then ${col} #> ${ph} else '[]'::jsonb end`;
+
+  it('not negates the conjunction of its children', () => {
+    expect(
+      buildJsonbQuery('data', {
+        logic: 'not',
+        filters: [
+          { field: 'name', dataType: 'string', operator: 'eq', value: 'bob' },
+          { field: 'age', dataType: 'numeric', operator: 'gt', value: 18 },
+        ],
+      }),
+    ).toEqual({
+      where: 'not ((("data" #>> $1) = $2) and (("data" #>> $3)::numeric > $4))',
+      values: [['name'], 'bob', ['age'], 18],
+      from: [],
+    });
+  });
+
+  it('nor negates the disjunction of its children', () => {
+    expect(
+      buildJsonbQuery('data', {
+        logic: 'nor',
+        filters: [
+          { field: 'name', dataType: 'string', operator: 'eq', value: 'bob' },
+          { field: 'age', dataType: 'numeric', operator: 'gt', value: 18 },
+        ],
+      }).where,
+    ).toBe('not ((("data" #>> $1) = $2) or (("data" #>> $3)::numeric > $4))');
+  });
+
+  it('expresses array not-contains in both dialects', () => {
+    const filter: JsonbFilterGroup = {
+      logic: 'not',
+      filters: [
+        { field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' },
+      ],
+    };
+    expect(buildJsonbQuery('data', filter)).toEqual({
+      where: `not ((exists (select 1 from jsonb_array_elements_text(${GUARD2('"data"', '$1')}) as e1(v) where (e1.v = $2))))`,
+      values: [['tags'], 'a'],
+      from: [],
+    });
+    expect(buildJsonbQuery('data', filter, { dialect: 'jsonpath' })).toEqual({
+      where: 'not (jsonb_path_exists("data", $1::jsonpath, $2::jsonb))',
+      values: ['$."tags"[*] ? (@ == $v)', { v: 'a' }],
+      from: [],
+    });
+  });
+
+  it('wraps a nested not group inside an and group', () => {
+    expect(
+      buildJsonbQuery('data', {
+        logic: 'and',
+        filters: [
+          { field: 'name', dataType: 'string', operator: 'eq', value: 'bob' },
+          {
+            logic: 'not',
+            filters: [{ field: 'vip', dataType: 'boolean', operator: 'eq', value: true }],
+          },
+        ],
+      }).where,
+    ).toBe('(("data" #>> $1) = $2) and (not ((("data" #>> $3)::boolean = $4)))');
+  });
+
+  it('supports not groups inside elemmatch (legacy)', () => {
+    expect(
+      buildJsonbQuery('data', {
+        logic: 'and',
+        filters: [
+          {
+            field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+            filters: {
+              logic: 'and',
+              filters: [
+                { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+                {
+                  logic: 'not',
+                  filters: [{ field: 'qty', dataType: 'numeric', operator: 'gt', value: 5 }],
+                },
+              ],
+            },
+          },
+        ],
+      }).where,
+    ).toBe(
+      `(exists (select 1 from jsonb_array_elements(${GUARD2('"data"', '$1')}) as e1 ` +
+        'where ((e1.value #>> $2) = $3) and (not (((e1.value #>> $4)::numeric > $5)))))',
+    );
+  });
+
+  it('drops empty not/nor groups (phase-1 empty-group convention)', () => {
+    expect(buildJsonbQuery('data', { logic: 'not', filters: [] }).where).toBe('');
+    expect(buildJsonbQuery('data', { logic: 'nor', filters: [] }).where).toBe('');
+  });
+});

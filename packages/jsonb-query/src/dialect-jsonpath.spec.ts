@@ -279,3 +279,41 @@ describe('jsonpathDialect.renderElemMatch', () => {
     ).toThrow(/requires a filter group with at least one condition/i);
   });
 });
+
+describe('jsonpathDialect.renderElemMatch — nor/not groups', () => {
+  function runElem2(field: string, filters: JsonbFilterGroup) {
+    const p = new ParamBuilder();
+    const cond: JsonbElemMatchCondition = {
+      field, dataType: 'array', elementType: 'object', operator: 'elemmatch', filters,
+    };
+    const where = jsonpathDialect.renderElemMatch('"data"', cond, makeCtx(p));
+    return { where, values: p.values };
+  }
+
+  it('negates a top-level nor group with !(… || …)', () => {
+    expect(
+      runElem2('items', {
+        logic: 'nor',
+        filters: [
+          { field: 'a', dataType: 'numeric', operator: 'eq', value: 1 },
+          { field: 'b', dataType: 'numeric', operator: 'eq', value: 2 },
+        ],
+      }).values[0],
+    ).toBe('$."items"[*] ? (!(@."a" == $v0 || @."b" == $v1))');
+  });
+
+  it('negates a nested not group with !(…) and wraps it in the conjunction', () => {
+    expect(
+      runElem2('items', {
+        logic: 'and',
+        filters: [
+          { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+          {
+            logic: 'not',
+            filters: [{ field: 'qty', dataType: 'numeric', operator: 'gt', value: 5 }],
+          },
+        ],
+      }).values[0],
+    ).toBe('$."items"[*] ? (@."sku" == $v0 && (!(@."qty" > $v1)))');
+  });
+});

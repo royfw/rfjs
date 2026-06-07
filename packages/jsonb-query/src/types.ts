@@ -9,7 +9,12 @@ export type JsonbValue = string | number | boolean | Date;
 /** Value for object-typed conditions: a plain JSON-serializable object. */
 export type JsonbObjectValue = Record<string, unknown>;
 
-export type JsonbLogicalOperator = 'and' | 'or';
+/**
+ * Group logic, aligned with `@rfjs/data-filter`'s `LogicalOperator`:
+ * `and` = all children match; `or` = any child matches;
+ * `not` = NOT(all children match); `nor` = NOT(any child matches).
+ */
+export type JsonbLogicalOperator = 'and' | 'or' | 'nor' | 'not';
 
 export type JsonbScalarOperator =
   | 'eq'

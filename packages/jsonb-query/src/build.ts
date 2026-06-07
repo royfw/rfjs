@@ -62,7 +62,16 @@ function buildGroup(
         : renderCondition(node, column, dialect, ctx, scope),
     )
     .filter((sql) => sql.length > 0);
-  return parts.join(group.logic === 'or' ? ' or ' : ' and ');
+  return joinLogic(parts, group.logic);
+}
+
+/** Join rendered parts per group logic; `not`/`nor` negate the joined result. */
+function joinLogic(parts: string[], logic: JsonbFilterGroup['logic']): string {
+  if (parts.length === 0) {
+    return '';
+  }
+  const joined = parts.join(logic === 'or' || logic === 'nor' ? ' or ' : ' and ');
+  return logic === 'not' || logic === 'nor' ? `not (${joined})` : joined;
 }
 
 function wrap(sql: string): string {

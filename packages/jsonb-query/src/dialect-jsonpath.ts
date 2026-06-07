@@ -175,7 +175,11 @@ function groupPredicate(group: JsonbFilterGroup, sink: VarSink): string {
       return conditionPredicate(node, sink);
     })
     .filter((part) => part.length > 0);
-  return parts.join(group.logic === 'or' ? ' || ' : ' && ');
+  if (parts.length === 0) {
+    return '';
+  }
+  const joined = parts.join(group.logic === 'or' || group.logic === 'nor' ? ' || ' : ' && ');
+  return group.logic === 'not' || group.logic === 'nor' ? `!(${joined})` : joined;
 }
 
 function conditionPredicate(node: JsonbCondition, sink: VarSink): string {

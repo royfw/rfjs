@@ -134,6 +134,40 @@ yet (rejected in both dialects).
 // jsonpath: $."items"[*] ? (@."sku" == $v0 && @."qty" > $v1)
 ```
 
+### Group logic (`and` / `or` / `nor` / `not`)
+
+Group `logic` is aligned with `@rfjs/data-filter`'s `LogicalOperator`:
+
+| logic | matches when | SQL |
+|-------|--------------|-----|
+| `and` | all children match | `A and B` |
+| `or` | any child matches | `A or B` |
+| `not` | NOT(all children match) | `not (A and B)` |
+| `nor` | NOT(any child matches) | `not (A or B)` |
+
+`not` with a single array condition expresses **"array does not contain"**
+(∀ semantics), consistently in both dialects:
+
+```typescript
+{
+  logic: 'not',
+  filters: [
+    { field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' },
+  ],
+}
+// legacy:   not ((exists (select 1 from jsonb_array_elements_text(...) where (e1.v = $2))))
+// jsonpath: not (jsonb_path_exists("data", $1::jsonpath, $2::jsonb))
+// A missing field or non-array value counts as "does not contain" in both dialects.
+```
+
+> **SQL three-valued logic caveat:** negating a **scalar** condition on a
+> *missing* field yields SQL `NULL`, so the row does **not** match — unlike
+> `@rfjs/data-filter`, which evaluates the same `not` in memory and matches.
+> When "missing field" should match, add an explicit `isnull` condition:
+> `{ logic: 'or', filters: [{ logic: 'not', ... }, { field, dataType, operator: 'isnull' }] }`.
+> Array conditions are not affected (the empty-array guard keeps both dialects
+> consistent).
+
 ### Semantics notes
 
 - Array element values destined for `::jsonb` parameters are `JSON.stringify`-ed
