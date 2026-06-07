@@ -112,10 +112,10 @@ The `apps/api/` follows a layered Fastify architecture:
 
 ## CI/CD
 
-CI/CD is split by responsibility: **GitHub Actions owns versioning**, **GitLab CI owns npm publish + Kubernetes deploy**. The repo lives on GitHub; `.github/workflows/trigger-gitlab-pipeline.yml` mirrors `main`, `release/*`, `deploy/*`, and `publish/*` to the GitLab project, but only **triggers** the GitLab pipeline for `publish/*` and `deploy/*` (mirror-only on `main` and `release/*`, which have no GitLab jobs).
+CI/CD is split by responsibility: **GitHub Actions owns versioning + npm publish**, **GitLab CI owns only Kubernetes deploy**. The repo lives on GitHub; `.github/workflows/trigger-gitlab-pipeline.yml` mirrors `main`, `release/*`, and `deploy/*` to the GitLab project, but only **triggers** the GitLab pipeline for `deploy/*` (mirror-only on `main` and `release/*`, which have no GitLab jobs).
 
 - **Release branches (GitHub Actions)**: merging a PR into `release/stable` or `release/alpha|beta|rc` runs `cd-version-release.yml` / `cd-version-release-prerelease.yml`, which call `royfw/rf-devops/.github/workflows/_changesets-version-channel-turbo.yml` to run changeset versioning, push the bump back to the release branch, and open a PR back to `main`. (rf-devops is being migrated into `github-toolkit`; the caller will repoint once ported.)
-- **Publish (GitLab)**: `publish/npmjs` (manual gate) runs `changeset publish` to npm and pushes git tags.
+- **Publish (GitHub Actions)**: `cd-publish-npmjs.yml` is a manual `workflow_dispatch` (Actions tab → Run workflow). It checks out the versioned branch (default `publish/npmjs`) and runs plain `changeset publish` — which publishes every public package whose version isn't yet on npm and skips private ones. (GitLab's toolkit publish guards on `changeset status`, which wrongly reports "no releases" once versioning has consumed the changesets — so publish lives on GitHub instead. `@rfjs/jsonb-query` is held back via `"private": true`, the only thing `changeset publish` honors.)
 - **Deploy branch (GitLab)**: `deploy/dev` runs build + Kubernetes deploy (`detect_project` / `trigger_project`). `deploy/prod` is not wired yet, and per-service Helm overlays under `.deploy/env/royfw-dev/helm/` are still pending (apps build to Harbor but `[skip-deploy]` until overlays exist).
 
 See `GITLAB_CI.md` for the full CI variable, environment, and flow reference.

@@ -1,0 +1,72 @@
+name: CD NPM Publish
+
+# Publish bumped @rfjs/* packages to npm from a versioned branch (default
+# publish/npmjs). Manual gate: trigger from the Actions tab → "Run workflow".
+#
+# Why GitHub (not GitLab): the devops-toolkit GitLab publish job guards on
+# `changeset status`, which reports nothing once `changeset version` has consumed
+# the changesets — so a versioned branch is wrongly treated as "no releases".
+# Plain `changeset publish` has no such guard: it publishes every public package
+# whose package.json version is not yet on npm, and skips private ones. Versioning
+# happens on release/* (cd-version-release*.yml); this only publishes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch to publish from (must carry the bumped versions)
+        type: string
+        default: publish/npmjs
+      channel:
+        description: dist-tag — stable publishes latest; others publish under that tag
+        type: choice
+        options: [stable, alpha, beta, rc]
+        default: stable
+
+permissions:
+  contents: write # push the git tags changeset publish creates
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ${{ inputs.ref }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref }}
+          token: ${{ secrets.GIT_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build:packages
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.channel }}" = "stable" ]; then
+            pnpm changeset publish
+          else
+            pnpm changeset publish --tag "${{ inputs.channel }}"
+          fi
+
+      - name: Push git tags
+        run: git push origin --tags

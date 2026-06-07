@@ -1,0 +1,77 @@
+name: CI E2E jsonb-query
+
+# Runs the @rfjs/jsonb-query E2E suite against real PostgreSQL service
+# containers: 11.16 (production target — legacy dialect only, jsonpath
+# auto-skips) and 16 (both dialects). Version gating happens inside the spec
+# via server_version_num.
+#
+# Path-filtered: only runs when the package (or this workflow) changes, so it
+# never adds time to release/deploy pipelines. Local equivalent:
+#   pnpm -F @rfjs/jsonb-query test:e2e   (packages/jsonb-query/scripts/e2e.sh)
+
+on:
+  pull_request:
+    paths:
+      - 'packages/jsonb-query/**'
+      - '.github/workflows/ci-e2e-jsonb-query.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/jsonb-query/**'
+      - '.github/workflows/ci-e2e-jsonb-query.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-jsonb-query-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      pg11:
+        image: postgres:11.16
+        env:
+          POSTGRES_PASSWORD: e2e
+        ports:
+          - 54311:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+      pg16:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: e2e
+        ports:
+          - 54316:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests
+        run: pnpm -F @rfjs/jsonb-query vitest:run
+
+      - name: Run E2E (PG 11.16 + PG 16)
+        env:
+          PG_E2E_URLS: postgres://postgres:e2e@localhost:54311/postgres,postgres://postgres:e2e@localhost:54316/postgres
+        run: pnpm -F @rfjs/jsonb-query vitest:e2e:run

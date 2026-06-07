@@ -1,10 +1,13 @@
-import type { JsonbScalarType } from './types';
+import type { JsonbScalarType, JsonbScalarOperator, JsonbValue } from './types';
 import {
-  type ScalarDialect,
+  type JsonbQueryDialect,
   fieldSegments,
   assertScalarValue,
   assertArrayValue,
+  renderNullCheck,
+  renderJsonbContains,
 } from './dialect';
+import type { ParamBuilder } from './param-builder';
 
 const CASTS: Record<JsonbScalarType, string> = {
   string: '',
@@ -20,47 +23,80 @@ const ARRAY_CASTS: Record<JsonbScalarType, string> = {
   boolean: '::boolean[]',
 };
 
-export const legacyDialect: ScalarDialect = {
-  render(column, field, dataType, operator, value, params) {
-    const fParam = params.add(fieldSegments(field));
-    const F = `(${column} #>> ${fParam})`;
-    const Fc = `${F}${CASTS[dataType]}`;
-
-    switch (operator) {
-      case 'isnull':
-        return `(${F} is null)`;
-      case 'isnotnull':
-        return `(${F} is not null)`;
-      case 'eq':
-        return `(${Fc} = ${params.add(assertScalarValue(operator, value))})`;
-      case 'neq':
-        return `(${Fc} <> ${params.add(assertScalarValue(operator, value))})`;
-      case 'gt':
-        return `(${Fc} > ${params.add(assertScalarValue(operator, value))})`;
-      case 'gte':
-        return `(${Fc} >= ${params.add(assertScalarValue(operator, value))})`;
-      case 'lt':
-        return `(${Fc} < ${params.add(assertScalarValue(operator, value))})`;
-      case 'lte':
-        return `(${Fc} <= ${params.add(assertScalarValue(operator, value))})`;
-      case 'range': {
-        const [lo, hi] = assertArrayValue(operator, value, 2);
-        return `(${Fc} between ${params.add(lo)} and ${params.add(hi)})`;
-      }
-      case 'terms':
-        return `(${Fc} = ANY(${params.add(assertArrayValue(operator, value))}${ARRAY_CASTS[dataType]}))`;
-      case 'contains':
-        return `(position(${params.add(assertScalarValue(operator, value))} in ${F}) > 0)`;
-      case 'startswith': {
-        const v = params.add(assertScalarValue(operator, value));
-        return `(left(${F}, char_length(${v})) = ${v})`;
-      }
-      case 'endswith': {
-        const v = params.add(assertScalarValue(operator, value));
-        return `(right(${F}, char_length(${v})) = ${v})`;
-      }
-      default:
-        throw new Error(`Unsupported operator "${operator as string}"`);
+/** Render a scalar operator against `F`, a text-valued SQL expression. */
+function renderScalarOp(
+  F: string,
+  dataType: JsonbScalarType,
+  operator: JsonbScalarOperator,
+  value: JsonbValue | JsonbValue[] | undefined,
+  params: ParamBuilder,
+): string {
+  const Fc = `${F}${CASTS[dataType]}`;
+  switch (operator) {
+    case 'eq':
+      return `(${Fc} = ${params.add(assertScalarValue(operator, value))})`;
+    case 'neq':
+      return `(${Fc} <> ${params.add(assertScalarValue(operator, value))})`;
+    case 'gt':
+      return `(${Fc} > ${params.add(assertScalarValue(operator, value))})`;
+    case 'gte':
+      return `(${Fc} >= ${params.add(assertScalarValue(operator, value))})`;
+    case 'lt':
+      return `(${Fc} < ${params.add(assertScalarValue(operator, value))})`;
+    case 'lte':
+      return `(${Fc} <= ${params.add(assertScalarValue(operator, value))})`;
+    case 'range': {
+      const [lo, hi] = assertArrayValue(operator, value, 2);
+      return `(${Fc} between ${params.add(lo)} and ${params.add(hi)})`;
     }
+    case 'terms':
+      return `(${Fc} = ANY(${params.add(assertArrayValue(operator, value))}${ARRAY_CASTS[dataType]}))`;
+    case 'contains':
+      return `(position(${params.add(assertScalarValue(operator, value))} in ${F}) > 0)`;
+    case 'startswith': {
+      const v = params.add(assertScalarValue(operator, value));
+      return `(left(${F}, char_length(${v})) = ${v})`;
+    }
+    case 'endswith': {
+      const v = params.add(assertScalarValue(operator, value));
+      return `(right(${F}, char_length(${v})) = ${v})`;
+    }
+    default:
+      throw new Error(`Unsupported operator "${operator as string}"`);
+  }
+}
+
+export const legacyDialect: JsonbQueryDialect = {
+  render(column, field, dataType, operator, value, params) {
+    if (operator === 'isnull' || operator === 'isnotnull') {
+      return renderNullCheck(column, field, operator, params);
+    }
+    const F = `(${column} #>> ${params.add(fieldSegments(field))})`;
+    return renderScalarOp(F, dataType, operator, value, params);
+  },
+  renderArray(column, condition, ctx) {
+    const { params } = ctx;
+    const { field, elementType, operator, value } = condition;
+    if (operator === 'isnull' || operator === 'isnotnull') {
+      return renderNullCheck(column, field, operator, params);
+    }
+    if (operator === 'containsall') {
+      return renderJsonbContains(column, field, assertArrayValue(operator, value), params);
+    }
+    const fParam = params.add(fieldSegments(field));
+    const guarded = `case when jsonb_typeof(${column} #> ${fParam}) = 'array' then ${column} #> ${fParam} else '[]'::jsonb end`;
+    const alias = ctx.nextAlias();
+    const predicate = renderScalarOp(`${alias}.v`, elementType, operator, value, params);
+    return `(exists (select 1 from jsonb_array_elements_text(${guarded}) as ${alias}(v) where ${predicate}))`;
+  },
+  renderElemMatch(column, condition, ctx) {
+    const fParam = ctx.params.add(fieldSegments(condition.field));
+    const guarded = `case when jsonb_typeof(${column} #> ${fParam}) = 'array' then ${column} #> ${fParam} else '[]'::jsonb end`;
+    const alias = ctx.nextAlias();
+    const sub = ctx.renderGroup(condition.filters, `${alias}.value`);
+    if (sub.length === 0) {
+      throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+    }
+    return `(exists (select 1 from jsonb_array_elements(${guarded}) as ${alias} where ${sub}))`;
   },
 };
