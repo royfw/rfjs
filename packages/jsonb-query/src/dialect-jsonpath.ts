@@ -1,9 +1,18 @@
-import type { JsonbScalarType, JsonbScalarOperator, JsonbValue } from './types';
+import type {
+  JsonbScalarType,
+  JsonbScalarOperator,
+  JsonbValue,
+  JsonbCondition,
+  JsonbFilterGroup,
+  JsonbScalarCondition,
+} from './types';
 import {
   type JsonbQueryDialect,
   fieldSegments,
   assertScalarValue,
   assertArrayValue,
+  assertCondition,
+  isFilterGroup,
   renderNullCheck,
   renderJsonbContains,
 } from './dialect';
@@ -138,6 +147,58 @@ function pathExists(
   return `jsonb_path_exists(${column}, ${pParam}::jsonpath, ${params.add(vars)}::jsonb)`;
 }
 
+/** Sequential naming (v0, v1, …) for predicates that merge many conditions. */
+function sequentialSink(): VarSink {
+  const vars: Record<string, JsonbValue> = {};
+  let n = 0;
+  const next = (value: JsonbValue) => {
+    const name = `v${n}`;
+    n += 1;
+    vars[name] = value;
+    return name;
+  };
+  return {
+    vars,
+    one: next,
+    pair: (lo, hi) => [next(lo), next(hi)],
+    many: (values) => values.map(next),
+  };
+}
+
+function groupPredicate(group: JsonbFilterGroup, sink: VarSink): string {
+  const parts = group.filters
+    .map((node) => {
+      if (isFilterGroup(node)) {
+        const inner = groupPredicate(node, sink);
+        return inner.length > 0 ? `(${inner})` : '';
+      }
+      return conditionPredicate(node, sink);
+    })
+    .filter((part) => part.length > 0);
+  return parts.join(group.logic === 'or' ? ' || ' : ' && ');
+}
+
+function conditionPredicate(node: JsonbCondition, sink: VarSink): string {
+  assertCondition(node, 'elemmatch');
+  if (node.dataType === 'array' && node.elementType === 'object') {
+    const inner = groupPredicate(node.filters, sink);
+    if (inner.length === 0) {
+      throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+    }
+    return `exists (${memberAccessor('@', node.field)}[*] ? (${inner}))`;
+  }
+  // assertCondition only lets scalar conditions through past this point.
+  const scalar = node as JsonbScalarCondition;
+  const { pred, compound } = scalarPredicate(
+    memberAccessor('@', scalar.field),
+    scalar.dataType,
+    scalar.operator,
+    scalar.value,
+    sink,
+  );
+  return compound ? `(${pred})` : pred;
+}
+
 export const jsonpathDialect: JsonbQueryDialect = {
   render(column, field, dataType, operator, value, params) {
     // isnull/isnotnull are dialect-independent.
@@ -161,7 +222,17 @@ export const jsonpathDialect: JsonbQueryDialect = {
     const { pred } = scalarPredicate('@', elementType, operator, value, sink);
     return pathExists(column, `${memberAccessor('$', field)}[*] ? (${pred})`, sink.vars, params);
   },
-  renderElemMatch() {
-    throw new Error('Not implemented');
+  renderElemMatch(column, condition, ctx) {
+    const sink = sequentialSink();
+    const pred = groupPredicate(condition.filters, sink);
+    if (pred.length === 0) {
+      throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+    }
+    return pathExists(
+      column,
+      `${memberAccessor('$', condition.field)}[*] ? (${pred})`,
+      sink.vars,
+      ctx.params,
+    );
   },
 };

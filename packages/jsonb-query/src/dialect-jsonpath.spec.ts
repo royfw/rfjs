@@ -2,7 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { jsonpathDialect } from './dialect-jsonpath';
 import { ParamBuilder } from './param-builder';
 import type { RenderContext } from './dialect';
-import type { JsonbArrayCondition } from './types';
+import type {
+  JsonbArrayCondition,
+  JsonbElemMatchCondition,
+  JsonbFilterGroup,
+} from './types';
 
 function makeCtx(p: ParamBuilder): RenderContext {
   let n = 0;
@@ -153,5 +157,125 @@ describe('jsonpathDialect.renderArray', () => {
       where: '(("data" #>> $1) is null)',
       values: [['tags']],
     });
+  });
+});
+
+describe('jsonpathDialect.renderElemMatch', () => {
+  function runElem(field: string, filters: JsonbFilterGroup) {
+    const p = new ParamBuilder();
+    const cond: JsonbElemMatchCondition = {
+      field, dataType: 'array', elementType: 'object', operator: 'elemmatch', filters,
+    };
+    const where = jsonpathDialect.renderElemMatch('"data"', cond, makeCtx(p));
+    return { where, values: p.values };
+  }
+
+  it('merges all sub-conditions into one path with sequential vars', () => {
+    expect(
+      runElem('items', {
+        logic: 'and',
+        filters: [
+          { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+          { field: 'qty', dataType: 'numeric', operator: 'gt', value: 1 },
+        ],
+      }),
+    ).toEqual({
+      where: 'jsonb_path_exists("data", $1::jsonpath, $2::jsonb)',
+      values: ['$."items"[*] ? (@."sku" == $v0 && @."qty" > $v1)', { v0: 'x', v1: 1 }],
+    });
+  });
+
+  it('wraps nested or-groups and compound predicates in parens', () => {
+    expect(
+      runElem('items', {
+        logic: 'and',
+        filters: [
+          { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+          {
+            logic: 'or',
+            filters: [
+              { field: 'qty', dataType: 'numeric', operator: 'range', value: [1, 9] },
+              { field: 'tag', dataType: 'string', operator: 'terms', value: ['a', 'b'] },
+            ],
+          },
+        ],
+      }).values[0],
+    ).toBe(
+      '$."items"[*] ? (@."sku" == $v0 && ((@."qty" >= $v1 && @."qty" <= $v2) || (@."tag" == $v3 || @."tag" == $v4)))',
+    );
+  });
+
+  it('supports dotted sub-fields, datetime, startswith and null checks', () => {
+    expect(
+      runElem('items', {
+        logic: 'and',
+        filters: [
+          { field: 'detail.x', dataType: 'numeric', operator: 'eq', value: 1 },
+          { field: 'd', dataType: 'date', operator: 'gte', value: '2020-01-01' },
+          { field: 's', dataType: 'string', operator: 'startswith', value: 'x' },
+          { field: 'n', dataType: 'string', operator: 'isnull' },
+          { field: 'm', dataType: 'string', operator: 'isnotnull' },
+        ],
+      }).values[0],
+    ).toBe(
+      '$."items"[*] ? (@."detail"."x" == $v0 && @."d".datetime() >= $v1.datetime() && @."s" starts with $v2 && (!exists (@."n") || @."n" == null) && (exists (@."m") && @."m" != null))',
+    );
+  });
+
+  it('renders nested elemmatch via exists()', () => {
+    expect(
+      runElem('orders', {
+        logic: 'and',
+        filters: [
+          { field: 'status', dataType: 'string', operator: 'eq', value: 'open' },
+          {
+            field: 'lines', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+            filters: { logic: 'and', filters: [{ field: 'sku', dataType: 'string', operator: 'eq', value: 'x' }] },
+          },
+        ],
+      }).values[0],
+    ).toBe('$."orders"[*] ? (@."status" == $v0 && exists (@."lines"[*] ? (@."sku" == $v1)))');
+  });
+
+  it('emits the 2-arg form when no vars are used', () => {
+    expect(
+      runElem('items', {
+        logic: 'and',
+        filters: [{ field: 's', dataType: 'string', operator: 'contains', value: 'x' }],
+      }),
+    ).toEqual({
+      where: 'jsonb_path_exists("data", $1::jsonpath)',
+      values: ['$."items"[*] ? (@."s" like_regex "x")'],
+    });
+  });
+
+  it('escapes hostile member names into the path parameter', () => {
+    expect(
+      runElem('items', {
+        logic: 'and',
+        filters: [{ field: 'a"b', dataType: 'string', operator: 'eq', value: 'x' }],
+      }).values[0],
+    ).toBe('$."items"[*] ? (@."a\\"b" == $v0)');
+  });
+
+  it('rejects object / scalar-array conditions inside elemmatch', () => {
+    expect(() =>
+      runElem('items', {
+        logic: 'and',
+        filters: [{ field: 'p', dataType: 'object', operator: 'eq', value: {} }],
+      }),
+    ).toThrow(/not supported inside elemmatch/i);
+    expect(() =>
+      runElem('items', {
+        logic: 'and',
+        filters: [{ field: 't', dataType: 'array', elementType: 'string', operator: 'eq', value: 'x' }],
+      }),
+    ).toThrow(/not supported inside elemmatch/i);
+  });
+
+  it('throws when the group renders empty', () => {
+    expect(() =>
+      runElem('items', { logic: 'and', filters: [{ logic: 'or', filters: [] }] }),
+    ).toThrow(/requires a filter group with at least one condition/i);
   });
 });
