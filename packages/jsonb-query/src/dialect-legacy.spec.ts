@@ -200,3 +200,36 @@ describe('legacyDialect.renderArray', () => {
     expect(b).toContain('as e2(v)');
   });
 });
+
+describe('legacyDialect.renderElemMatch', () => {
+  const cond = {
+    field: 'items',
+    dataType: 'array',
+    elementType: 'object',
+    operator: 'elemmatch',
+    filters: { logic: 'and', filters: [{ field: 'sku', dataType: 'string', operator: 'eq', value: 'x' }] },
+  } as const;
+
+  it('wraps the sub-group in EXISTS over jsonb_array_elements, rendered against the alias', () => {
+    const p = new ParamBuilder();
+    const seen: string[] = [];
+    const ctx = makeCtx(p, (_group, col) => {
+      seen.push(col);
+      return `<<sub:${col}>>`;
+    });
+    const where = legacyDialect.renderElemMatch('"data"', cond, ctx);
+    expect(where).toBe(
+      `(exists (select 1 from jsonb_array_elements(${GUARD('"data"', '$1')}) as e1 where <<sub:e1.value>>))`,
+    );
+    expect(seen).toEqual(['e1.value']);
+    expect(p.values).toEqual([['items']]);
+  });
+
+  it('throws when the sub-group renders empty', () => {
+    const p = new ParamBuilder();
+    const ctx = makeCtx(p, () => '');
+    expect(() => legacyDialect.renderElemMatch('"data"', cond, ctx)).toThrow(
+      /requires a filter group with at least one condition/i,
+    );
+  });
+});

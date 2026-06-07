@@ -89,7 +89,14 @@ export const legacyDialect: JsonbQueryDialect = {
     const predicate = renderScalarOp(`${alias}.v`, elementType, operator, value, params);
     return `(exists (select 1 from jsonb_array_elements_text(${guarded}) as ${alias}(v) where ${predicate}))`;
   },
-  renderElemMatch() {
-    throw new Error('Not implemented');
+  renderElemMatch(column, condition, ctx) {
+    const fParam = ctx.params.add(fieldSegments(condition.field));
+    const guarded = `case when jsonb_typeof(${column} #> ${fParam}) = 'array' then ${column} #> ${fParam} else '[]'::jsonb end`;
+    const alias = ctx.nextAlias();
+    const sub = ctx.renderGroup(condition.filters, `${alias}.value`);
+    if (sub.length === 0) {
+      throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+    }
+    return `(exists (select 1 from jsonb_array_elements(${guarded}) as ${alias} where ${sub}))`;
   },
 };
