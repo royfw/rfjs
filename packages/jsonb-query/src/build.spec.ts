@@ -1,11 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildJsonbQuery } from './build';
-import type {
-  JsonbArrayCondition,
-  JsonbElemMatchCondition,
-  JsonbFilterGroup,
-  JsonbObjectCondition,
-} from './types';
+import type { JsonbFilterGroup } from './types';
 
 describe('buildJsonbQuery', () => {
   it('builds a single-condition where with contiguous params (legacy default)', () => {
@@ -148,47 +143,11 @@ describe('buildJsonbQuery', () => {
     expect(r.values).toEqual([['a'], 'x', ['b'], 1, ['c'], 'y', ['d'], true]);
   });
 
-  // Phase 2 condition types are part of the JsonbCondition union but their
-  // rendering lands in later tasks. Until then the dispatcher must reject them
-  // explicitly rather than silently mis-render them as scalar conditions.
+  // Phase 2 condition types (object / scalar-array / elemmatch) are dispatched
+  // and rendered by buildJsonbQuery as of Task 13; full end-to-end coverage
+  // lives in the "buildJsonbQuery — phase 2" describe block below. This block
+  // only guards that scalar rendering on the same field is unaffected.
   describe('phase-2 condition types', () => {
-    const object: JsonbObjectCondition = {
-      field: 'profile',
-      dataType: 'object',
-      operator: 'contains',
-      value: { vip: true },
-    };
-    const array: JsonbArrayCondition = {
-      field: 'tags',
-      dataType: 'array',
-      elementType: 'string',
-      operator: 'eq',
-      value: 'a',
-    };
-    const elemMatch: JsonbElemMatchCondition = {
-      field: 'items',
-      dataType: 'array',
-      elementType: 'object',
-      operator: 'elemmatch',
-      filters: {
-        logic: 'and',
-        filters: [{ field: 'sku', dataType: 'string', operator: 'eq', value: 'x' }],
-      },
-    };
-
-    it.each([
-      ['object', object],
-      ['scalar array', array],
-      ['array of objects (elemmatch)', elemMatch],
-    ])('rejects %s conditions instead of mis-rendering them as scalars', (_label, condition) => {
-      expect(() =>
-        buildJsonbQuery('data', { logic: 'and', filters: [condition] }),
-      ).toThrow(/datatype "(object|array)" is not yet supported/i);
-      expect(() =>
-        buildJsonbQuery('data', { logic: 'and', filters: [condition] }, { dialect: 'jsonpath' }),
-      ).toThrow(/datatype "(object|array)" is not yet supported/i);
-    });
-
     it('still renders scalar conditions on the same field (no scalar regression)', () => {
       expect(
         buildJsonbQuery('data', {
@@ -201,5 +160,237 @@ describe('buildJsonbQuery', () => {
         from: [],
       });
     });
+  });
+});
+
+const GUARD = (col: string, ph: string) =>
+  `case when jsonb_typeof(${col} #> ${ph}) = 'array' then ${col} #> ${ph} else '[]'::jsonb end`;
+
+describe('buildJsonbQuery — phase 2', () => {
+  it('object conditions render identically in both dialects', () => {
+    const filter: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [{ field: 'profile', dataType: 'object', operator: 'eq', value: { vip: true } }],
+    };
+    const legacy = buildJsonbQuery('data', filter);
+    expect(legacy).toEqual({
+      where: '(("data" #> $1) = $2::jsonb)',
+      values: [['profile'], '{"vip":true}'],
+      from: [],
+    });
+    expect(buildJsonbQuery('data', filter, { dialect: 'jsonpath' })).toEqual(legacy);
+  });
+
+  it('array element eq — legacy EXISTS vs jsonpath [*] filter', () => {
+    const filter: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [{ field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' }],
+    };
+    expect(buildJsonbQuery('data', filter)).toEqual({
+      where: `(exists (select 1 from jsonb_array_elements_text(${GUARD('"data"', '$1')}) as e1(v) where (e1.v = $2)))`,
+      values: [['tags'], 'a'],
+      from: [],
+    });
+    expect(buildJsonbQuery('data', filter, { dialect: 'jsonpath' })).toEqual({
+      where: 'jsonb_path_exists("data", $1::jsonpath, $2::jsonb)',
+      values: ['$."tags"[*] ? (@ == $v)', { v: 'a' }],
+      from: [],
+    });
+  });
+
+  it('sibling array conditions get unique aliases and contiguous params (legacy)', () => {
+    const r = buildJsonbQuery('data', {
+      logic: 'and',
+      filters: [
+        { field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' },
+        { field: 'nums', dataType: 'array', elementType: 'numeric', operator: 'gt', value: 5 },
+      ],
+    });
+    expect(r.where).toBe(
+      `(exists (select 1 from jsonb_array_elements_text(${GUARD('"data"', '$1')}) as e1(v) where (e1.v = $2))) and ` +
+        `(exists (select 1 from jsonb_array_elements_text(${GUARD('"data"', '$3')}) as e2(v) where (e2.v::numeric > $4)))`,
+    );
+    expect(r.values).toEqual([['tags'], 'a', ['nums'], 5]);
+  });
+
+  it('containsall is identical in both dialects', () => {
+    const filter: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [{ field: 'tags', dataType: 'array', elementType: 'string', operator: 'containsall', value: ['a', 'b'] }],
+    };
+    const legacy = buildJsonbQuery('data', filter);
+    expect(legacy).toEqual({
+      where: '(("data" #> $1) @> $2::jsonb)',
+      values: [['tags'], '["a","b"]'],
+      from: [],
+    });
+    expect(buildJsonbQuery('data', filter, { dialect: 'jsonpath' })).toEqual(legacy);
+  });
+
+  it('elemmatch end-to-end (legacy)', () => {
+    const filter: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [
+        {
+          field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+          filters: {
+            logic: 'and',
+            filters: [
+              { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+              { field: 'qty', dataType: 'numeric', operator: 'gt', value: 1 },
+            ],
+          },
+        },
+      ],
+    };
+    expect(buildJsonbQuery('data', filter)).toEqual({
+      where:
+        `(exists (select 1 from jsonb_array_elements(${GUARD('"data"', '$1')}) as e1 ` +
+        'where ((e1.value #>> $2) = $3) and ((e1.value #>> $4)::numeric > $5)))',
+      values: [['items'], ['sku'], 'x', ['qty'], 1],
+      from: [],
+    });
+  });
+
+  it('elemmatch end-to-end (jsonpath)', () => {
+    const filter: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [
+        {
+          field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+          filters: {
+            logic: 'and',
+            filters: [
+              { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+              {
+                logic: 'or',
+                filters: [
+                  { field: 'qty', dataType: 'numeric', operator: 'gt', value: 10 },
+                  { field: 'flag', dataType: 'boolean', operator: 'eq', value: true },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    expect(buildJsonbQuery('data', filter, { dialect: 'jsonpath' })).toEqual({
+      where: 'jsonb_path_exists("data", $1::jsonpath, $2::jsonb)',
+      values: [
+        '$."items"[*] ? (@."sku" == $v0 && (@."qty" > $v1 || @."flag" == $v2))',
+        { v0: 'x', v1: 10, v2: true },
+      ],
+      from: [],
+    });
+  });
+
+  it('nested elemmatch recurses in both dialects', () => {
+    const filter: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [
+        {
+          field: 'orders', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+          filters: {
+            logic: 'and',
+            filters: [
+              { field: 'status', dataType: 'string', operator: 'eq', value: 'open' },
+              {
+                field: 'lines', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+                filters: { logic: 'and', filters: [{ field: 'sku', dataType: 'string', operator: 'eq', value: 'x' }] },
+              },
+            ],
+          },
+        },
+      ],
+    };
+    expect(buildJsonbQuery('data', filter)).toEqual({
+      where:
+        `(exists (select 1 from jsonb_array_elements(${GUARD('"data"', '$1')}) as e1 ` +
+        'where ((e1.value #>> $2) = $3) and ' +
+        `(exists (select 1 from jsonb_array_elements(${GUARD('e1.value', '$4')}) as e2 where ((e2.value #>> $5) = $6)))))`,
+      values: [['orders'], ['status'], 'open', ['lines'], ['sku'], 'x'],
+      from: [],
+    });
+    expect(buildJsonbQuery('data', filter, { dialect: 'jsonpath' }).values).toEqual([
+      '$."orders"[*] ? (@."status" == $v0 && exists (@."lines"[*] ? (@."sku" == $v1)))',
+      { v0: 'open', v1: 'x' },
+    ]);
+  });
+
+  it('mixes scalar and phase-2 conditions with contiguous params and honours paramOffset', () => {
+    const r = buildJsonbQuery(
+      'data',
+      {
+        logic: 'and',
+        filters: [
+          { field: 'name', dataType: 'string', operator: 'eq', value: 'bob' },
+          { field: 'profile', dataType: 'object', operator: 'contains', value: { vip: true } },
+          { field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' },
+        ],
+      },
+      { paramOffset: 1 },
+    );
+    expect(r.where).toBe(
+      '(("data" #>> $2) = $3) and (("data" #> $4) @> $5::jsonb) and ' +
+        `(exists (select 1 from jsonb_array_elements_text(${GUARD('"data"', '$6')}) as e1(v) where (e1.v = $7)))`,
+    );
+    expect(r.values).toEqual([['name'], 'bob', ['profile'], '{"vip":true}', ['tags'], 'a']);
+  });
+
+  it('rejects object / scalar-array conditions inside elemmatch in both dialects', () => {
+    const filter: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [
+        {
+          field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+          filters: { logic: 'and', filters: [{ field: 'p', dataType: 'object', operator: 'eq', value: {} }] },
+        },
+      ],
+    };
+    expect(() => buildJsonbQuery('data', filter)).toThrow(/not supported inside elemmatch/i);
+    expect(() => buildJsonbQuery('data', filter, { dialect: 'jsonpath' })).toThrow(
+      /not supported inside elemmatch/i,
+    );
+  });
+
+  it('throws when elemmatch filters are empty or render empty', () => {
+    const empty: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [
+        {
+          field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+          filters: { logic: 'and', filters: [] },
+        },
+      ],
+    };
+    expect(() => buildJsonbQuery('data', empty)).toThrow(/requires a filter group/i);
+
+    const rendersEmpty: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [
+        {
+          field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+          filters: { logic: 'and', filters: [{ logic: 'or', filters: [] }] },
+        },
+      ],
+    };
+    expect(() => buildJsonbQuery('data', rendersEmpty)).toThrow(/at least one condition/i);
+    expect(() => buildJsonbQuery('data', rendersEmpty, { dialect: 'jsonpath' })).toThrow(
+      /at least one condition/i,
+    );
+  });
+
+  it('rejects invalid phase-2 operator combinations', () => {
+    const one = (f: unknown) => () =>
+      buildJsonbQuery('data', { logic: 'and', filters: [f as never] });
+    expect(one({ field: 'p', dataType: 'object', operator: 'gt', value: {} })).toThrow(
+      /unsupported operator "gt" for type "object"/i,
+    );
+    expect(
+      one({ field: 't', dataType: 'array', elementType: 'string', operator: 'neq', value: 'x' }),
+    ).toThrow(/unsupported operator "neq" for array elements/i);
+    expect(
+      one({ field: 'i', dataType: 'array', elementType: 'object', operator: 'eq', value: {} }),
+    ).toThrow(/use "elemmatch"/i);
   });
 });
