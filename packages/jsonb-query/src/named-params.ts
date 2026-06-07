@@ -1,8 +1,14 @@
-import type { JsonbQueryResult } from './types';
+import type { BuildJsonbOptions, JsonbFilterGroup, JsonbQueryResult } from './types';
+import { buildJsonbQuery } from './build';
 
 export interface NamedParamsResult {
   where: string;
   params: Record<string, unknown>;
+}
+
+export interface BuildNamedJsonbOptions extends BuildJsonbOptions {
+  /** Named-parameter prefix (default `"p"`): `:p1`, `:p2`, … */
+  prefix?: string;
 }
 
 const PREFIX = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -48,4 +54,19 @@ export function toNamedParams(result: JsonbQueryResult, prefix = 'p'): NamedPara
       result.values.map((value, i) => [`${prefix}${offset + i + 1}`, value]),
     ),
   };
+}
+
+/**
+ * One-call variant for named-binding query layers (TypeORM QueryBuilder,
+ * Knex): `buildJsonbQuery` + `toNamedParams`. `paramOffset` shifts the
+ * parameter *names* (`:p5`, …), which also avoids key collisions when
+ * composing several fragments into one query.
+ */
+export function buildNamedJsonbQuery(
+  column: string,
+  filter: JsonbFilterGroup,
+  options: BuildNamedJsonbOptions = {},
+): NamedParamsResult {
+  const { prefix, ...buildOptions } = options;
+  return toNamedParams(buildJsonbQuery(column, filter, buildOptions), prefix);
 }

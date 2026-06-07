@@ -56,19 +56,22 @@ await client.query(`SELECT * FROM t WHERE org_id = $1 AND ${where}`, [orgId, ...
 
 位置型 `$N` 輸出可直接餵給 `pg`、TypeORM raw query、Prisma
 （`$queryRawUnsafe`）與 Kysely（`CompiledQuery.raw`）。使用**具名**綁定的
-查詢層不接受 `$N`——以 `toNamedParams` 轉換：
+查詢層不接受 `$N`——改用 `buildNamedJsonbQuery`：
 
 ```typescript
-import { buildJsonbQuery, toNamedParams } from '@rfjs/jsonb-query';
+import { buildNamedJsonbQuery } from '@rfjs/jsonb-query';
 
-const { where, params } = toNamedParams(buildJsonbQuery('data', filter));
+const { where, params } = buildNamedJsonbQuery('data', filter);
 // where:  '(("data" #>> :p1) = :p2)'
 // params: { p1: ['name'], p2: 'bob' }
 qb.andWhere(where, params); // TypeORM QueryBuilder / knex.whereRaw(where, params)
 ```
 
-佔位符編號會自動從 SQL 偵測，因此 `paramOffset` 的結果也能正確對應；同一
-佔位符被重複引用時（如 `startswith`）仍指向同一個具名參數。
+它接受 `buildJsonbQuery` 的所有選項，外加 `prefix`（預設 `"p"`）；
+`paramOffset` 會位移參數**名稱**（`:p5`、…），組合多個片段時可避免 key
+撞名。同一佔位符被重複引用時（如 `startswith`）仍指向同一個具名參數——
+這是 naive 的位置型 `?` 轉換做不到的。若要轉換既有的位置型結果，可使用
+底層的 `toNamedParams(result, prefix?)`。
 
 ## 安全性
 

@@ -60,20 +60,23 @@ await client.query(`SELECT * FROM t WHERE org_id = $1 AND ${where}`, [orgId, ...
 
 The positional `$N` output feeds `pg`, TypeORM raw queries, Prisma
 (`$queryRawUnsafe`) and Kysely (`CompiledQuery.raw`) directly. Query layers
-with **named** bindings don't accept `$N` — convert with `toNamedParams`:
+with **named** bindings don't accept `$N` — use `buildNamedJsonbQuery`:
 
 ```typescript
-import { buildJsonbQuery, toNamedParams } from '@rfjs/jsonb-query';
+import { buildNamedJsonbQuery } from '@rfjs/jsonb-query';
 
-const { where, params } = toNamedParams(buildJsonbQuery('data', filter));
+const { where, params } = buildNamedJsonbQuery('data', filter);
 // where:  '(("data" #>> :p1) = :p2)'
 // params: { p1: ['name'], p2: 'bob' }
 qb.andWhere(where, params); // TypeORM QueryBuilder / knex.whereRaw(where, params)
 ```
 
-Placeholder numbers are detected from the SQL, so `paramOffset` results map
-correctly, and repeated placeholder references (e.g. `startswith`) stay
-pointed at a single named param.
+It accepts every `buildJsonbQuery` option plus `prefix` (default `"p"`);
+`paramOffset` shifts the parameter *names* (`:p5`, …), which also avoids key
+collisions when composing several fragments. Repeated placeholder references
+(e.g. `startswith`) stay pointed at a single named param — something naive
+positional-`?` conversion cannot express. To convert an existing positional
+result instead, use the underlying `toNamedParams(result, prefix?)`.
 
 ## Safety
 

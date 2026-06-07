@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildJsonbQuery } from './build';
-import { toNamedParams } from './named-params';
+import { buildNamedJsonbQuery, toNamedParams } from './named-params';
 import type { JsonbFilterGroup } from './types';
 
 const one = (f: JsonbFilterGroup['filters'][number]): JsonbFilterGroup => ({
@@ -72,5 +72,40 @@ describe('toNamedParams', () => {
     expect(() => toNamedParams({ where: '($1)', values: ['a', 'b'], from: [] })).toThrow(
       /placeholders do not match/i,
     );
+  });
+});
+
+describe('buildNamedJsonbQuery', () => {
+  it('builds named output in one call', () => {
+    expect(
+      buildNamedJsonbQuery('data', one({ field: 'name', dataType: 'string', operator: 'eq', value: 'bob' })),
+    ).toEqual({
+      where: '(("data" #>> :p1) = :p2)',
+      params: { p1: ['name'], p2: 'bob' },
+    });
+  });
+
+  it('passes dialect/paramOffset through; the offset shifts the names', () => {
+    expect(
+      buildNamedJsonbQuery(
+        'data',
+        one({ field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' }),
+        { dialect: 'jsonpath', paramOffset: 4 },
+      ),
+    ).toEqual({
+      where: 'jsonb_path_exists("data", :p5::jsonpath, :p6::jsonb)',
+      params: { p5: '$."tags"[*] ? (@ == $v)', p6: { v: 'a' } },
+    });
+  });
+
+  it('honours a custom prefix (composable fragments without key collisions)', () => {
+    expect(
+      buildNamedJsonbQuery('data', one({ field: 'a', dataType: 'string', operator: 'eq', value: 'x' }), {
+        prefix: 'f',
+      }),
+    ).toEqual({
+      where: '(("data" #>> :f1) = :f2)',
+      params: { f1: ['a'], f2: 'x' },
+    });
   });
 });
