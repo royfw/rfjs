@@ -5,6 +5,7 @@ import {
   assertScalarValue,
   assertArrayValue,
   renderNullCheck,
+  renderJsonbContains,
 } from './dialect';
 import type { ParamBuilder } from './param-builder';
 
@@ -73,8 +74,20 @@ export const legacyDialect: JsonbQueryDialect = {
     const F = `(${column} #>> ${params.add(fieldSegments(field))})`;
     return renderScalarOp(F, dataType, operator, value, params);
   },
-  renderArray() {
-    throw new Error('Not implemented');
+  renderArray(column, condition, ctx) {
+    const { params } = ctx;
+    const { field, elementType, operator, value } = condition;
+    if (operator === 'isnull' || operator === 'isnotnull') {
+      return renderNullCheck(column, field, operator, params);
+    }
+    if (operator === 'containsall') {
+      return renderJsonbContains(column, field, assertArrayValue(operator, value), params);
+    }
+    const fParam = params.add(fieldSegments(field));
+    const guarded = `case when jsonb_typeof(${column} #> ${fParam}) = 'array' then ${column} #> ${fParam} else '[]'::jsonb end`;
+    const alias = ctx.nextAlias();
+    const predicate = renderScalarOp(`${alias}.v`, elementType, operator, value, params);
+    return `(exists (select 1 from jsonb_array_elements_text(${guarded}) as ${alias}(v) where ${predicate}))`;
   },
   renderElemMatch() {
     throw new Error('Not implemented');
