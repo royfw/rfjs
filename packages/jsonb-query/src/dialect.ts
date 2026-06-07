@@ -4,6 +4,8 @@ import type {
   JsonbValue,
   JsonbCondition,
   JsonbFilterGroup,
+  JsonbObjectOperator,
+  JsonbObjectValue,
 } from './types';
 import type { ParamBuilder } from './param-builder';
 
@@ -101,4 +103,70 @@ export function assertOperatorForType(
   if (!OPERATORS_BY_TYPE[dataType]?.has(operator)) {
     throw new Error(`Unsupported operator "${operator}" for type "${dataType}"`);
   }
+}
+
+export function assertObjectValue(operator: string, value: unknown): JsonbObjectValue {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    Array.isArray(value) ||
+    value instanceof Date
+  ) {
+    throw new Error(`Operator "${operator}" requires a plain object value`);
+  }
+  return value as JsonbObjectValue;
+}
+
+const OBJECT_OPERATORS: ReadonlySet<JsonbObjectOperator> = new Set([
+  'eq', 'neq', 'contains', 'isnull', 'isnotnull',
+]);
+
+const ARRAY_OPERATORS_BY_ELEMENT: Record<JsonbScalarType, ReadonlySet<string>> = {
+  string: new Set(['eq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull']),
+  numeric: new Set(['eq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull']),
+  date: new Set(['eq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'isnull', 'isnotnull']),
+  boolean: new Set(['eq', 'isnull', 'isnotnull']),
+};
+
+export type ConditionScope = 'root' | 'elemmatch';
+
+export function assertCondition(node: JsonbCondition, scope: ConditionScope): void {
+  if (node.dataType === 'object') {
+    if (scope === 'elemmatch') {
+      throw new Error('Object conditions are not supported inside elemmatch');
+    }
+    if (!OBJECT_OPERATORS.has(node.operator)) {
+      throw new Error(`Unsupported operator "${node.operator as string}" for type "object"`);
+    }
+    return;
+  }
+  if (node.dataType === 'array') {
+    if (node.elementType === 'object') {
+      if ((node.operator as string) !== 'elemmatch') {
+        throw new Error(
+          `Unsupported operator "${node.operator as string}" for array of objects (use "elemmatch")`,
+        );
+      }
+      if (!node.filters || !Array.isArray(node.filters.filters) || node.filters.filters.length === 0) {
+        throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+      }
+      return;
+    }
+    if (scope === 'elemmatch') {
+      throw new Error('Array conditions with scalar elements are not supported inside elemmatch');
+    }
+    const ops = ARRAY_OPERATORS_BY_ELEMENT[node.elementType];
+    if (!ops) {
+      throw new Error(
+        `Unsupported elementType ${JSON.stringify(node.elementType)} for array condition`,
+      );
+    }
+    if (!ops.has(node.operator)) {
+      throw new Error(
+        `Unsupported operator "${node.operator as string}" for array elements of type "${node.elementType}"`,
+      );
+    }
+    return;
+  }
+  assertOperatorForType(node.dataType, node.operator);
 }
