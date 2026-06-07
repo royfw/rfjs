@@ -1,52 +1,77 @@
 import type {
   JsonbCondition,
   JsonbDialect,
+  JsonbElemMatchCondition,
   JsonbFilterGroup,
   JsonbQueryResult,
   BuildJsonbOptions,
 } from './types';
 import { ParamBuilder } from './param-builder';
 import { quoteJsonbColumn } from './column';
-import type { ScalarDialect } from './dialect';
-import { assertOperatorForType } from './dialect';
+import {
+  type ConditionScope,
+  type JsonbQueryDialect,
+  type RenderContext,
+  assertCondition,
+  isFilterGroup,
+} from './dialect';
+import { renderObjectCondition } from './object-condition';
 import { legacyDialect } from './dialect-legacy';
 import { jsonpathDialect } from './dialect-jsonpath';
 
 const DIALECTS = {
   legacy: legacyDialect,
   jsonpath: jsonpathDialect,
-} satisfies Record<JsonbDialect, ScalarDialect>;
+} satisfies Record<JsonbDialect, JsonbQueryDialect>;
 
-function isGroup(
-  node: JsonbCondition | JsonbFilterGroup,
-): node is JsonbFilterGroup {
-  return 'logic' in node && 'filters' in node;
+function isElemMatch(node: JsonbCondition): node is JsonbElemMatchCondition {
+  return node.dataType === 'array' && node.elementType === 'object';
 }
 
 function renderCondition(
   node: JsonbCondition,
   column: string,
-  dialect: ScalarDialect,
-  params: ParamBuilder,
+  dialect: JsonbQueryDialect,
+  ctx: RenderContext,
+  scope: ConditionScope,
 ): string {
-  assertOperatorForType(node.dataType, node.operator);
-  return dialect.render(column, node.field, node.dataType, node.operator, node.value, params);
+  assertCondition(node, scope);
+  if (isElemMatch(node)) {
+    return dialect.renderElemMatch(column, node, ctx);
+  }
+  if (node.dataType === 'object') {
+    return renderObjectCondition(column, node, ctx.params);
+  }
+  if (node.dataType === 'array') {
+    return dialect.renderArray(column, node, ctx);
+  }
+  return dialect.render(column, node.field, node.dataType, node.operator, node.value, ctx.params);
 }
 
 function buildGroup(
   group: JsonbFilterGroup,
   column: string,
-  dialect: ScalarDialect,
-  params: ParamBuilder,
+  dialect: JsonbQueryDialect,
+  ctx: RenderContext,
+  scope: ConditionScope,
 ): string {
   const parts = group.filters
     .map((node) =>
-      isGroup(node)
-        ? wrap(buildGroup(node, column, dialect, params))
-        : renderCondition(node, column, dialect, params),
+      isFilterGroup(node)
+        ? wrap(buildGroup(node, column, dialect, ctx, scope))
+        : renderCondition(node, column, dialect, ctx, scope),
     )
     .filter((sql) => sql.length > 0);
-  return parts.join(group.logic === 'or' ? ' or ' : ' and ');
+  return joinLogic(parts, group.logic);
+}
+
+/** Join rendered parts per group logic; `not`/`nor` negate the joined result. */
+function joinLogic(parts: string[], logic: JsonbFilterGroup['logic']): string {
+  if (parts.length === 0) {
+    return '';
+  }
+  const joined = parts.join(logic === 'or' || logic === 'nor' ? ' or ' : ' and ');
+  return logic === 'not' || logic === 'nor' ? `not (${joined})` : joined;
 }
 
 function wrap(sql: string): string {
@@ -65,6 +90,15 @@ export function buildJsonbQuery(
     throw new Error(`Unknown JSONB dialect: "${dialectName}"`);
   }
   const params = new ParamBuilder(options.paramOffset ?? 0);
-  const where = buildGroup(filter, quoted, dialect, params);
+  let aliasCount = 0;
+  const ctx: RenderContext = {
+    params,
+    nextAlias: () => {
+      aliasCount += 1;
+      return `e${aliasCount}`;
+    },
+    renderGroup: (group, col) => buildGroup(group, col, dialect, ctx, 'elemmatch'),
+  };
+  const where = buildGroup(filter, quoted, dialect, ctx, 'root');
   return { where, values: params.values, from: [] };
 }

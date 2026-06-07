@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { legacyDialect } from './dialect-legacy';
 import { ParamBuilder } from './param-builder';
+import type { RenderContext } from './dialect';
+import type { JsonbArrayCondition } from './types';
 
 function run(
   field: string,
@@ -116,5 +118,118 @@ describe('legacyDialect', () => {
 
   it('throws on an unknown operator', () => {
     expect(() => run('name', 'string', 'bogus' as never, 'x')).toThrow(/unsupported operator/i);
+  });
+});
+
+function makeCtx(
+  p: ParamBuilder,
+  renderGroup: RenderContext['renderGroup'] = () => {
+    throw new Error('renderGroup not stubbed');
+  },
+): RenderContext {
+  let n = 0;
+  return {
+    params: p,
+    nextAlias: () => {
+      n += 1;
+      return `e${n}`;
+    },
+    renderGroup,
+  };
+}
+
+const GUARD = (col: string, ph: string) =>
+  `case when jsonb_typeof(${col} #> ${ph}) = 'array' then ${col} #> ${ph} else '[]'::jsonb end`;
+
+describe('legacyDialect.renderArray', () => {
+  function runArray(cond: Omit<JsonbArrayCondition, 'dataType'>) {
+    const p = new ParamBuilder();
+    const ctx = makeCtx(p);
+    const where = legacyDialect.renderArray('"data"', { ...cond, dataType: 'array' }, ctx);
+    return { where, values: p.values, ctx };
+  }
+
+  it('element eq uses EXISTS over jsonb_array_elements_text with a typeof guard', () => {
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'eq', value: 'a' })).toMatchObject({
+      where: `(exists (select 1 from jsonb_array_elements_text(${GUARD('"data"', '$1')}) as e1(v) where (e1.v = $2)))`,
+      values: [['tags'], 'a'],
+    });
+  });
+
+  it('element gt casts the element', () => {
+    expect(runArray({ field: 'nums', elementType: 'numeric', operator: 'gt', value: 5 }).where).toBe(
+      `(exists (select 1 from jsonb_array_elements_text(${GUARD('"data"', '$1')}) as e1(v) where (e1.v::numeric > $2)))`,
+    );
+  });
+
+  it('element range / terms / string ops reuse the scalar operator rendering', () => {
+    expect(runArray({ field: 'nums', elementType: 'numeric', operator: 'range', value: [1, 9] }).where).toContain(
+      '(e1.v::numeric between $2 and $3)',
+    );
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'terms', value: ['a', 'b'] }).where).toContain(
+      '(e1.v = ANY($2::text[]))',
+    );
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'startswith', value: 'x' }).where).toContain(
+      '(left(e1.v, char_length($2)) = $2)',
+    );
+    expect(runArray({ field: 'dates', elementType: 'date', operator: 'gt', value: '2020-01-01' }).where).toContain(
+      '(e1.v::timestamptz > $2)',
+    );
+  });
+
+  it('containsall maps to @> with a JSON-stringified param', () => {
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'containsall', value: ['a', 'b'] })).toMatchObject({
+      where: '(("data" #> $1) @> $2::jsonb)',
+      values: [['tags'], '["a","b"]'],
+    });
+  });
+
+  it('isnull / isnotnull test the array field itself', () => {
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'isnull' })).toMatchObject({
+      where: '(("data" #>> $1) is null)',
+      values: [['tags']],
+    });
+  });
+
+  it('allocates unique aliases across calls sharing a context', () => {
+    const p = new ParamBuilder();
+    const ctx = makeCtx(p);
+    const a = legacyDialect.renderArray('"data"', { field: 'x', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' }, ctx);
+    const b = legacyDialect.renderArray('"data"', { field: 'y', dataType: 'array', elementType: 'string', operator: 'eq', value: 'b' }, ctx);
+    expect(a).toContain('as e1(v)');
+    expect(b).toContain('as e2(v)');
+  });
+});
+
+describe('legacyDialect.renderElemMatch', () => {
+  const cond = {
+    field: 'items',
+    dataType: 'array',
+    elementType: 'object',
+    operator: 'elemmatch',
+    filters: { logic: 'and', filters: [{ field: 'sku', dataType: 'string', operator: 'eq', value: 'x' }] },
+  } as const;
+
+  it('wraps the sub-group in EXISTS over jsonb_array_elements, rendered against the alias', () => {
+    const p = new ParamBuilder();
+    const seen: string[] = [];
+    const ctx = makeCtx(p, (_group, col) => {
+      seen.push(col);
+      return `<<sub:${col}>>`;
+    });
+    const where = legacyDialect.renderElemMatch('"data"', cond, ctx);
+    expect(where).toBe(
+      `(exists (select 1 from jsonb_array_elements(${GUARD('"data"', '$1')}) as e1 where <<sub:e1.value>>))`,
+    );
+    expect(seen).toEqual(['e1.value']);
+    expect(p.values).toEqual([['items']]);
+  });
+
+  it('throws when the sub-group renders empty', () => {
+    const p = new ParamBuilder();
+    const ctx = makeCtx(p, () => '');
+    expect(() => legacyDialect.renderElemMatch('"data"', cond, ctx)).toThrow(
+      /requires a filter group with at least one condition/i,
+    );
   });
 });
