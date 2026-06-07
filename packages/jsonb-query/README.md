@@ -41,8 +41,9 @@ buildJsonbQuery('data', filter, { dialect: 'jsonpath' });
 
 - `legacy` (default) — `#>>` extraction with casts. Works on all supported
   PostgreSQL versions.
-- `jsonpath` — `jsonb_path_exists` with SQL/JSON path. Requires PostgreSQL 12+
-  (13+ for `date` comparisons, which use `.datetime()`).
+- `jsonpath` — `jsonb_path_exists` with SQL/JSON path. Requires PostgreSQL 12+.
+  `date` conditions render `jsonb_path_exists_tz` with `.datetime()` and
+  require PostgreSQL 13+.
 
 Both dialects accept the same filter metadata.
 
@@ -177,3 +178,9 @@ Group `logic` is aligned with `@rfjs/data-filter`'s `LogicalOperator`:
   a one-element array. Keep stored shapes consistent to avoid the divergence.
 - `containsall` on `date` elements is rejected: jsonb containment would compare
   ISO text, not datetimes.
+- **jsonpath `date` format caveat:** PG's `.datetime()` does not recognize the
+  trailing `Z` that JS `Date#toISOString()` emits. Query-side values are
+  normalized by the builder (`Z` → `+00:00`, `Date` instances serialized with
+  an offset), but **stored** `"…Z"` strings fail to parse and lax mode silently
+  treats them as non-matching. Store offset formats (`+00:00`) — or use the
+  legacy dialect, whose `::timestamptz` cast accepts every common format.

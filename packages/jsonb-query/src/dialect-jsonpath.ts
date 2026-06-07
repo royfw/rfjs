@@ -41,6 +41,8 @@ const COMPARATORS: Partial<Record<JsonbScalarOperator, string>> = {
 /** Allocates jsonpath variable names and collects their values. */
 interface VarSink {
   vars: Record<string, JsonbValue>;
+  /** Set when a date condition is rendered; switches to jsonb_path_exists_tz. */
+  tz: boolean;
   one(value: JsonbValue): string;
   pair(lo: JsonbValue, hi: JsonbValue): [string, string];
   many(values: JsonbValue[]): string[];
@@ -51,6 +53,7 @@ function namedSink(): VarSink {
   const vars: Record<string, JsonbValue> = {};
   return {
     vars,
+    tz: false,
     one(value) {
       vars.v = value;
       return 'v';
@@ -75,6 +78,16 @@ interface Predicate {
   compound: boolean;
 }
 
+/**
+ * PG's jsonpath `.datetime()` does not recognize the trailing `Z` that JS
+ * `Date#toISOString()` emits — normalize query-side values to an explicit
+ * `+00:00` offset. (Stored data is the caller's responsibility; see README.)
+ */
+function normalizeDateValue(value: JsonbValue): JsonbValue {
+  const text = value instanceof Date ? value.toISOString() : value;
+  return typeof text === 'string' ? text.replace(/Z$/, '+00:00') : text;
+}
+
 function scalarPredicate(
   acc: string,
   dataType: JsonbScalarType,
@@ -82,24 +95,32 @@ function scalarPredicate(
   value: JsonbValue | JsonbValue[] | undefined,
   sink: VarSink,
 ): Predicate {
-  const lhs = dataType === 'date' ? `${acc}.datetime()` : acc;
-  const rhs = (name: string) => (dataType === 'date' ? `$${name}.datetime()` : `$${name}`);
+  const isDate = dataType === 'date';
+  if (isDate) {
+    // .datetime() comparisons are timezone-dependent; the plain
+    // jsonb_path_exists() raises (and lax mode silently swallows) errors for
+    // cross-type comparisons, so date conditions use the _tz variant.
+    sink.tz = true;
+  }
+  const norm = (v: JsonbValue): JsonbValue => (isDate ? normalizeDateValue(v) : v);
+  const lhs = isDate ? `${acc}.datetime()` : acc;
+  const rhs = (name: string) => (isDate ? `$${name}.datetime()` : `$${name}`);
 
   const comparator = COMPARATORS[operator];
   if (comparator) {
-    const name = sink.one(assertScalarValue(operator, value));
+    const name = sink.one(norm(assertScalarValue(operator, value)));
     return { pred: `${lhs} ${comparator} ${rhs(name)}`, compound: false };
   }
 
   switch (operator) {
     case 'range': {
       const [lo, hi] = assertArrayValue(operator, value, 2);
-      const [a, b] = sink.pair(lo, hi);
+      const [a, b] = sink.pair(norm(lo), norm(hi));
       return { pred: `${lhs} >= ${rhs(a)} && ${lhs} <= ${rhs(b)}`, compound: true };
     }
     case 'terms': {
       const items = assertArrayValue(operator, value);
-      const names = sink.many(items);
+      const names = sink.many(items.map(norm));
       return {
         pred: names.map((name) => `${lhs} == ${rhs(name)}`).join(' || '),
         compound: items.length > 1,
@@ -133,18 +154,20 @@ function scalarPredicate(
   }
 }
 
-/** Emit jsonb_path_exists; omits the vars argument when no variables were used. */
+/** Emit jsonb_path_exists(_tz); omits the vars argument when no variables were used. */
 function pathExists(
   column: string,
   path: string,
   vars: Record<string, JsonbValue>,
   params: ParamBuilder,
+  tz: boolean,
 ): string {
+  const fn = tz ? 'jsonb_path_exists_tz' : 'jsonb_path_exists';
   const pParam = params.add(path);
   if (Object.keys(vars).length === 0) {
-    return `jsonb_path_exists(${column}, ${pParam}::jsonpath)`;
+    return `${fn}(${column}, ${pParam}::jsonpath)`;
   }
-  return `jsonb_path_exists(${column}, ${pParam}::jsonpath, ${params.add(vars)}::jsonb)`;
+  return `${fn}(${column}, ${pParam}::jsonpath, ${params.add(vars)}::jsonb)`;
 }
 
 /** Sequential naming (v0, v1, …) for predicates that merge many conditions. */
@@ -159,6 +182,7 @@ function sequentialSink(): VarSink {
   };
   return {
     vars,
+    tz: false,
     one: next,
     pair: (lo, hi) => [next(lo), next(hi)],
     many: (values) => values.map(next),
@@ -211,7 +235,7 @@ export const jsonpathDialect: JsonbQueryDialect = {
     }
     const sink = namedSink();
     const { pred } = scalarPredicate('@', dataType, operator, value, sink);
-    return pathExists(column, `${memberAccessor('$', field)} ? (${pred})`, sink.vars, params);
+    return pathExists(column, `${memberAccessor('$', field)} ? (${pred})`, sink.vars, params, sink.tz);
   },
   renderArray(column, condition, ctx) {
     const { params } = ctx;
@@ -224,7 +248,7 @@ export const jsonpathDialect: JsonbQueryDialect = {
     }
     const sink = namedSink();
     const { pred } = scalarPredicate('@', elementType, operator, value, sink);
-    return pathExists(column, `${memberAccessor('$', field)}[*] ? (${pred})`, sink.vars, params);
+    return pathExists(column, `${memberAccessor('$', field)}[*] ? (${pred})`, sink.vars, params, sink.tz);
   },
   renderElemMatch(column, condition, ctx) {
     const sink = sequentialSink();
@@ -237,6 +261,7 @@ export const jsonpathDialect: JsonbQueryDialect = {
       `${memberAccessor('$', condition.field)}[*] ? (${pred})`,
       sink.vars,
       ctx.params,
+      sink.tz,
     );
   },
 };

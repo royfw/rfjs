@@ -39,7 +39,7 @@ buildJsonbQuery('data', filter, { dialect: 'jsonpath' });
 ```
 
 - `legacy`（預設）— 使用 `#>>` 提取並加型別轉換，相容所有支援的 PostgreSQL 版本。
-- `jsonpath` — 使用 `jsonb_path_exists` 搭配 SQL/JSON 路徑，需要 PostgreSQL 12+（`date` 比較使用 `.datetime()`，需要 PostgreSQL 13+）。
+- `jsonpath` — 使用 `jsonb_path_exists` 搭配 SQL/JSON 路徑，需要 PostgreSQL 12+。`date` 條件會渲染為 `jsonb_path_exists_tz` 搭配 `.datetime()`，需要 PostgreSQL 13+。
 
 兩種方言接受相同的過濾條件格式。
 
@@ -163,3 +163,9 @@ boolean → `eq`。
 - 當儲存的值**不是**陣列時：legacy 方言視為空陣列（不符合）；jsonpath 方言
   （lax 模式）會把純量自動包裝成單元素陣列。請保持資料形狀一致以避免差異。
 - `date` 元素不支援 `containsall`：jsonb 包含比較的是 ISO 文字而非時間值。
+- **jsonpath `date` 格式注意事項：**PG 的 `.datetime()` 不認得 JS
+  `Date#toISOString()` 輸出的 `Z` 後綴。查詢端的值由建構器自動正規化
+  （`Z` → `+00:00`、`Date` 實例序列化為帶偏移量的格式），但**儲存端**的
+  `"…Z"` 字串會解析失敗，且 lax 模式會默默視為不符合。請以偏移量格式
+  （`+00:00`）儲存——或改用 legacy 方言，其 `::timestamptz` 轉型接受所有
+  常見格式。

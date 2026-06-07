@@ -317,3 +317,70 @@ describe('jsonpathDialect.renderElemMatch — nor/not groups', () => {
     ).toBe('$."items"[*] ? (@."sku" == $v0 && (!(@."qty" > $v1)))');
   });
 });
+
+describe('jsonpathDialect — datetime normalization and _tz switch', () => {
+  it('date comparisons emit jsonb_path_exists_tz', () => {
+    expect(run('d', 'date', 'eq', '2020-01-01')).toEqual({
+      where: 'jsonb_path_exists_tz("data", $1::jsonpath, $2::jsonb)',
+      values: ['$."d" ? (@.datetime() == $v.datetime())', { v: '2020-01-01' }],
+    });
+  });
+
+  it('non-date conditions keep jsonb_path_exists', () => {
+    expect(run('name', 'string', 'eq', 'bob').where).toBe(
+      'jsonb_path_exists("data", $1::jsonpath, $2::jsonb)',
+    );
+  });
+
+  it('normalizes a trailing Z (JS toISOString format) to +00:00', () => {
+    expect(run('d', 'date', 'eq', '2020-01-15T08:30:00Z').values[1]).toEqual({
+      v: '2020-01-15T08:30:00+00:00',
+    });
+  });
+
+  it('normalizes Date instances to an offset ISO string', () => {
+    expect(run('d', 'date', 'eq', new Date('2020-01-15T08:30:00Z')).values[1]).toEqual({
+      v: '2020-01-15T08:30:00.000+00:00',
+    });
+  });
+
+  it('normalizes range and terms date values', () => {
+    expect(
+      run('d', 'date', 'range', ['2020-01-01T00:00:00Z', '2021-01-01T00:00:00Z']).values[1],
+    ).toEqual({ lo: '2020-01-01T00:00:00+00:00', hi: '2021-01-01T00:00:00+00:00' });
+    expect(run('d', 'date', 'terms', ['2020-01-01T00:00:00Z']).values[1]).toEqual({
+      v0: '2020-01-01T00:00:00+00:00',
+    });
+  });
+
+  it('renderArray with date elements uses _tz and normalized values', () => {
+    const p = new ParamBuilder();
+    const where = jsonpathDialect.renderArray(
+      '"data"',
+      { field: 'dates', dataType: 'array', elementType: 'date', operator: 'gt', value: '2020-06-01T00:00:00Z' },
+      makeCtx(p),
+    );
+    expect(where).toBe('jsonb_path_exists_tz("data", $1::jsonpath, $2::jsonb)');
+    expect(p.values[1]).toEqual({ v: '2020-06-01T00:00:00+00:00' });
+  });
+
+  it('elemmatch containing a date sub-condition switches the whole path to _tz', () => {
+    const p = new ParamBuilder();
+    const where = jsonpathDialect.renderElemMatch(
+      '"data"',
+      {
+        field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+        filters: {
+          logic: 'and',
+          filters: [
+            { field: 'sku', dataType: 'string', operator: 'eq', value: 'y' },
+            { field: 'ship', dataType: 'date', operator: 'gt', value: '2020-12-31T00:00:00Z' },
+          ],
+        },
+      },
+      makeCtx(p),
+    );
+    expect(where).toBe('jsonb_path_exists_tz("data", $1::jsonpath, $2::jsonb)');
+    expect(p.values[1]).toEqual({ v0: 'y', v1: '2020-12-31T00:00:00+00:00' });
+  });
+});
