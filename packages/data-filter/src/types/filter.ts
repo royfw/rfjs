@@ -74,8 +74,13 @@ export type DataType =
   | 'integer'
   | 'date';
 
+/**
+ * An input record to filter. Values may be scalars, nested records, arrays of
+ * scalars, or arrays of records — JSONPath/lodash resolve arbitrary depth at
+ * runtime, so the data type is intentionally permissive.
+ */
 export type ObjectData = {
-  [key: string]: ValueType;
+  [key: string]: ValueType | ObjectData | ObjectData[] | null;
 };
 
 export interface PathResolveOptions {
