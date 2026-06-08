@@ -200,6 +200,27 @@ describe('resolvePath', () => {
             expect(result).toEqual([]);
         });
     });
+
+    describe('non-wildcard fast path', () => {
+        it('resolves a plain nested path', () => {
+            expect(resolvePath({ a: { b: 'v' } }, 'a.b')).toBe('v');
+        });
+        it('returns undefined for a missing plain path (default options)', () => {
+            expect(resolvePath({ a: {} }, 'a.b')).toBeUndefined();
+        });
+        it('returns null for a missing plain path when fallbackOnEmpty=false', () => {
+            expect(
+                resolvePath({ a: {} }, 'a.b', { fallbackOnEmpty: false }),
+            ).toBeNull();
+        });
+        it('still throws for nullish data when fallbackToLodash=false', () => {
+            expect(() =>
+                resolvePath(null as unknown, 'some.path', {
+                    fallbackToLodash: false,
+                }),
+            ).toThrow();
+        });
+    });
 });
 
 describe('resolvePathDetail', () => {
