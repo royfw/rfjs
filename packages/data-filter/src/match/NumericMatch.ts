@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
 import type { NumericFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
+import { NUMERIC_OPERATORS, assertOperator } from './operators';
 
 export class NumericMatch {
     isMatch = false;
@@ -28,9 +29,8 @@ export class NumericMatch {
         if (_.isNull(target) || _.isUndefined(target)) {
             this.targets = [];
         }
-        if (typeof this[this.operator] == 'function') {
-            this.isMatch = this[this.operator]();
-        }
+        assertOperator('numeric', this.operator, NUMERIC_OPERATORS);
+        this.isMatch = this[this.operator]();
     }
 
     private eq() {

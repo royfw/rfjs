@@ -707,4 +707,17 @@ describe('arrayQuery', () => {
             expect(new NumericMatch('n', 'range', [120, 50], { n: 100 }).isMatch).toBe(true);
         });
     });
+
+    describe('operator validation', () => {
+        it('throws on a type-mismatched operator', () => {
+            expect(
+                () => new NumericMatch('a', 'contains' as never, 1, { a: 1 }),
+            ).toThrow(/unsupported operator/);
+        });
+        it('throws on a prototype method name used as operator', () => {
+            expect(
+                () => new NumericMatch('a', 'toString' as never, 1, { a: 1 }),
+            ).toThrow(/unsupported operator/);
+        });
+    });
 });

@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
 import type { BooleanFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
+import { BOOLEAN_OPERATORS, assertOperator } from './operators';
 
 export class BooleanMatch {
     isMatch = false;
@@ -31,9 +32,8 @@ export class BooleanMatch {
         if (_.isNull(target) || _.isUndefined(target)) {
             this.targets = [];
         }
-        if (typeof this[this.operator] == 'function') {
-            this.isMatch = this[this.operator]();
-        }
+        assertOperator('boolean', this.operator, BOOLEAN_OPERATORS);
+        this.isMatch = this[this.operator]();
     }
 
     private eq() {

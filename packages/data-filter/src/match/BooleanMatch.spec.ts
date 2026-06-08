@@ -407,4 +407,17 @@ describe('arrayQuery', () => {
             expect(query.isMatch).toBe(true);
         });
     });
+
+        describe('operator validation', () => {
+            it('throws on a type-mismatched operator', () => {
+                expect(
+                    () => new BooleanMatch('a1.boolean', 'range' as never, true, testData1),
+                ).toThrow(/unsupported operator/);
+            });
+            it('throws on a prototype method name used as operator', () => {
+                expect(
+                    () => new BooleanMatch('a1.boolean', 'toString' as never, true, testData1),
+                ).toThrow(/unsupported operator/);
+            });
+        });
 });

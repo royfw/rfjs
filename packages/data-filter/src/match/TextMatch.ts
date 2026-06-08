@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
 import type { TextFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
+import { STRING_OPERATORS, assertOperator } from './operators';
 
 export class TextMatch {
     isMatch = false;
@@ -27,9 +28,8 @@ export class TextMatch {
         if (_.isNull(target) || _.isUndefined(target)) {
             this.targets = [];
         }
-        if (typeof this[this.operator] == 'function') {
-            this.isMatch = this[this.operator]();
-        }
+        assertOperator('string', this.operator, STRING_OPERATORS);
+        this.isMatch = this[this.operator]();
     }
 
     private eq() {

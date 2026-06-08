@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
 import type { DateFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
+import { DATE_OPERATORS, assertOperator } from './operators';
 
 export class DateMatch {
   isMatch = false;
@@ -32,9 +33,8 @@ export class DateMatch {
       this.targets = [];
     }
 
-    if (typeof this[this.operator] == 'function') {
-      this.isMatch = this[this.operator]();
-    }
+    assertOperator('date', this.operator, DATE_OPERATORS);
+    this.isMatch = this[this.operator]();
   }
 
   private toTimestamp(val: string | number | boolean | Date): number {

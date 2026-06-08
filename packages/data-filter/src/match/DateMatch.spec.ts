@@ -124,6 +124,19 @@ describe('DateMatch', () => {
     });
   });
 
+  describe('operator validation', () => {
+    it('throws on a type-mismatched operator', () => {
+      expect(
+        () => new DateMatch('createdAt', 'contains' as never, new Date('2024-01-01'), data),
+      ).toThrow(/unsupported operator/);
+    });
+    it('throws on a prototype method name used as operator', () => {
+      expect(
+        () => new DateMatch('createdAt', 'toString' as never, new Date('2024-01-01'), data),
+      ).toThrow(/unsupported operator/);
+    });
+  });
+
   describe('neq (multi-value, value-absent contract)', () => {
     it('no match when ANY value is present (all must be absent)', () => {
       // createdAt = 2024-06-15 is present, so neq over [present, absent] is false

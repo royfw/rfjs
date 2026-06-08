@@ -910,6 +910,19 @@ describe('arrayQuery', () => {
         });
     });
 
+    describe('operator validation', () => {
+        it('throws on a type-mismatched operator', () => {
+            expect(
+                () => new TextMatch('a', 'gt' as never, '1', { a: '1' }),
+            ).toThrow(/unsupported operator/);
+        });
+        it('throws on a prototype method name used as operator', () => {
+            expect(
+                () => new TextMatch('a', 'toString' as never, '1', { a: '1' }),
+            ).toThrow(/unsupported operator/);
+        });
+    });
+
     describe('TextMatch regex-safe prefix/suffix matching', () => {
         it('startswith treats a regex metacharacter literally', () => {
             // value "a." must match a literal "a." prefix, not "a" + any char
