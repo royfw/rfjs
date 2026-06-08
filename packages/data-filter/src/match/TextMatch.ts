@@ -56,10 +56,15 @@ export class TextMatch {
     }
 
     private neq() {
-        const isMatch = !this.eq();
-        const neqMatchs = this.values.filter((i) => !this.matchs.includes(i));
-        this.matchs = neqMatchs;
-        return isMatch;
+        // Matches only when every filter value is ABSENT from the resolved
+        // targets. On a single-value field this is a plain "not equal"; on an
+        // array/wildcard field it correctly rejects rows that contain the value
+        // (the old `!eq()` used forall semantics and wrongly matched a present
+        // value). Consistent with the other Match classes.
+        this.matchs = this.values.filter(
+            (value) => !this.targets.includes(value),
+        );
+        return this.matchs.length === this.values.length;
     }
 
     private isnull() {

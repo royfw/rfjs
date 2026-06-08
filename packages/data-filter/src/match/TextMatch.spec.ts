@@ -895,6 +895,21 @@ describe('arrayQuery', () => {
         });
     });
 
+    describe('neq (value-absent semantics)', () => {
+        it('scalar: matches when the value differs', () => {
+            expect(new TextMatch('name', 'neq', 'Bob', { name: 'Alice' }).isMatch).toBe(true);
+        });
+        it('scalar: no match when the value equals', () => {
+            expect(new TextMatch('name', 'neq', 'Alice', { name: 'Alice' }).isMatch).toBe(false);
+        });
+        it('array: no match when the value is present', () => {
+            expect(new TextMatch('tags', 'neq', 'B', { tags: ['A', 'B'] }).isMatch).toBe(false);
+        });
+        it('array: matches when the value is absent', () => {
+            expect(new TextMatch('tags', 'neq', 'Z', { tags: ['A', 'B'] }).isMatch).toBe(true);
+        });
+    });
+
     describe('TextMatch regex-safe prefix/suffix matching', () => {
         it('startswith treats a regex metacharacter literally', () => {
             // value "a." must match a literal "a." prefix, not "a" + any char

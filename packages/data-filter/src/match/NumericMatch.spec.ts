@@ -522,6 +522,21 @@ describe('arrayQuery', () => {
         });
     });
 
+    describe('neq (value-absent semantics)', () => {
+        it('scalar: matches when the value differs', () => {
+            expect(new NumericMatch('n', 'neq', 5, { n: 3 }).isMatch).toBe(true);
+        });
+        it('scalar: no match when the value equals', () => {
+            expect(new NumericMatch('n', 'neq', 3, { n: 3 }).isMatch).toBe(false);
+        });
+        it('array: no match when the value is present', () => {
+            expect(new NumericMatch('a', 'neq', 2, { a: [1, 2, 3] }).isMatch).toBe(false);
+        });
+        it('array: matches when the value is absent', () => {
+            expect(new NumericMatch('a', 'neq', 9, { a: [1, 2, 3] }).isMatch).toBe(true);
+        });
+    });
+
     describe('JSONPath 進階查詢測試', () => {
         it('應支援陣列切片查詢 users[0:2].age', () => {
             const data = {

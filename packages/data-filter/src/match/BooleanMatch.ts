@@ -60,10 +60,10 @@ export class BooleanMatch {
     }
 
     private neq() {
-        const neq = !this.eq();
-        const neqMatchs = this.values.filter((i) => !this.matchs.includes(i));
-        this.matchs = neqMatchs;
-        return neq;
+        this.matchs = this.values.filter(
+            (value) => !this.targets.includes(value),
+        );
+        return this.matchs.length === this.values.length;
     }
     private isnull() {
         return this.targets.length == 0;

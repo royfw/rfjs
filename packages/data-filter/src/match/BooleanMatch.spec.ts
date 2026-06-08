@@ -96,12 +96,24 @@ describe('arrayQuery', () => {
                 expect(query.isMatch).toEqual(true);
             });
 
-            it('booleanArray bool: true', () => {
+            it('booleanArray neq false: false (value present)', () => {
+                // booleanArray = [true, false, true, false, false] contains
+                // false, so "not equal to false" (value-absent) is false.
                 const query = new BooleanMatch(
                     'a1.booleanArray',
                     'neq',
                     false,
                     testData1,
+                );
+                expect(query.isMatch).toEqual(false);
+            });
+
+            it('booleanArray neq false: true (value absent)', () => {
+                const query = new BooleanMatch(
+                    'a1.allTrue',
+                    'neq',
+                    false,
+                    { a1: { allTrue: [true, true] } },
                 );
                 expect(query.isMatch).toEqual(true);
             });
@@ -262,8 +274,8 @@ describe('arrayQuery', () => {
                 ]
             };
             const query = new BooleanMatch('organizations[0].members[*].isAdmin', 'neq', false, data);
-            // 應該找到至少一個不是 false 的(即 true)
-            expect(query.isMatch).toBe(true);
+            // value-absent: members contain isAdmin=false, so neq false is false
+            expect(query.isMatch).toBe(false);
         });
 
         it('應支援多層萬用字元 departments[*].teams[*].active', () => {
@@ -285,8 +297,8 @@ describe('arrayQuery', () => {
                 ]
             };
             const query = new BooleanMatch('departments[*].teams[*].active', 'neq', false, data);
-            // 應該找到至少一個不是 false 的(即 true)
-            expect(query.isMatch).toBe(true);
+            // value-absent: an active=false exists, so neq false is false
+            expect(query.isMatch).toBe(false);
         });
 
         it('應處理空陣列路徑 emptyArray[*].active', () => {
@@ -319,7 +331,8 @@ describe('arrayQuery', () => {
                 ]
             };
             const query = new BooleanMatch('$..active', 'neq', false, data);
-            expect(query.isMatch).toBe(true);
+            // value-absent: an active=false exists in the tree, so neq false is false
+            expect(query.isMatch).toBe(false);
         });
 
         it('應支援陣列切片查詢 users[0:2].verified', () => {
@@ -367,7 +380,8 @@ describe('arrayQuery', () => {
                 ]
             };
             const query = new BooleanMatch('departments[*].users[*].active', 'neq', false, data);
-            expect(query.isMatch).toBe(true);
+            // value-absent: an active=false exists, so neq false is false
+            expect(query.isMatch).toBe(false);
         });
 
         it('應支援過濾表達式 - 存在性檢查 users[?(@.email)].verified', () => {
