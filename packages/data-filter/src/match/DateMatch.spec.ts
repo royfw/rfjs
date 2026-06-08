@@ -108,4 +108,41 @@ describe('DateMatch', () => {
       expect(q.isMatch).toBe(true);
     });
   });
+
+  describe('NaN / invalid dates', () => {
+    it('eq: two unparseable dates do NOT match', () => {
+      const q = new DateMatch('d', 'eq', 'garbage', { d: 'garbage' });
+      expect(q.isMatch).toBe(false);
+    });
+    it('terms: an unparseable value does not match a valid date', () => {
+      const q = new DateMatch('createdAt', 'terms', 'garbage', data);
+      expect(q.isMatch).toBe(false);
+    });
+    it('neq: an unparseable filter value does not silently pass', () => {
+      const q = new DateMatch('createdAt', 'neq', 'garbage', data);
+      expect(q.isMatch).toBe(false);
+    });
+  });
+
+  describe('neq (multi-value, value-absent contract)', () => {
+    it('no match when ANY value is present (all must be absent)', () => {
+      // createdAt = 2024-06-15 is present, so neq over [present, absent] is false
+      const q = new DateMatch(
+        'createdAt',
+        'neq',
+        [new Date('2024-06-15'), new Date('2025-01-01')],
+        data,
+      );
+      expect(q.isMatch).toBe(false);
+    });
+    it('matches when ALL values are absent', () => {
+      const q = new DateMatch(
+        'createdAt',
+        'neq',
+        [new Date('2025-01-01'), new Date('2026-01-01')],
+        data,
+      );
+      expect(q.isMatch).toBe(true);
+    });
+  });
 });
