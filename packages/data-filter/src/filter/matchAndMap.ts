@@ -6,41 +6,33 @@ import { aliasData } from '../alias/aliasData';
 type AnyObjectData = { [key: string]: any };
 
 export function matchAndMap<T>(
-  filterData: any[],
+  filterData: AnyObjectData[],
   filterMetadatas: FilterMappingMetadata[],
   exData: AnyObjectData = {},
   dataKey = 'data',
 ): T[] {
-  if (filterMetadatas.length == 0) {
+  if (filterMetadatas.length === 0) {
     return filterData as T[];
   }
-  const matchUserOrderItemMap = filterMetadatas.reduce((pre, cur) => {
-    const { filter, mappings } = cur;
+  // Keyed by the ORIGINAL source row so a row matched by several metadata is
+  // emitted once (last matching metadata's mapping wins). `aliasData` clones
+  // the filter/mappings internally, so we pass them as-is (no extra clone), and
+  // matching is read-only, so we only deep-clone the row once it matches.
+  const matched = new Map<AnyObjectData, T>();
+  for (const { filter, mappings } of filterMetadatas) {
     for (const item of filterData) {
-      const _item = _.cloneDeep(item);
-      const data: AnyObjectData = {
-        ...exData,
-        // Use the clone so mapping writes (genMappingDataByValue) and any
-        // alias resolution never mutate the caller's original input object.
-        [dataKey]: _item,
-      };
-      const convertFilter = aliasData<FilterMatchQuery>(
-        _.cloneDeep(filter),
-        data,
-      );
-      const convertMapping = aliasData<MappingValue[]>(
-        _.cloneDeep(mappings ?? []),
-        data,
-      );
-      if (matchQuery(data, convertFilter)) {
-        const matchData = genItemMappingData(dataKey, data, convertMapping);
-        pre.set(_item, matchData as T);
-      }
-    }
-    return pre;
-  }, new Map<number, T>());
+      const source: AnyObjectData = { ...exData, [dataKey]: item };
+      const convertFilter = aliasData<FilterMatchQuery>(filter, source);
+      if (!matchQuery(source, convertFilter)) continue;
 
-  return Array.from(matchUserOrderItemMap.values());
+      const clonedItem = _.cloneDeep(item);
+      const mapped: AnyObjectData = { ...exData, [dataKey]: clonedItem };
+      const convertMapping = aliasData<MappingValue[]>(mappings ?? [], mapped);
+      const matchData = genItemMappingData(dataKey, mapped, convertMapping);
+      matched.set(item, matchData as T);
+    }
+  }
+  return Array.from(matched.values());
 }
 
 type MappingDataValue = string | number | MappingObject[];
