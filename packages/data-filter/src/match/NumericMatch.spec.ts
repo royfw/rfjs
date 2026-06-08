@@ -535,6 +535,9 @@ describe('arrayQuery', () => {
         it('array: matches when the value is absent', () => {
             expect(new NumericMatch('a', 'neq', 9, { a: [1, 2, 3] }).isMatch).toBe(true);
         });
+        it('does not silently pass an unparseable (NaN) filter value', () => {
+            expect(new NumericMatch('n', 'neq', 'garbage' as never, { n: 5 }).isMatch).toBe(false);
+        });
     });
 
     describe('JSONPath 進階查詢測試', () => {

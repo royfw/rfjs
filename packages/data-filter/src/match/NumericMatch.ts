@@ -57,8 +57,10 @@ export class NumericMatch {
     }
 
     private neq() {
+        // NaN-safe (parity with DateMatch.neq): an unparseable filter value
+        // never counts as "absent", so a garbage value does not silently match.
         this.matchs = this.values.filter(
-            (value) => !this.targets.includes(value),
+            (value) => !Number.isNaN(value) && !this.targets.includes(value),
         );
         return this.matchs.length === this.values.length;
     }
