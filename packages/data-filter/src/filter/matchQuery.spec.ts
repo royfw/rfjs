@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { typeTransfer } from './matchQuery';
+import { typeTransfer, createMatchQuery } from './matchQuery';
+import type { MatchQueryMetadata } from '../types';
 
 describe('typeTransfer boolean coercion', () => {
   it('parses explicit false tokens to false', () => {
@@ -20,5 +21,17 @@ describe('typeTransfer boolean coercion', () => {
   it('passes through actual booleans', () => {
     expect(typeTransfer(true, 'boolean')).toBe(true);
     expect(typeTransfer(false, 'boolean')).toBe(false);
+  });
+});
+
+describe('createMatchQuery dataType validation', () => {
+  it('throws on an unsupported dataType', () => {
+    const bad = {
+      field: 'a',
+      dataType: 'mystery',
+      operator: 'eq',
+      value: 1,
+    } as unknown as MatchQueryMetadata;
+    expect(() => createMatchQuery({ a: 1 }, bad)).toThrow(/unsupported dataType/);
   });
 });

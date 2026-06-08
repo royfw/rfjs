@@ -9,10 +9,6 @@ import type {
   FilterMatchQuery,
   MatchQueryMetadata,
   LogicalOperator,
-  TextFilterOperator,
-  NumericFilterOperator,
-  BooleanFilterOperator,
-  DateFilterOperator,
 } from '../types';
 
 export function matchQueryArray(
@@ -89,38 +85,24 @@ export function createMatchQuery(
   data: ObjectData,
   metadata: MatchQueryMetadata,
 ): TextMatch | NumericMatch | BooleanMatch | DateMatch {
-  const { field, operator, value, dataType } = metadata;
-  const query = {
-    string: () =>
-      new TextMatch(
-        field,
-        operator as TextFilterOperator,
-        value,
-        data,
-      ),
-    numeric: () =>
-      new NumericMatch(
-        field,
-        operator as NumericFilterOperator,
-        value,
-        data,
-      ),
-    boolean: () =>
-      new BooleanMatch(
-        field,
-        operator as BooleanFilterOperator,
-        value,
-        data,
-      ),
-    date: () =>
-      new DateMatch(
-        field,
-        operator as DateFilterOperator,
-        value,
-        data,
-      ),
-  };
-  return query[dataType]();
+  switch (metadata.dataType) {
+    case 'string':
+      return new TextMatch(metadata.field, metadata.operator, metadata.value, data);
+    case 'numeric':
+      return new NumericMatch(metadata.field, metadata.operator, metadata.value, data);
+    case 'boolean':
+      return new BooleanMatch(metadata.field, metadata.operator, metadata.value, data);
+    case 'date':
+      return new DateMatch(metadata.field, metadata.operator, metadata.value, data);
+    default: {
+      // Exhaustiveness guard: if the union grows (e.g. object/array variants)
+      // without a matching case above, this assignment fails to compile.
+      const _exhaustive: never = metadata;
+      throw new Error(
+        `[data-filter] unsupported dataType '${String((_exhaustive as { dataType: unknown }).dataType)}'`,
+      );
+    }
+  }
 }
 
 export const typeTransfer = (
