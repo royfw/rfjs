@@ -156,20 +156,16 @@ export class NumericMatch {
     }
 
     private range() {
-        const sortVals = this.values.sort((a, b) => a - b);
-        const s = sortVals[0];
-        const b = sortVals[1];
-        const matchs = this.targets.reduce(
-            (pre, cur) => {
-                if (cur >= s && cur <= b) {
-                    pre.push(true);
-                }
-                return pre;
-            },
-            <boolean[]>[],
+        if (this.values.length !== 2) {
+            throw new Error(
+                `[data-filter] range operator requires exactly 2 values, received ${this.values.length}`,
+            );
+        }
+        const [lo, hi] = [...this.values].sort((a, b) => a - b);
+        this.matchs = this.targets.filter(
+            (target) => target >= lo && target <= hi,
         );
-        const isMatchCount = matchs.length;
-        return isMatchCount > 0;
+        return this.matchs.length > 0;
     }
 
     private terms() {

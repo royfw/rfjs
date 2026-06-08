@@ -693,4 +693,18 @@ describe('arrayQuery', () => {
             expect(query.isMatch).toBe(true);
         });
     });
+
+    describe('range arity', () => {
+        it('throws when range does not receive exactly 2 values', () => {
+            expect(() => new NumericMatch('n', 'range', 5, { n: 10 })).toThrow(
+                /exactly 2 values/,
+            );
+            expect(() => new NumericMatch('n', 'range', [1, 2, 3], { n: 10 })).toThrow(
+                /exactly 2 values/,
+            );
+        });
+        it('accepts reversed bounds via min/max', () => {
+            expect(new NumericMatch('n', 'range', [120, 50], { n: 100 }).isMatch).toBe(true);
+        });
+    });
 });

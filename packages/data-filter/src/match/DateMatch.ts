@@ -86,10 +86,13 @@ export class DateMatch {
   }
 
   private range() {
-    const sortVals = this.values.sort((a, b) => a - b);
-    const start = sortVals[0];
-    const end = sortVals[1];
-    this.matchs = this.targets.filter((cur) => cur >= start && cur <= end);
+    if (this.values.length !== 2) {
+      throw new Error(
+        `[data-filter] range operator requires exactly 2 values, received ${this.values.length}`,
+      );
+    }
+    const [lo, hi] = [...this.values].sort((a, b) => a - b);
+    this.matchs = this.targets.filter((target) => target >= lo && target <= hi);
     return this.matchs.length > 0;
   }
 
