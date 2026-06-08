@@ -138,11 +138,15 @@ export const typeTransfer = (
     string: () => value,
     number: () => Number(value),
     integer: () => Number(value),
-    boolean: () =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      ['true', 'false'].includes(value as string)
-        ? JSON.parse(value as string)
-        : Boolean(value),
+    boolean: () => {
+      if (typeof value === 'boolean') return value;
+      const normalized = String(value).trim().toLowerCase();
+      // Everything that is not an explicit falsy token is truthy. Fixes the old
+      // Boolean('false')/Boolean('0') === true footgun.
+      return !['false', '0', 'no', 'off', '', 'null', 'undefined'].includes(
+        normalized,
+      );
+    },
     regex: () => new RegExp(value as string),
   };
   if (!_.has(transfer, type)) type = 'any';
