@@ -5,25 +5,44 @@ export type FilterMatchQuery = {
 
 export type MatchQueryDataType = 'string' | 'numeric' | 'boolean' | 'date';
 
-export type MatchQueryMetadata = {
+export interface StringCondition {
   field: string;
-  dataType: MatchQueryDataType;
-  // Any filter operator is accepted; the runtime dispatches by `dataType`.
-  // Written as a flat union (rather than Text|Numeric|Date, which overlap on
-  // DefaultFilterOperator + `terms`) so the type carries no redundant members.
-  operator:
-    | DefaultFilterOperator
-    | 'contains'
-    | 'startswith'
-    | 'endswith'
-    | 'terms'
-    | 'gt'
-    | 'gte'
-    | 'lt'
-    | 'lte'
-    | 'range';
+  dataType: 'string';
+  operator: TextFilterOperator;
   value: ValueType;
-};
+}
+
+export interface NumericCondition {
+  field: string;
+  dataType: 'numeric';
+  operator: NumericFilterOperator;
+  value: ValueType;
+}
+
+export interface DateCondition {
+  field: string;
+  dataType: 'date';
+  operator: DateFilterOperator;
+  value: ValueType;
+}
+
+export interface BooleanCondition {
+  field: string;
+  dataType: 'boolean';
+  operator: BooleanFilterOperator;
+  value: ValueType;
+}
+
+/**
+ * A single field condition, discriminated by `dataType` so each data type only
+ * accepts its own operators. Future object/array/elemmatch variants are added
+ * to this union (mirroring `@rfjs/jsonb-query`) without breaking existing ones.
+ */
+export type MatchQueryMetadata =
+  | StringCondition
+  | NumericCondition
+  | DateCondition
+  | BooleanCondition;
 
 export type LogicalOperator = 'and' | 'or' | 'nor' | 'not';
 
@@ -74,8 +93,13 @@ export type DataType =
   | 'integer'
   | 'date';
 
+/**
+ * An input record to filter. Values may be scalars, nested records, arrays of
+ * scalars, or arrays of records — JSONPath/lodash resolve arbitrary depth at
+ * runtime, so the data type is intentionally permissive.
+ */
 export type ObjectData = {
-  [key: string]: ValueType;
+  [key: string]: ValueType | ObjectData | ObjectData[] | null;
 };
 
 export interface PathResolveOptions {

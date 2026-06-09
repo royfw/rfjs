@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
 import type { DateFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
+import { DATE_OPERATORS, assertOperator } from './operators';
 
 export class DateMatch {
   isMatch = false;
@@ -32,9 +33,8 @@ export class DateMatch {
       this.targets = [];
     }
 
-    if (typeof this[this.operator] == 'function') {
-      this.isMatch = this[this.operator]();
-    }
+    assertOperator('date', this.operator, DATE_OPERATORS);
+    this.isMatch = this[this.operator]();
   }
 
   private toTimestamp(val: string | number | boolean | Date): number {
@@ -43,14 +43,18 @@ export class DateMatch {
   }
 
   private eq() {
-    this.matchs = this.values.filter((cur) => this.targets.includes(cur));
-    return this.matchs.length == this.values.length;
+    this.matchs = this.values.filter(
+      (value) => !Number.isNaN(value) && this.targets.includes(value),
+    );
+    return this.matchs.length === this.values.length;
   }
 
   private neq() {
-    const eqMatchs = this.values.filter((cur) => this.targets.includes(cur));
-    this.matchs = this.values.filter((i) => !eqMatchs.includes(i));
-    return this.matchs.length > 0;
+    // value-absent + NaN-safe: an unparseable (NaN) filter value never matches.
+    this.matchs = this.values.filter(
+      (value) => !Number.isNaN(value) && !this.targets.includes(value),
+    );
+    return this.matchs.length === this.values.length;
   }
 
   private isnull() {
@@ -82,15 +86,20 @@ export class DateMatch {
   }
 
   private range() {
-    const sortVals = this.values.sort((a, b) => a - b);
-    const start = sortVals[0];
-    const end = sortVals[1];
-    this.matchs = this.targets.filter((cur) => cur >= start && cur <= end);
+    if (this.values.length !== 2) {
+      throw new Error(
+        `[data-filter] range operator requires exactly 2 values, received ${this.values.length}`,
+      );
+    }
+    const [lo, hi] = [...this.values].sort((a, b) => a - b);
+    this.matchs = this.targets.filter((target) => target >= lo && target <= hi);
     return this.matchs.length > 0;
   }
 
   private terms() {
-    this.matchs = this.values.filter((cur) => this.targets.includes(cur));
+    this.matchs = this.values.filter(
+      (value) => !Number.isNaN(value) && this.targets.includes(value),
+    );
     return this.matchs.length > 0;
   }
 }

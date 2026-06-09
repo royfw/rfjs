@@ -522,6 +522,24 @@ describe('arrayQuery', () => {
         });
     });
 
+    describe('neq (value-absent semantics)', () => {
+        it('scalar: matches when the value differs', () => {
+            expect(new NumericMatch('n', 'neq', 5, { n: 3 }).isMatch).toBe(true);
+        });
+        it('scalar: no match when the value equals', () => {
+            expect(new NumericMatch('n', 'neq', 3, { n: 3 }).isMatch).toBe(false);
+        });
+        it('array: no match when the value is present', () => {
+            expect(new NumericMatch('a', 'neq', 2, { a: [1, 2, 3] }).isMatch).toBe(false);
+        });
+        it('array: matches when the value is absent', () => {
+            expect(new NumericMatch('a', 'neq', 9, { a: [1, 2, 3] }).isMatch).toBe(true);
+        });
+        it('does not silently pass an unparseable (NaN) filter value', () => {
+            expect(new NumericMatch('n', 'neq', 'garbage' as never, { n: 5 }).isMatch).toBe(false);
+        });
+    });
+
     describe('JSONPath 進階查詢測試', () => {
         it('應支援陣列切片查詢 users[0:2].age', () => {
             const data = {
@@ -676,6 +694,33 @@ describe('arrayQuery', () => {
             };
             const query = new NumericMatch('users[(@.length-1)].score', 'eq', 95, data);
             expect(query.isMatch).toBe(true);
+        });
+    });
+
+    describe('range arity', () => {
+        it('throws when range does not receive exactly 2 values', () => {
+            expect(() => new NumericMatch('n', 'range', 5, { n: 10 })).toThrow(
+                /exactly 2 values/,
+            );
+            expect(() => new NumericMatch('n', 'range', [1, 2, 3], { n: 10 })).toThrow(
+                /exactly 2 values/,
+            );
+        });
+        it('accepts reversed bounds via min/max', () => {
+            expect(new NumericMatch('n', 'range', [120, 50], { n: 100 }).isMatch).toBe(true);
+        });
+    });
+
+    describe('operator validation', () => {
+        it('throws on a type-mismatched operator', () => {
+            expect(
+                () => new NumericMatch('a', 'contains' as never, 1, { a: 1 }),
+            ).toThrow(/unsupported operator/);
+        });
+        it('throws on a prototype method name used as operator', () => {
+            expect(
+                () => new NumericMatch('a', 'toString' as never, 1, { a: 1 }),
+            ).toThrow(/unsupported operator/);
         });
     });
 });

@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
 import type { NumericFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
+import { NUMERIC_OPERATORS, assertOperator } from './operators';
 
 export class NumericMatch {
     isMatch = false;
@@ -28,9 +29,8 @@ export class NumericMatch {
         if (_.isNull(target) || _.isUndefined(target)) {
             this.targets = [];
         }
-        if (typeof this[this.operator] == 'function') {
-            this.isMatch = this[this.operator]();
-        }
+        assertOperator('numeric', this.operator, NUMERIC_OPERATORS);
+        this.isMatch = this[this.operator]();
     }
 
     private eq() {
@@ -57,10 +57,12 @@ export class NumericMatch {
     }
 
     private neq() {
-        const neq = !this.eq();
-        const neqMatchs = this.values.filter((i) => !this.matchs.includes(i));
-        this.matchs = neqMatchs;
-        return neq;
+        // NaN-safe (parity with DateMatch.neq): an unparseable filter value
+        // never counts as "absent", so a garbage value does not silently match.
+        this.matchs = this.values.filter(
+            (value) => !Number.isNaN(value) && !this.targets.includes(value),
+        );
+        return this.matchs.length === this.values.length;
     }
 
     private isnull() {
@@ -156,20 +158,16 @@ export class NumericMatch {
     }
 
     private range() {
-        const sortVals = this.values.sort((a, b) => a - b);
-        const s = sortVals[0];
-        const b = sortVals[1];
-        const matchs = this.targets.reduce(
-            (pre, cur) => {
-                if (cur >= s && cur <= b) {
-                    pre.push(true);
-                }
-                return pre;
-            },
-            <boolean[]>[],
+        if (this.values.length !== 2) {
+            throw new Error(
+                `[data-filter] range operator requires exactly 2 values, received ${this.values.length}`,
+            );
+        }
+        const [lo, hi] = [...this.values].sort((a, b) => a - b);
+        this.matchs = this.targets.filter(
+            (target) => target >= lo && target <= hi,
         );
-        const isMatchCount = matchs.length;
-        return isMatchCount > 0;
+        return this.matchs.length > 0;
     }
 
     private terms() {
