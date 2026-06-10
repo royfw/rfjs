@@ -47,6 +47,16 @@ jsonb-query result-for-result.
    plus a runtime `assertOperator` extension for JS callers.
 6. **`elemmatch` supports nested groups and nested elemmatch** — free via recursion into
    `matchQuery`.
+7. **A wildcard `field` is rejected (throws) on collection dataTypes** (`object` / `array` /
+   `elemmatch`). A wildcard path also produces an array, which overlaps ambiguously with the
+   dataType's own iteration (e.g. `users[*].tags` → array-of-arrays) and still cannot express
+   "same element". Detect wildcard syntax via the existing `hasWildcardSyntax` (`*`, `..`,
+   `[?`, `[:`, `[,`) and throw. Plain dotted/single-index paths (`tags`, `order.items`,
+   `users[0].tags`) are fine. **Wildcard on scalar conditions is unchanged** (kept for its
+   concise loose-∃ flexibility).
+8. **`elemmatch` sub-conditions may themselves be `array` / `object` / `elemmatch`** (not only
+   scalars) — they recurse through `matchQuery` naturally, so data-filter is intentionally more
+   capable here than jsonb-query (which rejects array/object inside elemmatch for SQL reasons).
 
 ## Metadata (added to the `MatchQueryMetadata` union)
 
@@ -129,7 +139,24 @@ Resolve `field` → array (non-array / missing → empty → no match).
 Resolve `field` → array (non-array / empty / missing → no match).
 - `array.some(element => matchQuery(element, condition.filters))` — each element runs through the
   existing recursive matcher; sub-`field`s are relative to the element. Nested `and`/`or`/`nor`/
-  `not` and nested `elemmatch` work via the recursion with no special-casing.
+  `not`, nested `elemmatch`, **and `array`/`object` sub-conditions** all work via the recursion
+  with no special-casing (decision #8).
+
+## Usage guidance — wildcard-scalar vs collection dataTypes
+
+Two ways to reach into collections; they serve different needs (README should carry this table):
+
+| Need | Use | Why |
+|------|-----|-----|
+| Concise "**some** element/row loosely matches" | **wildcard + scalar** — `{ field:'users[*].active', dataType:'boolean', operator:'eq', value:true }` | one-liner ∃; flexible. Caveat: quantifier is implicit (∀ for `eq`, ∃ for others) and it **cannot** express "same element". |
+| Explicit, unambiguous array membership | **`dataType:'array'`** — `{ field:'tags', dataType:'array', elementType:'string', operator:'contains', value:'x' }` | declared ∃ + `containsall`; no ∀/∃ surprise. |
+| Whole-object match / containment | **`dataType:'object'`** | structural eq / `@>`-style contains. |
+| "**Same** element satisfies multiple conditions" | **`elemmatch`** | wildcard fundamentally can't (it ANDs across possibly-different elements). |
+| Nested collections (e.g. some user's tags contain x) | **`elemmatch` + `array`** composed | `matchQuery` recursion; no wildcard needed. |
+
+Rule of thumb: reach for **wildcard-scalar** for a quick loose ∃; reach for the **collection
+dataTypes** when correctness, same-element, or explicit semantics matter. A wildcard `field` is
+**not** allowed on a collection dataType (decision #7) — compose with `elemmatch` instead.
 
 ## Architecture / files
 
@@ -168,6 +195,9 @@ Resolve `field` → array (non-array / empty / missing → no match).
 
 - Operator invalid for a (dataType, elementType) → **throw** via `assertOperator` (Task-8
   precedent). Invalid `dataType` → throw (existing switch `default`).
+- **Wildcard `field` on a collection dataType** (`object`/`array`/`elemmatch`) → **throw** a clear
+  error (decision #7), e.g. `[data-filter] wildcard field is not supported for dataType 'array';
+  point field at the value, or compose with elemmatch`. Detected via `hasWildcardSyntax`.
 - Non-array data on an `array` condition, and missing/`null` fields → **no match** (forgiving),
   not thrown.
 - Matching returns a boolean and never throws on data *shape*; only an invalid *operator* or
@@ -182,15 +212,19 @@ Resolve `field` → array (non-array / empty / missing → no match).
 - **ArrayMatch** (per elementType): ∃ element ops; `containsall` (incl. date); non-array → no
   match; isnull/isnotnull on the field; "does not contain" via `not`+`eq`.
 - **elemmatch**: same-element AND (the `{items:[{sku,qty}]}` case that wildcard gets wrong),
-  nested `or` group, nested elemmatch (orders→items), empty array → false.
+  nested `or` group, nested elemmatch (orders→items), an elemmatch whose sub-condition is an
+  `array` (the `users → tags contains x` case, decision #8), empty array → false.
+- **Wildcard-field guard**: a collection condition with a wildcard `field` (`users[*].tags`,
+  `$..x`, `items[?(...)]`) throws; a plain/single-index field (`users[0].tags`) does not.
 - **Type test** (compile-time, `tsc --noEmit`): a valid combo compiles; an invalid one (e.g.
   `dataType:'object', operator:'gt'` or `dataType:'array', elementType:'boolean', operator:'range'`)
   is a compile error (`@ts-expect-error`).
 
 ## Out of scope
 
-- Wildcard paths (`users[*].x`) combined with `dataType:'array'/'object'/elemmatch` — undefined /
-  unsupported; the explicit dataType is the iteration mechanism. Documented.
+- Wildcard paths (`users[*].x`) combined with `dataType:'array'/'object'/elemmatch` — **rejected
+  (throws)**, not silently handled (decision #7); compose with `elemmatch` instead. The explicit
+  dataType is the iteration mechanism.
 - Changing or deprecating the existing wildcard-on-scalar ∀/∃ behavior (separate, breaking,
-  future major).
+  future major) — it stays and remains the concise loose-∃ tool (see Usage guidance).
 - `@rfjs/jsonb-query` changes, a shared types package, and the Track-B mapping registry.
