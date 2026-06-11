@@ -64,8 +64,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
-  --font-mono: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+  --font-sans: var(--font-archivo, ui-sans-serif, system-ui, sans-serif);
+  --font-mono: var(--font-jetbrains-mono, ui-monospace, "SF Mono", Menlo, monospace);
 
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
