@@ -1,5 +1,11 @@
 # @rfjs/object-utils
 
+## 0.2.0
+
+### Minor Changes
+
+- 0985dc4: Add `getByPath(obj, path)` — read a value by a dot/bracket path (e.g. `a.b[0].c`), returning `undefined` for a missing path, a nullish intermediate, or a non-object input.
+
 ## 0.1.0
 
 ### Minor Changes
