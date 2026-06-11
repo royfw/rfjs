@@ -5,9 +5,9 @@ import {
   isFilterGroup,
   assertCondition,
   assertObjectValue,
-} from './dialect';
-import { ParamBuilder } from './param-builder';
-import type { JsonbCondition } from './types';
+} from './base';
+import { ParamBuilder } from '../param-builder';
+import type { JsonbCondition } from '../types';
 
 describe('renderNullCheck', () => {
   it('renders is null / is not null with a parameterized path', () => {

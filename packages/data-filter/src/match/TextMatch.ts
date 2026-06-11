@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
 import type { TextFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
+import { STRING_OPERATORS, assertOperator } from './operators';
 
 export class TextMatch {
     isMatch = false;
@@ -27,9 +28,8 @@ export class TextMatch {
         if (_.isNull(target) || _.isUndefined(target)) {
             this.targets = [];
         }
-        if (typeof this[this.operator] == 'function') {
-            this.isMatch = this[this.operator]();
-        }
+        assertOperator('string', this.operator, STRING_OPERATORS);
+        this.isMatch = this[this.operator]();
     }
 
     private eq() {
@@ -56,10 +56,15 @@ export class TextMatch {
     }
 
     private neq() {
-        const isMatch = !this.eq();
-        const neqMatchs = this.values.filter((i) => !this.matchs.includes(i));
-        this.matchs = neqMatchs;
-        return isMatch;
+        // Matches only when every filter value is ABSENT from the resolved
+        // targets. On a single-value field this is a plain "not equal"; on an
+        // array/wildcard field it correctly rejects rows that contain the value
+        // (the old `!eq()` used forall semantics and wrongly matched a present
+        // value). Consistent with the other Match classes.
+        this.matchs = this.values.filter(
+            (value) => !this.targets.includes(value),
+        );
+        return this.matchs.length === this.values.length;
     }
 
     private isnull() {

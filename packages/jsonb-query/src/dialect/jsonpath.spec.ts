@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { jsonpathDialect } from './dialect-jsonpath';
-import { ParamBuilder } from './param-builder';
-import type { RenderContext } from './dialect';
+import { jsonpathDialect } from './jsonpath';
+import { ParamBuilder } from '../param-builder';
+import type { RenderContext } from './base';
 import type {
   JsonbArrayCondition,
   JsonbElemMatchCondition,
   JsonbFilterGroup,
-} from './types';
+} from '../types';
 
 function makeCtx(p: ParamBuilder): RenderContext {
   let n = 0;

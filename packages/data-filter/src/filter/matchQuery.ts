@@ -3,17 +3,18 @@ import { BooleanMatch } from '../match/BooleanMatch';
 import { NumericMatch } from '../match/NumericMatch';
 import { TextMatch } from '../match/TextMatch';
 import { DateMatch } from '../match/DateMatch';
+import { ObjectMatch } from '../match/ObjectMatch';
+import { ArrayMatch } from '../match/ArrayMatch';
+import { ElemMatch } from '../match/ElemMatch';
+import { hasWildcardSyntax } from '../path/resolve';
 import type {
   DataType,
   ObjectData,
   FilterMatchQuery,
   MatchQueryMetadata,
   LogicalOperator,
-  TextFilterOperator,
-  NumericFilterOperator,
-  BooleanFilterOperator,
-  DateFilterOperator,
 } from '../types';
+import { isExpression } from '@rfjs/data-expr';
 
 export function matchQueryArray(
   data: ObjectData[],
@@ -62,7 +63,7 @@ export function matchQuery(
   return logicMatch;
 }
 
-function logicMatchQuery(logic: LogicalOperator, data: boolean[]) {
+export function logicMatchQuery(logic: LogicalOperator, data: boolean[]) {
   let result = false;
   switch (logic) {
     case 'and':
@@ -88,39 +89,61 @@ function isFilterMatchQuery(filter: FilterMatchQuery | MatchQueryMetadata) {
 export function createMatchQuery(
   data: ObjectData,
   metadata: MatchQueryMetadata,
-): TextMatch | NumericMatch | BooleanMatch | DateMatch {
-  const { field, operator, value, dataType } = metadata;
-  const query = {
-    string: () =>
-      new TextMatch(
-        field,
-        operator as TextFilterOperator,
-        value,
+): { isMatch: boolean } {
+  if (
+    isExpression(metadata.field) ||
+    ('value' in metadata &&
+      typeof metadata.value === 'string' &&
+      isExpression(metadata.value))
+  ) {
+    throw new Error(
+      `[data-filter] '=' expression slots require the async api — use compileMatchQuery or matchQueryAsync`,
+    );
+  }
+  switch (metadata.dataType) {
+    case 'string':
+      return new TextMatch(metadata.field, metadata.operator, metadata.value, data);
+    case 'numeric':
+      return new NumericMatch(metadata.field, metadata.operator, metadata.value, data);
+    case 'boolean':
+      return new BooleanMatch(metadata.field, metadata.operator, metadata.value, data);
+    case 'date':
+      return new DateMatch(metadata.field, metadata.operator, metadata.value, data);
+    case 'object':
+      if (hasWildcardSyntax(metadata.field)) {
+        throw new Error(
+          `[data-filter] wildcard field is not supported for dataType 'object'; point field at the value`,
+        );
+      }
+      return new ObjectMatch(metadata.field, metadata.operator, metadata.value, data);
+    case 'array':
+      if (hasWildcardSyntax(metadata.field)) {
+        throw new Error(
+          `[data-filter] wildcard field is not supported for dataType 'array'; point field at the value, or compose with elemmatch`,
+        );
+      }
+      if (metadata.elementType === 'object') {
+        return new ElemMatch(
+          metadata.field,
+          metadata.filters,
+          data,
+          (element, filters) => matchQuery(element as ObjectData, filters),
+        );
+      }
+      return new ArrayMatch(
+        metadata.field,
+        metadata.elementType,
+        metadata.operator,
+        metadata.value,
         data,
-      ),
-    numeric: () =>
-      new NumericMatch(
-        field,
-        operator as NumericFilterOperator,
-        value,
-        data,
-      ),
-    boolean: () =>
-      new BooleanMatch(
-        field,
-        operator as BooleanFilterOperator,
-        value,
-        data,
-      ),
-    date: () =>
-      new DateMatch(
-        field,
-        operator as DateFilterOperator,
-        value,
-        data,
-      ),
-  };
-  return query[dataType]();
+      );
+    default: {
+      const _exhaustive: never = metadata;
+      throw new Error(
+        `[data-filter] unsupported dataType '${String((_exhaustive as { dataType: unknown }).dataType)}'`,
+      );
+    }
+  }
 }
 
 export const typeTransfer = (
@@ -138,11 +161,15 @@ export const typeTransfer = (
     string: () => value,
     number: () => Number(value),
     integer: () => Number(value),
-    boolean: () =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      ['true', 'false'].includes(value as string)
-        ? JSON.parse(value as string)
-        : Boolean(value),
+    boolean: () => {
+      if (typeof value === 'boolean') return value;
+      const normalized = String(value).trim().toLowerCase();
+      // Everything that is not an explicit falsy token is truthy. Fixes the old
+      // Boolean('false')/Boolean('0') === true footgun.
+      return !['false', '0', 'no', 'off', '', 'null', 'undefined'].includes(
+        normalized,
+      );
+    },
     regex: () => new RegExp(value as string),
   };
   if (!_.has(transfer, type)) type = 'any';

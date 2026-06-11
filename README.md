@@ -8,7 +8,9 @@ A Turborepo monorepo and template collection for the [start-ts-by](https://www.n
 
 | Package | Description |
 |---------|-------------|
-| [@rfjs/data-filter](packages/data-filter) | Data filtering with JSONPath support, wildcard path resolution, and logic operators |
+| [@rfjs/data-expr](packages/data-expr) | Safe JSON expression engine (JSONata wrapper) — compile-once eval, DoS guards, no `eval` |
+| [@rfjs/data-filter](packages/data-filter) | In-memory filtering & mapping — scalar/object/array/elemmatch conditions, computed `=` expressions, logic operators |
+| [@rfjs/data-label](packages/data-label) | Compose display label strings from data paths, value maps, and templates |
 | [@rfjs/data-transform](packages/data-transform) | Data type transformation utilities — typeTransfer, jsonbTransfer, toBoolean, toDateString |
 | [@rfjs/jsonb-query](packages/jsonb-query) | PostgreSQL JSONB SQL query builder |
 | [@rfjs/jwt](packages/jwt) | JWT sign, verify, and decode helper |
@@ -46,57 +48,6 @@ Standalone project templates distributed via `start-ts-by` CLI. See [templates/r
 - **BullMQ**: `bull-api`, `lib-queue`
 - **Monorepo**: `turbo`
 
-## ORM Libraries Usage
+## ORM Libraries (internal)
 
-This project includes wrappers for multiple ORM libraries. Below are examples of how to initialize migrations and seeding for each, based on usage in `@apps/orm-app`.
-
-### @libs/orm-drizzle
-
-```typescript
-import { migrateToLatest, seedToLatest } from '@rfjs/orm-drizzle';
-
-await migrateToLatest({
-  connectionString: process.env.DATABASE_URL,
-  schema: 'app_drizzle',
-  migrationsFolder: 'node_modules/@rfjs/orm-drizzle/dist/drizzle',
-});
-await seedToLatest(process.env.DATABASE_URL, 'app_drizzle');
-```
-
-### @libs/orm-kysely
-
-```typescript
-import { migrateToLatest, seedToLatest } from '@rfjs/orm-kysely';
-
-await migrateToLatest({
-  connectionString: process.env.DATABASE_URL,
-  schema: 'app_kysely',
-});
-await seedToLatest(process.env.DATABASE_URL, 'app_kysely');
-```
-
-### @libs/orm-prisma
-
-```typescript
-import { migrateToLatest, seedToLatest } from '@rfjs/orm-prisma';
-
-await migrateToLatest({
-  connectionString: process.env.DATABASE_URL,
-  schemaFilePath: 'node_modules/@rfjs/orm-prisma/dist/prisma/schema.prisma',
-  configFilePath: 'node_modules/@rfjs/orm-prisma/dist/prisma.config.ts',
-  schema: 'app_prisma',
-});
-await seedToLatest(process.env.DATABASE_URL, 'app_prisma');
-```
-
-### @libs/orm-typeorm
-
-```typescript
-import { migrateToLatest, seedToLatest } from '@rfjs/orm-typeorm';
-
-await migrateToLatest({
-  connectionString: process.env.DATABASE_URL,
-  schema: 'app_typeorm',
-});
-await seedToLatest(process.env.DATABASE_URL, 'app_typeorm');
-```
+`libs/orm-drizzle`, `orm-kysely`, `orm-prisma`, and `orm-typeorm` wrap each ORM's migrate/seed flow behind a common `migrateToLatest` / `seedToLatest` API. For runnable usage, see [`apps/orm-app`](apps/orm-app) and each package's own README.
