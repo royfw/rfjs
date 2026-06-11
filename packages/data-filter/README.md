@@ -1,6 +1,6 @@
 # @rfjs/data-filter
 
-In-memory data filtering with JSONPath wildcard support, alias substitution, and filter mapping.
+In-memory data filtering with computed `=` expression slots, alias substitution, and filter mapping.
 
 ## Installation
 
@@ -61,13 +61,17 @@ const results = matchAndMap<T>(
 
 #### `resolvePath(data, path, options)`
 
-Resolve a path in an object with JSONPath wildcard support. Falls back to lodash `_.get` for plain paths.
+Resolve a plain dot/bracket path (lodash `_.get`). Wildcard/jsonpath forms
+(`users[*].name`, `$..x`, `[?(...)]`, slices, unions, `$.` roots) are **not
+supported and throw** — use `dataType: 'array'` / `elemmatch`, or an `=`
+expression instead.
 
 ```typescript
 import { resolvePath } from '@rfjs/data-filter';
 
-resolvePath(data, 'users[*].name');  // JSONPath wildcard
-resolvePath(data, 'a.b.c');           // plain path
+resolvePath(data, 'a.b.c');
+resolvePath(data, 'users[0].name');
+resolvePath(data, 'user.missing', { fallbackOnEmpty: false }); // null instead of undefined
 ```
 
 ### Operators
@@ -111,19 +115,55 @@ matchQuery(data, wrap({
 }));
 ```
 
-`array` `neq` is excluded (use `not` + `eq` for "does not contain"). A **wildcard** `field`
-(`users[*].x`) is **not allowed** on `object`/`array`/`elemmatch` — it throws; compose with
-`elemmatch` instead.
+`array` `neq` is excluded (use `not` + `eq` for "does not contain"). Wildcard/jsonpath
+`field` forms (`users[*].x`) are **not supported and throw** — compose with
+`elemmatch`/`array`, or use an `=` expression instead.
 
-#### When to use wildcard-scalar vs collection dataTypes
+#### When to use collection dataTypes
 
 | Need | Use |
 |------|-----|
-| Concise "some element/row loosely matches" | wildcard + scalar (`users[*].active eq true`) — one-liner ∃; cannot express "same element" |
+| Concise "some element/row loosely matches" | `dataType:'array'` (∃ over elements), or an `=` expression |
 | Explicit, unambiguous array membership | `dataType:'array'` |
 | Whole-object match / containment | `dataType:'object'` |
 | "Same element satisfies multiple conditions" | `elemmatch` |
 | Nested collections (some user's tags contain x) | `elemmatch` + `array` composed |
+
+### Computed `=` expression slots (async)
+
+A condition `field`/`value` — or a `matchAndMap` mapping `value` — that starts
+with `=` is a computed [JSONata](https://jsonata.org) expression, powered by
+[`@rfjs/data-expr`](../data-expr) (safe: no `eval`; DoS guards on by default).
+Expressions require the **async** APIs; the sync APIs throw on `=`-slots.
+
+```typescript
+import { compileMatchQuery, matchQueryAsync, matchAndMapAsync } from '@rfjs/data-filter';
+
+// compile once, run per row
+const matches = compileMatchQuery({
+  logic: 'and',
+  filters: [{ field: '=$sum(items.amount)', dataType: 'numeric', operator: 'gt', value: 1000 }],
+});
+await matches(order);
+
+// count-where on the value side
+await matchQueryAsync(order, {
+  logic: 'and',
+  filters: [{ field: 'paidTarget', dataType: 'numeric', operator: 'eq', value: "=$count(items[status='paid'])" }],
+});
+
+// computed mapping values (replaces per-op mapping types like "times")
+await matchAndMapAsync(rows, [{
+  filter,
+  mappings: [{ key: 'bonus', type: 'value', value: '=500 * data.qty' }],
+}]);
+```
+
+Notes: inside an `=` expression use JSONata paths (not `${}` aliases); an
+`undefined` result is a no-match (pass `onUndefined`/`strict` via the options
+to observe or throw); `=` inside `elemmatch` sub-filters is not supported; a
+literal value that must start with `=` can be written as `"='=foo'"`. See the
+`@rfjs/data-expr` README for the JSONPath → JSONata mapping table.
 
 ## Types
 

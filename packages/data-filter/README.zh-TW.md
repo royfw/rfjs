@@ -1,6 +1,6 @@
 # @rfjs/data-filter
 
-具備 JSONPath 萬用字元支援的記憶體資料過濾工具，支援別名替換與欄位映射。
+具備計算型 `=` 運算式槽位的記憶體資料過濾工具，支援別名替換與欄位映射。
 
 ## 安裝
 
@@ -61,13 +61,16 @@ const results = matchAndMap<T>(
 
 #### `resolvePath(data, path, options)`
 
-解析物件中的路徑，支援 JSONPath 萬用字元。一般路徑自動回退至 lodash `_.get`。
+純路徑解析(lodash `_.get`)。wildcard/jsonpath 形式(`users[*].name`、`$..x`、
+`[?(...)]`、slice、union、`$.` 根)**不支援、會丟錯**——改用 `dataType: 'array'`／
+`elemmatch`,或 `=` 運算式。
 
 ```typescript
 import { resolvePath } from '@rfjs/data-filter';
 
-resolvePath(data, 'users[*].name');  // JSONPath 萬用字元
-resolvePath(data, 'a.b.c');           // 一般路徑
+resolvePath(data, 'a.b.c');
+resolvePath(data, 'users[0].name');
+resolvePath(data, 'user.missing', { fallbackOnEmpty: false }); // null instead of undefined
 ```
 
 ### 運算子
@@ -112,18 +115,52 @@ matchQuery(data, wrap({
 ```
 
 陣列的元素運算子是 ∃(「某元素符合」),`containsall` 是 ∀(成員全含)。`array` 的 `neq`
-已排除(「不含」用 `not` + `eq`)。`object`/`array`/`elemmatch` 的 `field` **不允許 wildcard**
-(`users[*].x` → throw);巢狀需求用 `elemmatch` + `array` 組合。
+已排除(「不含」用 `not` + `eq`)。wildcard/jsonpath `field` 形式(`users[*].x`)**不支援、
+會丟錯**——用 `elemmatch`／`array` 組合,或 `=` 運算式。
 
-#### 何時用 wildcard-scalar、何時用 collection dataType
+#### 何時用 collection dataType
 
 | 需求 | 用 |
 |------|-----|
-| 簡潔的「某元素/列鬆散符合」 | wildcard + scalar(`users[*].active eq true`)——一行 ∃;無法表達「同元素」 |
+| 簡潔的「某元素/列鬆散符合」 | `dataType:'array'`(對元素 ∃),或 `=` 運算式 |
 | 明確、無歧義的陣列成員判斷 | `dataType:'array'` |
 | 整個物件比對 / 包含 | `dataType:'object'` |
 | 「同一元素滿足多條件」 | `elemmatch` |
 | 巢狀集合(某 user 的 tags 含 x) | `elemmatch` + `array` 組合 |
+
+### 計算型 `=` 運算式槽位(async)
+
+條件的 `field`／`value`——或 `matchAndMap` 映射的 `value`——以 `=` 開頭即為計算型
+[JSONata](https://jsonata.org) 運算式,由 [`@rfjs/data-expr`](../data-expr) 驅動(安全:
+無 `eval`;DoS 護欄預設開啟)。運算式必須使用 **async** API;sync API 遇 `=` 槽位會丟錯。
+
+```typescript
+import { compileMatchQuery, matchQueryAsync, matchAndMapAsync } from '@rfjs/data-filter';
+
+// compile once, run per row
+const matches = compileMatchQuery({
+  logic: 'and',
+  filters: [{ field: '=$sum(items.amount)', dataType: 'numeric', operator: 'gt', value: 1000 }],
+});
+await matches(order);
+
+// count-where on the value side
+await matchQueryAsync(order, {
+  logic: 'and',
+  filters: [{ field: 'paidTarget', dataType: 'numeric', operator: 'eq', value: "=$count(items[status='paid'])" }],
+});
+
+// computed mapping values (replaces per-op mapping types like "times")
+await matchAndMapAsync(rows, [{
+  filter,
+  mappings: [{ key: 'bonus', type: 'value', value: '=500 * data.qty' }],
+}]);
+```
+
+說明:`=` 運算式內請用 JSONata 路徑(不用 `${}` 別名);結果為 `undefined` 視為不匹配
+(可透過 options 傳入 `onUndefined`／`strict` 來觀察或丟錯);`elemmatch` 子條件內不支援
+`=`;字面值若必須以 `=` 開頭,可寫成 `"='=foo'"`。JSONPath → JSONata 對照表見
+`@rfjs/data-expr` README。
 
 ## 型別
 
