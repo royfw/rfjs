@@ -18,7 +18,12 @@ const EVALUATE_EXIT = Symbol.for('jsonata.__evaluate_exit');
  * Throws DataExprError(kind 'compile') synchronously on a malformed expression.
  */
 export function compile(expression: string, options: ExprOptions = {}): CompiledExpr {
-  const { timeoutMs = DEFAULT_TIMEOUT_MS, maxDepth = DEFAULT_MAX_DEPTH } = options;
+  const {
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    maxDepth = DEFAULT_MAX_DEPTH,
+    strict = false,
+    onUndefined,
+  } = options;
 
   let parsed: jsonata.Expression;
   try {
@@ -57,14 +62,14 @@ export function compile(expression: string, options: ExprOptions = {}): Compiled
     async evaluate(data: unknown): Promise<unknown> {
       startedAt = Date.now();
       depth = 0;
+      let result: unknown;
       try {
-        const result = (await parsed.evaluate(data)) as unknown;
+        result = (await parsed.evaluate(data)) as unknown;
         // jsonata 2.x tags multi-element result arrays with an enumerable
         // `sequence: true` own property; strip it so consumers get plain arrays.
         if (Array.isArray(result) && Object.prototype.hasOwnProperty.call(result, 'sequence')) {
           Reflect.deleteProperty(result, 'sequence');
         }
-        return result;
       } catch (cause) {
         if (cause instanceof DataExprError) throw cause;
         throw new DataExprError(
@@ -74,6 +79,13 @@ export function compile(expression: string, options: ExprOptions = {}): Compiled
           { cause },
         );
       }
+      if (result === undefined) {
+        onUndefined?.(expression);
+        if (strict) {
+          throw new DataExprError('undefined', expression, 'expression evaluated to undefined');
+        }
+      }
+      return result;
     },
   };
 }
