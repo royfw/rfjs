@@ -86,23 +86,32 @@ runtime dependency + adopting JSONata's syntax. The dependency cost is offset by
 
 ## Architecture
 
-- **`@rfjs/data-expr`** (new): the JSONata wrapper. Runtime dep: `jsonata`. Public API:
+- **`@rfjs/data-expr`** (new): the JSONata wrapper. Runtime dep: `jsonata`. Public API
+  (**async** — verified against jsonata 2.2.1, whose `evaluate` returns a Promise):
   ```ts
-  export interface CompiledExpr { evaluate(data: unknown): unknown }
+  export interface CompiledExpr {
+    /** Async (jsonata v2). Not safe for CONCURRENT calls on one instance (shared timebox state); sequential reuse is the contract. */
+    evaluate(data: unknown): Promise<unknown>;
+  }
   export interface ExprOptions {
-    timeoutMs?: number;            // default e.g. 1000
-    maxDepth?: number;             // default e.g. 100
-    strict?: boolean;              // undefined result throws instead of returning undefined
+    timeoutMs?: number;            // default 1000
+    maxDepth?: number;             // default 100
+    strict?: boolean;              // undefined result rejects instead of resolving undefined
     onUndefined?: (expr: string) => void; // observability hook (decision 7)
   }
   export function compile(expr: string, options?: ExprOptions): CompiledExpr;
-  export function evaluate(expr: string, data: unknown, options?: ExprOptions): unknown; // one-shot convenience
+  export function evaluate(expr: string, data: unknown, options?: ExprOptions): Promise<unknown>; // one-shot convenience
   export function isExpression(slot: string): boolean;        // slot starts with '='
   export function stripExpressionPrefix(slot: string): string; // '=...' -> '...'
   ```
-  `compile` parses with JSONata once and wraps it with the guards (timebox). `evaluate` is the
-  one-shot convenience (not for hot paths). `isExpression`/`stripExpressionPrefix` are the shared
-  convention helpers consumers use to detect `=`-slots.
+  `compile` parses with JSONata once and wraps it with the guards. **Implementation note
+  (verified):** jsonata ≥2 looks the timebox hooks up by `Symbol.for('jsonata.__evaluate_entry'
+  / '__evaluate_exit')` — string keys are silently ignored; the timebox state resets at the start
+  of each `evaluate()` call so compiled expressions are reusable. Errors are a typed
+  `DataExprError` with `kind: 'compile' | 'evaluate' | 'timeout' | 'depth' | 'undefined'`.
+  **Phase 2 consequence:** because evaluation is async, data-filter's compiled-filter evaluator
+  for `=`-slots must be async (e.g. an async compiled predicate / `matchQueryAsync`); the existing
+  sync `matchQuery` stays for expression-free filters. Detailed design belongs to the Phase 2 plan.
 
 - **`@rfjs/data-filter`** (modified, breaking per decision 5):
   - **Embedding:** condition resolution and mapping resolution consult `data-expr` when a slot is
@@ -157,6 +166,12 @@ runtime dependency + adopting JSONata's syntax. The dependency cost is offset by
   ```
   A single `=`-expression covers arithmetic, aggregates, count-where, and strings; the legacy
   mapping `type: 'value'` keeps meaning "assign literal".
+- **The structured collection dataTypes (`object`/`array`/`elemmatch` from Track A) REMAIN the
+  primary filter DSL** — serializable, UI-buildable, compile-time typed, vocabulary-aligned with
+  `@rfjs/jsonb-query`, and synchronous. `=`-expressions are the escape hatch for *computed*
+  values (memory-only, async); they do not replace structured conditions. What gets removed is
+  only the jsonpath wildcard `field` syntax — whose designated replacements are exactly
+  `array`/`elemmatch` (and `=` for the exotic cases).
 
 ## Scope (v1) and phasing
 
