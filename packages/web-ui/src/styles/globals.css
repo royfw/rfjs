@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* 讓 Tailwind 掃描 web-ui 自己的元件(路徑相對於本 CSS 檔) */
+@source "../components";
+
+@theme {
+  /* 暫定 tokens — Task 7 設計計畫定稿後替換為正式色票/字體 */
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}

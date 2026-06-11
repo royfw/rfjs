@@ -1,1 +1,1 @@
-/* Tailwind 接線於 @rfjs/web-ui 完成後匯入(見 Task 4) */
+@import "@rfjs/web-ui/globals.css";
