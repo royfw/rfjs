@@ -31,6 +31,14 @@ export const BOOLEAN_OPERATORS = [
   'isnotnull',
 ] as const;
 
+export const OBJECT_OPERATORS = [
+  'eq',
+  'neq',
+  'contains',
+  'isnull',
+  'isnotnull',
+] as const;
+
 /**
  * Throw if `operator` is not valid for `dataType`. Guards against typos,
  * type-mismatched operators, and inherited prototype names (`toString`,
