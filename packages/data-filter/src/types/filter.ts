@@ -33,6 +33,46 @@ export interface BooleanCondition {
   value: ValueType;
 }
 
+export type ObjectFilterOperator = 'eq' | 'neq' | 'contains' | 'isnull' | 'isnotnull';
+
+export interface ObjectCondition {
+  field: string;
+  dataType: 'object';
+  operator: ObjectFilterOperator;
+  value?: Record<string, unknown>;
+}
+
+export type StringArrayOperator =
+  | 'eq' | 'contains' | 'startswith' | 'endswith' | 'terms'
+  | 'containsall' | 'isnull' | 'isnotnull';
+export type NumericArrayOperator =
+  | 'eq' | 'gt' | 'gte' | 'lt' | 'lte' | 'range' | 'terms'
+  | 'containsall' | 'isnull' | 'isnotnull';
+export type DateArrayOperator = NumericArrayOperator;
+export type BooleanArrayOperator = 'eq' | 'isnull' | 'isnotnull';
+
+export interface StringArrayCondition {
+  field: string; dataType: 'array'; elementType: 'string';
+  operator: StringArrayOperator; value?: ValueType;
+}
+export interface NumericArrayCondition {
+  field: string; dataType: 'array'; elementType: 'numeric';
+  operator: NumericArrayOperator; value?: ValueType;
+}
+export interface DateArrayCondition {
+  field: string; dataType: 'array'; elementType: 'date';
+  operator: DateArrayOperator; value?: ValueType;
+}
+export interface BooleanArrayCondition {
+  field: string; dataType: 'array'; elementType: 'boolean';
+  operator: BooleanArrayOperator; value?: ValueType;
+}
+export interface ElemMatchCondition {
+  field: string; dataType: 'array'; elementType: 'object';
+  operator: 'elemmatch';
+  filters: FilterMatchQuery;
+}
+
 /**
  * A single field condition, discriminated by `dataType` so each data type only
  * accepts its own operators. Future object/array/elemmatch variants are added
@@ -42,7 +82,13 @@ export type MatchQueryMetadata =
   | StringCondition
   | NumericCondition
   | DateCondition
-  | BooleanCondition;
+  | BooleanCondition
+  | ObjectCondition
+  | StringArrayCondition
+  | NumericArrayCondition
+  | DateArrayCondition
+  | BooleanArrayCondition
+  | ElemMatchCondition;
 
 export type LogicalOperator = 'and' | 'or' | 'nor' | 'not';
 

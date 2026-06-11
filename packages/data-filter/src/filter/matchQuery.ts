@@ -3,6 +3,10 @@ import { BooleanMatch } from '../match/BooleanMatch';
 import { NumericMatch } from '../match/NumericMatch';
 import { TextMatch } from '../match/TextMatch';
 import { DateMatch } from '../match/DateMatch';
+import { ObjectMatch } from '../match/ObjectMatch';
+import { ArrayMatch } from '../match/ArrayMatch';
+import { ElemMatch } from '../match/ElemMatch';
+import { hasWildcardSyntax } from '../path/resolve';
 import type {
   DataType,
   ObjectData,
@@ -84,7 +88,7 @@ function isFilterMatchQuery(filter: FilterMatchQuery | MatchQueryMetadata) {
 export function createMatchQuery(
   data: ObjectData,
   metadata: MatchQueryMetadata,
-): TextMatch | NumericMatch | BooleanMatch | DateMatch {
+): { isMatch: boolean } {
   switch (metadata.dataType) {
     case 'string':
       return new TextMatch(metadata.field, metadata.operator, metadata.value, data);
@@ -94,9 +98,35 @@ export function createMatchQuery(
       return new BooleanMatch(metadata.field, metadata.operator, metadata.value, data);
     case 'date':
       return new DateMatch(metadata.field, metadata.operator, metadata.value, data);
+    case 'object':
+      if (hasWildcardSyntax(metadata.field)) {
+        throw new Error(
+          `[data-filter] wildcard field is not supported for dataType 'object'; point field at the value`,
+        );
+      }
+      return new ObjectMatch(metadata.field, metadata.operator, metadata.value, data);
+    case 'array':
+      if (hasWildcardSyntax(metadata.field)) {
+        throw new Error(
+          `[data-filter] wildcard field is not supported for dataType 'array'; point field at the value, or compose with elemmatch`,
+        );
+      }
+      if (metadata.elementType === 'object') {
+        return new ElemMatch(
+          metadata.field,
+          metadata.filters,
+          data,
+          (element, filters) => matchQuery(element as ObjectData, filters),
+        );
+      }
+      return new ArrayMatch(
+        metadata.field,
+        metadata.elementType,
+        metadata.operator,
+        metadata.value,
+        data,
+      );
     default: {
-      // Exhaustiveness guard: if the union grows (e.g. object/array variants)
-      // without a matching case above, this assignment fails to compile.
       const _exhaustive: never = metadata;
       throw new Error(
         `[data-filter] unsupported dataType '${String((_exhaustive as { dataType: unknown }).dataType)}'`,
