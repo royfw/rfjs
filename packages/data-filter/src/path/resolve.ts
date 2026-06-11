@@ -6,7 +6,7 @@ function hasCommaOutsideBrackets(path: string): boolean {
   return path.includes(',') && !/\[[^\]]*,/.test(path);
 }
 
-function hasWildcardSyntax(path: string): boolean {
+export function hasWildcardSyntax(path: string): boolean {
   return (
     path.includes('*') ||
     /\[[^\]]*,/.test(path) ||
