@@ -740,6 +740,9 @@ importers:
 
   packages/data-filter:
     dependencies:
+      '@rfjs/data-expr':
+        specifier: workspace:*
+        version: link:../data-expr
       '@rfjs/object-utils':
         specifier: workspace:*
         version: link:../object-utils
