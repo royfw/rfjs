@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { typeTransfer } from '../filter/matchQuery';
 import type { BooleanFilterOperator, ValueType, ObjectData } from '../types';
 import { resolvePath } from '../path/resolve';
+import { BOOLEAN_OPERATORS, assertOperator } from './operators';
 
 export class BooleanMatch {
     isMatch = false;
@@ -15,13 +16,13 @@ export class BooleanMatch {
         value: ValueType,
         private data: ObjectData,
     ) {
-        // 使用共用的 JSONPath 解析函數
+        // 使用共用的路徑解析函數
         const target = resolvePath(this.data, this.field);
         if (_.isUndefined(target)) {
             this.validPath = false;
         }
-        const targets = []
-            .concat(target)
+        const targets = ([] as unknown[])
+            .concat(target as never)
             .map((i) => typeTransfer(i, 'boolean'));
         const transVals = (Array.isArray(value) ? value : [value]).map((i) =>
             typeTransfer(i, 'boolean'),
@@ -31,9 +32,8 @@ export class BooleanMatch {
         if (_.isNull(target) || _.isUndefined(target)) {
             this.targets = [];
         }
-        if (typeof this[this.operator] == 'function') {
-            this.isMatch = this[this.operator]();
-        }
+        assertOperator('boolean', this.operator, BOOLEAN_OPERATORS);
+        this.isMatch = this[this.operator]();
     }
 
     private eq() {
@@ -60,10 +60,10 @@ export class BooleanMatch {
     }
 
     private neq() {
-        const neq = !this.eq();
-        const neqMatchs = this.values.filter((i) => !this.matchs.includes(i));
-        this.matchs = neqMatchs;
-        return neq;
+        this.matchs = this.values.filter(
+            (value) => !this.targets.includes(value),
+        );
+        return this.matchs.length === this.values.length;
     }
     private isnull() {
         return this.targets.length == 0;

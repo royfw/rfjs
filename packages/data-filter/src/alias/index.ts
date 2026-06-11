@@ -1,3 +1,3 @@
 export { aliasRegex } from './aliasRegex';
-export { aliasValue } from './aliasValue';
+export { aliasValue, buildAliasLookup } from './aliasValue';
 export { aliasData } from './aliasData';

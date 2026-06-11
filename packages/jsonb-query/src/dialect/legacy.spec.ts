@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { legacyDialect } from './dialect-legacy';
-import { ParamBuilder } from './param-builder';
-import type { RenderContext } from './dialect';
-import type { JsonbArrayCondition } from './types';
+import { legacyDialect } from './legacy';
+import { ParamBuilder } from '../param-builder';
+import type { RenderContext } from './base';
+import type { JsonbArrayCondition } from '../types';
 
 function run(
   field: string,

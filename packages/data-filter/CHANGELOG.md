@@ -1,5 +1,57 @@
 # @rfjs/data-filter
 
+## 0.2.0
+
+### Minor Changes
+
+- 87cad34: Add `object`, `array` (scalar element types), and `elemmatch` (arrays of objects) dataTypes to the matcher (purely additive; existing scalar matching is unchanged).
+
+  - `object`: `eq`/`neq` (deep-equal), `contains` (recursive `@>`-style containment), `isnull`/`isnotnull`.
+  - `array` + `elementType: string|numeric|date|boolean`: element operators with ∃ ("some element matches") semantics, plus `containsall` (string/numeric/date) and `isnull`/`isnotnull`. `neq` is excluded — use `not` + `eq` for "does not contain".
+  - `array` + `elementType: 'object'` + `elemmatch`: the same element must satisfy nested sub-conditions; supports nested groups, nested elemmatch, and nested array/object sub-conditions.
+
+  A wildcard `field` (`users[*].x`) on these dataTypes throws — compose with `elemmatch` instead. Vocabulary is aligned with `@rfjs/jsonb-query`; semantics are in-memory-natural (not result-for-result identical).
+
+- f8bd385: Computed `=` expression slots + jsonpath removal (breaking — pre-1.0 minor).
+
+  **New:** a condition `field`/`value` or a `matchAndMap` mapping `value` starting with `=` is a
+  computed JSONata expression (via `@rfjs/data-expr`; no eval, DoS guards default-on). New async
+  APIs: `compileMatchQuery` (compile-once predicate), `matchQueryAsync`, `matchAndMapAsync`.
+  Sync APIs throw on `=`-slots.
+
+  **Breaking:** the jsonpath engine is removed. Wildcard/jsonpath `field` forms (`users[*].x`,
+  `$..x`, `[?(...)]`, slices, unions, `$.` roots) now **throw** — use `dataType: 'array'`/
+  `elemmatch`, or an `=` expression. `resolvePathDetail` and the `fallbackToLodash` option are
+  removed; `jsonpath-plus` is no longer a dependency.
+
+- b5154c5: Harden the matcher: correctness fixes, faster path resolution, stricter validation, and safer public types.
+
+  **Behavior changes (review before upgrading):**
+
+  - **`neq` on array / wildcard fields now uses "value-absent" semantics** — it matches only when the value is **not present** among the resolved elements. Previously `neq` on a multi-element field could match a row that _did_ contain the value. Single-value fields are unaffected.
+  - **`range` now throws** when not given exactly two values (previously a single value silently matched nothing and extra values were ignored).
+  - **An unsupported operator now throws** (e.g. `range` on a `boolean` field, or a typo) instead of silently returning "no match". This also closes a prototype-pollution footgun (`toString`/`constructor` as operator names).
+  - **Boolean coercion fixed** — the strings `'false'`, `'0'`, `'no'`, `'off'`, `''` now coerce to `false` (previously `Boolean('false')` made them `true`).
+  - **Date and numeric `neq` reject unparseable (NaN) values** — a garbage/typo filter value no longer silently passes; `Date` `eq`/`terms` no longer treat two unparseable dates as equal.
+
+  **Improvements:**
+
+  - `resolvePath` skips the JSONPath engine for plain (non-wildcard) paths — roughly 5× faster on the common hot path, behavior preserved.
+  - `matchAndMap` defers the per-row deep clone until a row matches, drops a redundant double-clone of the filter/mappings, and de-duplicates by the source row (a row matched by several metadata is emitted once, last mapping wins).
+  - `aliasValue` builds its lookup table once per `aliasData` call instead of per aliased leaf; new `buildAliasLookup` export.
+
+  **Types:**
+
+  - `ObjectData` widened to accept nested objects and arrays of objects (the flagship `users[*].name` wildcard case now type-checks).
+  - `MatchQueryMetadata` is now a discriminated union (`StringCondition | NumericCondition | DateCondition | BooleanCondition`), so an operator that is invalid for its `dataType` is a compile error. Shaped so future object/array/elemmatch variants can be added without breaking existing ones.
+
+### Patch Changes
+
+- Updated dependencies [d3b9dcb]
+- Updated dependencies [0985dc4]
+  - @rfjs/data-expr@0.1.0
+  - @rfjs/object-utils@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes

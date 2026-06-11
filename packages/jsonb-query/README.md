@@ -3,7 +3,7 @@
 Parameterized PostgreSQL JSONB query builder. Turns a filter-metadata tree into
 a safe, parameterized `WHERE` expression (node-postgres `$1, $2` placeholders).
 
-## Install
+## Installation
 
 ```bash
 npm install @rfjs/jsonb-query

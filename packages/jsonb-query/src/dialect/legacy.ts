@@ -1,4 +1,4 @@
-import type { JsonbScalarType, JsonbScalarOperator, JsonbValue } from './types';
+import type { JsonbScalarType, JsonbScalarOperator, JsonbValue } from '../types';
 import {
   type JsonbQueryDialect,
   fieldSegments,
@@ -6,8 +6,8 @@ import {
   assertArrayValue,
   renderNullCheck,
   renderJsonbContains,
-} from './dialect';
-import type { ParamBuilder } from './param-builder';
+} from './base';
+import type { ParamBuilder } from '../param-builder';
 
 const CASTS: Record<JsonbScalarType, string> = {
   string: '',

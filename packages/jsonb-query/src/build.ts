@@ -14,10 +14,10 @@ import {
   type RenderContext,
   assertCondition,
   isFilterGroup,
+  legacyDialect,
+  jsonpathDialect,
 } from './dialect';
 import { renderObjectCondition } from './object-condition';
-import { legacyDialect } from './dialect-legacy';
-import { jsonpathDialect } from './dialect-jsonpath';
 
 const DIALECTS = {
   legacy: legacyDialect,
