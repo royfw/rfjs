@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 
+import { LocaleSwitcher } from "./locale-switcher";
 import { MobileNav } from "./mobile-nav";
 
 // lucide-react v1 removed all brand icons (Github included); the upstream guidance
@@ -33,6 +34,7 @@ export async function AppHeader() {
         </Link>
       </div>
       <div className="flex items-center gap-1">
+        <LocaleSwitcher />
         <ThemeToggle />
         <Button variant="ghost" size="icon" asChild aria-label={t("github")}>
           <a href="https://github.com/royfw/rfjs" target="_blank" rel="noreferrer">
