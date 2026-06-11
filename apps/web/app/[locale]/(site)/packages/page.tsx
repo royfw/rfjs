@@ -1,6 +1,6 @@
 import { packageRegistry } from "@rfjs/web-core";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PackageCard } from "@/components/shared/package-card";
 import { PageHeader } from "@/components/shared/page-header";
@@ -15,7 +15,13 @@ export async function generateMetadata({
   return { title: `${t("packagesTitle")} — rfjs` };
 }
 
-export default async function PackagesPage() {
+export default async function PackagesPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations("Pages");
   return (
     <>

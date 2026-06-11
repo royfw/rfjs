@@ -2,13 +2,19 @@ import { packageRegistry } from "@rfjs/web-core";
 import { Button } from "@rfjs/web-ui/components/button";
 import { CopyButton } from "@rfjs/web-ui/components/copy-button";
 import { Seam } from "@rfjs/web-ui/components/seam";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { HeroSpecimen } from "@/components/home/hero-specimen";
 import { PackageCard } from "@/components/shared/package-card";
 
-export default async function HomePage() {
+export default async function HomePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations("Home");
   const tf = await getTranslations("Features");
   const featuredPackages = packageRegistry.filter((p) => p.status === "ready").slice(0, 6);

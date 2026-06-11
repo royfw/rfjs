@@ -1,6 +1,6 @@
 import { toolRegistry } from "@rfjs/web-core";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { ToolCard } from "@/components/shared/tool-card";
@@ -15,7 +15,13 @@ export async function generateMetadata({
   return { title: `${t("playgroundTitle")} — rfjs` };
 }
 
-export default async function PlaygroundPage() {
+export default async function PlaygroundPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations("Pages");
   const playgroundTools = toolRegistry.filter((tool) => tool.href.startsWith("/playground/"));
   return (
