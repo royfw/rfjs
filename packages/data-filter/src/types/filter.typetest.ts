@@ -29,3 +29,26 @@ export const badBooleanRange: MatchQueryMetadata = {
   operator: 'range',
   value: true,
 };
+
+import type { MatchQueryMetadata as MQM } from './filter';
+
+// valid object/array/elemmatch combos compile
+export const okObject: MQM = { field: 'p', dataType: 'object', operator: 'contains', value: { a: 1 } };
+export const okArray: MQM = { field: 't', dataType: 'array', elementType: 'string', operator: 'contains', value: 'x' };
+export const okElem: MQM = {
+  field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+  filters: { logic: 'and', filters: [] },
+};
+
+// invalid combos are compile errors
+// @ts-expect-error object does not support 'gt'
+export const badObjectOp: MQM = {
+  field: 'p', dataType: 'object',
+  operator: 'gt',
+  value: { a: 1 },
+};
+// @ts-expect-error boolean-array does not support 'range'
+export const badBoolArrayOp: MQM = {
+  field: 'b', dataType: 'array', elementType: 'boolean',
+  operator: 'range',
+};

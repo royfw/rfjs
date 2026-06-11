@@ -31,6 +31,30 @@ export const BOOLEAN_OPERATORS = [
   'isnotnull',
 ] as const;
 
+export const OBJECT_OPERATORS = [
+  'eq',
+  'neq',
+  'contains',
+  'isnull',
+  'isnotnull',
+] as const;
+
+export const STRING_ARRAY_OPERATORS = [
+  'eq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull',
+] as const;
+export const NUMERIC_ARRAY_OPERATORS = [
+  'eq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull',
+] as const;
+export const DATE_ARRAY_OPERATORS = NUMERIC_ARRAY_OPERATORS;
+export const BOOLEAN_ARRAY_OPERATORS = ['eq', 'isnull', 'isnotnull'] as const;
+
+export const ARRAY_OPERATORS_BY_ELEMENT: Record<string, readonly string[]> = {
+  string: STRING_ARRAY_OPERATORS,
+  numeric: NUMERIC_ARRAY_OPERATORS,
+  date: DATE_ARRAY_OPERATORS,
+  boolean: BOOLEAN_ARRAY_OPERATORS,
+};
+
 /**
  * Throw if `operator` is not valid for `dataType`. Guards against typos,
  * type-mismatched operators, and inherited prototype names (`toString`,
