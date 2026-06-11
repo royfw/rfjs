@@ -692,6 +692,52 @@ importers:
         specifier: ^3.2.3
         version: 3.2.4(@types/node@25.9.1)(@vitest/ui@3.2.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.8.2)
 
+  packages/data-expr:
+    dependencies:
+      jsonata:
+        specifier: ^2.2.1
+        version: 2.2.1
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.20.0
+        version: 9.39.1
+      '@vitest/coverage-istanbul':
+        specifier: ^3.2.3
+        version: 3.2.4(vitest@3.2.4)
+      '@vitest/ui':
+        specifier: ^3.2.3
+        version: 3.2.4(vitest@3.2.4)
+      eslint:
+        specifier: ^9.20.1
+        version: 9.39.1(jiti@2.4.2)
+      eslint-config-prettier:
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@9.39.1(jiti@2.4.2))
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      prettier:
+        specifier: ^3.5.1
+        version: 3.5.3
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.1.2
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@25.9.1)(typescript@5.8.3)
+      tsdown:
+        specifier: 0.17.0-beta.6
+        version: 0.17.0-beta.6(typescript@5.8.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.24.0
+        version: 8.48.0(eslint@9.39.1(jiti@2.4.2))(typescript@5.8.3)
+      vitest:
+        specifier: ^3.2.3
+        version: 3.2.4(@types/node@25.9.1)(@vitest/ui@3.2.4)(jiti@2.4.2)(tsx@4.21.0)(yaml@2.8.2)
+
   packages/data-filter:
     dependencies:
       '@rfjs/object-utils':
@@ -5295,6 +5341,10 @@ packages:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
     hasBin: true
+
+  jsonata@2.2.1:
+    resolution: {integrity: sha512-xd1uwUrKeIcJbsWhaoS3qAX4Ea8m0Mw0G5nlnAQvPT7TbZ5qaPdzBVTQia9KfyuyQm+nenfyjvzUDTRYHsC2sw==}
+    engines: {node: '>= 8'}
 
   jsonfile@4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
@@ -12060,6 +12110,8 @@ snapshots:
   json-stable-stringify-without-jsonify@1.0.1: {}
 
   json5@2.2.3: {}
+
+  jsonata@2.2.1: {}
 
   jsonfile@4.0.0:
     optionalDependencies:
