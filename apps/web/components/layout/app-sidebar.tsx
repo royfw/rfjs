@@ -1,12 +1,13 @@
 "use client";
 
 import { Seam } from "@rfjs/web-ui/components/seam";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
+import { Link, usePathname } from "@/i18n/navigation";
 import { buildSidebarNav } from "@/lib/nav";
 
 export function AppSidebar() {
+  const t = useTranslations("Tools");
   const pathname = usePathname();
   const groups = buildSidebarNav();
   return (
@@ -28,7 +29,7 @@ export function AppSidebar() {
                 <span className="h-4 w-px">
                   {active ? <Seam state="current" operation="" orientation="vertical" /> : null}
                 </span>
-                {tool.title}
+                {t(`${tool.id}.title`)}
               </Link>
             );
           })}

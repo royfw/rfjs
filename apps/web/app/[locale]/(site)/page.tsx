@@ -7,6 +7,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { HeroSpecimen } from "@/components/home/hero-specimen";
 import { PackageCard } from "@/components/shared/package-card";
+import { packageSlug } from "@/lib/i18n-content";
 
 export default async function HomePage({
   params,
@@ -17,6 +18,7 @@ export default async function HomePage({
   setRequestLocale(locale);
   const t = await getTranslations("Home");
   const tf = await getTranslations("Features");
+  const tPackages = await getTranslations("Packages");
   const featuredPackages = packageRegistry.filter((p) => p.status === "ready").slice(0, 6);
   const features = [
     { title: tf("showcaseTitle"), body: tf("showcaseBody"), href: "/packages" },
@@ -102,7 +104,11 @@ export default async function HomePage({
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {featuredPackages.map((pkg) => (
-            <PackageCard key={pkg.name} pkg={pkg} />
+            <PackageCard
+              key={pkg.name}
+              pkg={pkg}
+              description={tPackages(`${packageSlug(pkg.name)}.description`)}
+            />
           ))}
         </div>
       </section>

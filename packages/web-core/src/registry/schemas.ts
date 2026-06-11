@@ -13,8 +13,6 @@ export const registryStatusSchema = z.enum(['ready', 'preview', 'planned']);
 
 export const toolDefinitionSchema = z.object({
   id: z.string().min(1),
-  title: z.string().min(1),
-  description: z.string().min(1),
   category: toolCategorySchema,
   href: z.string().startsWith('/'),
   status: registryStatusSchema,
@@ -24,7 +22,6 @@ export const toolDefinitionSchema = z.object({
 
 export const packageDefinitionSchema = z.object({
   name: z.string().startsWith('@rfjs/'),
-  description: z.string().min(1),
   status: registryStatusSchema,
   href: z.string().startsWith('/'),
   npm: z.url().optional(),

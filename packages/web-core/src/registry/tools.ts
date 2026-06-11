@@ -3,8 +3,6 @@ import type { ToolDefinition } from './schemas';
 export const toolRegistry: ToolDefinition[] = [
   {
     id: 'object-flatten',
-    title: 'Object Flatten / Unflatten',
-    description: 'Flatten nested objects to dot-path keys and back.',
     category: 'transform',
     href: '/tools/object-flatten',
     status: 'planned',
@@ -13,8 +11,6 @@ export const toolRegistry: ToolDefinition[] = [
   },
   {
     id: 'type-converter',
-    title: 'Data Type Converter',
-    description: 'Convert values between string, number, boolean, and date.',
     category: 'transform',
     href: '/tools/type-converter',
     status: 'planned',
@@ -23,8 +19,6 @@ export const toolRegistry: ToolDefinition[] = [
   },
   {
     id: 'data-filter-tester',
-    title: 'JSONPath Filter Tester',
-    description: 'Run @rfjs/data-filter conditions against sample data live.',
     category: 'filter',
     href: '/tools/data-filter-tester',
     status: 'planned',
@@ -33,8 +27,6 @@ export const toolRegistry: ToolDefinition[] = [
   },
   {
     id: 'jwt-decoder',
-    title: 'JWT Decoder',
-    description: 'Decode JWT header and payload locally — nothing leaves your browser.',
     category: 'inspect',
     href: '/tools/jwt-decoder',
     status: 'planned',
@@ -43,8 +35,6 @@ export const toolRegistry: ToolDefinition[] = [
   },
   {
     id: 'jsonb-query-generator',
-    title: 'Filter → JSONB SQL',
-    description: 'Generate PostgreSQL JSONB queries from filter metadata.',
     category: 'query',
     href: '/tools/jsonb-query-generator',
     status: 'planned',
@@ -53,8 +43,6 @@ export const toolRegistry: ToolDefinition[] = [
   },
   {
     id: 'mongo-query-generator',
-    title: 'Filter → Mongo Query',
-    description: 'Generate MongoDB queries from filter metadata.',
     category: 'query',
     href: '/tools/mongo-query-generator',
     status: 'planned',
@@ -63,8 +51,6 @@ export const toolRegistry: ToolDefinition[] = [
   },
   {
     id: 'data-filter-builder',
-    title: 'Data Filter Builder',
-    description: 'Compose nested filter conditions visually and export them.',
     category: 'filter',
     href: '/playground/data-filter-builder',
     status: 'planned',
@@ -73,8 +59,6 @@ export const toolRegistry: ToolDefinition[] = [
   },
   {
     id: 'object-transformer',
-    title: 'Object Transformer',
-    description: 'Interactive object transformation playground.',
     category: 'transform',
     href: '/playground/object-transformer',
     status: 'planned',

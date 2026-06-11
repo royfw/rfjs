@@ -23,12 +23,18 @@ export default async function ToolsPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Pages");
+  const tTools = await getTranslations("Tools");
   return (
     <>
       <PageHeader title={t("toolsTitle")} description={t("toolsDescription")} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {toolRegistry.map((tool) => (
-          <ToolCard key={tool.id} tool={tool} />
+          <ToolCard
+            key={tool.id}
+            tool={tool}
+            title={tTools(`${tool.id}.title`)}
+            description={tTools(`${tool.id}.description`)}
+          />
         ))}
       </div>
     </>

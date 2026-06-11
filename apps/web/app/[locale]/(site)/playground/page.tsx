@@ -23,13 +23,19 @@ export default async function PlaygroundPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Pages");
+  const tTools = await getTranslations("Tools");
   const playgroundTools = toolRegistry.filter((tool) => tool.href.startsWith("/playground/"));
   return (
     <>
       <PageHeader title={t("playgroundTitle")} description={t("playgroundDescription")} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {playgroundTools.map((tool) => (
-          <ToolCard key={tool.id} tool={tool} />
+          <ToolCard
+            key={tool.id}
+            tool={tool}
+            title={tTools(`${tool.id}.title`)}
+            description={tTools(`${tool.id}.description`)}
+          />
         ))}
       </div>
     </>

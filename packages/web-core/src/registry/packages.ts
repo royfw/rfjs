@@ -7,7 +7,6 @@ const npmUrl = (name: string) => `https://www.npmjs.com/package/${name}`;
 export const packageRegistry: PackageDefinition[] = [
   {
     name: '@rfjs/data-filter',
-    description: 'Filter in-memory data with JSONPath-addressed conditions.',
     status: 'ready',
     href: '/packages/data-filter',
     npm: npmUrl('@rfjs/data-filter'),
@@ -17,7 +16,6 @@ export const packageRegistry: PackageDefinition[] = [
   },
   {
     name: '@rfjs/data-transform',
-    description: 'Data type transformation utilities (string/number/boolean/date).',
     status: 'ready',
     href: '/packages/data-transform',
     npm: npmUrl('@rfjs/data-transform'),
@@ -27,8 +25,6 @@ export const packageRegistry: PackageDefinition[] = [
   },
   {
     name: '@rfjs/data-label',
-    description:
-      'Compose display label strings from data paths, value maps, and templates.',
     status: 'preview',
     href: '/packages/data-label',
     github: GITHUB,
@@ -36,7 +32,6 @@ export const packageRegistry: PackageDefinition[] = [
   },
   {
     name: '@rfjs/jsonb-query',
-    description: 'PostgreSQL JSONB query builder from filter metadata.',
     status: 'preview',
     href: '/packages/jsonb-query',
     github: GITHUB,
@@ -45,7 +40,6 @@ export const packageRegistry: PackageDefinition[] = [
   },
   {
     name: '@rfjs/jwt',
-    description: 'JWT sign/verify/decode helper.',
     status: 'ready',
     href: '/packages/jwt',
     npm: npmUrl('@rfjs/jwt'),
@@ -55,7 +49,6 @@ export const packageRegistry: PackageDefinition[] = [
   },
   {
     name: '@rfjs/mongo-query',
-    description: 'MongoDB query builder from filter metadata.',
     status: 'ready',
     href: '/packages/mongo-query',
     npm: npmUrl('@rfjs/mongo-query'),
@@ -65,7 +58,6 @@ export const packageRegistry: PackageDefinition[] = [
   },
   {
     name: '@rfjs/object-utils',
-    description: 'Object manipulation utilities (flatten, paths, merge).',
     status: 'ready',
     href: '/packages/object-utils',
     npm: npmUrl('@rfjs/object-utils'),
@@ -75,7 +67,6 @@ export const packageRegistry: PackageDefinition[] = [
   },
   {
     name: '@rfjs/pg-toolkit',
-    description: 'PostgreSQL admin utilities (seed history, DB/schema creation).',
     status: 'ready',
     href: '/packages/pg-toolkit',
     npm: npmUrl('@rfjs/pg-toolkit'),
@@ -84,7 +75,6 @@ export const packageRegistry: PackageDefinition[] = [
   },
   {
     name: '@rfjs/retry',
-    description: 'Retry helper with configurable delay.',
     status: 'ready',
     href: '/packages/retry',
     npm: npmUrl('@rfjs/retry'),
@@ -93,7 +83,6 @@ export const packageRegistry: PackageDefinition[] = [
   },
   {
     name: '@rfjs/tpl-toolkit',
-    description: 'Shared config factories for rfjs project templates.',
     status: 'ready',
     href: '/packages/tpl-toolkit',
     npm: npmUrl('@rfjs/tpl-toolkit'),
