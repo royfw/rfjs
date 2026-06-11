@@ -91,6 +91,40 @@ Under-the-hood match classes for each data type:
 - `BooleanMatch` — boolean equality operators
 - `DateMatch` — date range operators
 
+### Collection dataTypes — object / array / elemmatch
+
+```typescript
+// object: whole-value match
+matchQuery(data, wrap({ field: 'profile', dataType: 'object', operator: 'contains', value: { vip: true } }));
+
+// array of scalars: element ops are ∃ ("some element matches"); containsall is ∀-membership
+matchQuery(data, wrap({ field: 'tags', dataType: 'array', elementType: 'string', operator: 'contains', value: 'x' }));
+matchQuery(data, wrap({ field: 'tags', dataType: 'array', elementType: 'string', operator: 'containsall', value: ['a', 'b'] }));
+
+// arrays of objects: elemmatch — the SAME element must satisfy all sub-conditions
+matchQuery(data, wrap({
+  field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+  filters: { logic: 'and', filters: [
+    { field: 'sku', dataType: 'string', operator: 'eq', value: 'A' },
+    { field: 'qty', dataType: 'numeric', operator: 'gt', value: 1 },
+  ] },
+}));
+```
+
+`array` `neq` is excluded (use `not` + `eq` for "does not contain"). A **wildcard** `field`
+(`users[*].x`) is **not allowed** on `object`/`array`/`elemmatch` — it throws; compose with
+`elemmatch` instead.
+
+#### When to use wildcard-scalar vs collection dataTypes
+
+| Need | Use |
+|------|-----|
+| Concise "some element/row loosely matches" | wildcard + scalar (`users[*].active eq true`) — one-liner ∃; cannot express "same element" |
+| Explicit, unambiguous array membership | `dataType:'array'` |
+| Whole-object match / containment | `dataType:'object'` |
+| "Same element satisfies multiple conditions" | `elemmatch` |
+| Nested collections (some user's tags contain x) | `elemmatch` + `array` composed |
+
 ## Types
 
 ```typescript
