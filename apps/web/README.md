@@ -36,3 +36,12 @@ tools index, and sitemap are all driven by these registries.
 
 All navigation is driven by the `@rfjs/web-core` registries via `lib/nav.ts`.
 Per-package tool/detail pages are designed and built individually in later phases.
+
+## Internationalization
+
+Bilingual via [next-intl](https://next-intl.dev): English (`en`, default) and Traditional Chinese (`zh-TW`).
+
+- Routing: `[locale]` segment (`/en/...`, `/zh-TW/...`); config in `i18n/routing.ts`, middleware in `middleware.ts`.
+- Strings: `messages/en.json` + `messages/zh-TW.json`. UI chrome under `Common`/`Home`/`Features`/`Pages`; tool & package copy under `Tools`/`Packages` keyed by tool id / package slug.
+- The `@rfjs/web-core` registries hold language-neutral structure only; all display copy is translated. A test (`lib/i18n-content.spec.ts`) fails if any registry entry is missing a string in either locale.
+- Switch language via the header switcher; switch theme independently (next-themes).
