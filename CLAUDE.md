@@ -63,7 +63,9 @@ packages/                 # Shared internal packages + publishable libs
   eslint-config/          # Shared ESLint config (@repo/eslint-config, private)
   typescript-config/      # Shared tsconfig (@repo/typescript-config, private)
   ui/                     # Shared React component library (@repo/ui, private)
-  data-filter/            # Data filtering with JSONPath — npm (@rfjs/data-filter)
+  data-expr/              # Safe JSON expression engine (JSONata wrapper) — npm (@rfjs/data-expr)
+  data-filter/            # In-memory filtering & mapping (object/array/elemmatch, computed `=` expressions) — npm (@rfjs/data-filter)
+  data-label/             # Compose display label strings from data paths/maps/templates — npm (@rfjs/data-label)
   data-transform/         # Data type transformation utilities — npm (@rfjs/data-transform)
   jsonb-query/            # PostgreSQL JSONB query builder — npm (@rfjs/jsonb-query)
   jwt/                    # JWT sign/verify/decode helper — npm (@rfjs/jwt)
@@ -115,7 +117,7 @@ The `apps/api/` follows a layered Fastify architecture:
 CI/CD is split by responsibility: **GitHub Actions owns versioning + npm publish**, **GitLab CI owns only Kubernetes deploy**. The repo lives on GitHub; `.github/workflows/trigger-gitlab-pipeline.yml` mirrors `main`, `release/*`, and `deploy/*` to the GitLab project, but only **triggers** the GitLab pipeline for `deploy/*` (mirror-only on `main` and `release/*`, which have no GitLab jobs).
 
 - **Release branches (GitHub Actions)**: merging a PR into `release/stable` or `release/alpha|beta|rc` runs `cd-version-release.yml` / `cd-version-release-prerelease.yml`, which call `royfw/rf-devops/.github/workflows/_changesets-version-channel-turbo.yml` to run changeset versioning, push the bump back to the release branch, and open a PR back to `main`. (rf-devops is being migrated into `github-toolkit`; the caller will repoint once ported.)
-- **Publish (GitHub Actions)**: `cd-publish-npmjs.yml` is a manual `workflow_dispatch` (Actions tab → Run workflow). It checks out the versioned branch (default `publish/npmjs`) and runs plain `changeset publish` — which publishes every public package whose version isn't yet on npm and skips private ones. (GitLab's toolkit publish guards on `changeset status`, which wrongly reports "no releases" once versioning has consumed the changesets — so publish lives on GitHub instead. `@rfjs/jsonb-query` is held back via `"private": true`, the only thing `changeset publish` honors.)
+- **Publish (GitHub Actions)**: `cd-publish-npmjs.yml` is a manual `workflow_dispatch` (Actions tab → Run workflow). It checks out the versioned branch (default `publish/npmjs`) and runs plain `changeset publish` — which publishes every public package whose version isn't yet on npm and skips private ones. (GitLab's toolkit publish guards on `changeset status`, which wrongly reports "no releases" once versioning has consumed the changesets — so publish lives on GitHub instead. To hold a package back from publish, set `"private": true` — the only thing `changeset publish` honors.)
 - **Deploy branch (GitLab)**: `deploy/dev` runs build + Kubernetes deploy (`detect_project` / `trigger_project`). `deploy/prod` is not wired yet, and per-service Helm overlays under `.deploy/env/royfw-dev/helm/` are still pending (apps build to Harbor but `[skip-deploy]` until overlays exist).
 
 See `GITLAB_CI.md` for the full CI variable, environment, and flow reference.
@@ -124,9 +126,9 @@ See `GITLAB_CI.md` for the full CI variable, environment, and flow reference.
 
 - Uses **Changesets** for version management (`pnpm changeset:add` to create a changeset)
 - Not in pre-release mode (no `.changeset/pre.json`); `release/stable` produces stable versions. Prerelease channels are entered per-branch by the `release/alpha|beta|rc` versioning workflow.
-- `@rfjs/jsonb-query` is held back from publish via the changeset `ignore` list in `.changeset/config.json` until its Phase 2 (object/array) support lands.
+- The changeset `ignore` list in `.changeset/config.json` is currently empty. To hold a package back from a release, add it there (or set `"private": true`).
 - Changelog: `@changesets/cli/changelog`
-- Release workflow: `pnpm changeset:add` → commit to `main` → PR `main → release/*` and merge (GitHub Actions versions, opens a PR back to `main`) → merge the versioned state to `publish/npmjs` (GitLab publishes to npm)
+- Release workflow: `pnpm changeset:add` → commit to `main` → PR `main → release/*` and merge (GitHub Actions versions, opens a PR back to `main`) → merge the versioned state to `publish/npmjs` → run the `cd-publish-npmjs.yml` workflow (GitHub Actions publishes to npm)
 
 ## Git Hooks
 
