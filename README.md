@@ -2,6 +2,8 @@
 
 A Turborepo monorepo and template collection for the [start-ts-by](https://www.npmjs.com/package/start-ts-by) CLI. Contains production-ready TypeScript project templates for apps, libraries, CLIs, ORM wrappers, and monorepo scaffolds.
 
+`apps/web` is the rfjs web playground and developer tools site.
+
 ## Packages
 
 ### Published Libraries (`@rfjs/*`)
