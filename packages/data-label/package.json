@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/data-label",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Compose display label strings from data paths, value maps, and templates",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/data-expr",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Safe JSON expression engine — JSONata wrapper with compile-once evaluation and DoS guards",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
