@@ -10,10 +10,12 @@ Next.js App Router · TypeScript strict · Tailwind CSS v4 · shadcn/ui
 
 ## Develop
 
+```bash
 pnpm -F web dev          # http://localhost:3000
 pnpm -F web build
 pnpm -F web lint
 pnpm -F web check-types
+```
 
 ## Add a tool / package to the site
 

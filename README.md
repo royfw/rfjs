@@ -26,9 +26,8 @@ A Turborepo monorepo and template collection for the [start-ts-by](https://www.n
 
 | Package | Description |
 |---------|-------------|
-| @repo/eslint-config | Shared ESLint configuration |
-| @repo/typescript-config | Shared TypeScript configuration |
-| @repo/ui | Shared React component library |
+| @rfjs/web-core | Tool/package registry, zod schemas, and fixtures for `apps/web` |
+| @rfjs/web-ui | Design tokens, Tailwind preset, and shadcn components for `apps/web` |
 
 ## Apps
 
