@@ -7,7 +7,7 @@ import { DateMatch } from './DateMatch';
 import type { MatchQueryDataType, ObjectData } from '../types';
 
 function toTimestamp(value: unknown): number {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const d = typeTransfer(value, 'date');
   return d instanceof Date ? d.getTime() : Number(d);
 }
