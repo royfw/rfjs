@@ -1,16 +1,24 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { PageHeader } from "@/components/shared/page-header";
 
-export const metadata: Metadata = { title: "Templates — rfjs" };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Pages" });
+  return { title: `${t("templatesTitle")} — rfjs` };
+}
 
-export default function TemplatesPage() {
+export default async function TemplatesPage() {
+  const t = await getTranslations("Pages");
   return (
     <>
-      <PageHeader title="Templates" description="start-ts-by project templates." />
-      <p className="text-sm text-muted-foreground">
-        Template gallery (sourced from templates/registry.json) arrives in a later phase.
-      </p>
+      <PageHeader title={t("templatesTitle")} description={t("templatesDescription")} />
+      <p className="text-sm text-muted-foreground">{t("templatesBody")}</p>
     </>
   );
 }

@@ -1,15 +1,25 @@
 import { toolRegistry } from "@rfjs/web-core";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { ToolCard } from "@/components/shared/tool-card";
 
-export const metadata: Metadata = { title: "Tools — rfjs" };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Pages" });
+  return { title: `${t("toolsTitle")} — rfjs` };
+}
 
-export default function ToolsPage() {
+export default async function ToolsPage() {
+  const t = await getTranslations("Pages");
   return (
     <>
-      <PageHeader title="Tools" description="Developer data tools, each powered by an @rfjs/* package." />
+      <PageHeader title={t("toolsTitle")} description={t("toolsDescription")} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {toolRegistry.map((tool) => (
           <ToolCard key={tool.id} tool={tool} />

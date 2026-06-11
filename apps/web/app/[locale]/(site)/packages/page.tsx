@@ -1,15 +1,25 @@
 import { packageRegistry } from "@rfjs/web-core";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { PackageCard } from "@/components/shared/package-card";
 import { PageHeader } from "@/components/shared/page-header";
 
-export const metadata: Metadata = { title: "Packages — rfjs" };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Pages" });
+  return { title: `${t("packagesTitle")} — rfjs` };
+}
 
-export default function PackagesPage() {
+export default async function PackagesPage() {
+  const t = await getTranslations("Pages");
   return (
     <>
-      <PageHeader title="Packages" description="The @rfjs/* utility toolkit." />
+      <PageHeader title={t("packagesTitle")} description={t("packagesDescription")} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {packageRegistry.map((pkg) => (
           <PackageCard key={pkg.name} pkg={pkg} />

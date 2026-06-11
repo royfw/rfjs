@@ -1,3 +1,38 @@
 {
-  "Home": { "title": "rfjs" }
+  "Common": { "openMenu": "開啟選單", "closeMenu": "關閉選單", "github": "GitHub 儲存庫" },
+  "Home": {
+    "title": "rfjs",
+    "eyebrowLeft": "左",
+    "becomes": "化為",
+    "eyebrowRight": "右",
+    "tagline": "處理 JSON、物件、篩選與查詢工作流的工具、playground 與開發者資料工具。資料進來一種形狀、出去另一種 —— 這個轉換就是整個網站。",
+    "viewPackages": "瀏覽套件",
+    "browseTools": "瀏覽工具",
+    "startHere": "從這裡開始",
+    "packagesHeading": "套件",
+    "packagesSubtitle": "@rfjs/* 工具組 —— 每個都是一個資料動作。",
+    "viewAll": "查看全部 →"
+  },
+  "Features": {
+    "showcaseTitle": "套件展示",
+    "showcaseBody": "每個工具都是某個 @rfjs/* 套件的即時示範。",
+    "toolsTitle": "資料工具",
+    "toolsBody": "壓平、轉型、解碼 —— 全在瀏覽器完成。",
+    "playgroundTitle": "查詢與篩選 Playground",
+    "playgroundBody": "組合篩選條件,編譯成 SQL 或 Mongo 查詢。",
+    "templatesTitle": "範本",
+    "templatesBody": "用 start-ts-by 建立 TypeScript 專案。"
+  },
+  "Pages": {
+    "packagesTitle": "套件",
+    "packagesDescription": "@rfjs/* 工具組。",
+    "toolsTitle": "工具",
+    "toolsDescription": "開發者資料工具,每個都由某個 @rfjs/* 套件驅動。",
+    "playgroundTitle": "Playground",
+    "playgroundDescription": "@rfjs/* 工作流的互動式建構器。",
+    "templatesTitle": "範本",
+    "templatesDescription": "start-ts-by 專案範本。",
+    "templatesBody": "範本藝廊(資料源自 templates/registry.json)會在後續階段推出。"
+  },
+  "LocaleSwitcher": { "label": "語言", "en": "English", "zh-TW": "繁體中文" }
 }

@@ -1,6 +1,8 @@
 import { Button } from "@rfjs/web-ui/components/button";
 import { ThemeToggle } from "@rfjs/web-ui/components/theme-toggle";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+
+import { Link } from "@/i18n/navigation";
 
 import { MobileNav } from "./mobile-nav";
 
@@ -20,7 +22,8 @@ function GithubMark({ className }: { className?: string }) {
   );
 }
 
-export function AppHeader() {
+export async function AppHeader() {
+  const t = await getTranslations("Common");
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-bedrock/90 px-4 backdrop-blur">
       <div className="flex items-center gap-2">
@@ -31,7 +34,7 @@ export function AppHeader() {
       </div>
       <div className="flex items-center gap-1">
         <ThemeToggle />
-        <Button variant="ghost" size="icon" asChild aria-label="GitHub repository">
+        <Button variant="ghost" size="icon" asChild aria-label={t("github")}>
           <a href="https://github.com/royfw/rfjs" target="_blank" rel="noreferrer">
             <GithubMark className="size-4" />
           </a>
