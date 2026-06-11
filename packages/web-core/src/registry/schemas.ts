@@ -27,8 +27,8 @@ export const packageDefinitionSchema = z.object({
   description: z.string().min(1),
   status: registryStatusSchema,
   href: z.string().startsWith('/'),
-  npm: z.string().url().optional(),
-  github: z.string().url().optional(),
+  npm: z.url().optional(),
+  github: z.url().optional(),
   tags: z.array(z.string()).optional(),
   relatedTools: z.array(z.string()).optional(),
 });

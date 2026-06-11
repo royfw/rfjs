@@ -27,7 +27,8 @@ export const packageRegistry: PackageDefinition[] = [
   },
   {
     name: '@rfjs/data-label',
-    description: 'Compose display label strings from data paths, value maps, and templates.',
+    description:
+      'Compose display label strings from data paths, value maps, and templates.',
     status: 'preview',
     href: '/packages/data-label',
     github: GITHUB,
