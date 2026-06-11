@@ -14,6 +14,7 @@ import type {
   MatchQueryMetadata,
   LogicalOperator,
 } from '../types';
+import { isExpression } from '@rfjs/data-expr';
 
 export function matchQueryArray(
   data: ObjectData[],
@@ -62,7 +63,7 @@ export function matchQuery(
   return logicMatch;
 }
 
-function logicMatchQuery(logic: LogicalOperator, data: boolean[]) {
+export function logicMatchQuery(logic: LogicalOperator, data: boolean[]) {
   let result = false;
   switch (logic) {
     case 'and':
@@ -89,6 +90,16 @@ export function createMatchQuery(
   data: ObjectData,
   metadata: MatchQueryMetadata,
 ): { isMatch: boolean } {
+  if (
+    isExpression(metadata.field) ||
+    ('value' in metadata &&
+      typeof metadata.value === 'string' &&
+      isExpression(metadata.value))
+  ) {
+    throw new Error(
+      `[data-filter] '=' expression slots require the async api — use compileMatchQuery or matchQueryAsync`,
+    );
+  }
   switch (metadata.dataType) {
     case 'string':
       return new TextMatch(metadata.field, metadata.operator, metadata.value, data);

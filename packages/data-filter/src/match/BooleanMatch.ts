@@ -16,13 +16,13 @@ export class BooleanMatch {
         value: ValueType,
         private data: ObjectData,
     ) {
-        // 使用共用的 JSONPath 解析函數
+        // 使用共用的路徑解析函數
         const target = resolvePath(this.data, this.field);
         if (_.isUndefined(target)) {
             this.validPath = false;
         }
-        const targets = []
-            .concat(target)
+        const targets = ([] as unknown[])
+            .concat(target as never)
             .map((i) => typeTransfer(i, 'boolean'));
         const transVals = (Array.isArray(value) ? value : [value]).map((i) =>
             typeTransfer(i, 'boolean'),

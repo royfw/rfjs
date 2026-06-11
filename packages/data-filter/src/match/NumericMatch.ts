@@ -24,7 +24,7 @@ export class NumericMatch {
             typeTransfer(i, 'number'),
         ) as number[];
         this.values = targetVals;
-        const targets = [].concat(target).map((i) => typeTransfer(i, 'number'));
+        const targets = ([] as unknown[]).concat(target as never).map((i) => typeTransfer(i, 'number'));
         this.targets = targets;
         if (_.isNull(target) || _.isUndefined(target)) {
             this.targets = [];

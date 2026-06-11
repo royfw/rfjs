@@ -26,7 +26,9 @@ export class DateMatch {
       this.toTimestamp(i),
     );
 
-    const targets = [].concat(target).map((i) => this.toTimestamp(i));
+    const targets = ([] as unknown[])
+      .concat(target as never)
+      .map((i) => this.toTimestamp(i as string | number | boolean | Date));
     this.targets = targets;
 
     if (_.isNull(target) || _.isUndefined(target)) {

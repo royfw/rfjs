@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { matchQuery } from './matchQuery';
 import { FilterMatchQuery } from '../types';
 import { aliasData } from '../alias/aliasData';
+import { isExpression } from '@rfjs/data-expr';
 
 type AnyObjectData = { [key: string]: any };
 
@@ -13,6 +14,16 @@ export function matchAndMap<T>(
 ): T[] {
   if (filterMetadatas.length === 0) {
     return filterData as T[];
+  }
+  for (const metadata of filterMetadatas) {
+    const hasExprMapping = (metadata.mappings ?? []).some(
+      (mapping) => typeof mapping.value === 'string' && isExpression(mapping.value),
+    );
+    if (hasExprMapping) {
+      throw new Error(
+        `[data-filter] '=' expression mapping values require the async api — use matchAndMapAsync`,
+      );
+    }
   }
   // Keyed by the ORIGINAL source row so a row matched by several metadata is
   // emitted once (last matching metadata's mapping wins). `aliasData` clones
