@@ -5,7 +5,7 @@ import type {
   JsonbCondition,
   JsonbFilterGroup,
   JsonbScalarCondition,
-} from './types';
+} from '../types';
 import {
   type JsonbQueryDialect,
   fieldSegments,
@@ -15,8 +15,8 @@ import {
   isFilterGroup,
   renderNullCheck,
   renderJsonbContains,
-} from './dialect';
-import type { ParamBuilder } from './param-builder';
+} from './base';
+import type { ParamBuilder } from '../param-builder';
 import { escapeJsonpathString, escapeRegexLiteral } from './escape';
 
 /** `$."a"."b"` / `@."a"."b"` accessor for a dot path, members escaped. */

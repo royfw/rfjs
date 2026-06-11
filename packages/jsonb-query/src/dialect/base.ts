@@ -8,8 +8,8 @@ import type {
   JsonbObjectValue,
   JsonbArrayCondition,
   JsonbElemMatchCondition,
-} from './types';
-import type { ParamBuilder } from './param-builder';
+} from '../types';
+import type { ParamBuilder } from '../param-builder';
 
 export interface RenderContext {
   params: ParamBuilder;
