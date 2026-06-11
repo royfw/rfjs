@@ -16,7 +16,7 @@ export class BooleanMatch {
         value: ValueType,
         private data: ObjectData,
     ) {
-        // 使用共用的 JSONPath 解析函數
+        // 使用共用的路徑解析函數
         const target = resolvePath(this.data, this.field);
         if (_.isUndefined(target)) {
             this.validPath = false;

@@ -141,7 +141,7 @@ export type DataType =
 
 /**
  * An input record to filter. Values may be scalars, nested records, arrays of
- * scalars, or arrays of records — JSONPath/lodash resolve arbitrary depth at
+ * scalars, or arrays of records — path resolution reaches arbitrary depth at
  * runtime, so the data type is intentionally permissive.
  */
 export type ObjectData = {
