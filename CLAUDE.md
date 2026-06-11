@@ -92,6 +92,20 @@ templates/                # Standalone project templates (start-ts-by CLI)
   registry.json           # Template registry for start-ts-by CLI
 ```
 
+## Package Source Layout (`packages/*/src`)
+
+Package `src/` structure is **size-driven, not uniform** — don't force every package into the same shape:
+
+- **Flat** (modules directly under `src/`) for small, single-purpose packages (≤ ~7 source modules). Examples: `data-expr`, `data-label`, `object-utils`, `data-transform`, `mongo-query`, `jwt`, `retry`.
+- **Subfolders by responsibility** once a package crosses ~8 source modules *or* has a clear sub-domain. Each subfolder gets a barrel `index.ts`. Examples: `data-filter` (`alias/`, `filter/`, `match/`, `path/`, `types/`), `pg-toolkit` (`pure/` vs side-effecting `admin/`), `jsonb-query` (`dialect/` groups the base contract + `legacy`/`jsonpath` dialects + jsonpath `escape`).
+
+Conventions that hold regardless of shape:
+- **Co-locate tests**: `*.spec.ts` next to the source it covers (the vitest glob is `src/**/*.spec.ts`).
+- **One barrel per folder**: a subfolder's `index.ts` re-exports its public surface; the package root `src/index.ts` is the only entry in `package.json` `exports` (no deep subpaths) — so internal moves never change the published API.
+- **File naming**: PascalCase for class modules (`TextMatch.ts`, `NumericMatch.ts`), camelCase for function/util modules (`matchQuery.ts`, `objectCompare.ts`).
+
+When a package outgrows flat, group by **what changes together** (responsibility/sub-domain), not by technical layer.
+
 ## Template Architecture
 
 Each template in `templates/` is a **standalone project** with its own `package.json`, `node_modules`, and build config. They are NOT part of the pnpm workspace. Templates are registered in `templates/registry.json` and consumed by the `start-ts-by` CLI.
