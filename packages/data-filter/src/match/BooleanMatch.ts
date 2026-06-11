@@ -21,8 +21,8 @@ export class BooleanMatch {
         if (_.isUndefined(target)) {
             this.validPath = false;
         }
-        const targets = []
-            .concat(target)
+        const targets = ([] as unknown[])
+            .concat(target as never)
             .map((i) => typeTransfer(i, 'boolean'));
         const transVals = (Array.isArray(value) ? value : [value]).map((i) =>
             typeTransfer(i, 'boolean'),

@@ -149,12 +149,6 @@ export type ObjectData = {
 };
 
 export interface PathResolveOptions {
-  fallbackToLodash?: boolean;
+  /** When false, a missing path resolves to null instead of undefined. */
   fallbackOnEmpty?: boolean;
-}
-
-export interface PathResolveResult {
-  value: unknown;
-  usedJsonPath: boolean;
-  isWildcardResult: boolean;
 }
