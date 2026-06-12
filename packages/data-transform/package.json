@@ -33,9 +33,22 @@
     "vitest:run": "vitest --passWithNoTests --run",
     "vitest:ui": "vitest --passWithNoTests --ui"
   },
-  "keywords": [],
+  "keywords": [
+    "transform",
+    "convert",
+    "type-conversion",
+    "date",
+    "jsonb"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/data-transform"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/data-transform#readme",
   "files": [
     "dist",
     "README.md",

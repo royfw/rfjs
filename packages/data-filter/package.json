@@ -33,9 +33,22 @@
     "vitest:run": "vitest --passWithNoTests --run",
     "vitest:ui": "vitest --passWithNoTests --ui"
   },
-  "keywords": [],
+  "keywords": [
+    "filter",
+    "jsonpath",
+    "query",
+    "in-memory",
+    "data"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/data-filter"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/data-filter#readme",
   "files": [
     "dist",
     "README.md",

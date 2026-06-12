@@ -33,9 +33,21 @@
     "vitest:run": "vitest --passWithNoTests --run",
     "vitest:ui": "vitest --passWithNoTests --ui"
   },
-  "keywords": [],
+  "keywords": [
+    "retry",
+    "backoff",
+    "delay",
+    "async"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/retry"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/retry#readme",
   "files": [
     "dist",
     "README.md",

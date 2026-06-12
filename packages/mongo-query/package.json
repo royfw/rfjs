@@ -33,9 +33,21 @@
     "vitest:run": "vitest --passWithNoTests --run",
     "vitest:ui": "vitest --passWithNoTests --ui"
   },
-  "keywords": [],
+  "keywords": [
+    "mongodb",
+    "query-builder",
+    "filter",
+    "query"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/mongo-query"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/mongo-query#readme",
   "files": [
     "dist",
     "README.md",

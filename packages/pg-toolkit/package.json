@@ -57,9 +57,22 @@
       "pnpm exec eslint --fix"
     ]
   },
-  "keywords": [],
+  "keywords": [
+    "postgresql",
+    "pg",
+    "migration",
+    "seed",
+    "database"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/pg-toolkit"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/pg-toolkit#readme",
   "engines": {
     "node": ">=18",
     "pnpm": ">=10.24.0 <11.0.0"
