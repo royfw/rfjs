@@ -16,7 +16,7 @@
     "dashboardTitle": "Dashboard",
     "dashboardDescription": "Datasets at a glance and shortcuts into the apps.",
     "datasetsTitle": "Datasets",
-    "datasetsDescription": "Built-in samples and imported JSON/CSV datasets. Management lands in Phase 3.",
+    "datasetsDescription": "Built-in samples and imported JSON/CSV datasets. Management arrives in a later phase.",
     "appsTitle": "Apps",
     "appsDescription": "Dataset-driven applications composing the @rfjs packages.",
     "adminTitle": "Admin",
