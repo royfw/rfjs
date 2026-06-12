@@ -18,10 +18,11 @@ export default async function PackageDetailPage({
   const pkg = packageRegistry.find((p) => p.href === `/packages/${slug}`);
   if (!pkg) notFound();
   const t = await getTranslations({ locale, namespace: "Packages" });
+  const tDetail = await getTranslations({ locale, namespace: "Detail" });
   return (
     <>
       <PageHeader title={pkg.name} description={t(`${packageSlug(pkg.name)}.description`)} />
-      <p className="text-sm text-muted-foreground">Package detail + playground arrive in a later phase.</p>
+      <p className="text-sm text-muted-foreground">{tDetail("packageComingSoon")}</p>
     </>
   );
 }

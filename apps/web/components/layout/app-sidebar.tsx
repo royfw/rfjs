@@ -8,10 +8,11 @@ import { buildSidebarNav } from "@/lib/nav";
 
 export function AppSidebar() {
   const t = useTranslations("Tools");
+  const tNav = useTranslations("Pages");
   const pathname = usePathname();
   const groups = buildSidebarNav();
   return (
-    <nav aria-label="Tools" className="flex flex-col gap-5 p-4">
+    <nav aria-label={tNav("toolsTitle")} className="flex flex-col gap-5 p-4">
       {groups.map((group) => (
         <div key={group.packageName} className="flex flex-col gap-1">
           <span className="px-2 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">

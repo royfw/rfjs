@@ -19,11 +19,14 @@ export default async function ToolDetailPage({
   const tool = toolRegistry.find((t) => t.href === `/tools/${slug}`);
   if (!tool) notFound();
   const t = await getTranslations({ locale, namespace: "Tools" });
+  const tDetail = await getTranslations({ locale, namespace: "Detail" });
+  const tStatus = await getTranslations({ locale, namespace: "Status" });
   return (
     <>
       <PageHeader title={t(`${tool.id}.title`)} description={t(`${tool.id}.description`)} />
-      <p className="text-sm text-muted-foreground">
-        This tool ships in a later phase (status: {tool.status}).
+      <p className="text-sm text-muted-foreground">{tDetail("toolComingSoon")}</p>
+      <p className="mt-1 font-mono text-xs text-muted-foreground">
+        {tDetail("status", { status: tStatus(tool.status) })}
       </p>
     </>
   );

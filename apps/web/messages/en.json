@@ -35,6 +35,13 @@
     "templatesBody": "Template gallery (sourced from templates/registry.json) arrives in a later phase."
   },
   "LocaleSwitcher": { "label": "Language", "en": "English", "zh-TW": "繁體中文" },
+  "Status": { "ready": "Ready", "preview": "Preview", "planned": "Planned" },
+  "Detail": {
+    "toolComingSoon": "This tool ships in a later phase.",
+    "playgroundComingSoon": "This playground ships in a later phase.",
+    "packageComingSoon": "Package detail and playground arrive in a later phase.",
+    "status": "Status: {status}"
+  },
   "Tools": {
     "object-flatten": { "title": "Object Flatten / Unflatten", "description": "Flatten nested objects to dot-path keys and back." },
     "type-converter": { "title": "Data Type Converter", "description": "Convert values between string, number, boolean, and date." },

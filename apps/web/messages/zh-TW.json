@@ -35,6 +35,13 @@
     "templatesBody": "範本藝廊(資料源自 templates/registry.json)會在後續階段推出。"
   },
   "LocaleSwitcher": { "label": "語言", "en": "English", "zh-TW": "繁體中文" },
+  "Status": { "ready": "可用", "preview": "預覽", "planned": "規劃中" },
+  "Detail": {
+    "toolComingSoon": "此工具會在後續階段推出。",
+    "playgroundComingSoon": "此 playground 會在後續階段推出。",
+    "packageComingSoon": "套件詳情與 playground 會在後續階段推出。",
+    "status": "狀態:{status}"
+  },
   "Tools": {
     "object-flatten": { "title": "物件壓平 / 還原", "description": "把巢狀物件壓平成點路徑鍵,並可還原。" },
     "type-converter": { "title": "資料型別轉換器", "description": "在字串、數字、布林、日期之間轉換值。" },

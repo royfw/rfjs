@@ -24,6 +24,7 @@ export default async function ToolsPage({
   setRequestLocale(locale);
   const t = await getTranslations("Pages");
   const tTools = await getTranslations("Tools");
+  const tStatus = await getTranslations("Status");
   return (
     <>
       <PageHeader title={t("toolsTitle")} description={t("toolsDescription")} />
@@ -34,6 +35,7 @@ export default async function ToolsPage({
             tool={tool}
             title={tTools(`${tool.id}.title`)}
             description={tTools(`${tool.id}.description`)}
+            statusLabel={tStatus(tool.status)}
           />
         ))}
       </div>
