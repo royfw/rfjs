@@ -132,12 +132,13 @@ interface Session {
 
 ## 13. 階段路線圖
 
-1. **Phase 1 — web 收斂**：§3 的 1/2/4/5/6（sidebar、index 連結、redirect、套件頁補實）。公開後門面先完整。
-2. **Phase 2 — web 快速工具**：工具版型（@rfjs/web-ui 共用基礎）+ 第一批 3 工具；第二批接續。
-3. **Phase 3 — workbench MVP**：shell + datasets + data-filter-builder + registry `surface` 擴充。
-4. **Phase 4 — PWA**：兩站接 Serwist。
-5. **Phase 5 — demo auth（v2）**：登入頁 + @rfjs/jwt session + `/admin` 區 + jwt sign/verify 升級。
-6. **Phase 6+（不排程）**：better-auth 多 provider、pg-toolkit 沙箱 demo、web index 分組。
+1. **Phase 1 — workbench 骨架**：app scaffold（Next 16 + turbo 接線）、admin shell（sidebar / topbar / ⌘K）、i18n + 主題、四路由區空殼（dashboard / datasets / apps / admin 預留）、registry `surface` 擴充。版型基礎元件進 `@rfjs/web-ui`，供後續 web 工具共用。
+2. **Phase 2 — web 收斂**（小，可與 Phase 1 交錯）：§3 的 1/2/4/5/6（sidebar、index 連結、redirect、套件頁補實）。
+3. **Phase 3 — workbench datasets + data-filter-builder**：招牌動線（dataset → 篩選 → query 輸出）。
+4. **Phase 4 — web 快速工具**：第一批 3 工具 + 第二批接續。
+5. **Phase 5 — PWA**：兩站接 Serwist。
+6. **Phase 6 — demo auth（v2）**：登入頁 + @rfjs/jwt session + `/admin` 區 + jwt sign/verify 升級。
+7. **Phase 7+（不排程）**：better-auth 多 provider、pg-toolkit 沙箱 demo、index 分組。
 
 每個 Phase 各出一份 implementation plan，獨立可交付。
 
