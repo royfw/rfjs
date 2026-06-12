@@ -1,0 +1,32 @@
+{
+  "Common": {
+    "appName": "rfjs workbench",
+    "comingSoon": "Coming soon",
+    "github": "GitHub"
+  },
+  "Nav": {
+    "dashboard": "Dashboard",
+    "datasets": "Datasets",
+    "apps": "Apps",
+    "admin": "Admin",
+    "adminLocked": "Sign-in required — coming soon",
+    "toggleSidebar": "Toggle sidebar"
+  },
+  "Pages": {
+    "dashboardTitle": "Dashboard",
+    "dashboardDescription": "Datasets at a glance and shortcuts into the apps.",
+    "datasetsTitle": "Datasets",
+    "datasetsDescription": "Built-in samples and imported JSON/CSV datasets. Management lands in Phase 3.",
+    "appsTitle": "Apps",
+    "appsDescription": "Dataset-driven applications composing the @rfjs packages.",
+    "adminTitle": "Admin",
+    "adminDescription": "Reserved area. Unlocks with demo sign-in in a later phase."
+  },
+  "CommandMenu": {
+    "placeholder": "Type a command or search…",
+    "navigation": "Navigation"
+  },
+  "LocaleSwitcher": {
+    "label": "Language"
+  }
+}
