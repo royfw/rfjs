@@ -1,0 +1,110 @@
+@import 'tailwindcss';
+
+/* 讓 Tailwind 掃描 web-ui 自己的元件(路徑相對於本 CSS 檔) */
+@source "../components";
+
+@custom-variant dark (&:is(.dark *));
+
+/* "The Seam" — six named tokens (see docs/superpowers/specs/2026-06-11-web-design-plan.md) */
+:root {
+  --radius: 0.25rem;
+
+  /* raw palette — light mode default (prefers-color-scheme dark flips below) */
+  --bedrock: #f4f6f9;
+  --slab: #ffffff;
+  --slab-border: #e1e6ee;
+  --signal: #1c232e;
+  --intake: #2e6cb8;
+  --yield: #8f6310;
+  --fault: #c2362f;
+
+  /* shadcn semantic vars mapped onto the palette */
+  --background: var(--bedrock);
+  --foreground: var(--signal);
+  --card: var(--slab);
+  --card-foreground: var(--signal);
+  --popover: var(--slab);
+  --popover-foreground: var(--signal);
+  --primary: var(--yield);
+  --primary-foreground: var(--bedrock);
+  --secondary: var(--slab);
+  --secondary-foreground: var(--signal);
+  --muted: var(--slab);
+  --muted-foreground: color-mix(in srgb, var(--signal) 65%, transparent);
+  --accent: var(--slab);
+  --accent-foreground: var(--signal);
+  --destructive: var(--fault);
+  --destructive-foreground: var(--bedrock);
+  --border: var(--slab-border);
+  --input: var(--slab-border);
+  --ring: var(--intake);
+}
+
+.dark {
+  --bedrock: #11151c;
+  --slab: #1b212c;
+  --slab-border: color-mix(in srgb, #e2e8f1 12%, transparent);
+  --signal: #e2e8f1;
+  --intake: #6e9bd6;
+  --yield: #e8b04b;
+  --fault: #ef6f6c;
+}
+
+/* honor OS preference when the user has not explicitly chosen a theme */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    --bedrock: #11151c;
+    --slab: #1b212c;
+    --slab-border: color-mix(in srgb, #e2e8f1 12%, transparent);
+    --signal: #e2e8f1;
+    --intake: #6e9bd6;
+    --yield: #e8b04b;
+    --fault: #ef6f6c;
+  }
+}
+
+@theme inline {
+  --font-sans: var(--font-archivo, ui-sans-serif, system-ui, sans-serif);
+  --font-mono: var(--font-jetbrains-mono, ui-monospace, "SF Mono", Menlo, monospace);
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+
+  /* named brand tokens — enable bg-intake / text-yield / border-fault, etc. */
+  --color-bedrock: var(--bedrock);
+  --color-slab: var(--slab);
+  --color-signal: var(--signal);
+  --color-intake: var(--intake);
+  --color-yield: var(--yield);
+  --color-fault: var(--fault);
+
+  /* shadcn semantic colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

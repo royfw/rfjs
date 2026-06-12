@@ -11,7 +11,7 @@ export type ValueType =
   | null
   | undefined;
 
-export const typeTransfer = (value: ValueType, type: MgoDataType | DataType): ValueType => {
+export const typeTransfer = (value: ValueType, type: DataType): ValueType => {
   const transfer = {
     any: () => value,
     date: () => new Date(value as string | number),

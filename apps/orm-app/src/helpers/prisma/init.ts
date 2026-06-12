@@ -15,8 +15,8 @@ export const _testInitPrisma = async () => {
   try {
     await migratePrisma();
     const prisma = initPrisma();
-    const users = await prisma.user.findMany();
-    console.log('users: ', users);
+    const demos = await prisma.demo.findMany();
+    console.log('demos: ', demos);
     await prisma.$disconnect();
   } catch (error) {
     console.error('Error in _testInitPrisma:', error);

@@ -1,0 +1,68 @@
+import type { ToolDefinition } from './schemas';
+
+export const toolRegistry: ToolDefinition[] = [
+  {
+    id: 'object-flatten',
+    category: 'transform',
+    href: '/tools/object-flatten',
+    status: 'planned',
+    relatedPackages: ['@rfjs/object-utils'],
+    tags: ['object', 'flatten'],
+  },
+  {
+    id: 'type-converter',
+    category: 'transform',
+    href: '/tools/type-converter',
+    status: 'planned',
+    relatedPackages: ['@rfjs/data-transform'],
+    tags: ['convert', 'types'],
+  },
+  {
+    id: 'data-filter-tester',
+    category: 'filter',
+    href: '/tools/data-filter-tester',
+    status: 'planned',
+    relatedPackages: ['@rfjs/data-filter'],
+    tags: ['jsonpath', 'filter'],
+  },
+  {
+    id: 'jwt-decoder',
+    category: 'inspect',
+    href: '/tools/jwt-decoder',
+    status: 'planned',
+    relatedPackages: ['@rfjs/jwt'],
+    tags: ['jwt', 'decode'],
+  },
+  {
+    id: 'jsonb-query-generator',
+    category: 'query',
+    href: '/tools/jsonb-query-generator',
+    status: 'planned',
+    relatedPackages: ['@rfjs/jsonb-query'],
+    tags: ['postgres', 'jsonb', 'sql'],
+  },
+  {
+    id: 'mongo-query-generator',
+    category: 'query',
+    href: '/tools/mongo-query-generator',
+    status: 'planned',
+    relatedPackages: ['@rfjs/mongo-query'],
+    tags: ['mongodb', 'query'],
+  },
+  {
+    id: 'data-filter-builder',
+    category: 'filter',
+    href: '/playground/data-filter-builder',
+    status: 'planned',
+    relatedPackages: ['@rfjs/data-filter'],
+    tags: ['builder', 'playground'],
+  },
+  {
+    id: 'object-transformer',
+    category: 'transform',
+    href: '/playground/object-transformer',
+    status: 'planned',
+    relatedPackages: ['@rfjs/object-utils', '@rfjs/data-transform'],
+    tags: ['object', 'playground'],
+  },
+];

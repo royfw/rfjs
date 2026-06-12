@@ -1,0 +1,28 @@
+{
+  "name": "@rfjs/web-core",
+  "version": "0.0.0",
+  "description": "Tool/package registry, schemas, and fixtures for the rfjs web app",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "vitest": "vitest",
+    "vitest:run": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "typescript": "5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vitest": "^3.2.3"
+  }
+}

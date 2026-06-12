@@ -60,9 +60,6 @@ apps/                     # Demo applications
   web/                    # Next.js web app (turbopack)
 
 packages/                 # Shared internal packages + publishable libs
-  eslint-config/          # Shared ESLint config (@repo/eslint-config, private)
-  typescript-config/      # Shared tsconfig (@repo/typescript-config, private)
-  ui/                     # Shared React component library (@repo/ui, private)
   data-expr/              # Safe JSON expression engine (JSONata wrapper) — npm (@rfjs/data-expr)
   data-filter/            # In-memory filtering & mapping (object/array/elemmatch, computed `=` expressions) — npm (@rfjs/data-filter)
   data-label/             # Compose display label strings from data paths/maps/templates — npm (@rfjs/data-label)
@@ -74,6 +71,8 @@ packages/                 # Shared internal packages + publishable libs
   pg-toolkit/             # PostgreSQL utilities — npm (@rfjs/pg-toolkit)
   retry/                  # Retry helper with configurable delay — npm (@rfjs/retry)
   tpl-toolkit/            # Shared config factories for project templates — npm (@rfjs/tpl-toolkit)
+  web-core/               # apps/web tool/package registry + zod schemas (@rfjs/web-core, private)
+  web-ui/                 # apps/web Tailwind tokens + shadcn components (@rfjs/web-ui, private)
 
 libs/                     # ORM wrapper libraries (private, consumed by orm-app)
   orm-drizzle/            # Drizzle ORM wrapper

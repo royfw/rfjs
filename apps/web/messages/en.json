@@ -1,0 +1,67 @@
+{
+  "Common": { "openMenu": "Open menu", "closeMenu": "Close menu", "github": "GitHub repository" },
+  "Home": {
+    "title": "rfjs",
+    "eyebrowLeft": "left",
+    "becomes": "becomes",
+    "eyebrowRight": "right",
+    "tagline": "Utilities, playgrounds, and developer data tools for JSON, objects, filters, and query workflows. Data in one shape, out another — that transformation is the whole site.",
+    "viewPackages": "View Packages",
+    "browseTools": "Browse Tools",
+    "startHere": "Start here",
+    "packagesHeading": "Packages",
+    "packagesSubtitle": "The @rfjs/* toolkit — each one a single data gesture.",
+    "viewAll": "view all →"
+  },
+  "Features": {
+    "showcaseTitle": "Package Showcase",
+    "showcaseBody": "Every tool is a live demo of an @rfjs/* package.",
+    "toolsTitle": "Data Tools",
+    "toolsBody": "Flatten, convert, decode — all in your browser.",
+    "playgroundTitle": "Query & Filter Playground",
+    "playgroundBody": "Build filters, compile them to SQL or Mongo.",
+    "templatesTitle": "Templates",
+    "templatesBody": "Scaffold TypeScript projects with start-ts-by."
+  },
+  "Pages": {
+    "packagesTitle": "Packages",
+    "packagesDescription": "The @rfjs/* utility toolkit.",
+    "toolsTitle": "Tools",
+    "toolsDescription": "Developer data tools, each powered by an @rfjs/* package.",
+    "playgroundTitle": "Playground",
+    "playgroundDescription": "Interactive builders for @rfjs/* workflows.",
+    "templatesTitle": "Templates",
+    "templatesDescription": "start-ts-by project templates.",
+    "templatesBody": "Template gallery (sourced from templates/registry.json) arrives in a later phase."
+  },
+  "LocaleSwitcher": { "label": "Language", "en": "English", "zh-TW": "繁體中文" },
+  "Status": { "ready": "Ready", "preview": "Preview", "planned": "Planned" },
+  "Detail": {
+    "toolComingSoon": "This tool ships in a later phase.",
+    "playgroundComingSoon": "This playground ships in a later phase.",
+    "packageComingSoon": "Package detail and playground arrive in a later phase.",
+    "status": "Status: {status}"
+  },
+  "Tools": {
+    "object-flatten": { "title": "Object Flatten / Unflatten", "description": "Flatten nested objects to dot-path keys and back." },
+    "type-converter": { "title": "Data Type Converter", "description": "Convert values between string, number, boolean, and date." },
+    "data-filter-tester": { "title": "JSONPath Filter Tester", "description": "Run @rfjs/data-filter conditions against sample data live." },
+    "jwt-decoder": { "title": "JWT Decoder", "description": "Decode JWT header and payload locally — nothing leaves your browser." },
+    "jsonb-query-generator": { "title": "Filter → JSONB SQL", "description": "Generate PostgreSQL JSONB queries from filter metadata." },
+    "mongo-query-generator": { "title": "Filter → Mongo Query", "description": "Generate MongoDB queries from filter metadata." },
+    "data-filter-builder": { "title": "Data Filter Builder", "description": "Compose nested filter conditions visually and export them." },
+    "object-transformer": { "title": "Object Transformer", "description": "Interactive object transformation playground." }
+  },
+  "Packages": {
+    "data-filter": { "description": "Filter in-memory data with JSONPath-addressed conditions." },
+    "data-transform": { "description": "Data type transformation utilities (string/number/boolean/date)." },
+    "data-label": { "description": "Compose display label strings from data paths, value maps, and templates." },
+    "jsonb-query": { "description": "PostgreSQL JSONB query builder from filter metadata." },
+    "jwt": { "description": "JWT sign/verify/decode helper." },
+    "mongo-query": { "description": "MongoDB query builder from filter metadata." },
+    "object-utils": { "description": "Object manipulation utilities (flatten, paths, merge)." },
+    "pg-toolkit": { "description": "PostgreSQL admin utilities (seed history, DB/schema creation)." },
+    "retry": { "description": "Retry helper with configurable delay." },
+    "tpl-toolkit": { "description": "Shared config factories for rfjs project templates." }
+  }
+}
