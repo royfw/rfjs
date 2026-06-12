@@ -12,12 +12,14 @@ export function ShellTopbar() {
   const t = useTranslations("Nav");
   const tCommon = useTranslations("Common");
   const toggle = useSidebarStore((s) => s.toggle);
+  const collapsed = useSidebarStore((s) => s.collapsed);
 
   return (
     <header className="flex items-center gap-3 border-b px-4 py-2">
       <button
         type="button"
         aria-label={t("toggleSidebar")}
+        aria-expanded={!collapsed}
         onClick={toggle}
         className="rounded-sm p-1.5 transition-colors hover:bg-accent"
       >

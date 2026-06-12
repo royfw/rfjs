@@ -1,16 +1,12 @@
 "use client";
 
-import { Boxes, Database, LayoutDashboard, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link, usePathname } from "@/i18n/navigation";
 import { useSidebarStore } from "@/stores/sidebar-store";
 
-const NAV = [
-  { key: "dashboard", href: "/dashboard", Icon: LayoutDashboard },
-  { key: "datasets", href: "/datasets", Icon: Database },
-  { key: "apps", href: "/apps", Icon: Boxes },
-] as const;
+import { NAV } from "./nav-items";
 
 export function ShellSidebar() {
   const t = useTranslations("Nav");
@@ -36,16 +32,18 @@ export function ShellSidebar() {
             className="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent aria-[current=page]:text-signal"
           >
             <Icon className="size-4 shrink-0" />
-            {collapsed ? null : t(key)}
+            {collapsed ? <span className="sr-only">{t(key)}</span> : t(key)}
           </Link>
         );
       })}
       <span
         title={t("adminLocked")}
+        aria-disabled="true"
+        aria-label={t("adminLocked")}
         className="flex cursor-not-allowed items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground/60"
       >
         <Lock className="size-4 shrink-0" />
-        {collapsed ? null : t("admin")}
+        {collapsed ? <span className="sr-only">{t("admin")}</span> : t("admin")}
       </span>
     </aside>
   );
