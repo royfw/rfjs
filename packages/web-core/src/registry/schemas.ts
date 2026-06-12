@@ -11,9 +11,12 @@ export const toolCategorySchema = z.enum([
 
 export const registryStatusSchema = z.enum(['ready', 'preview', 'planned']);
 
+export const toolSurfaceSchema = z.enum(['web', 'workbench']);
+
 export const toolDefinitionSchema = z.object({
   id: z.string().min(1),
   category: toolCategorySchema,
+  surface: toolSurfaceSchema,
   href: z.string().startsWith('/'),
   status: registryStatusSchema,
   relatedPackages: z.array(z.string().startsWith('@rfjs/')).optional(),
@@ -32,5 +35,6 @@ export const packageDefinitionSchema = z.object({
 
 export type ToolCategory = z.infer<typeof toolCategorySchema>;
 export type RegistryStatus = z.infer<typeof registryStatusSchema>;
+export type ToolSurface = z.infer<typeof toolSurfaceSchema>;
 export type ToolDefinition = z.infer<typeof toolDefinitionSchema>;
 export type PackageDefinition = z.infer<typeof packageDefinitionSchema>;

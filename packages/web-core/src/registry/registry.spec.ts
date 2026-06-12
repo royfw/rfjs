@@ -28,6 +28,22 @@ describe('toolRegistry', () => {
   });
 });
 
+describe('tool surfaces', () => {
+  it('every tool declares a surface', () => {
+    for (const tool of toolRegistry) {
+      expect(['web', 'workbench'], `${tool.id} missing surface`).toContain(tool.surface);
+    }
+  });
+
+  it('workbench surface holds exactly the dataset-driven apps', () => {
+    const ids = toolRegistry
+      .filter((t) => t.surface === 'workbench')
+      .map((t) => t.id)
+      .sort();
+    expect(ids).toEqual(['data-filter-builder', 'object-transformer']);
+  });
+});
+
 describe('packageRegistry', () => {
   it('every entry matches the package schema', () => {
     for (const pkg of packageRegistry) {
