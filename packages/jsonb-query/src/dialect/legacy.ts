@@ -87,8 +87,11 @@ export const legacyDialect: JsonbQueryDialect = {
     const fParam = params.add(fieldSegments(field));
     const guarded = `case when jsonb_typeof(${column} #> ${fParam}) = 'array' then ${column} #> ${fParam} else '[]'::jsonb end`;
     const alias = ctx.nextAlias();
-    const predicate = renderScalarOp(`${alias}.v`, elementType, operator, value, params);
-    return `(exists (select 1 from jsonb_array_elements_text(${guarded}) as ${alias}(v) where ${predicate}))`;
+    // neq = "value not present" = NOT(exists element == value).
+    const isNeq = operator === 'neq';
+    const predicate = renderScalarOp(`${alias}.v`, elementType, isNeq ? 'eq' : operator, value, params);
+    const exists = `(exists (select 1 from jsonb_array_elements_text(${guarded}) as ${alias}(v) where ${predicate}))`;
+    return isNeq ? `(not ${exists})` : exists;
   },
   renderElemMatch(column, condition, ctx) {
     const fParam = ctx.params.add(fieldSegments(condition.field));

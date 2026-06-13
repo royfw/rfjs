@@ -137,10 +137,10 @@ const OBJECT_OPERATORS: ReadonlySet<JsonbObjectOperator> = new Set([
 ]);
 
 const ARRAY_OPERATORS_BY_ELEMENT: Record<JsonbScalarType, ReadonlySet<string>> = {
-  string: new Set(['eq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull']),
-  numeric: new Set(['eq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull']),
-  date: new Set(['eq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'isnull', 'isnotnull']),
-  boolean: new Set(['eq', 'isnull', 'isnotnull']),
+  string: new Set(['eq', 'neq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull']),
+  numeric: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull']),
+  date: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'isnull', 'isnotnull']),
+  boolean: new Set(['eq', 'neq', 'isnull', 'isnotnull']),
 };
 
 export function assertCondition(node: JsonbCondition): void {

@@ -234,9 +234,11 @@ function conditionPredicate(node: JsonbCondition, sink: VarSink): string {
     }
     // containsall never reaches here: groupNeedsSqlFallback routes such groups
     // to the SQL EXISTS fallback before any path predicate is built.
-    const operator = arr.operator as JsonbScalarOperator;
+    const isNeq = arr.operator === 'neq';
+    const operator = (isNeq ? 'eq' : arr.operator) as JsonbScalarOperator;
     const { pred } = scalarPredicate('@', arr.elementType, operator, arr.value, sink);
-    return `exists (${acc}[*] ? (${pred}))`;
+    const existsPred = `exists (${acc}[*] ? (${pred}))`;
+    return isNeq ? `(!${existsPred})` : existsPred;
   }
   if (node.dataType === 'object') {
     // Unreachable: object conditions force the SQL EXISTS fallback. Guard
@@ -277,9 +279,11 @@ export const jsonpathDialect: JsonbQueryDialect = {
     if (operator === 'containsall') {
       return renderJsonbContains(column, field, assertArrayValue(operator, value), params);
     }
+    const isNeq = operator === 'neq';
     const sink = namedSink();
-    const { pred } = scalarPredicate('@', elementType, operator, value, sink);
-    return pathExists(column, `${memberAccessor('$', field)}[*] ? (${pred})`, sink.vars, params, sink.tz);
+    const { pred } = scalarPredicate('@', elementType, isNeq ? 'eq' : operator, value, sink);
+    const exists = pathExists(column, `${memberAccessor('$', field)}[*] ? (${pred})`, sink.vars, params, sink.tz);
+    return isNeq ? `(not ${exists})` : exists;
   },
   renderElemMatch(column, condition, ctx) {
     if (groupNeedsSqlFallback(condition.filters)) {

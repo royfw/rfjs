@@ -405,9 +405,6 @@ describe('buildJsonbQuery — phase 2', () => {
       /unsupported operator "gt" for type "object"/i,
     );
     expect(
-      one({ field: 't', dataType: 'array', elementType: 'string', operator: 'neq', value: 'x' }),
-    ).toThrow(/unsupported operator "neq" for array elements/i);
-    expect(
       one({ field: 'i', dataType: 'array', elementType: 'object', operator: 'eq', value: {} }),
     ).toThrow(/use "elemmatch"/i);
   });
@@ -508,5 +505,19 @@ describe('buildJsonbQuery — nor/not logical operators', () => {
   it('emits identity for empty not/nor groups', () => {
     expect(buildJsonbQuery('data', { logic: 'not', filters: [] }).where).toBe('false');
     expect(buildJsonbQuery('data', { logic: 'nor', filters: [] }).where).toBe('true');
+  });
+});
+
+describe('buildJsonbQuery — array element neq', () => {
+  const one = (f: JsonbFilterGroup['filters'][number]): JsonbFilterGroup => ({ logic: 'and', filters: [f] });
+
+  it('jsonpath renders not(jsonb_path_exists(... == ...))', () => {
+    expect(
+      buildJsonbQuery('data', one({ field: 'tags', dataType: 'array', elementType: 'string', operator: 'neq', value: 'a' }), { dialect: 'jsonpath' }),
+    ).toEqual({
+      where: '(not jsonb_path_exists("data", $1::jsonpath, $2::jsonb))',
+      values: ['$."tags"[*] ? (@ == $v)', { v: 'a' }],
+      from: [],
+    });
   });
 });

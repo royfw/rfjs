@@ -73,7 +73,8 @@ describe('assertCondition', () => {
     expect(arr('numeric', 'gt')).not.toThrow();
     expect(arr('string', 'gt')).toThrow(/for array elements of type "string"/i);
     expect(arr('numeric', 'startswith')).toThrow(/for array elements of type "numeric"/i);
-    expect(arr('string', 'neq')).toThrow(/unsupported operator "neq" for array elements/i);
+    expect(arr('string', 'neq')).not.toThrow();
+    expect(arr('numeric', 'neq')).not.toThrow();
     expect(arr('boolean', 'terms')).toThrow(/for array elements of type "boolean"/i);
     expect(arr('date', 'containsall')).toThrow(/for array elements of type "date"/i);
     expect(arr('bogus', 'eq')).toThrow(/unsupported elementtype "bogus"/i);
