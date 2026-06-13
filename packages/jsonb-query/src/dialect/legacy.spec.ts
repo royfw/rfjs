@@ -184,6 +184,13 @@ describe('legacyDialect.renderArray', () => {
     });
   });
 
+  it('element neq negates the existence (value not present)', () => {
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'neq', value: 'a' })).toMatchObject({
+      where: `(not (exists (select 1 from jsonb_array_elements_text(${GUARD('"data"', '$1')}) as e1(v) where (e1.v = $2))))`,
+      values: [['tags'], 'a'],
+    });
+  });
+
   it('isnull / isnotnull test the array field itself', () => {
     expect(runArray({ field: 'tags', elementType: 'string', operator: 'isnull' })).toMatchObject({
       where: '(("data" #>> $1) is null)',

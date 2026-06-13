@@ -4,7 +4,6 @@ import type {
   JsonbValue,
   JsonbCondition,
   JsonbFilterGroup,
-  JsonbScalarCondition,
 } from '../types';
 import {
   type JsonbQueryDialect,
@@ -15,9 +14,12 @@ import {
   isFilterGroup,
   renderNullCheck,
   renderJsonbContains,
+  groupNeedsSqlFallback,
 } from './base';
+import { legacyDialect } from './legacy';
 import type { ParamBuilder } from '../param-builder';
 import { escapeJsonpathString, escapeRegexLiteral } from './escape';
+import { JsonbQueryError } from '../errors';
 
 /** `$."a"."b"` / `@."a"."b"` accessor for a dot path, members escaped. */
 function memberAccessor(root: '$' | '@', field: string): string {
@@ -150,7 +152,7 @@ function scalarPredicate(
     case 'isnotnull':
       return { pred: `exists (${acc}) && ${acc} != null`, compound: true };
     default:
-      throw new Error(`Unsupported operator "${operator as string}"`);
+      throw new JsonbQueryError(`Unsupported operator "${operator as string}"`, 'UNSUPPORTED_OPERATOR');
   }
 }
 
@@ -189,6 +191,13 @@ function sequentialSink(): VarSink {
   };
 }
 
+const JSONPATH_EMPTY_IDENTITY: Record<JsonbFilterGroup['logic'], string> = {
+  and: '1 == 1',
+  or: '1 == 0',
+  not: '1 == 0', // !(AND of nothing) = !(true)
+  nor: '1 == 1', // !(OR of nothing) = !(false)
+};
+
 function groupPredicate(group: JsonbFilterGroup, sink: VarSink): string {
   const parts = group.filters
     .map((node) => {
@@ -200,23 +209,47 @@ function groupPredicate(group: JsonbFilterGroup, sink: VarSink): string {
     })
     .filter((part) => part.length > 0);
   if (parts.length === 0) {
-    return '';
+    return JSONPATH_EMPTY_IDENTITY[group.logic];
   }
   const joined = parts.join(group.logic === 'or' || group.logic === 'nor' ? ' || ' : ' && ');
   return group.logic === 'not' || group.logic === 'nor' ? `!(${joined})` : joined;
 }
 
 function conditionPredicate(node: JsonbCondition, sink: VarSink): string {
-  assertCondition(node, 'elemmatch');
+  assertCondition(node);
   if (node.dataType === 'array' && node.elementType === 'object') {
     const inner = groupPredicate(node.filters, sink);
     if (inner.length === 0) {
-      throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+      throw new JsonbQueryError('Operator "elemmatch" requires a filter group with at least one condition', 'EMPTY_FILTER_GROUP');
     }
     return `exists (${memberAccessor('@', node.field)}[*] ? (${inner}))`;
   }
+  if (node.dataType === 'array') {
+    // scalar-element array nested inside elemmatch.
+    const arr = node;
+    const acc = memberAccessor('@', arr.field);
+    if (arr.operator === 'isnull' || arr.operator === 'isnotnull') {
+      const { pred } = scalarPredicate(acc, 'string', arr.operator, undefined, sink);
+      return `(${pred})`;
+    }
+    // containsall never reaches here: groupNeedsSqlFallback routes such groups
+    // to the SQL EXISTS fallback before any path predicate is built.
+    const isNeq = arr.operator === 'neq';
+    const operator = (isNeq ? 'eq' : arr.operator) as JsonbScalarOperator;
+    const { pred } = scalarPredicate('@', arr.elementType, operator, arr.value, sink);
+    const existsPred = `exists (${acc}[*] ? (${pred}))`;
+    return isNeq ? `(!${existsPred})` : existsPred;
+  }
+  if (node.dataType === 'object') {
+    // Unreachable: object conditions force the SQL EXISTS fallback. Guard
+    // against silently mis-rendering an object as a scalar comparison.
+    throw new JsonbQueryError(
+      'Object conditions cannot be expressed as a jsonpath predicate',
+      'UNSUPPORTED_OPERATOR',
+    );
+  }
   // assertCondition only lets scalar conditions through past this point.
-  const scalar = node as JsonbScalarCondition;
+  const scalar = node;
   const { pred, compound } = scalarPredicate(
     memberAccessor('@', scalar.field),
     scalar.dataType,
@@ -246,15 +279,23 @@ export const jsonpathDialect: JsonbQueryDialect = {
     if (operator === 'containsall') {
       return renderJsonbContains(column, field, assertArrayValue(operator, value), params);
     }
+    const isNeq = operator === 'neq';
     const sink = namedSink();
-    const { pred } = scalarPredicate('@', elementType, operator, value, sink);
-    return pathExists(column, `${memberAccessor('$', field)}[*] ? (${pred})`, sink.vars, params, sink.tz);
+    const { pred } = scalarPredicate('@', elementType, isNeq ? 'eq' : operator, value, sink);
+    const exists = pathExists(column, `${memberAccessor('$', field)}[*] ? (${pred})`, sink.vars, params, sink.tz);
+    return isNeq ? `(not ${exists})` : exists;
   },
   renderElemMatch(column, condition, ctx) {
+    if (groupNeedsSqlFallback(condition.filters)) {
+      // Object / containsall leaves can't live in a path predicate. Use the
+      // legacy EXISTS shell; its body renders each leaf through THIS (jsonpath)
+      // dialect via ctx.renderGroup.
+      return legacyDialect.renderElemMatch(column, condition, ctx);
+    }
     const sink = sequentialSink();
     const pred = groupPredicate(condition.filters, sink);
     if (pred.length === 0) {
-      throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+      throw new JsonbQueryError('Operator "elemmatch" requires a filter group with at least one condition', 'EMPTY_FILTER_GROUP');
     }
     return pathExists(
       column,

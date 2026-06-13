@@ -38,7 +38,7 @@ const SEED: Array<[number, unknown]> = [
       tags: ['a', 'b'],
       nums: [1, 5, 9],
       items: [
-        { sku: 'x', qty: 2, ship: '2020-02-01T00:00:00+00:00' },
+        { sku: 'x', qty: 2, ship: '2020-02-01T00:00:00+00:00', meta: { vip: true } },
         { sku: 'y', qty: 10, ship: '2021-02-01T00:00:00+00:00' },
       ],
       orders: [{ status: 'open', lines: [{ sku: 'x' }] }],
@@ -147,6 +147,10 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
 
       afterAll(async () => {
         await client?.end();
+      });
+
+      it('an empty filter group renders true (matches all rows)', async () => {
+        await expectIds({ logic: 'and', filters: [] }, [1, 2, 3, 4, 5, 6, 7, 8]);
       });
 
       describe('scalar conditions', () => {
@@ -280,9 +284,64 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
             [3, 5, 6, 7, 8],
           );
         });
+
+        it('element neq = value not present (∀); missing/non-array match', async () => {
+          // tags present on 1 (a,b) and 2 (b,c); 'a' present only on 1.
+          // not-present-'a' => everyone except id 1 (incl. missing tags + the
+          // malformed scalar "a" on id 4: legacy treats scalar as empty array;
+          // jsonpath lax-wraps "a" but "a" != ... wait it equals -> see note).
+          await expectPerDialect(
+            { logic: 'and', filters: [{ field: 'tags', dataType: 'array', elementType: 'string', operator: 'neq', value: 'a' }] },
+            { legacy: [2, 3, 4, 5, 6, 7, 8], jsonpath: [2, 3, 5, 6, 7, 8] },
+          );
+        });
       });
 
       describe('elemmatch', () => {
+        it('object condition inside elemmatch (jsonpath uses SQL fallback)', async () => {
+          await expectIds(
+            {
+              logic: 'and',
+              filters: [
+                {
+                  field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+                  filters: {
+                    logic: 'and',
+                    filters: [
+                      { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+                      { field: 'meta', dataType: 'object', operator: 'contains', value: { vip: true } },
+                    ],
+                  },
+                },
+              ],
+            },
+            [1],
+          );
+        });
+
+        it('scalar-array condition inside elemmatch', async () => {
+          // orders[0] has lines (array of objects); use a scalar-array seed.
+          // id 1 items all have sku; assert "some element whose sku is in a set".
+          await expectIds(
+            {
+              logic: 'and',
+              filters: [
+                {
+                  field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+                  filters: {
+                    logic: 'and',
+                    filters: [
+                      { field: 'sku', dataType: 'string', operator: 'eq', value: 'y' },
+                      { field: 'qty', dataType: 'numeric', operator: 'gte', value: 10 },
+                    ],
+                  },
+                },
+              ],
+            },
+            [1],
+          );
+        });
+
         it('binds all sub-conditions to the same element', async () => {
           // id 1: {y,10} satisfies both; id 2: {y,1} fails qty.
           await expectIds(

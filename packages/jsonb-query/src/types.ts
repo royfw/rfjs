@@ -36,10 +36,10 @@ export type JsonbObjectOperator = 'eq' | 'neq' | 'contains' | 'isnull' | 'isnotn
 /**
  * Operators on arrays of scalars. Scalar operators use "some element matches"
  * (∃) semantics; `isnull`/`isnotnull` test the array field itself;
- * `containsall` requires every listed value to be present. `neq` is excluded:
- * its exists-vs-forall meaning is ambiguous on arrays.
+ * `containsall` requires every listed value to be present. `neq` means "value
+ * not present" (∀ element ≠ value) — the negation of `eq`'s ∃-present.
  */
-export type JsonbArrayOperator = Exclude<JsonbScalarOperator, 'neq'> | 'containsall';
+export type JsonbArrayOperator = JsonbScalarOperator | 'containsall';
 
 export interface JsonbScalarCondition {
   field: string;

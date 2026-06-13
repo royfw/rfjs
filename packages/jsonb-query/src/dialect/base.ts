@@ -10,6 +10,7 @@ import type {
   JsonbElemMatchCondition,
 } from '../types';
 import type { ParamBuilder } from '../param-builder';
+import { JsonbQueryError } from '../errors';
 
 export interface RenderContext {
   params: ParamBuilder;
@@ -80,7 +81,7 @@ export function assertScalarValue(
   value: JsonbValue | JsonbValue[] | undefined,
 ): JsonbValue {
   if (value === undefined || value === null || Array.isArray(value)) {
-    throw new Error(`Operator "${operator}" requires a single scalar value`);
+    throw new JsonbQueryError(`Operator "${operator}" requires a single scalar value`, 'INVALID_SCALAR_VALUE');
   }
   return value;
 }
@@ -92,13 +93,13 @@ export function assertArrayValue(
 ): JsonbValue[] {
   if (!Array.isArray(value)) {
     const need = exactLength !== undefined ? `${exactLength} values` : 'a non-empty array';
-    throw new Error(`Operator "${operator}" requires ${need}`);
+    throw new JsonbQueryError(`Operator "${operator}" requires ${need}`, 'INVALID_ARRAY_VALUE');
   }
   if (exactLength !== undefined && value.length !== exactLength) {
-    throw new Error(`Operator "${operator}" requires ${exactLength} values`);
+    throw new JsonbQueryError(`Operator "${operator}" requires ${exactLength} values`, 'INVALID_ARRAY_VALUE');
   }
   if (exactLength === undefined && value.length === 0) {
-    throw new Error(`Operator "${operator}" requires a non-empty array`);
+    throw new JsonbQueryError(`Operator "${operator}" requires a non-empty array`, 'INVALID_ARRAY_VALUE');
   }
   return value;
 }
@@ -115,7 +116,7 @@ export function assertOperatorForType(
   operator: JsonbScalarOperator,
 ): void {
   if (!OPERATORS_BY_TYPE[dataType]?.has(operator)) {
-    throw new Error(`Unsupported operator "${operator}" for type "${dataType}"`);
+    throw new JsonbQueryError(`Unsupported operator "${operator}" for type "${dataType}"`, 'UNSUPPORTED_OPERATOR');
   }
 }
 
@@ -126,7 +127,7 @@ export function assertObjectValue(operator: string, value: unknown): JsonbObject
     Array.isArray(value) ||
     value instanceof Date
   ) {
-    throw new Error(`Operator "${operator}" requires a plain object value`);
+    throw new JsonbQueryError(`Operator "${operator}" requires a plain object value`, 'INVALID_OBJECT_VALUE');
   }
   return value as JsonbObjectValue;
 }
@@ -136,51 +137,78 @@ const OBJECT_OPERATORS: ReadonlySet<JsonbObjectOperator> = new Set([
 ]);
 
 const ARRAY_OPERATORS_BY_ELEMENT: Record<JsonbScalarType, ReadonlySet<string>> = {
-  string: new Set(['eq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull']),
-  numeric: new Set(['eq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull']),
-  date: new Set(['eq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'isnull', 'isnotnull']),
-  boolean: new Set(['eq', 'isnull', 'isnotnull']),
+  string: new Set(['eq', 'neq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull']),
+  numeric: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull']),
+  date: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'isnull', 'isnotnull']),
+  boolean: new Set(['eq', 'neq', 'isnull', 'isnotnull']),
 };
 
-export type ConditionScope = 'root' | 'elemmatch';
-
-export function assertCondition(node: JsonbCondition, scope: ConditionScope): void {
+export function assertCondition(node: JsonbCondition): void {
   if (node.dataType === 'object') {
-    if (scope === 'elemmatch') {
-      throw new Error('Object conditions are not supported inside elemmatch');
-    }
     if (!OBJECT_OPERATORS.has(node.operator)) {
-      throw new Error(`Unsupported operator "${node.operator as string}" for type "object"`);
+      throw new JsonbQueryError(
+        `Unsupported operator "${node.operator as string}" for type "object"`,
+        'UNSUPPORTED_OPERATOR',
+      );
     }
     return;
   }
   if (node.dataType === 'array') {
     if (node.elementType === 'object') {
       if ((node.operator as string) !== 'elemmatch') {
-        throw new Error(
+        throw new JsonbQueryError(
           `Unsupported operator "${node.operator as string}" for array of objects (use "elemmatch")`,
+          'UNSUPPORTED_OPERATOR',
         );
       }
       if (!node.filters || !Array.isArray(node.filters.filters) || node.filters.filters.length === 0) {
-        throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+        throw new JsonbQueryError(
+          'Operator "elemmatch" requires a filter group with at least one condition',
+          'EMPTY_FILTER_GROUP',
+        );
       }
       return;
     }
-    if (scope === 'elemmatch') {
-      throw new Error('Array conditions with scalar elements are not supported inside elemmatch');
-    }
     const ops = ARRAY_OPERATORS_BY_ELEMENT[node.elementType];
     if (!ops) {
-      throw new Error(
+      throw new JsonbQueryError(
         `Unsupported elementType ${JSON.stringify(node.elementType)} for array condition`,
+        'INVALID_ELEMENT_TYPE',
       );
     }
     if (!ops.has(node.operator)) {
-      throw new Error(
+      throw new JsonbQueryError(
         `Unsupported operator "${node.operator as string}" for array elements of type "${node.elementType}"`,
+        'UNSUPPORTED_OPERATOR',
       );
     }
     return;
   }
   assertOperatorForType(node.dataType, node.operator);
+}
+
+/**
+ * True when any node in this elemmatch predicate subtree cannot be expressed as
+ * a SQL/JSON path predicate (it needs `@>` / `#>>` instead): an object
+ * condition, or a scalar-array `containsall`. Recurses through nested groups and
+ * nested elemmatch — an outer path predicate can only embed a nested elemmatch
+ * when the nested predicate is itself path-expressible.
+ */
+export function groupNeedsSqlFallback(group: JsonbFilterGroup): boolean {
+  return group.filters.some((node) =>
+    isFilterGroup(node) ? groupNeedsSqlFallback(node) : conditionNeedsSqlFallback(node),
+  );
+}
+
+function conditionNeedsSqlFallback(node: JsonbCondition): boolean {
+  if (node.dataType === 'object') {
+    return true;
+  }
+  if (node.dataType === 'array') {
+    if (node.elementType === 'object') {
+      return groupNeedsSqlFallback(node.filters);
+    }
+    return node.operator === 'containsall';
+  }
+  return false;
 }

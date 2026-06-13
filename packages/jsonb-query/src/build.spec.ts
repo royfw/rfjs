@@ -73,12 +73,21 @@ describe('buildJsonbQuery', () => {
     });
   });
 
-  it('returns empty where for an empty group', () => {
-    expect(buildJsonbQuery('data', { logic: 'and', filters: [] })).toEqual({
-      where: '',
-      values: [],
-      from: [],
-    });
+  it('emits the logic boolean identity for an empty group', () => {
+    expect(buildJsonbQuery('data', { logic: 'and', filters: [] })).toEqual({ where: 'true', values: [], from: [] });
+    expect(buildJsonbQuery('data', { logic: 'or', filters: [] }).where).toBe('false');
+  });
+
+  it('empty inner groups participate as their identity', () => {
+    expect(
+      buildJsonbQuery('data', {
+        logic: 'and',
+        filters: [
+          { field: 'name', dataType: 'string', operator: 'eq', value: 'bob' },
+          { logic: 'or', filters: [] },
+        ],
+      }).where,
+    ).toBe('(("data" #>> $1) = $2) and (false)');
   });
 
   it('does not mutate across calls (fresh state each time)', () => {
@@ -337,23 +346,58 @@ describe('buildJsonbQuery — phase 2', () => {
     expect(r.values).toEqual([['name'], 'bob', ['profile'], '{"vip":true}', ['tags'], 'a']);
   });
 
-  it('rejects object / scalar-array conditions inside elemmatch in both dialects', () => {
+  it('allows object and scalar-array conditions inside elemmatch (both dialects)', () => {
     const filter: JsonbFilterGroup = {
       logic: 'and',
       filters: [
         {
           field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
-          filters: { logic: 'and', filters: [{ field: 'p', dataType: 'object', operator: 'eq', value: {} }] },
+          filters: {
+            logic: 'and',
+            filters: [
+              { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+              { field: 'meta', dataType: 'object', operator: 'contains', value: { vip: true } },
+            ],
+          },
         },
       ],
     };
-    expect(() => buildJsonbQuery('data', filter)).toThrow(/not supported inside elemmatch/i);
-    expect(() => buildJsonbQuery('data', filter, { dialect: 'jsonpath' })).toThrow(
-      /not supported inside elemmatch/i,
-    );
+    // legacy: a single EXISTS shell, object leaf via @>
+    const legacy = buildJsonbQuery('data', filter);
+    expect(legacy.where).toContain('jsonb_array_elements(');
+    expect(legacy.where).toContain('@>');
+    // jsonpath: the object leaf forces the SQL EXISTS hybrid fallback, whose
+    // body still renders each leaf through the jsonpath dialect.
+    const jp = buildJsonbQuery('data', filter, { dialect: 'jsonpath' });
+    expect(jp.where).toContain('jsonb_array_elements(');
+    expect(jp.where).toContain('jsonb_path_exists(e1.value,');
+    expect(jp.where).toContain('@>');
   });
 
-  it('throws when elemmatch filters are empty or render empty', () => {
+  it('scalar-array neq inside elemmatch negates existence (both dialects)', () => {
+    const filter: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [
+        {
+          field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+          filters: {
+            logic: 'and',
+            filters: [{ field: 'codes', dataType: 'array', elementType: 'string', operator: 'neq', value: 'x' }],
+          },
+        },
+      ],
+    };
+    // legacy: outer EXISTS over elements; the inner scalar-array neq is a
+    // negated nested EXISTS.
+    const legacy = buildJsonbQuery('data', filter).where;
+    expect(legacy).toContain('as e1 where (not (exists');
+    expect(legacy).toContain('where (e2.v = $3)');
+    // jsonpath: native path predicate with the negated inner exists.
+    const jp = buildJsonbQuery('data', filter, { dialect: 'jsonpath' });
+    expect(jp.values[0]).toContain('(!exists (@."codes"[*] ? (@ == $v0)))');
+  });
+
+  it('elemmatch with empty OWN filters throws; empty NESTED group renders as identity', () => {
     const empty: JsonbFilterGroup = {
       logic: 'and',
       filters: [
@@ -365,7 +409,7 @@ describe('buildJsonbQuery — phase 2', () => {
     };
     expect(() => buildJsonbQuery('data', empty)).toThrow(/requires a filter group/i);
 
-    const rendersEmpty: JsonbFilterGroup = {
+    const nestedEmpty: JsonbFilterGroup = {
       logic: 'and',
       filters: [
         {
@@ -374,10 +418,9 @@ describe('buildJsonbQuery — phase 2', () => {
         },
       ],
     };
-    expect(() => buildJsonbQuery('data', rendersEmpty)).toThrow(/at least one condition/i);
-    expect(() => buildJsonbQuery('data', rendersEmpty, { dialect: 'jsonpath' })).toThrow(
-      /at least one condition/i,
-    );
+    // legacy renders `where (false)`; jsonpath renders the `1 == 0` identity.
+    expect(buildJsonbQuery('data', nestedEmpty).where).toContain('where (false)');
+    expect(buildJsonbQuery('data', nestedEmpty, { dialect: 'jsonpath' }).values[0]).toContain('1 == 0');
   });
 
   it('rejects invalid phase-2 operator combinations', () => {
@@ -386,9 +429,6 @@ describe('buildJsonbQuery — phase 2', () => {
     expect(one({ field: 'p', dataType: 'object', operator: 'gt', value: {} })).toThrow(
       /unsupported operator "gt" for type "object"/i,
     );
-    expect(
-      one({ field: 't', dataType: 'array', elementType: 'string', operator: 'neq', value: 'x' }),
-    ).toThrow(/unsupported operator "neq" for array elements/i);
     expect(
       one({ field: 'i', dataType: 'array', elementType: 'object', operator: 'eq', value: {} }),
     ).toThrow(/use "elemmatch"/i);
@@ -487,8 +527,22 @@ describe('buildJsonbQuery — nor/not logical operators', () => {
     );
   });
 
-  it('drops empty not/nor groups (phase-1 empty-group convention)', () => {
-    expect(buildJsonbQuery('data', { logic: 'not', filters: [] }).where).toBe('');
-    expect(buildJsonbQuery('data', { logic: 'nor', filters: [] }).where).toBe('');
+  it('emits identity for empty not/nor groups', () => {
+    expect(buildJsonbQuery('data', { logic: 'not', filters: [] }).where).toBe('false');
+    expect(buildJsonbQuery('data', { logic: 'nor', filters: [] }).where).toBe('true');
+  });
+});
+
+describe('buildJsonbQuery — array element neq', () => {
+  const one = (f: JsonbFilterGroup['filters'][number]): JsonbFilterGroup => ({ logic: 'and', filters: [f] });
+
+  it('jsonpath renders not(jsonb_path_exists(... == ...))', () => {
+    expect(
+      buildJsonbQuery('data', one({ field: 'tags', dataType: 'array', elementType: 'string', operator: 'neq', value: 'a' }), { dialect: 'jsonpath' }),
+    ).toEqual({
+      where: '(not jsonb_path_exists("data", $1::jsonpath, $2::jsonb))',
+      values: ['$."tags"[*] ? (@ == $v)', { v: 'a' }],
+      from: [],
+    });
   });
 });
