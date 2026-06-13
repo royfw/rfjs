@@ -5,6 +5,6 @@ const nextConfig = {
   transpilePackages: ["@rfjs/web-ui", "@rfjs/web-core"],
 };
 
-const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 export default withNextIntl(nextConfig);
