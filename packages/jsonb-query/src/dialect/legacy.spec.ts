@@ -130,10 +130,10 @@ describe('legacyDialect', () => {
       '(position(lower($2) in lower(("data" #>> $1))) > 0)',
     );
     expect(run('name', 'string', 'istartswith', 'Bo').where).toBe(
-      '(left(lower(("data" #>> $1)), char_length($2)) = lower($2))',
+      '(left(lower(("data" #>> $1)), char_length(lower($2))) = lower($2))',
     );
     expect(run('name', 'string', 'iendswith', 'ob').where).toBe(
-      '(right(lower(("data" #>> $1)), char_length($2)) = lower($2))',
+      '(right(lower(("data" #>> $1)), char_length(lower($2))) = lower($2))',
     );
   });
 });

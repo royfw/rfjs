@@ -71,11 +71,11 @@ function renderScalarOp(
       return `(position(lower(${params.add(assertScalarValue(operator, value))}) in lower(${F})) > 0)`;
     case 'istartswith': {
       const v = params.add(assertScalarValue(operator, value));
-      return `(left(lower(${F}), char_length(${v})) = lower(${v}))`;
+      return `(left(lower(${F}), char_length(lower(${v}))) = lower(${v}))`;
     }
     case 'iendswith': {
       const v = params.add(assertScalarValue(operator, value));
-      return `(right(lower(${F}), char_length(${v})) = lower(${v}))`;
+      return `(right(lower(${F}), char_length(lower(${v}))) = lower(${v}))`;
     }
     default:
       throw new JsonbQueryError(`Unsupported operator "${operator as string}"`, 'UNSUPPORTED_OPERATOR');

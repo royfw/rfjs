@@ -172,6 +172,12 @@ cannot compare non-scalar values), and `@>` is GIN-indexable.
 //  (("data" #> $1) ?& $2::text[])
 ```
 
+> **`?` placeholder collision:** these operators emit a literal `?` / `?|` / `?&`
+> in the SQL. node-postgres uses `$N` placeholders, so this is safe there. Query
+> layers that treat `?` as a bind placeholder (e.g. Knex `whereRaw`) will
+> misparse it — use `buildNamedJsonbQuery` (`:pN` output) with those, or a driver
+> that uses `$N`.
+
 ### Case-insensitive text
 
 `icontains` / `istartswith` / `iendswith` / `ieq` / `ineq` match strings

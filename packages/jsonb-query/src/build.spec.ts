@@ -558,3 +558,28 @@ describe('buildJsonbQuery — array emptiness', () => {
     expect(buildJsonbQuery('data', filter, { dialect: 'jsonpath' }).where).toBe(expected);
   });
 });
+
+describe('buildJsonbQuery — key existence & case-insensitive end-to-end', () => {
+  const one = (f: JsonbFilterGroup['filters'][number]): JsonbFilterGroup => ({ logic: 'and', filters: [f] });
+
+  it('haskey renders identical SQL in both dialects', () => {
+    const filter = one({ field: 'profile', dataType: 'object', operator: 'haskey', value: 'vip' });
+    const expected = { where: '(("data" #> $1) ? $2)', values: [['profile'], 'vip'], from: [] };
+    expect(buildJsonbQuery('data', filter)).toEqual(expected);
+    expect(buildJsonbQuery('data', filter, { dialect: 'jsonpath' })).toEqual(expected);
+  });
+
+  it('icontains renders per-dialect (lower() vs like_regex flag "i")', () => {
+    const filter = one({ field: 'name', dataType: 'string', operator: 'icontains', value: 'Bob' });
+    expect(buildJsonbQuery('data', filter)).toEqual({
+      where: '(position(lower($2) in lower(("data" #>> $1))) > 0)',
+      values: [['name'], 'Bob'],
+      from: [],
+    });
+    expect(buildJsonbQuery('data', filter, { dialect: 'jsonpath' })).toEqual({
+      where: 'jsonb_path_exists("data", $1::jsonpath)',
+      values: ['$."name" ? (@ like_regex "Bob" flag "i")'],
+      from: [],
+    });
+  });
+});

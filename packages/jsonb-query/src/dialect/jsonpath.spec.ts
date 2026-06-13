@@ -125,6 +125,13 @@ describe('jsonpathDialect', () => {
   it('icontains regex-escapes the literal', () => {
     expect(run('name', 'string', 'icontains', 'a.b').values[0]).toBe('$."name" ? (@ like_regex "a\\\\.b" flag "i")');
   });
+
+  it('anchored case-insensitive operators regex-escape the literal too', () => {
+    expect(run('name', 'string', 'istartswith', 'a.b').values[0]).toBe('$."name" ? (@ like_regex "^a\\\\.b" flag "i")');
+    expect(run('name', 'string', 'iendswith', 'a.b').values[0]).toBe('$."name" ? (@ like_regex "a\\\\.b$" flag "i")');
+    expect(run('name', 'string', 'ieq', 'a.b').values[0]).toBe('$."name" ? (@ like_regex "^a\\\\.b$" flag "i")');
+    expect(run('name', 'string', 'ineq', 'a.b').values[0]).toBe('$."name" ? (!(@ like_regex "^a\\\\.b$" flag "i"))');
+  });
 });
 
 describe('jsonpathDialect.renderArray', () => {
