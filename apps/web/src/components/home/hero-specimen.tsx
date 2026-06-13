@@ -15,7 +15,7 @@ const OUTPUT = `{
   "active": true
 }`;
 
-interface PanelProps {
+interface SpecimenPaneProps {
   tone: "intake" | "yield";
   /** Reading-order marker: input is the "before", output the "after". */
   direction: "before" | "after";
@@ -25,7 +25,7 @@ interface PanelProps {
   status: string;
 }
 
-function Panel({ tone, direction, label, code, status }: PanelProps) {
+function SpecimenPane({ tone, direction, label, code, status }: SpecimenPaneProps) {
   const isIntake = tone === "intake";
   return (
     <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-slab">
@@ -64,7 +64,7 @@ export function HeroSpecimen() {
   return (
     <figure className="flex flex-col gap-0">
       <div className="flex flex-col items-stretch gap-3 lg:flex-row">
-        <Panel
+        <SpecimenPane
           tone="intake"
           direction="before"
           label="input"
@@ -85,7 +85,7 @@ export function HeroSpecimen() {
             className="hidden lg:flex"
           />
         </div>
-        <Panel
+        <SpecimenPane
           tone="yield"
           direction="after"
           label="output"
