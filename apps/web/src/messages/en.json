@@ -40,7 +40,8 @@
     "toolComingSoon": "This tool ships in a later phase.",
     "playgroundComingSoon": "This playground ships in a later phase.",
     "packageComingSoon": "Package detail and playground arrive in a later phase.",
-    "status": "Status: {status}"
+    "status": "Status: {status}",
+    "workbenchBadge": "Workbench ↗"
   },
   "Tools": {
     "object-flatten": { "title": "Object Flatten / Unflatten", "description": "Flatten nested objects to dot-path keys and back." },

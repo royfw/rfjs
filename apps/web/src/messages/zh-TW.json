@@ -40,7 +40,8 @@
     "toolComingSoon": "此工具會在後續階段推出。",
     "playgroundComingSoon": "此 playground 會在後續階段推出。",
     "packageComingSoon": "套件詳情與 playground 會在後續階段推出。",
-    "status": "狀態:{status}"
+    "status": "狀態:{status}",
+    "workbenchBadge": "Workbench ↗"
   },
   "Tools": {
     "object-flatten": { "title": "物件壓平 / 還原", "description": "把巢狀物件壓平成點路徑鍵,並可還原。" },

@@ -25,6 +25,7 @@ export default async function ToolsPage({
   const t = await getTranslations("Pages");
   const tTools = await getTranslations("Tools");
   const tStatus = await getTranslations("Status");
+  const tDetail = await getTranslations("Detail");
   return (
     <>
       <PageHeader title={t("toolsTitle")} description={t("toolsDescription")} />
@@ -36,6 +37,7 @@ export default async function ToolsPage({
             title={tTools(`${tool.id}.title`)}
             description={tTools(`${tool.id}.description`)}
             statusLabel={tStatus(tool.status)}
+            workbenchLabel={tDetail("workbenchBadge")}
           />
         ))}
       </div>

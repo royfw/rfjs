@@ -25,6 +25,7 @@ export default async function PlaygroundPage({
   const t = await getTranslations("Pages");
   const tTools = await getTranslations("Tools");
   const tStatus = await getTranslations("Status");
+  const tDetail = await getTranslations("Detail");
   const playgroundTools = toolRegistry.filter((tool) => tool.href.startsWith("/playground/"));
   return (
     <>
@@ -37,6 +38,7 @@ export default async function PlaygroundPage({
             title={tTools(`${tool.id}.title`)}
             description={tTools(`${tool.id}.description`)}
             statusLabel={tStatus(tool.status)}
+            workbenchLabel={tDetail("workbenchBadge")}
           />
         ))}
       </div>
