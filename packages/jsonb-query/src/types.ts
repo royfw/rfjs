@@ -29,17 +29,30 @@ export type JsonbScalarOperator =
   | 'lt'
   | 'lte'
   | 'range'
-  | 'terms';
+  | 'terms'
+  | 'icontains'
+  | 'istartswith'
+  | 'iendswith'
+  | 'ieq'
+  | 'ineq';
 
-export type JsonbObjectOperator = 'eq' | 'neq' | 'contains' | 'isnull' | 'isnotnull';
+export type JsonbObjectOperator =
+  | 'eq'
+  | 'neq'
+  | 'contains'
+  | 'isnull'
+  | 'isnotnull'
+  | 'haskey'
+  | 'hasanykey'
+  | 'hasallkeys';
 
 /**
  * Operators on arrays of scalars. Scalar operators use "some element matches"
  * (∃) semantics; `isnull`/`isnotnull` test the array field itself;
- * `containsall` requires every listed value to be present. `neq` is excluded:
- * its exists-vs-forall meaning is ambiguous on arrays.
+ * `containsall` requires every listed value to be present. `neq` means "value
+ * not present" (∀ element ≠ value) — the negation of `eq`'s ∃-present.
  */
-export type JsonbArrayOperator = Exclude<JsonbScalarOperator, 'neq'> | 'containsall';
+export type JsonbArrayOperator = JsonbScalarOperator | 'containsall' | 'isempty' | 'isnotempty';
 
 export interface JsonbScalarCondition {
   field: string;
@@ -54,7 +67,8 @@ export interface JsonbObjectCondition {
   field: string;
   dataType: 'object';
   operator: JsonbObjectOperator;
-  value?: JsonbObjectValue;
+  /** Object value for eq/neq/contains; a string key for haskey; a string[] for hasanykey/hasallkeys. */
+  value?: JsonbObjectValue | string | string[];
   elementType?: never;
   filters?: never;
 }

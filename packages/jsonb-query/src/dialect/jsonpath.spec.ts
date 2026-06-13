@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { jsonpathDialect } from './jsonpath';
+import { buildJsonbQuery } from '../build';
 import { ParamBuilder } from '../param-builder';
 import type { RenderContext } from './base';
 import type {
@@ -111,6 +112,25 @@ describe('jsonpathDialect', () => {
 
   it('throws on an unknown operator', () => {
     expect(() => run('name', 'string', 'bogus' as never, 'x')).toThrow(/unsupported operator/i);
+  });
+
+  it('case-insensitive operators use like_regex with flag "i"', () => {
+    expect(run('name', 'string', 'icontains', 'Bo').values[0]).toBe('$."name" ? (@ like_regex "Bo" flag "i")');
+    expect(run('name', 'string', 'istartswith', 'Bo').values[0]).toBe('$."name" ? (@ like_regex "^Bo" flag "i")');
+    expect(run('name', 'string', 'iendswith', 'ob').values[0]).toBe('$."name" ? (@ like_regex "ob$" flag "i")');
+    expect(run('name', 'string', 'ieq', 'Bob').values[0]).toBe('$."name" ? (@ like_regex "^Bob$" flag "i")');
+    expect(run('name', 'string', 'ineq', 'Bob').values[0]).toBe('$."name" ? (!(@ like_regex "^Bob$" flag "i"))');
+  });
+
+  it('icontains regex-escapes the literal', () => {
+    expect(run('name', 'string', 'icontains', 'a.b').values[0]).toBe('$."name" ? (@ like_regex "a\\\\.b" flag "i")');
+  });
+
+  it('anchored case-insensitive operators regex-escape the literal too', () => {
+    expect(run('name', 'string', 'istartswith', 'a.b').values[0]).toBe('$."name" ? (@ like_regex "^a\\\\.b" flag "i")');
+    expect(run('name', 'string', 'iendswith', 'a.b').values[0]).toBe('$."name" ? (@ like_regex "a\\\\.b$" flag "i")');
+    expect(run('name', 'string', 'ieq', 'a.b').values[0]).toBe('$."name" ? (@ like_regex "^a\\\\.b$" flag "i")');
+    expect(run('name', 'string', 'ineq', 'a.b').values[0]).toBe('$."name" ? (!(@ like_regex "^a\\\\.b$" flag "i"))');
   });
 });
 
@@ -258,25 +278,52 @@ describe('jsonpathDialect.renderElemMatch', () => {
     ).toBe('$."items"[*] ? (@."a\\"b" == $v0)');
   });
 
-  it('rejects object / scalar-array conditions inside elemmatch', () => {
-    expect(() =>
-      runElem('items', {
-        logic: 'and',
-        filters: [{ field: 'p', dataType: 'object', operator: 'eq', value: {} }],
-      }),
-    ).toThrow(/not supported inside elemmatch/i);
-    expect(() =>
-      runElem('items', {
-        logic: 'and',
-        filters: [{ field: 't', dataType: 'array', elementType: 'string', operator: 'eq', value: 'x' }],
-      }),
-    ).toThrow(/not supported inside elemmatch/i);
+  it('renders scalar-array conditions inside elemmatch as a nested path predicate', () => {
+    const { values } = runElem('items', {
+      logic: 'and',
+      filters: [{ field: 't', dataType: 'array', elementType: 'string', operator: 'eq', value: 'x' }],
+    });
+    expect(values[0]).toContain('exists (@."t"[*] ? (@ == $v0))');
   });
 
-  it('throws when the group renders empty', () => {
-    expect(() =>
-      runElem('items', { logic: 'and', filters: [{ logic: 'or', filters: [] }] }),
-    ).toThrow(/requires a filter group with at least one condition/i);
+  it('falls back to a SQL EXISTS shell when an object leaf is present', () => {
+    // The fallback delegates to legacyDialect.renderElemMatch, which needs a
+    // real ctx.renderGroup (the unit makeCtx stub deliberately omits it), so
+    // drive it through buildJsonbQuery with the jsonpath dialect.
+    const { where, values } = buildJsonbQuery(
+      'data',
+      {
+        logic: 'and',
+        filters: [
+          {
+            field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+            filters: {
+              logic: 'and',
+              filters: [
+                { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+                { field: 'meta', dataType: 'object', operator: 'contains', value: { vip: true } },
+              ],
+            },
+          },
+        ],
+      },
+      { dialect: 'jsonpath' },
+    );
+    // legacy EXISTS shell with a jsonpath scalar leaf and an @> object leaf
+    expect(where).toContain('jsonb_array_elements(');
+    expect(where).toContain('jsonb_path_exists(e1.value,');
+    expect(where).toContain('@>');
+    expect(values[0]).toEqual(['items']);
+  });
+
+  it.each([
+    ['and', '1 == 1'],
+    ['or', '1 == 0'],
+    ['not', '1 == 0'],
+    ['nor', '1 == 1'],
+  ] as const)('renders an empty nested %s group as its jsonpath identity literal', (logic, identity) => {
+    const { values } = runElem('items', { logic: 'and', filters: [{ logic, filters: [] }] });
+    expect(values[0]).toContain(identity);
   });
 });
 

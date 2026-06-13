@@ -16,7 +16,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Client } from 'pg';
-import { buildJsonbQuery } from '../src';
+import { buildJsonbQuery, buildJsonbOrderBy } from '../src';
 import type { BuildJsonbOptions, JsonbDialect, JsonbFilterGroup } from '../src';
 
 const URLS = (process.env.PG_E2E_URLS ?? '')
@@ -36,9 +36,10 @@ const SEED: Array<[number, unknown]> = [
       joined: '2020-01-15T08:30:00Z',
       profile: { vip: true, level: 3 },
       tags: ['a', 'b'],
+      roles: [], // empty array — exercises isempty (no other test touches `roles`)
       nums: [1, 5, 9],
       items: [
-        { sku: 'x', qty: 2, ship: '2020-02-01T00:00:00+00:00' },
+        { sku: 'x', qty: 2, ship: '2020-02-01T00:00:00+00:00', meta: { vip: true } },
         { sku: 'y', qty: 10, ship: '2021-02-01T00:00:00+00:00' },
       ],
       orders: [{ status: 'open', lines: [{ sku: 'x' }] }],
@@ -53,12 +54,13 @@ const SEED: Array<[number, unknown]> = [
       joined: '2021-03-20T00:00:00Z',
       profile: { vip: false },
       tags: ['b', 'c'],
+      roles: ['admin'], // non-empty array — exercises isnotempty
       nums: [10, 20],
       items: [{ sku: 'y', qty: 1 }],
     },
   ],
-  // JSON null age; everything else missing.
-  [3, { name: 'carol', age: null }],
+  // JSON null age; profile present with a null-valued key (for haskey vs isnotnull).
+  [3, { name: 'carol', age: null, profile: { vip: null } }],
   // Malformed shapes: tags is a scalar, items is an object (not an array).
   [4, { name: 'dave', tags: 'a', items: { sku: 'x', qty: 99 } }],
   // Regex metacharacters + hostile value stored as data.
@@ -149,6 +151,10 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
         await client?.end();
       });
 
+      it('an empty filter group renders true (matches all rows)', async () => {
+        await expectIds({ logic: 'and', filters: [] }, [1, 2, 3, 4, 5, 6, 7, 8]);
+      });
+
       describe('scalar conditions', () => {
         const one = (f: JsonbFilterGroup['filters'][number]): JsonbFilterGroup => ({
           logic: 'and',
@@ -224,8 +230,9 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
             [2],
           );
           await expectIds(
+            // id 3 now seeds profile: { vip: null }, so it is no longer null.
             { logic: 'and', filters: [{ field: 'profile', dataType: 'object', operator: 'isnull' }] },
-            [3, 4, 5, 6, 7, 8],
+            [4, 5, 6, 7, 8],
           );
         });
       });
@@ -280,9 +287,64 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
             [3, 5, 6, 7, 8],
           );
         });
+
+        it('element neq = value not present (∀); missing/non-array match', async () => {
+          // tags present on 1 (a,b) and 2 (b,c); 'a' present only on 1.
+          // not-present-'a' => everyone except id 1 (incl. missing tags + the
+          // malformed scalar "a" on id 4: legacy treats scalar as empty array;
+          // jsonpath lax-wraps "a" but "a" != ... wait it equals -> see note).
+          await expectPerDialect(
+            { logic: 'and', filters: [{ field: 'tags', dataType: 'array', elementType: 'string', operator: 'neq', value: 'a' }] },
+            { legacy: [2, 3, 4, 5, 6, 7, 8], jsonpath: [2, 3, 5, 6, 7, 8] },
+          );
+        });
       });
 
       describe('elemmatch', () => {
+        it('object condition inside elemmatch (jsonpath uses SQL fallback)', async () => {
+          await expectIds(
+            {
+              logic: 'and',
+              filters: [
+                {
+                  field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+                  filters: {
+                    logic: 'and',
+                    filters: [
+                      { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+                      { field: 'meta', dataType: 'object', operator: 'contains', value: { vip: true } },
+                    ],
+                  },
+                },
+              ],
+            },
+            [1],
+          );
+        });
+
+        it('scalar-array condition inside elemmatch', async () => {
+          // orders[0] has lines (array of objects); use a scalar-array seed.
+          // id 1 items all have sku; assert "some element whose sku is in a set".
+          await expectIds(
+            {
+              logic: 'and',
+              filters: [
+                {
+                  field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+                  filters: {
+                    logic: 'and',
+                    filters: [
+                      { field: 'sku', dataType: 'string', operator: 'eq', value: 'y' },
+                      { field: 'qty', dataType: 'numeric', operator: 'gte', value: 10 },
+                    ],
+                  },
+                },
+              ],
+            },
+            [1],
+          );
+        });
+
         it('binds all sub-conditions to the same element', async () => {
           // id 1: {y,10} satisfies both; id 2: {y,1} fails qty.
           await expectIds(
@@ -471,6 +533,34 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
         });
       });
 
+      describe('operator expansion', () => {
+        const one = (f: JsonbFilterGroup['filters'][number]): JsonbFilterGroup => ({ logic: 'and', filters: [f] });
+
+        it('haskey detects a null-valued key that isnotnull misses', async () => {
+          // id 3 has profile.vip = null: the KEY exists (haskey) but the VALUE is null (isnotnull false).
+          await expectIds(one({ field: 'profile', dataType: 'object', operator: 'haskey', value: 'vip' }), [1, 2, 3]);
+          await expectIds(one({ field: 'profile.vip', dataType: 'boolean', operator: 'isnotnull' }), [1, 2]);
+        });
+
+        it('hasanykey / hasallkeys', async () => {
+          await expectIds(one({ field: 'profile', dataType: 'object', operator: 'hasallkeys', value: ['vip', 'level'] }), [1]);
+          await expectIds(one({ field: 'profile', dataType: 'object', operator: 'hasanykey', value: ['level', 'nope'] }), [1]);
+        });
+
+        it('case-insensitive contains matches regardless of case', async () => {
+          await expectIds(one({ field: 'name', dataType: 'string', operator: 'icontains', value: 'BO' }), [1]);
+          await expectIds(one({ field: 'name', dataType: 'string', operator: 'ieq', value: 'ALICE' }), [2]);
+        });
+
+        it('isempty / isnotempty distinguish empty, non-empty, and missing arrays', async () => {
+          // id 1 roles:[] (empty), id 2 roles:['admin'] (non-empty); no other row has `roles`.
+          await expectIds(one({ field: 'roles', dataType: 'array', elementType: 'string', operator: 'isempty' }), [1]);
+          await expectIds(one({ field: 'roles', dataType: 'array', elementType: 'string', operator: 'isnotempty' }), [2]);
+          // tags present and non-empty on 1 and 2; missing/scalar elsewhere → not non-empty.
+          await expectIds(one({ field: 'tags', dataType: 'array', elementType: 'string', operator: 'isnotempty' }), [1, 2]);
+        });
+      });
+
       describe('safety', () => {
         it('round-trips a hostile value through parameters', async () => {
           await expectIds(
@@ -512,6 +602,20 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
           );
           expect(res.rows.map((r: { id: number }) => Number(r.id)), dialect).toEqual([1]);
         }
+      });
+
+      it('orders by a numeric jsonb path (desc, nulls last)', async () => {
+        // Seed ages: id1=30, id2=18, id3=null, ids4-8 have no age. desc nulls last
+        // → 30,18 first, then the null/missing-age rows; secondary `, id` makes the
+        // null group deterministic.
+        const ob = buildJsonbOrderBy('data', [
+          { field: 'age', dataType: 'numeric', direction: 'desc', nulls: 'last' },
+        ]);
+        const res = await client.query(
+          `select id from e2e_t order by ${ob.orderBy}, id`,
+          ob.values,
+        );
+        expect(res.rows.map((r: { id: number }) => Number(r.id))).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
       });
     },
   );

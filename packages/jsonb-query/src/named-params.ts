@@ -1,5 +1,6 @@
 import type { BuildJsonbOptions, JsonbFilterGroup, JsonbQueryResult } from './types';
 import { buildJsonbQuery } from './build';
+import { JsonbQueryError } from './errors';
 
 export interface NamedParamsResult {
   where: string;
@@ -24,36 +25,45 @@ const PREFIX = /^[A-Za-z_][A-Za-z0-9_]*$/;
  * references (e.g. `startswith` reuses its value) pointing at a single param,
  * which naive positional-`?` conversion cannot express.
  */
-export function toNamedParams(result: JsonbQueryResult, prefix = 'p'): NamedParamsResult {
+/**
+ * Internal: rewrite positional `$N` placeholders in `sql` to `:<prefix>N` and
+ * build the matching params object. Shared by `toNamedParams` and the ORDER BY
+ * named builder. Not part of the public API (not re-exported from the barrel).
+ *
+ * The lookbehind keeps `$` inside quoted identifiers (e.g. "t$1") from being
+ * rewritten: real placeholders are never preceded by an identifier character or
+ * a double quote. Values never appear in the SQL text, so no user data can be
+ * affected by this rewrite.
+ */
+export function positionalToNamed(
+  sql: string,
+  values: unknown[],
+  prefix: string,
+): { sql: string; params: Record<string, unknown> } {
   if (!PREFIX.test(prefix)) {
-    throw new Error(`Invalid named-parameter prefix: ${JSON.stringify(prefix)}`);
+    throw new JsonbQueryError(`Invalid named-parameter prefix: ${JSON.stringify(prefix)}`, 'INVALID_PREFIX');
   }
-
-  // The lookbehind keeps `$` inside quoted identifiers (e.g. "t$1") from being
-  // rewritten: real placeholders are never preceded by an identifier
-  // character or a double quote. Values never appear in the SQL text, so no
-  // user data can be affected by this rewrite.
   const seen = new Set<number>();
-  const where = result.where.replace(/(?<![A-Za-z0-9_$"])\$(\d+)/g, (_match, n: string) => {
+  const rewritten = sql.replace(/(?<![A-Za-z0-9_$"])\$(\d+)/g, (_match, n: string) => {
     seen.add(Number(n));
     return `:${prefix}${n}`;
   });
-
   const numbers = [...seen].sort((a, b) => a - b);
   const offset = (numbers[0] ?? 1) - 1;
   const contiguous =
-    numbers.length === result.values.length &&
-    numbers.every((n, i) => n === offset + i + 1);
+    numbers.length === values.length && numbers.every((n, i) => n === offset + i + 1);
   if (!contiguous) {
-    throw new Error('toNamedParams: placeholders do not match the values array');
+    throw new JsonbQueryError('placeholders do not match the values array', 'PARAM_MISMATCH');
   }
-
   return {
-    where,
-    params: Object.fromEntries(
-      result.values.map((value, i) => [`${prefix}${offset + i + 1}`, value]),
-    ),
+    sql: rewritten,
+    params: Object.fromEntries(values.map((value, i) => [`${prefix}${offset + i + 1}`, value])),
   };
+}
+
+export function toNamedParams(result: JsonbQueryResult, prefix = 'p'): NamedParamsResult {
+  const { sql, params } = positionalToNamed(result.where, result.values, prefix);
+  return { where: sql, params };
 }
 
 /**

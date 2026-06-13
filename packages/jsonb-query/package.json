@@ -36,9 +36,22 @@
     "test:e2e": "bash scripts/e2e.sh",
     "test:e2e:down": "bash scripts/e2e.sh --down"
   },
-  "keywords": [],
+  "keywords": [
+    "postgresql",
+    "jsonb",
+    "query-builder",
+    "sql",
+    "jsonpath"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/jsonb-query"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/jsonb-query#readme",
   "files": [
     "dist",
     "README.md",

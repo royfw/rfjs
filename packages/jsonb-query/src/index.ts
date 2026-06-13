@@ -8,3 +8,15 @@ export {
   type BuildNamedJsonbOptions,
   type NamedParamsResult,
 } from './named-params';
+export { JsonbQueryError, type JsonbQueryErrorCode } from './errors';
+export {
+  buildJsonbOrderBy,
+  buildNamedJsonbOrderBy,
+  type JsonbSortSpec,
+  type JsonbSortDirection,
+  type JsonbNullsOrder,
+  type JsonbOrderByResult,
+  type BuildJsonbOrderByOptions,
+  type BuildNamedJsonbOrderByOptions,
+  type NamedOrderByResult,
+} from './order-by';

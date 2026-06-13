@@ -1,0 +1,94 @@
+{
+  "Common": { "openMenu": "開啟選單", "closeMenu": "關閉選單", "github": "GitHub 儲存庫" },
+  "Home": {
+    "title": "rfjs",
+    "eyebrowLeft": "左",
+    "becomes": "化為",
+    "eyebrowRight": "右",
+    "tagline": "處理 JSON、物件、篩選與查詢工作流的工具、playground 與開發者資料工具。資料進來一種形狀、出去另一種 —— 這個轉換就是整個網站。",
+    "viewPackages": "瀏覽套件",
+    "browseTools": "瀏覽工具",
+    "startHere": "從這裡開始",
+    "packagesHeading": "套件",
+    "packagesSubtitle": "@rfjs/* 工具組 —— 每個都是一個資料動作。",
+    "viewAll": "查看全部 →"
+  },
+  "Features": {
+    "showcaseTitle": "套件展示",
+    "showcaseBody": "每個工具都是某個 @rfjs/* 套件的即時示範。",
+    "toolsTitle": "資料工具",
+    "toolsBody": "壓平、轉型、解碼 —— 全在瀏覽器完成。",
+    "playgroundTitle": "查詢與篩選 Playground",
+    "playgroundBody": "組合篩選條件,編譯成 SQL 或 Mongo 查詢。",
+    "templatesTitle": "範本",
+    "templatesBody": "用 start-ts-by 建立 TypeScript 專案。"
+  },
+  "Pages": {
+    "packagesTitle": "套件",
+    "packagesDescription": "@rfjs/* 工具組。",
+    "toolsTitle": "工具",
+    "toolsDescription": "開發者資料工具,每個都由某個 @rfjs/* 套件驅動。",
+    "playgroundTitle": "Playground",
+    "playgroundDescription": "@rfjs/* 工作流的互動式建構器。",
+    "templatesTitle": "範本",
+    "templatesDescription": "start-ts-by 專案範本。",
+    "templatesBody": "範本藝廊(資料源自 templates/registry.json)會在後續階段推出。"
+  },
+  "LocaleSwitcher": { "label": "語言", "en": "English", "zh-TW": "繁體中文" },
+  "Status": { "ready": "可用", "preview": "預覽", "planned": "規劃中" },
+  "Detail": {
+    "toolComingSoon": "此工具會在後續階段推出。",
+    "playgroundComingSoon": "此 playground 會在後續階段推出。",
+    "packageComingSoon": "套件詳情與 playground 會在後續階段推出。",
+    "status": "狀態:{status}",
+    "workbenchBadge": "Workbench ↗",
+    "install": "安裝",
+    "relatedTools": "相關工具",
+    "viewOnNpm": "npm",
+    "viewOnGithub": "GitHub"
+  },
+  "Tools": {
+    "object-flatten": { "title": "物件壓平 / 還原", "description": "把巢狀物件壓平成點路徑鍵,並可還原。" },
+    "type-converter": { "title": "資料型別轉換器", "description": "在字串、數字、布林、日期之間轉換值。" },
+    "data-filter-tester": { "title": "JSONPath 篩選測試器", "description": "對範例資料即時執行 @rfjs/data-filter 條件。" },
+    "jwt-decoder": { "title": "JWT 解碼器", "description": "在本機解碼 JWT 標頭與內容 —— 資料不離開瀏覽器。" },
+    "jsonb-query-generator": { "title": "篩選 → JSONB SQL", "description": "從篩選 metadata 產生 PostgreSQL JSONB 查詢。" },
+    "mongo-query-generator": { "title": "篩選 → Mongo 查詢", "description": "從篩選 metadata 產生 MongoDB 查詢。" },
+    "data-filter-builder": { "title": "資料篩選建構器", "description": "視覺化組合巢狀篩選條件並匯出。" },
+    "object-transformer": { "title": "物件轉換器", "description": "互動式物件轉換 playground。" }
+  },
+  "ToolUI": {
+    "input": "輸入",
+    "output": "輸出",
+    "inputValue": "值",
+    "targetType": "目標型別",
+    "jsonInput": "JSON",
+    "copy": "複製",
+    "types": {
+      "string": "字串",
+      "number": "數字",
+      "integer": "整數",
+      "boolean": "布林",
+      "date": "日期",
+      "any": "任意"
+    },
+    "error": {
+      "nan": "不是數字",
+      "invalidDate": "無效日期",
+      "invalidJson": "無效的 JSON",
+      "notObject": "需要 JSON 物件"
+    }
+  },
+  "Packages": {
+    "data-filter": { "description": "用 JSONPath 條件篩選記憶體內資料。" },
+    "data-transform": { "description": "資料型別轉換工具(字串/數字/布林/日期)。" },
+    "data-label": { "description": "從資料路徑、值對應與樣板組合顯示用標籤字串。" },
+    "jsonb-query": { "description": "從篩選 metadata 建構 PostgreSQL JSONB 查詢。" },
+    "jwt": { "description": "JWT 簽署/驗證/解碼工具。" },
+    "mongo-query": { "description": "從篩選 metadata 建構 MongoDB 查詢。" },
+    "object-utils": { "description": "物件操作工具(壓平、路徑、合併)。" },
+    "pg-toolkit": { "description": "PostgreSQL 管理工具(seed 歷史、建立 DB/schema)。" },
+    "retry": { "description": "可設定延遲的重試工具。" },
+    "tpl-toolkit": { "description": "rfjs 專案範本的共用設定工廠。" }
+  }
+}

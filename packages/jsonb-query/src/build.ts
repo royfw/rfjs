@@ -9,7 +9,6 @@ import type {
 import { ParamBuilder } from './param-builder';
 import { quoteJsonbColumn } from './column';
 import {
-  type ConditionScope,
   type JsonbQueryDialect,
   type RenderContext,
   assertCondition,
@@ -18,6 +17,7 @@ import {
   jsonpathDialect,
 } from './dialect';
 import { renderObjectCondition } from './object-condition';
+import { JsonbQueryError } from './errors';
 
 const DIALECTS = {
   legacy: legacyDialect,
@@ -33,9 +33,8 @@ function renderCondition(
   column: string,
   dialect: JsonbQueryDialect,
   ctx: RenderContext,
-  scope: ConditionScope,
 ): string {
-  assertCondition(node, scope);
+  assertCondition(node);
   if (isElemMatch(node)) {
     return dialect.renderElemMatch(column, node, ctx);
   }
@@ -53,22 +52,28 @@ function buildGroup(
   column: string,
   dialect: JsonbQueryDialect,
   ctx: RenderContext,
-  scope: ConditionScope,
 ): string {
   const parts = group.filters
     .map((node) =>
       isFilterGroup(node)
-        ? wrap(buildGroup(node, column, dialect, ctx, scope))
-        : renderCondition(node, column, dialect, ctx, scope),
+        ? wrap(buildGroup(node, column, dialect, ctx))
+        : renderCondition(node, column, dialect, ctx),
     )
     .filter((sql) => sql.length > 0);
   return joinLogic(parts, group.logic);
 }
 
+const EMPTY_GROUP_IDENTITY: Record<JsonbFilterGroup['logic'], string> = {
+  and: 'true',
+  or: 'false',
+  not: 'false', // not(AND of nothing) = not(true)
+  nor: 'true', // not(OR of nothing) = not(false)
+};
+
 /** Join rendered parts per group logic; `not`/`nor` negate the joined result. */
 function joinLogic(parts: string[], logic: JsonbFilterGroup['logic']): string {
   if (parts.length === 0) {
-    return '';
+    return EMPTY_GROUP_IDENTITY[logic];
   }
   const joined = parts.join(logic === 'or' || logic === 'nor' ? ' or ' : ' and ');
   return logic === 'not' || logic === 'nor' ? `not (${joined})` : joined;
@@ -87,7 +92,7 @@ export function buildJsonbQuery(
   const dialectName = options.dialect ?? 'legacy';
   const dialect = DIALECTS[dialectName];
   if (!dialect) {
-    throw new Error(`Unknown JSONB dialect: "${dialectName}"`);
+    throw new JsonbQueryError(`Unknown JSONB dialect: "${dialectName}"`, 'INVALID_DIALECT');
   }
   const params = new ParamBuilder(options.paramOffset ?? 0);
   let aliasCount = 0;
@@ -97,8 +102,8 @@ export function buildJsonbQuery(
       aliasCount += 1;
       return `e${aliasCount}`;
     },
-    renderGroup: (group, col) => buildGroup(group, col, dialect, ctx, 'elemmatch'),
+    renderGroup: (group, col) => buildGroup(group, col, dialect, ctx),
   };
-  const where = buildGroup(filter, quoted, dialect, ctx, 'root');
+  const where = buildGroup(filter, quoted, dialect, ctx);
   return { where, values: params.values, from: [] };
 }

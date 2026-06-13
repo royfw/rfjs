@@ -1,0 +1,92 @@
+import type { PackageDefinition } from './schemas';
+
+const GITHUB = 'https://github.com/royfw/rfjs';
+
+const npmUrl = (name: string) => `https://www.npmjs.com/package/${name}`;
+
+export const packageRegistry: PackageDefinition[] = [
+  {
+    name: '@rfjs/data-filter',
+    status: 'ready',
+    href: '/packages/data-filter',
+    npm: npmUrl('@rfjs/data-filter'),
+    github: GITHUB,
+    tags: ['filter', 'jsonpath'],
+    relatedTools: ['data-filter-tester', 'data-filter-builder'],
+  },
+  {
+    name: '@rfjs/data-transform',
+    status: 'ready',
+    href: '/packages/data-transform',
+    npm: npmUrl('@rfjs/data-transform'),
+    github: GITHUB,
+    tags: ['transform', 'types'],
+    relatedTools: ['type-converter', 'object-transformer'],
+  },
+  {
+    name: '@rfjs/data-label',
+    status: 'preview',
+    href: '/packages/data-label',
+    github: GITHUB,
+    tags: ['label', 'template'],
+  },
+  {
+    name: '@rfjs/jsonb-query',
+    status: 'preview',
+    href: '/packages/jsonb-query',
+    github: GITHUB,
+    tags: ['postgres', 'jsonb'],
+    relatedTools: ['jsonb-query-generator'],
+  },
+  {
+    name: '@rfjs/jwt',
+    status: 'ready',
+    href: '/packages/jwt',
+    npm: npmUrl('@rfjs/jwt'),
+    github: GITHUB,
+    tags: ['jwt', 'auth'],
+    relatedTools: ['jwt-decoder'],
+  },
+  {
+    name: '@rfjs/mongo-query',
+    status: 'ready',
+    href: '/packages/mongo-query',
+    npm: npmUrl('@rfjs/mongo-query'),
+    github: GITHUB,
+    tags: ['mongodb', 'query'],
+    relatedTools: ['mongo-query-generator'],
+  },
+  {
+    name: '@rfjs/object-utils',
+    status: 'ready',
+    href: '/packages/object-utils',
+    npm: npmUrl('@rfjs/object-utils'),
+    github: GITHUB,
+    tags: ['object', 'flatten'],
+    relatedTools: ['object-flatten', 'object-transformer'],
+  },
+  {
+    name: '@rfjs/pg-toolkit',
+    status: 'ready',
+    href: '/packages/pg-toolkit',
+    npm: npmUrl('@rfjs/pg-toolkit'),
+    github: GITHUB,
+    tags: ['postgres', 'admin'],
+  },
+  {
+    name: '@rfjs/retry',
+    status: 'ready',
+    href: '/packages/retry',
+    npm: npmUrl('@rfjs/retry'),
+    github: GITHUB,
+    tags: ['retry', 'async'],
+  },
+  {
+    name: '@rfjs/tpl-toolkit',
+    status: 'ready',
+    href: '/packages/tpl-toolkit',
+    npm: npmUrl('@rfjs/tpl-toolkit'),
+    github: GITHUB,
+    tags: ['config', 'templates'],
+  },
+];

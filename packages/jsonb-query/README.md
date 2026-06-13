@@ -56,6 +56,10 @@ const { where, values } = buildJsonbQuery('data', filter, { paramOffset: 1 });
 await client.query(`SELECT * FROM t WHERE org_id = $1 AND ${where}`, [orgId, ...values]);
 ```
 
+An empty filter group renders its boolean identity (`and`/`nor` → `true`,
+`or`/`not` → `false`) rather than an empty string, so `WHERE ${where}` is always
+valid SQL. An `elemmatch` still requires at least one condition.
+
 ### Named parameters (TypeORM QueryBuilder, Knex)
 
 The positional `$N` output feeds `pg`, TypeORM raw queries, Prisma
@@ -78,6 +82,80 @@ collisions when composing several fragments. Repeated placeholder references
 positional-`?` conversion cannot express. To convert an existing positional
 result instead, use the underlying `toNamedParams(result, prefix?)`.
 
+## Errors
+
+Every caller-input problem throws a `JsonbQueryError` carrying a stable `code`;
+any other thrown type signals an internal bug.
+
+```typescript
+import { JsonbQueryError } from '@rfjs/jsonb-query';
+
+try {
+  buildJsonbQuery('data', filter);
+} catch (e) {
+  if (e instanceof JsonbQueryError) {
+    // e.code: 'INVALID_COLUMN' | 'INVALID_DIALECT' | 'UNSUPPORTED_OPERATOR'
+    //       | 'INVALID_ELEMENT_TYPE' | 'INVALID_SCALAR_VALUE' | 'INVALID_ARRAY_VALUE'
+    //       | 'INVALID_OBJECT_VALUE' | 'EMPTY_FILTER_GROUP' | 'INVALID_PREFIX'
+    //       | 'PARAM_MISMATCH' | 'INVALID_SORT'
+  }
+}
+```
+
+## Indexing
+
+| Operators | Index that helps |
+| --- | --- |
+| object `contains`/`containsall` (`@>`), `haskey`/`hasanykey`/`hasallkeys` (`?`/`?|`/`?&`) | default `GIN (col jsonb_ops)` |
+| `jsonpath` dialect predicates (`@?` / `@@`) | `GIN (col jsonb_path_ops)` |
+| `legacy` scalar comparisons on a hot path | b-tree **expression** index, e.g. `CREATE INDEX ON t ((data #>> '{status}'))` |
+
+`contains` / `icontains` / `startswith` / `istartswith` / `endswith` /
+`iendswith` are **not** index-served (they scan); for heavy substring search use
+a `pg_trgm` GIN index. The jsonpath `elemmatch` SQL-fallback fragment (object or
+`containsall` leaf) is not served by a `jsonb_path_ops` GIN index.
+
+## Sorting
+
+`buildJsonbOrderBy` turns sort metadata into a parameterized `ORDER BY` fragment,
+reusing the same path extraction and casts as the `WHERE` builder. It is
+**dialect-independent** (ordering always extracts a scalar; there is no jsonpath
+ordering construct), so it takes no `dialect` option. Use `paramOffset` to
+compose it after a `WHERE`:
+
+```typescript
+import { buildJsonbQuery, buildJsonbOrderBy } from '@rfjs/jsonb-query';
+
+const { where, values } = buildJsonbQuery('data', filter);
+const ob = buildJsonbOrderBy('data', [
+  { field: 'age', dataType: 'numeric', direction: 'desc', nulls: 'last' },
+  { field: 'name', dataType: 'string' }, // direction defaults to 'asc'
+], { paramOffset: values.length });
+// ob.orderBy: '("data" #>> $3)::numeric desc nulls last, ("data" #>> $4) asc'
+await client.query(
+  `SELECT * FROM t WHERE ${where} ORDER BY ${ob.orderBy}`,
+  [...values, ...ob.values],
+);
+```
+
+`nulls` is optional; omit it to use PostgreSQL's default (`NULLS LAST` for `asc`,
+`NULLS FIRST` for `desc`). Empty `sorts` yields an empty `orderBy` string (just
+omit the `ORDER BY` clause). Only scalar `dataType`s are orderable; an invalid
+`dataType` / `direction` / `nulls` throws `JsonbQueryError` with code
+`INVALID_SORT`.
+
+For named-binding query layers (TypeORM QueryBuilder, Knex), use
+`buildNamedJsonbOrderBy` (`:pN` output) — the ORDER BY counterpart to
+`buildNamedJsonbQuery`:
+
+```typescript
+const { orderBy, params } = buildNamedJsonbOrderBy('data', [
+  { field: 'age', dataType: 'numeric', direction: 'desc' },
+], { prefix: 'o' });
+// orderBy: '("data" #>> :o1)::numeric desc'   params: { o1: ['age'] }
+qb.addOrderBy(orderBy).setParameters(params);
+```
+
 ## Safety
 
 Condition **values** and **field paths** are always parameterized — never
@@ -95,12 +173,12 @@ is not a plain (optionally qualified) column reference is rejected.
 
 | dataType                          | operators                                                                  |
 | --------------------------------- | -------------------------------------------------------------------------- |
-| `string`                          | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `terms` |
+| `string`                          | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `terms` `icontains` `istartswith` `iendswith` `ieq` `ineq` |
 | `numeric`                         | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms`      |
 | `date`                            | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms`      |
 | `boolean`                         | `eq` `neq` `isnull` `isnotnull`                                            |
-| `object`                          | `eq` `neq` `contains` `isnull` `isnotnull`                                 |
-| `array` + scalar `elementType`    | element ops (see below) + `containsall` + `isnull` `isnotnull`             |
+| `object`                          | `eq` `neq` `contains` `isnull` `isnotnull` `haskey` `hasanykey` `hasallkeys`               |
+| `array` + scalar `elementType`    | element ops (`neq` = value not present) + `containsall` + `isempty` `isnotempty` + `isnull` `isnotnull` |
 | `array` + `elementType: 'object'` | `elemmatch`                                                                |
 
 `range` takes a 2-element `[lo, hi]` value; `terms` takes a non-empty array.
@@ -119,13 +197,56 @@ jsonb containment (`@>`):
 Object conditions render the same SQL in both dialects (SQL/JSON path predicates
 cannot compare non-scalar values), and `@>` is GIN-indexable.
 
+### Key existence (object)
+
+`haskey` / `hasanykey` / `hasallkeys` test for the presence of object **keys**
+(jsonb `?` / `?|` / `?&`), regardless of the value at that key — distinct from
+`isnotnull`, which tests the value (a key present with a JSON `null` value is
+`haskey: true` but `isnotnull: false`). All three are GIN-indexable.
+
+```typescript
+{ field: 'profile', dataType: 'object', operator: 'haskey', value: 'vip' }
+//  (("data" #> $1) ? $2)              values: [['profile'], 'vip']
+{ field: 'profile', dataType: 'object', operator: 'hasanykey', value: ['vip','premium'] }
+//  (("data" #> $1) ?| $2::text[])
+{ field: 'profile', dataType: 'object', operator: 'hasallkeys', value: ['vip','level'] }
+//  (("data" #> $1) ?& $2::text[])
+```
+
+> **`?` placeholder collision:** these operators emit a literal `?` / `?|` / `?&`
+> in the SQL. node-postgres uses `$N` placeholders, so this is safe there. Query
+> layers that treat `?` as a bind placeholder (e.g. Knex `whereRaw`) will
+> misparse it — use `buildNamedJsonbQuery` (`:pN` output) with those, or a driver
+> that uses `$N`.
+
+### Case-insensitive text
+
+`icontains` / `istartswith` / `iendswith` / `ieq` / `ineq` match strings
+case-insensitively. The legacy dialect lowercases both sides (`lower()`); the
+jsonpath dialect uses `like_regex … flag "i"`.
+
+> Case folding differs slightly between dialects on non-ASCII text: `lower()`
+> follows the database `LC_CTYPE`, while jsonpath `flag "i"` uses its own Unicode
+> rules. ASCII text matches identically.
+
+### Array emptiness
+
+`isempty` / `isnotempty` test whether a scalar-element array field has zero /
+at least one element (`jsonb_array_length`). A missing field or non-array value
+is **neither** (both operators return false). They render identical SQL in both
+dialects.
+
 ### JSON arrays (scalar elements)
 
 Declare `dataType: 'array'` with the element type in `elementType`. Scalar
 operators match with **"some element matches"** (∃) semantics; `isnull`/
 `isnotnull` test the array field itself; `containsall` (string/numeric elements)
-requires every listed value to be present. `neq` is not allowed on elements
-(exists-vs-forall ambiguity).
+requires every listed value to be present.
+
+`neq` means **"value not present"** (∀ element ≠ value) — the negation of `eq`'s
+"some element matches"; a missing field counts as not-present and matches. It is
+the inline equivalent of wrapping `eq` in a `not` group. (A *non-array* stored
+value diverges between dialects — see the Semantics notes below.)
 
 ```typescript
 { field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' }
@@ -144,8 +265,11 @@ boolean → `eq`.
 
 All sub-conditions must hold on the **same element**. Sub-`field`s are relative
 to the element; nested `and`/`or` groups and nested `elemmatch` are supported.
-Object-valued and scalar-array conditions inside `elemmatch` are not supported
-yet (rejected in both dialects).
+Object-valued and scalar-array conditions are supported inside `elemmatch`. In
+the `jsonpath` dialect, an `elemmatch` whose body contains an object condition or
+a scalar-array `containsall` (neither expressible as a SQL/JSON path predicate)
+falls back to a SQL `EXISTS` sub-select for that fragment — same results, but
+that fragment is not served by a `jsonb_path_ops` GIN index.
 
 ```typescript
 {
@@ -186,7 +310,9 @@ Group `logic` is aligned with `@rfjs/data-filter`'s `LogicalOperator`:
 }
 // legacy:   not ((exists (select 1 from jsonb_array_elements_text(...) where (e1.v = $2))))
 // jsonpath: not (jsonb_path_exists("data", $1::jsonpath, $2::jsonb))
-// A missing field or non-array value counts as "does not contain" in both dialects.
+// A missing field counts as "does not contain" in both dialects. A non-array
+// stored value diverges (legacy: treated as empty array; jsonpath lax mode
+// wraps the scalar into a one-element array) — see the Semantics notes.
 ```
 
 > **SQL three-valued logic caveat:** negating a **scalar** condition on a
@@ -194,8 +320,9 @@ Group `logic` is aligned with `@rfjs/data-filter`'s `LogicalOperator`:
 > `@rfjs/data-filter`, which evaluates the same `not` in memory and matches.
 > When "missing field" should match, add an explicit `isnull` condition:
 > `{ logic: 'or', filters: [{ logic: 'not', ... }, { field, dataType, operator: 'isnull' }] }`.
-> Array conditions are not affected (the empty-array guard keeps both dialects
-> consistent).
+> Array conditions on a *missing* field are not affected (the empty-array guard
+> keeps both dialects consistent); a *non-array stored value* still diverges
+> between dialects (jsonpath lax mode wraps the scalar — see the Semantics notes).
 
 ### Semantics notes
 
