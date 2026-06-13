@@ -1,5 +1,19 @@
 # @rfjs/mongo-query
 
+## 0.1.1
+
+### Patch Changes
+
+- a72251f: chore(packages): add npm metadata for the public repo
+
+  - Add `repository` (with per-package `directory`), `bugs`, and `homepage` fields so npm package pages link back to the now-public GitHub repo
+  - Fill in `keywords` for npm search discoverability
+  - Fix pg-toolkit README titles to the published `@rfjs/pg-toolkit` scope
+
+- Updated dependencies [333b1b5]
+- Updated dependencies [a72251f]
+  - @rfjs/data-transform@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
