@@ -6,6 +6,7 @@ import {
   renderNullCheck,
   renderJsonbContains,
 } from './dialect';
+import { JsonbQueryError } from './errors';
 
 /**
  * Object conditions render the same SQL in both dialects: SQL/JSON path
@@ -32,6 +33,6 @@ export function renderObjectCondition(
       return `(${F} ${operator === 'eq' ? '=' : '<>'} ${params.add(JSON.stringify(obj))}::jsonb)`;
     }
     default:
-      throw new Error(`Unsupported operator "${operator as string}" for type "object"`);
+      throw new JsonbQueryError(`Unsupported operator "${operator as string}" for type "object"`, 'UNSUPPORTED_OPERATOR');
   }
 }

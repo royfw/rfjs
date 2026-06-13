@@ -1,5 +1,6 @@
 import type { BuildJsonbOptions, JsonbFilterGroup, JsonbQueryResult } from './types';
 import { buildJsonbQuery } from './build';
+import { JsonbQueryError } from './errors';
 
 export interface NamedParamsResult {
   where: string;
@@ -26,7 +27,7 @@ const PREFIX = /^[A-Za-z_][A-Za-z0-9_]*$/;
  */
 export function toNamedParams(result: JsonbQueryResult, prefix = 'p'): NamedParamsResult {
   if (!PREFIX.test(prefix)) {
-    throw new Error(`Invalid named-parameter prefix: ${JSON.stringify(prefix)}`);
+    throw new JsonbQueryError(`Invalid named-parameter prefix: ${JSON.stringify(prefix)}`, 'INVALID_PREFIX');
   }
 
   // The lookbehind keeps `$` inside quoted identifiers (e.g. "t$1") from being
@@ -45,7 +46,7 @@ export function toNamedParams(result: JsonbQueryResult, prefix = 'p'): NamedPara
     numbers.length === result.values.length &&
     numbers.every((n, i) => n === offset + i + 1);
   if (!contiguous) {
-    throw new Error('toNamedParams: placeholders do not match the values array');
+    throw new JsonbQueryError('toNamedParams: placeholders do not match the values array', 'PARAM_MISMATCH');
   }
 
   return {

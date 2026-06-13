@@ -18,6 +18,7 @@ import {
   jsonpathDialect,
 } from './dialect';
 import { renderObjectCondition } from './object-condition';
+import { JsonbQueryError } from './errors';
 
 const DIALECTS = {
   legacy: legacyDialect,
@@ -87,7 +88,7 @@ export function buildJsonbQuery(
   const dialectName = options.dialect ?? 'legacy';
   const dialect = DIALECTS[dialectName];
   if (!dialect) {
-    throw new Error(`Unknown JSONB dialect: "${dialectName}"`);
+    throw new JsonbQueryError(`Unknown JSONB dialect: "${dialectName}"`, 'INVALID_DIALECT');
   }
   const params = new ParamBuilder(options.paramOffset ?? 0);
   let aliasCount = 0;

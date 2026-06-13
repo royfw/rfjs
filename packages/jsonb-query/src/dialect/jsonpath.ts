@@ -18,6 +18,7 @@ import {
 } from './base';
 import type { ParamBuilder } from '../param-builder';
 import { escapeJsonpathString, escapeRegexLiteral } from './escape';
+import { JsonbQueryError } from '../errors';
 
 /** `$."a"."b"` / `@."a"."b"` accessor for a dot path, members escaped. */
 function memberAccessor(root: '$' | '@', field: string): string {
@@ -150,7 +151,7 @@ function scalarPredicate(
     case 'isnotnull':
       return { pred: `exists (${acc}) && ${acc} != null`, compound: true };
     default:
-      throw new Error(`Unsupported operator "${operator as string}"`);
+      throw new JsonbQueryError(`Unsupported operator "${operator as string}"`, 'UNSUPPORTED_OPERATOR');
   }
 }
 
@@ -211,7 +212,7 @@ function conditionPredicate(node: JsonbCondition, sink: VarSink): string {
   if (node.dataType === 'array' && node.elementType === 'object') {
     const inner = groupPredicate(node.filters, sink);
     if (inner.length === 0) {
-      throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+      throw new JsonbQueryError('Operator "elemmatch" requires a filter group with at least one condition', 'EMPTY_FILTER_GROUP');
     }
     return `exists (${memberAccessor('@', node.field)}[*] ? (${inner}))`;
   }
@@ -254,7 +255,7 @@ export const jsonpathDialect: JsonbQueryDialect = {
     const sink = sequentialSink();
     const pred = groupPredicate(condition.filters, sink);
     if (pred.length === 0) {
-      throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+      throw new JsonbQueryError('Operator "elemmatch" requires a filter group with at least one condition', 'EMPTY_FILTER_GROUP');
     }
     return pathExists(
       column,

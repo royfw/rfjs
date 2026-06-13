@@ -8,6 +8,7 @@ import {
   renderJsonbContains,
 } from './base';
 import type { ParamBuilder } from '../param-builder';
+import { JsonbQueryError } from '../errors';
 
 const CASTS: Record<JsonbScalarType, string> = {
   string: '',
@@ -62,7 +63,7 @@ function renderScalarOp(
       return `(right(${F}, char_length(${v})) = ${v})`;
     }
     default:
-      throw new Error(`Unsupported operator "${operator as string}"`);
+      throw new JsonbQueryError(`Unsupported operator "${operator as string}"`, 'UNSUPPORTED_OPERATOR');
   }
 }
 
@@ -95,7 +96,7 @@ export const legacyDialect: JsonbQueryDialect = {
     const alias = ctx.nextAlias();
     const sub = ctx.renderGroup(condition.filters, `${alias}.value`);
     if (sub.length === 0) {
-      throw new Error('Operator "elemmatch" requires a filter group with at least one condition');
+      throw new JsonbQueryError('Operator "elemmatch" requires a filter group with at least one condition', 'EMPTY_FILTER_GROUP');
     }
     return `(exists (select 1 from jsonb_array_elements(${guarded}) as ${alias} where ${sub}))`;
   },
