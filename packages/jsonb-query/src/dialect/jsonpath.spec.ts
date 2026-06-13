@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { jsonpathDialect } from './jsonpath';
+import { buildJsonbQuery } from '../build';
 import { ParamBuilder } from '../param-builder';
 import type { RenderContext } from './base';
 import type {
@@ -258,15 +259,42 @@ describe('jsonpathDialect.renderElemMatch', () => {
     ).toBe('$."items"[*] ? (@."a\\"b" == $v0)');
   });
 
-  // The scalar-array branch in conditionPredicate is implemented in Task 4;
-  // until then a scalar-array leaf inside elemmatch is not rendered as a nested
-  // path predicate. Task 4 enables this test.
-  it.skip('renders scalar-array conditions inside elemmatch as a nested path predicate', () => {
+  it('renders scalar-array conditions inside elemmatch as a nested path predicate', () => {
     const { values } = runElem('items', {
       logic: 'and',
       filters: [{ field: 't', dataType: 'array', elementType: 'string', operator: 'eq', value: 'x' }],
     });
     expect(values[0]).toContain('exists (@."t"[*] ? (@ == $v0))');
+  });
+
+  it('falls back to a SQL EXISTS shell when an object leaf is present', () => {
+    // The fallback delegates to legacyDialect.renderElemMatch, which needs a
+    // real ctx.renderGroup (the unit makeCtx stub deliberately omits it), so
+    // drive it through buildJsonbQuery with the jsonpath dialect.
+    const { where, values } = buildJsonbQuery(
+      'data',
+      {
+        logic: 'and',
+        filters: [
+          {
+            field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+            filters: {
+              logic: 'and',
+              filters: [
+                { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+                { field: 'meta', dataType: 'object', operator: 'contains', value: { vip: true } },
+              ],
+            },
+          },
+        ],
+      },
+      { dialect: 'jsonpath' },
+    );
+    // legacy EXISTS shell with a jsonpath scalar leaf and an @> object leaf
+    expect(where).toContain('jsonb_array_elements(');
+    expect(where).toContain('jsonb_path_exists(e1.value,');
+    expect(where).toContain('@>');
+    expect(values[0]).toEqual(['items']);
   });
 
   it('throws when the group renders empty', () => {

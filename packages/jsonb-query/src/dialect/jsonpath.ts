@@ -4,7 +4,6 @@ import type {
   JsonbValue,
   JsonbCondition,
   JsonbFilterGroup,
-  JsonbScalarCondition,
 } from '../types';
 import {
   type JsonbQueryDialect,
@@ -15,7 +14,9 @@ import {
   isFilterGroup,
   renderNullCheck,
   renderJsonbContains,
+  groupNeedsSqlFallback,
 } from './base';
+import { legacyDialect } from './legacy';
 import type { ParamBuilder } from '../param-builder';
 import { escapeJsonpathString, escapeRegexLiteral } from './escape';
 import { JsonbQueryError } from '../errors';
@@ -216,8 +217,30 @@ function conditionPredicate(node: JsonbCondition, sink: VarSink): string {
     }
     return `exists (${memberAccessor('@', node.field)}[*] ? (${inner}))`;
   }
+  if (node.dataType === 'array') {
+    // scalar-element array nested inside elemmatch.
+    const arr = node;
+    const acc = memberAccessor('@', arr.field);
+    if (arr.operator === 'isnull' || arr.operator === 'isnotnull') {
+      const { pred } = scalarPredicate(acc, 'string', arr.operator, undefined, sink);
+      return `(${pred})`;
+    }
+    // containsall never reaches here: groupNeedsSqlFallback routes such groups
+    // to the SQL EXISTS fallback before any path predicate is built.
+    const operator = arr.operator as JsonbScalarOperator;
+    const { pred } = scalarPredicate('@', arr.elementType, operator, arr.value, sink);
+    return `exists (${acc}[*] ? (${pred}))`;
+  }
+  if (node.dataType === 'object') {
+    // Unreachable: object conditions force the SQL EXISTS fallback. Guard
+    // against silently mis-rendering an object as a scalar comparison.
+    throw new JsonbQueryError(
+      'Object conditions cannot be expressed as a jsonpath predicate',
+      'UNSUPPORTED_OPERATOR',
+    );
+  }
   // assertCondition only lets scalar conditions through past this point.
-  const scalar = node as JsonbScalarCondition;
+  const scalar = node;
   const { pred, compound } = scalarPredicate(
     memberAccessor('@', scalar.field),
     scalar.dataType,
@@ -252,6 +275,12 @@ export const jsonpathDialect: JsonbQueryDialect = {
     return pathExists(column, `${memberAccessor('$', field)}[*] ? (${pred})`, sink.vars, params, sink.tz);
   },
   renderElemMatch(column, condition, ctx) {
+    if (groupNeedsSqlFallback(condition.filters)) {
+      // Object / containsall leaves can't live in a path predicate. Use the
+      // legacy EXISTS shell; its body renders each leaf through THIS (jsonpath)
+      // dialect via ctx.renderGroup.
+      return legacyDialect.renderElemMatch(column, condition, ctx);
+    }
     const sink = sequentialSink();
     const pred = groupPredicate(condition.filters, sink);
     if (pred.length === 0) {

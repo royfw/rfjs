@@ -186,3 +186,29 @@ export function assertCondition(node: JsonbCondition): void {
   }
   assertOperatorForType(node.dataType, node.operator);
 }
+
+/**
+ * True when any node in this elemmatch predicate subtree cannot be expressed as
+ * a SQL/JSON path predicate (it needs `@>` / `#>>` instead): an object
+ * condition, or a scalar-array `containsall`. Recurses through nested groups and
+ * nested elemmatch — an outer path predicate can only embed a nested elemmatch
+ * when the nested predicate is itself path-expressible.
+ */
+export function groupNeedsSqlFallback(group: JsonbFilterGroup): boolean {
+  return group.filters.some((node) =>
+    isFilterGroup(node) ? groupNeedsSqlFallback(node) : conditionNeedsSqlFallback(node),
+  );
+}
+
+function conditionNeedsSqlFallback(node: JsonbCondition): boolean {
+  if (node.dataType === 'object') {
+    return true;
+  }
+  if (node.dataType === 'array') {
+    if (node.elementType === 'object') {
+      return groupNeedsSqlFallback(node.filters);
+    }
+    return node.operator === 'containsall';
+  }
+  return false;
+}

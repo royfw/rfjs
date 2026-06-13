@@ -5,9 +5,10 @@ import {
   isFilterGroup,
   assertCondition,
   assertObjectValue,
+  groupNeedsSqlFallback,
 } from './base';
 import { ParamBuilder } from '../param-builder';
-import type { JsonbCondition } from '../types';
+import type { JsonbCondition, JsonbFilterGroup } from '../types';
 
 describe('renderNullCheck', () => {
   it('renders is null / is not null with a parameterized path', () => {
@@ -99,5 +100,38 @@ describe('assertCondition', () => {
     expect(c({ field: 'p', dataType: 'object', operator: 'gt', value: {} })).toThrow(
       /unsupported operator "gt" for type "object"/i,
     );
+  });
+});
+
+describe('groupNeedsSqlFallback', () => {
+  const g = (filters: JsonbFilterGroup['filters']): JsonbFilterGroup => ({ logic: 'and', filters });
+
+  it('false for scalar-only and path-expressible scalar-array groups', () => {
+    expect(groupNeedsSqlFallback(g([{ field: 's', dataType: 'string', operator: 'eq', value: 'x' }]))).toBe(false);
+    expect(groupNeedsSqlFallback(g([{ field: 't', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' }]))).toBe(false);
+    expect(groupNeedsSqlFallback(g([{ field: 't', dataType: 'array', elementType: 'string', operator: 'isnull' }]))).toBe(false);
+  });
+
+  it('true for object conditions and scalar-array containsall', () => {
+    expect(groupNeedsSqlFallback(g([{ field: 'p', dataType: 'object', operator: 'contains', value: {} }]))).toBe(true);
+    expect(groupNeedsSqlFallback(g([{ field: 't', dataType: 'array', elementType: 'string', operator: 'containsall', value: ['a'] }]))).toBe(true);
+  });
+
+  it('recurses through nested groups and nested elemmatch', () => {
+    expect(groupNeedsSqlFallback(g([{ logic: 'or', filters: [{ field: 'p', dataType: 'object', operator: 'eq', value: {} }] } as never]))).toBe(true);
+    const nestedElem = g([
+      {
+        field: 'sub', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+        filters: { logic: 'and', filters: [{ field: 'p', dataType: 'object', operator: 'eq', value: {} }] },
+      } as never,
+    ]);
+    expect(groupNeedsSqlFallback(nestedElem)).toBe(true);
+    const nestedElemScalar = g([
+      {
+        field: 'sub', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+        filters: { logic: 'and', filters: [{ field: 's', dataType: 'string', operator: 'eq', value: 'x' }] },
+      } as never,
+    ]);
+    expect(groupNeedsSqlFallback(nestedElemScalar)).toBe(false);
   });
 });
