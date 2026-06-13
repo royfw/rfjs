@@ -23,7 +23,6 @@ export default async function HomePage({
   const features = [
     { title: tf("showcaseTitle"), body: tf("showcaseBody"), href: "/packages" },
     { title: tf("toolsTitle"), body: tf("toolsBody"), href: "/tools" },
-    { title: tf("playgroundTitle"), body: tf("playgroundBody"), href: "/playground" },
     { title: tf("templatesTitle"), body: tf("templatesBody"), href: "/templates" },
   ];
   return (
@@ -65,7 +64,7 @@ export default async function HomePage({
 
       <section className="flex flex-col gap-4">
         <h2 className="font-sans text-lg font-semibold tracking-tight">{t("startHere")}</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f, i) => (
             <Link
               key={f.title}
