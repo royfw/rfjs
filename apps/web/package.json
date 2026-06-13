@@ -13,6 +13,8 @@
     "vitest:run": "vitest run"
   },
   "dependencies": {
+    "@rfjs/data-transform": "workspace:*",
+    "@rfjs/object-utils": "workspace:*",
     "@rfjs/web-core": "workspace:*",
     "@rfjs/web-ui": "workspace:*",
     "lucide-react": "^1.17.0",

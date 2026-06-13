@@ -281,6 +281,12 @@ importers:
 
   apps/web:
     dependencies:
+      '@rfjs/data-transform':
+        specifier: workspace:*
+        version: link:../../packages/data-transform
+      '@rfjs/object-utils':
+        specifier: workspace:*
+        version: link:../../packages/object-utils
       '@rfjs/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core

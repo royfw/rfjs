@@ -57,6 +57,28 @@
     "data-filter-builder": { "title": "資料篩選建構器", "description": "視覺化組合巢狀篩選條件並匯出。" },
     "object-transformer": { "title": "物件轉換器", "description": "互動式物件轉換 playground。" }
   },
+  "ToolUI": {
+    "input": "輸入",
+    "output": "輸出",
+    "inputValue": "值",
+    "targetType": "目標型別",
+    "jsonInput": "JSON",
+    "copy": "複製",
+    "types": {
+      "string": "字串",
+      "number": "數字",
+      "integer": "整數",
+      "boolean": "布林",
+      "date": "日期",
+      "any": "任意"
+    },
+    "error": {
+      "nan": "不是數字",
+      "invalidDate": "無效日期",
+      "invalidJson": "無效的 JSON",
+      "notObject": "需要 JSON 物件"
+    }
+  },
   "Packages": {
     "data-filter": { "description": "用 JSONPath 條件篩選記憶體內資料。" },
     "data-transform": { "description": "資料型別轉換工具(字串/數字/布林/日期)。" },
