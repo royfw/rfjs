@@ -102,6 +102,19 @@ try {
 }
 ```
 
+## Indexing
+
+| Operators | Index that helps |
+| --- | --- |
+| object `contains`/`containsall` (`@>`), `haskey`/`hasanykey`/`hasallkeys` (`?`/`?|`/`?&`) | default `GIN (col jsonb_ops)` |
+| `jsonpath` dialect predicates (`@?` / `@@`) | `GIN (col jsonb_path_ops)` |
+| `legacy` scalar comparisons on a hot path | b-tree **expression** index, e.g. `CREATE INDEX ON t ((data #>> '{status}'))` |
+
+`contains` / `icontains` / `startswith` / `istartswith` / `endswith` /
+`iendswith` are **not** index-served (they scan); for heavy substring search use
+a `pg_trgm` GIN index. The jsonpath `elemmatch` SQL-fallback fragment (object or
+`containsall` leaf) is not served by a `jsonb_path_ops` GIN index.
+
 ## Safety
 
 Condition **values** and **field paths** are always parameterized — never
@@ -119,12 +132,12 @@ is not a plain (optionally qualified) column reference is rejected.
 
 | dataType                          | operators                                                                  |
 | --------------------------------- | -------------------------------------------------------------------------- |
-| `string`                          | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `terms` |
+| `string`                          | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `terms` `icontains` `istartswith` `iendswith` `ieq` `ineq` |
 | `numeric`                         | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms`      |
 | `date`                            | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms`      |
 | `boolean`                         | `eq` `neq` `isnull` `isnotnull`                                            |
-| `object`                          | `eq` `neq` `contains` `isnull` `isnotnull`                                 |
-| `array` + scalar `elementType`    | element ops (`neq` = value not present) + `containsall` + `isnull` `isnotnull` |
+| `object`                          | `eq` `neq` `contains` `isnull` `isnotnull` `haskey` `hasanykey` `hasallkeys`               |
+| `array` + scalar `elementType`    | element ops (`neq` = value not present) + `containsall` + `isempty` `isnotempty` + `isnull` `isnotnull` |
 | `array` + `elementType: 'object'` | `elemmatch`                                                                |
 
 `range` takes a 2-element `[lo, hi]` value; `terms` takes a non-empty array.
@@ -142,6 +155,45 @@ jsonb containment (`@>`):
 
 Object conditions render the same SQL in both dialects (SQL/JSON path predicates
 cannot compare non-scalar values), and `@>` is GIN-indexable.
+
+### Key existence (object)
+
+`haskey` / `hasanykey` / `hasallkeys` test for the presence of object **keys**
+(jsonb `?` / `?|` / `?&`), regardless of the value at that key — distinct from
+`isnotnull`, which tests the value (a key present with a JSON `null` value is
+`haskey: true` but `isnotnull: false`). All three are GIN-indexable.
+
+```typescript
+{ field: 'profile', dataType: 'object', operator: 'haskey', value: 'vip' }
+//  (("data" #> $1) ? $2)              values: [['profile'], 'vip']
+{ field: 'profile', dataType: 'object', operator: 'hasanykey', value: ['vip','premium'] }
+//  (("data" #> $1) ?| $2::text[])
+{ field: 'profile', dataType: 'object', operator: 'hasallkeys', value: ['vip','level'] }
+//  (("data" #> $1) ?& $2::text[])
+```
+
+> **`?` placeholder collision:** these operators emit a literal `?` / `?|` / `?&`
+> in the SQL. node-postgres uses `$N` placeholders, so this is safe there. Query
+> layers that treat `?` as a bind placeholder (e.g. Knex `whereRaw`) will
+> misparse it — use `buildNamedJsonbQuery` (`:pN` output) with those, or a driver
+> that uses `$N`.
+
+### Case-insensitive text
+
+`icontains` / `istartswith` / `iendswith` / `ieq` / `ineq` match strings
+case-insensitively. The legacy dialect lowercases both sides (`lower()`); the
+jsonpath dialect uses `like_regex … flag "i"`.
+
+> Case folding differs slightly between dialects on non-ASCII text: `lower()`
+> follows the database `LC_CTYPE`, while jsonpath `flag "i"` uses its own Unicode
+> rules. ASCII text matches identically.
+
+### Array emptiness
+
+`isempty` / `isnotempty` test whether a scalar-element array field has zero /
+at least one element (`jsonb_array_length`). A missing field or non-array value
+is **neither** (both operators return false). They render identical SQL in both
+dialects.
 
 ### JSON arrays (scalar elements)
 

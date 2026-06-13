@@ -6,6 +6,7 @@ import {
   assertArrayValue,
   renderNullCheck,
   renderJsonbContains,
+  renderArrayEmptiness,
 } from './base';
 import type { ParamBuilder } from '../param-builder';
 import { JsonbQueryError } from '../errors';
@@ -62,6 +63,20 @@ function renderScalarOp(
       const v = params.add(assertScalarValue(operator, value));
       return `(right(${F}, char_length(${v})) = ${v})`;
     }
+    case 'ieq':
+      return `(lower(${F}) = lower(${params.add(assertScalarValue(operator, value))}))`;
+    case 'ineq':
+      return `(lower(${F}) <> lower(${params.add(assertScalarValue(operator, value))}))`;
+    case 'icontains':
+      return `(position(lower(${params.add(assertScalarValue(operator, value))}) in lower(${F})) > 0)`;
+    case 'istartswith': {
+      const v = params.add(assertScalarValue(operator, value));
+      return `(left(lower(${F}), char_length(lower(${v}))) = lower(${v}))`;
+    }
+    case 'iendswith': {
+      const v = params.add(assertScalarValue(operator, value));
+      return `(right(lower(${F}), char_length(lower(${v}))) = lower(${v}))`;
+    }
     default:
       throw new JsonbQueryError(`Unsupported operator "${operator as string}"`, 'UNSUPPORTED_OPERATOR');
   }
@@ -80,6 +95,9 @@ export const legacyDialect: JsonbQueryDialect = {
     const { field, elementType, operator, value } = condition;
     if (operator === 'isnull' || operator === 'isnotnull') {
       return renderNullCheck(column, field, operator, params);
+    }
+    if (operator === 'isempty' || operator === 'isnotempty') {
+      return renderArrayEmptiness(column, field, operator, params);
     }
     if (operator === 'containsall') {
       return renderJsonbContains(column, field, assertArrayValue(operator, value), params);

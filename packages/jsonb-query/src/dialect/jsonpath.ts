@@ -14,6 +14,7 @@ import {
   isFilterGroup,
   renderNullCheck,
   renderJsonbContains,
+  renderArrayEmptiness,
   groupNeedsSqlFallback,
 } from './base';
 import { legacyDialect } from './legacy';
@@ -151,6 +152,26 @@ function scalarPredicate(
       return { pred: `!exists (${acc}) || ${acc} == null`, compound: true };
     case 'isnotnull':
       return { pred: `exists (${acc}) && ${acc} != null`, compound: true };
+    case 'icontains': {
+      const lit = escapeJsonpathString(escapeRegexLiteral(String(assertScalarValue(operator, value))));
+      return { pred: `${acc} like_regex "${lit}" flag "i"`, compound: false };
+    }
+    case 'istartswith': {
+      const lit = escapeJsonpathString('^' + escapeRegexLiteral(String(assertScalarValue(operator, value))));
+      return { pred: `${acc} like_regex "${lit}" flag "i"`, compound: false };
+    }
+    case 'iendswith': {
+      const lit = escapeJsonpathString(escapeRegexLiteral(String(assertScalarValue(operator, value))) + '$');
+      return { pred: `${acc} like_regex "${lit}" flag "i"`, compound: false };
+    }
+    case 'ieq': {
+      const lit = escapeJsonpathString('^' + escapeRegexLiteral(String(assertScalarValue(operator, value))) + '$');
+      return { pred: `${acc} like_regex "${lit}" flag "i"`, compound: false };
+    }
+    case 'ineq': {
+      const lit = escapeJsonpathString('^' + escapeRegexLiteral(String(assertScalarValue(operator, value))) + '$');
+      return { pred: `!(${acc} like_regex "${lit}" flag "i")`, compound: true };
+    }
     default:
       throw new JsonbQueryError(`Unsupported operator "${operator as string}"`, 'UNSUPPORTED_OPERATOR');
   }
@@ -275,6 +296,9 @@ export const jsonpathDialect: JsonbQueryDialect = {
     const { field, elementType, operator, value } = condition;
     if (operator === 'isnull' || operator === 'isnotnull') {
       return renderNullCheck(column, field, operator, params);
+    }
+    if (operator === 'isempty' || operator === 'isnotempty') {
+      return renderArrayEmptiness(column, field, operator, params);
     }
     if (operator === 'containsall') {
       return renderJsonbContains(column, field, assertArrayValue(operator, value), params);

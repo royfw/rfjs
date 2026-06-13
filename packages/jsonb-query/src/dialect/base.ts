@@ -62,6 +62,20 @@ export function renderNullCheck(
   return operator === 'isnull' ? `(${F} is null)` : `(${F} is not null)`;
 }
 
+/** Array emptiness via jsonb_array_length, dialect-independent. Missing / non-array → both false. */
+export function renderArrayEmptiness(
+  column: string,
+  field: string,
+  operator: 'isempty' | 'isnotempty',
+  params: ParamBuilder,
+): string {
+  const arr = `${column} #> ${params.add(fieldSegments(field))}`;
+  const cmp = operator === 'isempty' ? '= 0' : '> 0';
+  // CASE (not AND): Postgres does not guarantee AND short-circuits, so
+  // jsonb_array_length must never reach a non-array value (it errors on scalars).
+  return `(case when jsonb_typeof(${arr}) = 'array' then jsonb_array_length(${arr}) ${cmp} else false end)`;
+}
+
 /**
  * JSONB containment (`@>`). `JSON.stringify` is required: node-postgres encodes
  * raw JS arrays as Postgres array literals ('{a,b}'), which are not valid jsonb.
@@ -105,7 +119,7 @@ export function assertArrayValue(
 }
 
 const OPERATORS_BY_TYPE: Record<JsonbScalarType, ReadonlySet<JsonbScalarOperator>> = {
-  string: new Set(['eq', 'neq', 'isnull', 'isnotnull', 'contains', 'startswith', 'endswith', 'terms']),
+  string: new Set(['eq', 'neq', 'isnull', 'isnotnull', 'contains', 'startswith', 'endswith', 'terms', 'icontains', 'istartswith', 'iendswith', 'ieq', 'ineq']),
   numeric: new Set(['eq', 'neq', 'isnull', 'isnotnull', 'gt', 'gte', 'lt', 'lte', 'range', 'terms']),
   date: new Set(['eq', 'neq', 'isnull', 'isnotnull', 'gt', 'gte', 'lt', 'lte', 'range', 'terms']),
   boolean: new Set(['eq', 'neq', 'isnull', 'isnotnull']),
@@ -132,15 +146,32 @@ export function assertObjectValue(operator: string, value: unknown): JsonbObject
   return value as JsonbObjectValue;
 }
 
+export function assertKeyValue(operator: string, value: unknown): string {
+  if (typeof value !== 'string') {
+    throw new JsonbQueryError(`Operator "${operator}" requires a single string key`, 'INVALID_SCALAR_VALUE');
+  }
+  return value;
+}
+
+export function assertKeyArray(operator: string, value: unknown): string[] {
+  if (!Array.isArray(value) || value.length === 0 || !value.every((k) => typeof k === 'string')) {
+    throw new JsonbQueryError(
+      `Operator "${operator}" requires a non-empty array of string keys`,
+      'INVALID_ARRAY_VALUE',
+    );
+  }
+  return value;
+}
+
 const OBJECT_OPERATORS: ReadonlySet<JsonbObjectOperator> = new Set([
-  'eq', 'neq', 'contains', 'isnull', 'isnotnull',
+  'eq', 'neq', 'contains', 'isnull', 'isnotnull', 'haskey', 'hasanykey', 'hasallkeys',
 ]);
 
 const ARRAY_OPERATORS_BY_ELEMENT: Record<JsonbScalarType, ReadonlySet<string>> = {
-  string: new Set(['eq', 'neq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull']),
-  numeric: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull']),
-  date: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'isnull', 'isnotnull']),
-  boolean: new Set(['eq', 'neq', 'isnull', 'isnotnull']),
+  string: new Set(['eq', 'neq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull', 'isempty', 'isnotempty']),
+  numeric: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull', 'isempty', 'isnotempty']),
+  date: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'isnull', 'isnotnull', 'isempty', 'isnotempty']),
+  boolean: new Set(['eq', 'neq', 'isnull', 'isnotnull', 'isempty', 'isnotempty']),
 };
 
 export function assertCondition(node: JsonbCondition): void {
@@ -208,7 +239,7 @@ function conditionNeedsSqlFallback(node: JsonbCondition): boolean {
     if (node.elementType === 'object') {
       return groupNeedsSqlFallback(node.filters);
     }
-    return node.operator === 'containsall';
+    return node.operator === 'containsall' || node.operator === 'isempty' || node.operator === 'isnotempty';
   }
   return false;
 }

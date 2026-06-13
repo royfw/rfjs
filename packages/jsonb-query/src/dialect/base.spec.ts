@@ -67,6 +67,20 @@ describe('assertCondition', () => {
     );
   });
 
+  it('accepts key-existence object operators', () => {
+    expect(c({ field: 'p', dataType: 'object', operator: 'haskey', value: 'vip' })).not.toThrow();
+    expect(c({ field: 'p', dataType: 'object', operator: 'hasanykey', value: ['a'] })).not.toThrow();
+    expect(c({ field: 'p', dataType: 'object', operator: 'hasallkeys', value: ['a', 'b'] })).not.toThrow();
+  });
+
+  it('accepts case-insensitive operators only for string', () => {
+    expect(c({ field: 'x', dataType: 'string', operator: 'icontains', value: 'a' })).not.toThrow();
+    expect(c({ field: 'x', dataType: 'string', operator: 'ieq', value: 'a' })).not.toThrow();
+    expect(c({ field: 'x', dataType: 'numeric', operator: 'icontains', value: 1 })).toThrow(
+      /unsupported operator "icontains" for type "numeric"/i,
+    );
+  });
+
   it('validates array element operators per elementType', () => {
     const arr = (elementType: string, operator: string) =>
       c({ field: 'a', dataType: 'array', elementType, operator, value: 1 });
@@ -102,6 +116,13 @@ describe('assertCondition', () => {
       /unsupported operator "gt" for type "object"/i,
     );
   });
+
+  it('accepts isempty / isnotempty for every array element type', () => {
+    for (const elementType of ['string', 'numeric', 'date', 'boolean'] as const) {
+      expect(c({ field: 'a', dataType: 'array', elementType, operator: 'isempty' })).not.toThrow();
+      expect(c({ field: 'a', dataType: 'array', elementType, operator: 'isnotempty' })).not.toThrow();
+    }
+  });
 });
 
 describe('groupNeedsSqlFallback', () => {
@@ -134,5 +155,10 @@ describe('groupNeedsSqlFallback', () => {
       } as never,
     ]);
     expect(groupNeedsSqlFallback(nestedElemScalar)).toBe(false);
+  });
+
+  it('isempty / isnotempty force the SQL fallback', () => {
+    expect(groupNeedsSqlFallback(g([{ field: 't', dataType: 'array', elementType: 'string', operator: 'isempty' }]))).toBe(true);
+    expect(groupNeedsSqlFallback(g([{ field: 't', dataType: 'array', elementType: 'string', operator: 'isnotempty' }]))).toBe(true);
   });
 });

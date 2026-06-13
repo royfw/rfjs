@@ -3,6 +3,8 @@ import type { ParamBuilder } from './param-builder';
 import {
   fieldSegments,
   assertObjectValue,
+  assertKeyValue,
+  assertKeyArray,
   renderNullCheck,
   renderJsonbContains,
 } from './dialect';
@@ -31,6 +33,16 @@ export function renderObjectCondition(
       const obj = assertObjectValue(operator, value);
       const F = `(${column} #> ${params.add(fieldSegments(field))})`;
       return `(${F} ${operator === 'eq' ? '=' : '<>'} ${params.add(JSON.stringify(obj))}::jsonb)`;
+    }
+    case 'haskey': {
+      const key = assertKeyValue(operator, value);
+      return `((${column} #> ${params.add(fieldSegments(field))}) ? ${params.add(key)})`;
+    }
+    case 'hasanykey':
+    case 'hasallkeys': {
+      const keys = assertKeyArray(operator, value);
+      const op = operator === 'hasanykey' ? '?|' : '?&';
+      return `((${column} #> ${params.add(fieldSegments(field))}) ${op} ${params.add(keys)}::text[])`;
     }
     default:
       throw new JsonbQueryError(`Unsupported operator "${operator as string}" for type "object"`, 'UNSUPPORTED_OPERATOR');
