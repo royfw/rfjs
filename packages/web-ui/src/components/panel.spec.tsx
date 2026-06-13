@@ -14,4 +14,20 @@ describe("Panel", () => {
     render(<Panel>body only</Panel>);
     expect(screen.queryByRole("heading")).toBeNull();
   });
+
+  it("renders an action in the header", () => {
+    render(
+      <Panel title="Output" action={<button>copy</button>}>
+        body
+      </Panel>,
+    );
+    expect(screen.getByRole("button", { name: "copy" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Output" })).toBeDefined();
+  });
+
+  it("renders the action even with no title, and still no heading", () => {
+    render(<Panel action={<button>copy</button>}>body</Panel>);
+    expect(screen.getByRole("button", { name: "copy" })).toBeDefined();
+    expect(screen.queryByRole("heading")).toBeNull();
+  });
 });
