@@ -105,15 +105,18 @@ interface Session {
 
 ## 10. MVP 批次（建議值 — implementation plan 時可調）
 
-**web 快速工具（第一批 3 個，驗證版型）：**
+**web 快速工具版型（2026-06-13 定案）：** 左右並排「輸入面板 | 中間 Seam（操作名）| 輸出面板」，延續首頁 hero-specimen 的 before→after 視覺；RWD 窄螢幕垂直堆疊。輸入即時觸發（純函式免 debounce），錯誤非破壞性顯示於輸出面板。共用 primitive 為 `@rfjs/web-ui` 的 `Panel`（加 optional `action` header slot 放 copy 鈕）；並排+Seam 佈局是 apps/web 的 composition（`components/tools/tool-shell.tsx`）。JSON 輸入用純 `<textarea>`，CodeMirror 留待 workbench 階段。
+
+**web 快速工具第一批（2 個，驗證版型）：**
 
 | 工具 | 套件 | 備註 |
 |---|---|---|
-| type-converter | data-transform | 純函式，最快打樣 |
-| object-flatten | object-utils | 與上者共享版型驗證 |
-| jwt-decoder | jwt | **decode-only**（純 base64 解析，client 可跑）；sign/verify 留待 v2 route handler |
+| type-converter | data-transform | `typeTransfer(value, type)`，純函式 |
+| object-flatten | object-utils | `flatten(obj)`，JSON.parse → flatten |
 
 第二批：data-filter-tester、mongo-query-generator、jsonb-query-generator（皆純函式輸出字串，client 可跑）。
+
+**jwt-decoder 退至 Phase 6（auth）**：`@rfjs/jwt` 由 `jsonwebtoken` 包裝，module 頂層 `require('crypto')`，無法乾淨進 client bundle。要 dogfood `@rfjs/jwt` 就得走 route handler — 與 Phase 6 的 jwt sign/verify 升級同期。
 
 **workbench MVP：**shell + datasets + **data-filter-builder**（招牌：表格 + filter → 即時結果）→ 串接 query 生成輸出。object-transformer 次批。
 
@@ -132,14 +135,14 @@ interface Session {
 
 ## 13. 階段路線圖
 
-> **執行順序修訂（2026-06-13）**：原排程為 3→4→5；改為 **web 快速工具 → PWA → workbench**（workbench 規模較大、後排），即下方標號的 Phase 1、2 已完成，接著 Phase 4 → Phase 5 → Phase 3。Phase 編號保留原意義（不重新編號），僅執行順序調整。
+> **編號修訂（2026-06-13）**：原排程的 Phase 3（workbench）規模較大，移至後段；未動工的階段已**重新編號為遞增 = 執行順序**（取代先前「保留編號、只調順序」的做法，更易讀）。Phase 1、2 已完成、編號不變。
 
-1. **Phase 1 — workbench 骨架**（✅ 已完成，#140/#141）：app scaffold（Next 16 + turbo 接線）、admin shell（sidebar / topbar / ⌘K）、i18n + 主題、四路由區空殼（dashboard / datasets / apps / admin 預留）、registry `surface` 擴充。版型基礎元件進 `@rfjs/web-ui`，供後續 web 工具共用。
+1. **Phase 1 — workbench 骨架**（✅ 已完成，#140/#141）：app scaffold（Next 16 + turbo 接線）、admin shell（sidebar / topbar / ⌘K）、i18n + 主題、四路由區空殼（dashboard / datasets / apps / admin 預留）、registry `surface` 擴充。
 2. **Phase 2 — web 收斂**（✅ 已完成，#143）：§3 的 1/2/4/5/6（sidebar、index 連結、redirect、套件頁補實）。
-3. **Phase 4 — web 快速工具**（下一個）：第一批 3 工具 + 第二批接續。
-4. **Phase 5 — PWA**：兩站接 Serwist。
-5. **Phase 3 — workbench datasets + data-filter-builder**：招牌動線（dataset → 篩選 → query 輸出）。
-6. **Phase 6 — demo auth（v2）**：登入頁 + @rfjs/jwt session + `/admin` 區 + jwt sign/verify 升級。
+3. **Phase 3 — web 快速工具**（下一個）：共用工具版型（§10）+ 第一批 type-converter、object-flatten；第二批 data-filter-tester、兩個 query generator 接續。
+4. **Phase 4 — PWA**：兩站接 Serwist。
+5. **Phase 5 — workbench datasets + data-filter-builder**：招牌動線（dataset → 篩選 → query 輸出）。
+6. **Phase 6 — demo auth（v2）**：登入頁 + @rfjs/jwt session + `/admin` 區 + jwt sign/verify 升級 + **jwt-decoder 工具**（§10，需 route handler）。
 7. **Phase 7+（不排程）**：better-auth 多 provider、pg-toolkit 沙箱 demo、index 分組。
 
 每個 Phase 各出一份 implementation plan，獨立可交付。
