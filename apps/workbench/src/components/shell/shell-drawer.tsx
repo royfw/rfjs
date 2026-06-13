@@ -31,15 +31,20 @@ export function ShellDrawer() {
     return () => mq.removeEventListener("change", onChange);
   }, [setOpen]);
 
-  // Escape to close + move focus into the panel.
+  // Escape to close, move focus into the panel on open, and restore focus to
+  // the opener (the hamburger) on close — mirrors apps/web's mobile-nav.
   useEffect(() => {
     if (!open) return;
+    const opener = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
     document.addEventListener("keydown", onKey);
     panelRef.current?.focus();
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      opener?.focus?.();
+    };
   }, [open, setOpen]);
 
   if (!open) return null;
@@ -53,6 +58,7 @@ export function ShellDrawer() {
       />
       <div
         ref={panelRef}
+        id="workbench-drawer"
         tabIndex={-1}
         role="dialog"
         aria-modal="true"

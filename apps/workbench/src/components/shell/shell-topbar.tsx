@@ -17,12 +17,15 @@ export function ShellTopbar() {
   const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
   const collapsed = useSidebarStore((s) => s.collapsed);
   const setDrawerOpen = useSidebarStore((s) => s.setDrawerOpen);
+  const drawerOpen = useSidebarStore((s) => s.drawerOpen);
 
   return (
     <header className="flex items-center gap-3 border-b px-4 py-2">
       <button
         type="button"
         aria-label={tCommon("openMenu")}
+        aria-expanded={drawerOpen}
+        aria-controls="workbench-drawer"
         onClick={() => setDrawerOpen(true)}
         className={`${btnClass} lg:hidden`}
       >
