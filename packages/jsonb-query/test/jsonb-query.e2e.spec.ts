@@ -16,7 +16,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Client } from 'pg';
-import { buildJsonbQuery } from '../src';
+import { buildJsonbQuery, buildJsonbOrderBy } from '../src';
 import type { BuildJsonbOptions, JsonbDialect, JsonbFilterGroup } from '../src';
 
 const URLS = (process.env.PG_E2E_URLS ?? '')
@@ -602,6 +602,20 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
           );
           expect(res.rows.map((r: { id: number }) => Number(r.id)), dialect).toEqual([1]);
         }
+      });
+
+      it('orders by a numeric jsonb path (desc, nulls last)', async () => {
+        // Seed ages: id1=30, id2=18, id3=null, ids4-8 have no age. desc nulls last
+        // → 30,18 first, then the null/missing-age rows; secondary `, id` makes the
+        // null group deterministic.
+        const ob = buildJsonbOrderBy('data', [
+          { field: 'age', dataType: 'numeric', direction: 'desc', nulls: 'last' },
+        ]);
+        const res = await client.query(
+          `select id from e2e_t order by ${ob.orderBy}, id`,
+          ob.values,
+        );
+        expect(res.rows.map((r: { id: number }) => Number(r.id))).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
       });
     },
   );
