@@ -56,6 +56,10 @@ const { where, values } = buildJsonbQuery('data', filter, { paramOffset: 1 });
 await client.query(`SELECT * FROM t WHERE org_id = $1 AND ${where}`, [orgId, ...values]);
 ```
 
+An empty filter group renders its boolean identity (`and`/`nor` → `true`,
+`or`/`not` → `false`) rather than an empty string, so `WHERE ${where}` is always
+valid SQL. An `elemmatch` still requires at least one condition.
+
 ### Named parameters (TypeORM QueryBuilder, Knex)
 
 The positional `$N` output feeds `pg`, TypeORM raw queries, Prisma
@@ -77,6 +81,26 @@ collisions when composing several fragments. Repeated placeholder references
 (e.g. `startswith`) stay pointed at a single named param — something naive
 positional-`?` conversion cannot express. To convert an existing positional
 result instead, use the underlying `toNamedParams(result, prefix?)`.
+
+## Errors
+
+Every caller-input problem throws a `JsonbQueryError` carrying a stable `code`;
+any other thrown type signals an internal bug.
+
+```typescript
+import { JsonbQueryError } from '@rfjs/jsonb-query';
+
+try {
+  buildJsonbQuery('data', filter);
+} catch (e) {
+  if (e instanceof JsonbQueryError) {
+    // e.code: 'INVALID_COLUMN' | 'INVALID_DIALECT' | 'UNSUPPORTED_OPERATOR'
+    //       | 'INVALID_ELEMENT_TYPE' | 'INVALID_SCALAR_VALUE' | 'INVALID_ARRAY_VALUE'
+    //       | 'INVALID_OBJECT_VALUE' | 'EMPTY_FILTER_GROUP' | 'INVALID_PREFIX'
+    //       | 'PARAM_MISMATCH'
+  }
+}
+```
 
 ## Safety
 
@@ -100,7 +124,7 @@ is not a plain (optionally qualified) column reference is rejected.
 | `date`                            | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms`      |
 | `boolean`                         | `eq` `neq` `isnull` `isnotnull`                                            |
 | `object`                          | `eq` `neq` `contains` `isnull` `isnotnull`                                 |
-| `array` + scalar `elementType`    | element ops (see below) + `containsall` + `isnull` `isnotnull`             |
+| `array` + scalar `elementType`    | element ops (`neq` = value not present) + `containsall` + `isnull` `isnotnull` |
 | `array` + `elementType: 'object'` | `elemmatch`                                                                |
 
 `range` takes a 2-element `[lo, hi]` value; `terms` takes a non-empty array.
@@ -124,8 +148,11 @@ cannot compare non-scalar values), and `@>` is GIN-indexable.
 Declare `dataType: 'array'` with the element type in `elementType`. Scalar
 operators match with **"some element matches"** (∃) semantics; `isnull`/
 `isnotnull` test the array field itself; `containsall` (string/numeric elements)
-requires every listed value to be present. `neq` is not allowed on elements
-(exists-vs-forall ambiguity).
+requires every listed value to be present.
+
+`neq` means **"value not present"** (∀ element ≠ value) — the negation of `eq`'s
+"some element matches"; a missing / non-array field counts as not-present and
+matches. It is the inline equivalent of wrapping `eq` in a `not` group.
 
 ```typescript
 { field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' }
@@ -144,8 +171,11 @@ boolean → `eq`.
 
 All sub-conditions must hold on the **same element**. Sub-`field`s are relative
 to the element; nested `and`/`or` groups and nested `elemmatch` are supported.
-Object-valued and scalar-array conditions inside `elemmatch` are not supported
-yet (rejected in both dialects).
+Object-valued and scalar-array conditions are supported inside `elemmatch`. In
+the `jsonpath` dialect, an `elemmatch` whose body contains an object condition or
+a scalar-array `containsall` (neither expressible as a SQL/JSON path predicate)
+falls back to a SQL `EXISTS` sub-select for that fragment — same results, but
+that fragment is not served by a `jsonb_path_ops` GIN index.
 
 ```typescript
 {
