@@ -31,7 +31,15 @@ export type JsonbScalarOperator =
   | 'range'
   | 'terms';
 
-export type JsonbObjectOperator = 'eq' | 'neq' | 'contains' | 'isnull' | 'isnotnull';
+export type JsonbObjectOperator =
+  | 'eq'
+  | 'neq'
+  | 'contains'
+  | 'isnull'
+  | 'isnotnull'
+  | 'haskey'
+  | 'hasanykey'
+  | 'hasallkeys';
 
 /**
  * Operators on arrays of scalars. Scalar operators use "some element matches"
@@ -54,7 +62,8 @@ export interface JsonbObjectCondition {
   field: string;
   dataType: 'object';
   operator: JsonbObjectOperator;
-  value?: JsonbObjectValue;
+  /** Object value for eq/neq/contains; a string key for haskey; a string[] for hasanykey/hasallkeys. */
+  value?: JsonbObjectValue | string | string[];
   elementType?: never;
   filters?: never;
 }

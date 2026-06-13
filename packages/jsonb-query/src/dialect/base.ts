@@ -132,8 +132,25 @@ export function assertObjectValue(operator: string, value: unknown): JsonbObject
   return value as JsonbObjectValue;
 }
 
+export function assertKeyValue(operator: string, value: unknown): string {
+  if (typeof value !== 'string') {
+    throw new JsonbQueryError(`Operator "${operator}" requires a single string key`, 'INVALID_SCALAR_VALUE');
+  }
+  return value;
+}
+
+export function assertKeyArray(operator: string, value: unknown): string[] {
+  if (!Array.isArray(value) || value.length === 0 || !value.every((k) => typeof k === 'string')) {
+    throw new JsonbQueryError(
+      `Operator "${operator}" requires a non-empty array of string keys`,
+      'INVALID_ARRAY_VALUE',
+    );
+  }
+  return value;
+}
+
 const OBJECT_OPERATORS: ReadonlySet<JsonbObjectOperator> = new Set([
-  'eq', 'neq', 'contains', 'isnull', 'isnotnull',
+  'eq', 'neq', 'contains', 'isnull', 'isnotnull', 'haskey', 'hasanykey', 'hasallkeys',
 ]);
 
 const ARRAY_OPERATORS_BY_ELEMENT: Record<JsonbScalarType, ReadonlySet<string>> = {

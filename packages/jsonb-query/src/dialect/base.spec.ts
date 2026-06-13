@@ -67,6 +67,12 @@ describe('assertCondition', () => {
     );
   });
 
+  it('accepts key-existence object operators', () => {
+    expect(c({ field: 'p', dataType: 'object', operator: 'haskey', value: 'vip' })).not.toThrow();
+    expect(c({ field: 'p', dataType: 'object', operator: 'hasanykey', value: ['a'] })).not.toThrow();
+    expect(c({ field: 'p', dataType: 'object', operator: 'hasallkeys', value: ['a', 'b'] })).not.toThrow();
+  });
+
   it('validates array element operators per elementType', () => {
     const arr = (elementType: string, operator: string) =>
       c({ field: 'a', dataType: 'array', elementType, operator, value: 1 });
