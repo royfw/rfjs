@@ -24,18 +24,31 @@ Edit the registries in `packages/web-core/src/registry/` (`tools.ts`,
 `pnpm -F @rfjs/web-core test` checks cross-references. Homepage, sidebar,
 tools index, and sitemap are all driven by these registries.
 
+> **Source layout**: app source lives under `src/` (`src/app/`, `src/components/`,
+> `src/lib/`, etc.). Registry data stays in `packages/web-core` as before.
+
 ## Routes
 
 | Route | State |
 |-------|-------|
 | `/` | Home — polished intro page |
-| `/packages`, `/packages/[slug]` | Package showcase (index real, detail placeholder) |
-| `/tools`, `/tools/[slug]` | Tools index (real) + detail placeholders |
-| `/playground`, `/playground/[slug]` | Playground index (real) + tool placeholders |
+| `/packages`, `/packages/[slug]` | Package showcase — index lists all `@rfjs/*` packages; detail shows install command, npm/GitHub links, and related tools |
+| `/tools`, `/tools/[slug]` | Tools index lists web-native quick tools (internal) **and** workbench apps as cross-site links; detail pages per tool |
+| `/playground` | Redirects to `/tools` (the playground concept moved to the workbench app) |
 | `/templates` | Templates gallery (placeholder) |
 
 All navigation is driven by the `@rfjs/web-core` registries via `lib/nav.ts`.
-Per-package tool/detail pages are designed and built individually in later phases.
+
+## Cross-site links
+
+Tools that are workbench apps link across to the workbench (separate Next.js app).
+The base URL is controlled by:
+
+```
+NEXT_PUBLIC_WORKBENCH_URL=http://localhost:3001   # default in dev
+```
+
+Set this in `.env.local` (or your deploy environment) to point at the deployed workbench.
 
 ## Internationalization
 
