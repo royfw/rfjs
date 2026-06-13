@@ -52,7 +52,7 @@ export type JsonbObjectOperator =
  * `containsall` requires every listed value to be present. `neq` means "value
  * not present" (∀ element ≠ value) — the negation of `eq`'s ∃-present.
  */
-export type JsonbArrayOperator = JsonbScalarOperator | 'containsall';
+export type JsonbArrayOperator = JsonbScalarOperator | 'containsall' | 'isempty' | 'isnotempty';
 
 export interface JsonbScalarCondition {
   field: string;

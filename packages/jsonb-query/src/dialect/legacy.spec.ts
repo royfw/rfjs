@@ -215,6 +215,16 @@ describe('legacyDialect.renderArray', () => {
     });
   });
 
+  it('isempty / isnotempty test the array length (dialect-independent)', () => {
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'isempty' })).toMatchObject({
+      where: "(jsonb_typeof(\"data\" #> $1) = 'array' and jsonb_array_length(\"data\" #> $1) = 0)",
+      values: [['tags']],
+    });
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'isnotempty' }).where).toBe(
+      "(jsonb_typeof(\"data\" #> $1) = 'array' and jsonb_array_length(\"data\" #> $1) > 0)",
+    );
+  });
+
   it('allocates unique aliases across calls sharing a context', () => {
     const p = new ParamBuilder();
     const ctx = makeCtx(p);

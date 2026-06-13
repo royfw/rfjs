@@ -62,6 +62,18 @@ export function renderNullCheck(
   return operator === 'isnull' ? `(${F} is null)` : `(${F} is not null)`;
 }
 
+/** Array emptiness via jsonb_array_length, dialect-independent. Missing / non-array → both false. */
+export function renderArrayEmptiness(
+  column: string,
+  field: string,
+  operator: 'isempty' | 'isnotempty',
+  params: ParamBuilder,
+): string {
+  const arr = `${column} #> ${params.add(fieldSegments(field))}`;
+  const cmp = operator === 'isempty' ? '= 0' : '> 0';
+  return `(jsonb_typeof(${arr}) = 'array' and jsonb_array_length(${arr}) ${cmp})`;
+}
+
 /**
  * JSONB containment (`@>`). `JSON.stringify` is required: node-postgres encodes
  * raw JS arrays as Postgres array literals ('{a,b}'), which are not valid jsonb.
@@ -154,10 +166,10 @@ const OBJECT_OPERATORS: ReadonlySet<JsonbObjectOperator> = new Set([
 ]);
 
 const ARRAY_OPERATORS_BY_ELEMENT: Record<JsonbScalarType, ReadonlySet<string>> = {
-  string: new Set(['eq', 'neq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull']),
-  numeric: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull']),
-  date: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'isnull', 'isnotnull']),
-  boolean: new Set(['eq', 'neq', 'isnull', 'isnotnull']),
+  string: new Set(['eq', 'neq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull', 'isempty', 'isnotempty']),
+  numeric: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull', 'isempty', 'isnotempty']),
+  date: new Set(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'isnull', 'isnotnull', 'isempty', 'isnotempty']),
+  boolean: new Set(['eq', 'neq', 'isnull', 'isnotnull', 'isempty', 'isnotempty']),
 };
 
 export function assertCondition(node: JsonbCondition): void {
@@ -225,7 +237,7 @@ function conditionNeedsSqlFallback(node: JsonbCondition): boolean {
     if (node.elementType === 'object') {
       return groupNeedsSqlFallback(node.filters);
     }
-    return node.operator === 'containsall';
+    return node.operator === 'containsall' || node.operator === 'isempty' || node.operator === 'isnotempty';
   }
   return false;
 }

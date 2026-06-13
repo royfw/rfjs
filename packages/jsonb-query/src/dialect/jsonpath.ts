@@ -14,6 +14,7 @@ import {
   isFilterGroup,
   renderNullCheck,
   renderJsonbContains,
+  renderArrayEmptiness,
   groupNeedsSqlFallback,
 } from './base';
 import { legacyDialect } from './legacy';
@@ -295,6 +296,9 @@ export const jsonpathDialect: JsonbQueryDialect = {
     const { field, elementType, operator, value } = condition;
     if (operator === 'isnull' || operator === 'isnotnull') {
       return renderNullCheck(column, field, operator, params);
+    }
+    if (operator === 'isempty' || operator === 'isnotempty') {
+      return renderArrayEmptiness(column, field, operator, params);
     }
     if (operator === 'containsall') {
       return renderJsonbContains(column, field, assertArrayValue(operator, value), params);

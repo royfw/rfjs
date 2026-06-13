@@ -116,6 +116,13 @@ describe('assertCondition', () => {
       /unsupported operator "gt" for type "object"/i,
     );
   });
+
+  it('accepts isempty / isnotempty for every array element type', () => {
+    for (const elementType of ['string', 'numeric', 'date', 'boolean'] as const) {
+      expect(c({ field: 'a', dataType: 'array', elementType, operator: 'isempty' })).not.toThrow();
+      expect(c({ field: 'a', dataType: 'array', elementType, operator: 'isnotempty' })).not.toThrow();
+    }
+  });
 });
 
 describe('groupNeedsSqlFallback', () => {
@@ -148,5 +155,10 @@ describe('groupNeedsSqlFallback', () => {
       } as never,
     ]);
     expect(groupNeedsSqlFallback(nestedElemScalar)).toBe(false);
+  });
+
+  it('isempty / isnotempty force the SQL fallback', () => {
+    expect(groupNeedsSqlFallback(g([{ field: 't', dataType: 'array', elementType: 'string', operator: 'isempty' }]))).toBe(true);
+    expect(groupNeedsSqlFallback(g([{ field: 't', dataType: 'array', elementType: 'string', operator: 'isnotempty' }]))).toBe(true);
   });
 });

@@ -6,6 +6,7 @@ import {
   assertArrayValue,
   renderNullCheck,
   renderJsonbContains,
+  renderArrayEmptiness,
 } from './base';
 import type { ParamBuilder } from '../param-builder';
 import { JsonbQueryError } from '../errors';
@@ -94,6 +95,9 @@ export const legacyDialect: JsonbQueryDialect = {
     const { field, elementType, operator, value } = condition;
     if (operator === 'isnull' || operator === 'isnotnull') {
       return renderNullCheck(column, field, operator, params);
+    }
+    if (operator === 'isempty' || operator === 'isnotempty') {
+      return renderArrayEmptiness(column, field, operator, params);
     }
     if (operator === 'containsall') {
       return renderJsonbContains(column, field, assertArrayValue(operator, value), params);
