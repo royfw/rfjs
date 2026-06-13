@@ -41,7 +41,11 @@
     "playgroundComingSoon": "This playground ships in a later phase.",
     "packageComingSoon": "Package detail and playground arrive in a later phase.",
     "status": "Status: {status}",
-    "workbenchBadge": "Workbench ↗"
+    "workbenchBadge": "Workbench ↗",
+    "install": "Install",
+    "relatedTools": "Related tools",
+    "viewOnNpm": "npm",
+    "viewOnGithub": "GitHub"
   },
   "Tools": {
     "object-flatten": { "title": "Object Flatten / Unflatten", "description": "Flatten nested objects to dot-path keys and back." },
