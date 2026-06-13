@@ -156,10 +156,22 @@ These literals participate in parent joins normally, so `X and (empty or)` →
 `WHERE`. The `.filter(sql.length > 0)` guard in `buildGroup` becomes effectively
 dead (every group now renders non-empty) but is kept as defense.
 
-**Scope boundary:** this affects only the SQL group logic in `build.ts`. The
-jsonpath dialect's *path-predicate* `groupPredicate` (inside `elemmatch`) is
-untouched — `elemmatch` already asserts ≥1 condition, so empty path-predicate
-groups cannot occur. No bare-`true`/`false` jsonpath literal is needed.
+**Empty groups nested inside `elemmatch` (both dialects).** An `elemmatch`'s
+*own* `filters` must still be non-empty (`assertCondition` throws
+`EMPTY_FILTER_GROUP` — unchanged contract). But a non-empty `elemmatch` can
+contain an empty *nested* group, e.g. `elemmatch{ and:[ or:[] ] }`. For "any
+level → identity" to hold consistently across dialects:
+
+- **legacy** elemmatch bodies already render via the shared `buildGroup`, so they
+  inherit the SQL identity literals automatically (`… where (false)`).
+- **jsonpath** path predicates are built by a separate `groupPredicate` in
+  `jsonpath.ts`. It gets a matching identity map expressed in jsonpath predicate
+  syntax: `and`/`nor` → `1 == 1`, `or`/`not` → `1 == 0`. (jsonpath has no bare
+  boolean predicate literal; `1 == 1` / `1 == 0` are the constant stand-ins.)
+
+The `pred.length === 0` / `sub.length === 0` guards in both dialects'
+`renderElemMatch` thus become defensive-only (reachable only via a stubbed
+`renderGroup` in unit tests); they stay.
 
 **Behavior change** — documented in the changeset: previously-dropped inner
 empty groups now contribute their identity, which can change results for
