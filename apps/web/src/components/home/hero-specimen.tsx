@@ -1,5 +1,3 @@
-import { Seam } from "@rfjs/web-ui/components/seam";
-
 const INPUT = `{
   "user": {
     "name": "Ada",
@@ -71,20 +69,6 @@ export function HeroSpecimen() {
           code={INPUT}
           status="4 nested keys"
         />
-        <div className="flex shrink-0 items-center justify-center py-1 lg:px-1 lg:py-0">
-          <Seam
-            state="current"
-            operation="flatten()"
-            orientation="horizontal"
-            className="lg:hidden"
-          />
-          <Seam
-            state="current"
-            operation="flatten()"
-            orientation="vertical"
-            className="hidden lg:flex"
-          />
-        </div>
         <SpecimenPane
           tone="yield"
           direction="after"
