@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/tpl-toolkit",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Shared configuration factories and build helpers for rfjs project templates",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -55,9 +55,22 @@
     "vitest:ui": "vitest --passWithNoTests --ui",
     "commit": "pnpm exec cz"
   },
-  "keywords": [],
+  "keywords": [
+    "tsdown",
+    "vitest",
+    "config",
+    "template",
+    "scaffold"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/tpl-toolkit"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/tpl-toolkit#readme",
   "engines": {
     "node": ">=18"
   },

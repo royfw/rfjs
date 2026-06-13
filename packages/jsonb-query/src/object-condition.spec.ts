@@ -55,4 +55,34 @@ describe('renderObjectCondition', () => {
     expect(where).toBe('(("data" #> $1) = $2::jsonb)');
     expect(values[1]).toBe('{"name":"x\'; DROP TABLE t; --"}');
   });
+
+  it('haskey uses the jsonb ? operator', () => {
+    expect(run({ field: 'profile', operator: 'haskey', value: 'vip' })).toEqual({
+      where: '(("data" #> $1) ? $2)',
+      values: [['profile'], 'vip'],
+    });
+  });
+
+  it('hasanykey / hasallkeys use ?| / ?& with a text[] param', () => {
+    expect(run({ field: 'profile', operator: 'hasanykey', value: ['vip', 'premium'] })).toEqual({
+      where: '(("data" #> $1) ?| $2::text[])',
+      values: [['profile'], ['vip', 'premium']],
+    });
+    expect(run({ field: 'profile', operator: 'hasallkeys', value: ['vip', 'level'] })).toEqual({
+      where: '(("data" #> $1) ?& $2::text[])',
+      values: [['profile'], ['vip', 'level']],
+    });
+  });
+
+  it('rejects bad key arguments', () => {
+    expect(() => run({ field: 'p', operator: 'haskey', value: ['x'] as never })).toThrow(
+      /requires a single string key/i,
+    );
+    expect(() => run({ field: 'p', operator: 'hasanykey', value: [] as never })).toThrow(
+      /requires a non-empty array of string keys/i,
+    );
+    expect(() => run({ field: 'p', operator: 'hasallkeys', value: [1] as never })).toThrow(
+      /requires a non-empty array of string keys/i,
+    );
+  });
 });

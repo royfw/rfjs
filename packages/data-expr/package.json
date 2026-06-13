@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/data-expr",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Safe JSON expression engine — JSONata wrapper with compile-once evaluation and DoS guards",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -33,9 +33,22 @@
     "vitest:run": "vitest --passWithNoTests --run",
     "vitest:ui": "vitest --passWithNoTests --ui"
   },
-  "keywords": [],
+  "keywords": [
+    "jsonata",
+    "expression",
+    "json",
+    "safe-eval",
+    "data"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/data-expr"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/data-expr#readme",
   "files": [
     "dist",
     "README.md",

@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/object-utils",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Object utilities — flatten, keysToNested, toJSONString, toFlatString",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -33,9 +33,21 @@
     "vitest:run": "vitest --passWithNoTests --run",
     "vitest:ui": "vitest --passWithNoTests --ui"
   },
-  "keywords": [],
+  "keywords": [
+    "object",
+    "flatten",
+    "utilities",
+    "compare"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/object-utils"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/object-utils#readme",
   "files": [
     "dist",
     "README.md",

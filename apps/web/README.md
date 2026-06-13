@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/create-next-app).
+# web — rfjs web playground
 
-## Getting Started
+Package showcase, interactive playgrounds, and developer data tools for the
+`@rfjs/*` ecosystem. Not a blog or docs site (that's royfw.dev).
 
-First, run the development server:
+## Stack
+
+Next.js App Router · TypeScript strict · Tailwind CSS v4 · shadcn/ui
+(components live in `@rfjs/web-ui`) · registry data in `@rfjs/web-core`.
+
+## Develop
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm -F web dev          # http://localhost:3000
+pnpm -F web build
+pnpm -F web lint
+pnpm -F web check-types
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Add a tool / package to the site
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Edit the registries in `packages/web-core/src/registry/` (`tools.ts`,
+`packages.ts`). Schemas in `schemas.ts` validate entries;
+`pnpm -F @rfjs/web-core test` checks cross-references. Homepage, sidebar,
+tools index, and sitemap are all driven by these registries.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load Inter, a custom Google Font.
+> **Source layout**: app source lives under `src/` (`src/app/`, `src/components/`,
+> `src/lib/`, etc.). Registry data stays in `packages/web-core` as before.
 
-## Learn More
+## Routes
 
-To learn more about Next.js, take a look at the following resources:
+| Route | State |
+|-------|-------|
+| `/` | Home — polished intro page |
+| `/packages`, `/packages/[slug]` | Package showcase — index lists all `@rfjs/*` packages; detail shows install command, npm/GitHub links, and related tools |
+| `/tools`, `/tools/[slug]` | Tools index lists web-native quick tools (internal) **and** workbench apps as cross-site links. Detail pages: `type-converter` and `object-flatten` are live interactive tools; the rest are coming-soon placeholders |
+| `/playground` | Redirects to `/tools` (the playground concept moved to the workbench app) |
+| `/templates` | Templates gallery (placeholder) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+All navigation is driven by the `@rfjs/web-core` registries via `lib/nav.ts`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Cross-site links
 
-## Deploy on Vercel
+Tools that are workbench apps link across to the workbench (separate Next.js app).
+The base URL is controlled by:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+NEXT_PUBLIC_WORKBENCH_URL=http://localhost:3001   # default in dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Set this in `.env.local` (or your deploy environment) to point at the deployed workbench.
+
+## Internationalization
+
+Bilingual via [next-intl](https://next-intl.dev): English (`en`, default) and Traditional Chinese (`zh-TW`).
+
+- Routing: `[locale]` segment (`/en/...`, `/zh-TW/...`); config in `i18n/routing.ts`, middleware in `middleware.ts`.
+- Strings: `messages/en.json` + `messages/zh-TW.json`. UI chrome under `Common`/`Home`/`Features`/`Pages`; tool & package copy under `Tools`/`Packages` keyed by tool id / package slug.
+- The `@rfjs/web-core` registries hold language-neutral structure only; all display copy is translated. A test (`lib/i18n-content.spec.ts`) fails if any registry entry is missing a string in either locale.
+- Switch language via the header switcher; switch theme independently (next-themes).
+
+## Known issues
+
+- **next-themes inline-script warning (dev only).** next-themes' `ThemeProvider`
+  injects an anti-flash inline `<script>`; React 19 flags it with "Encountered a
+  script tag while rendering React component" (the script is only needed in the
+  server-rendered HTML, where it does execute before hydration). It is **dev-only**
+  — absent from production builds — and does not affect theming or cause a flash.
+  Our setup matches next-themes' documented App Router pattern, and
+  `next-themes@0.4.6` (latest) has no option to render the script server-only.
+  Tracking upstream for a React 19 fix; no action needed.

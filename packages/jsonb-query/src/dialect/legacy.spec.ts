@@ -119,6 +119,23 @@ describe('legacyDialect', () => {
   it('throws on an unknown operator', () => {
     expect(() => run('name', 'string', 'bogus' as never, 'x')).toThrow(/unsupported operator/i);
   });
+
+  it('case-insensitive operators lower() both sides (literal, no LIKE)', () => {
+    expect(run('name', 'string', 'ieq', 'Bob')).toEqual({
+      where: '(lower(("data" #>> $1)) = lower($2))',
+      values: [['name'], 'Bob'],
+    });
+    expect(run('name', 'string', 'ineq', 'Bob').where).toBe('(lower(("data" #>> $1)) <> lower($2))');
+    expect(run('name', 'string', 'icontains', 'Bo').where).toBe(
+      '(position(lower($2) in lower(("data" #>> $1))) > 0)',
+    );
+    expect(run('name', 'string', 'istartswith', 'Bo').where).toBe(
+      '(left(lower(("data" #>> $1)), char_length(lower($2))) = lower($2))',
+    );
+    expect(run('name', 'string', 'iendswith', 'ob').where).toBe(
+      '(right(lower(("data" #>> $1)), char_length(lower($2))) = lower($2))',
+    );
+  });
 });
 
 function makeCtx(
@@ -184,11 +201,29 @@ describe('legacyDialect.renderArray', () => {
     });
   });
 
+  it('element neq negates the existence (value not present)', () => {
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'neq', value: 'a' })).toMatchObject({
+      where: `(not (exists (select 1 from jsonb_array_elements_text(${GUARD('"data"', '$1')}) as e1(v) where (e1.v = $2))))`,
+      values: [['tags'], 'a'],
+    });
+  });
+
   it('isnull / isnotnull test the array field itself', () => {
     expect(runArray({ field: 'tags', elementType: 'string', operator: 'isnull' })).toMatchObject({
       where: '(("data" #>> $1) is null)',
       values: [['tags']],
     });
+  });
+
+  it('isempty / isnotempty test the array length (dialect-independent)', () => {
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'isempty' })).toMatchObject({
+      where:
+        "(case when jsonb_typeof(\"data\" #> $1) = 'array' then jsonb_array_length(\"data\" #> $1) = 0 else false end)",
+      values: [['tags']],
+    });
+    expect(runArray({ field: 'tags', elementType: 'string', operator: 'isnotempty' }).where).toBe(
+      "(case when jsonb_typeof(\"data\" #> $1) = 'array' then jsonb_array_length(\"data\" #> $1) > 0 else false end)",
+    );
   });
 
   it('allocates unique aliases across calls sharing a context', () => {

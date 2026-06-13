@@ -1,4 +1,4 @@
-# @packages/pg-toolkit
+# @rfjs/pg-toolkit
 
 A utility toolkit for PostgreSQL, designed to share common functionality and management scripts across different ORMs (Drizzle, Prisma, Kysely, TypeORM).
 

@@ -1,4 +1,4 @@
-# @packages/pg-toolkit
+# @rfjs/pg-toolkit
 
 PostgreSQL 工具庫，提供跨 ORM (Drizzle, Prisma, Kysely, TypeORM) 共用的基礎功能與管理腳本。
 

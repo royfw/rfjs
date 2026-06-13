@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/jwt",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JWT helper — sign, verify, decode JSON web tokens",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -35,13 +35,20 @@
   },
   "keywords": [
     "jwt",
-    "json-web-token",
+    "jsonwebtoken",
     "sign",
     "verify",
     "decode"
   ],
   "author": "Roy Chuang",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/jwt"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/jwt#readme",
   "files": [
     "dist",
     "README.md",
