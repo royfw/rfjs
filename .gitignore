@@ -43,3 +43,8 @@ yarn-error.log*
 changeset-status.json
 # git worktrees (superpowers / parallel sessions)
 .worktrees/
+
+# Per-agent skill symlinks — regenerable from .agents/ + skills-lock.json
+# via `npx skills experimental_sync`. The canonical skill source lives in
+# .agents/skills/ (committed); agent-specific dirs are generated.
+.claude/skills/
