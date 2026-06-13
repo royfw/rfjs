@@ -57,6 +57,28 @@
     "data-filter-builder": { "title": "Data Filter Builder", "description": "Compose nested filter conditions visually and export them." },
     "object-transformer": { "title": "Object Transformer", "description": "Interactive object transformation playground." }
   },
+  "ToolUI": {
+    "input": "Input",
+    "output": "Output",
+    "inputValue": "Value",
+    "targetType": "Target type",
+    "jsonInput": "JSON",
+    "copy": "Copy",
+    "types": {
+      "string": "String",
+      "number": "Number",
+      "integer": "Integer",
+      "boolean": "Boolean",
+      "date": "Date",
+      "any": "Any"
+    },
+    "error": {
+      "nan": "Not a number",
+      "invalidDate": "Invalid date",
+      "invalidJson": "Invalid JSON",
+      "notObject": "Expected a JSON object"
+    }
+  },
   "Packages": {
     "data-filter": { "description": "Filter in-memory data with JSONPath-addressed conditions." },
     "data-transform": { "description": "Data type transformation utilities (string/number/boolean/date)." },
