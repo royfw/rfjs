@@ -7,16 +7,10 @@ import {
   renderNullCheck,
   renderJsonbContains,
   renderArrayEmptiness,
+  SCALAR_CASTS,
 } from './base';
 import type { ParamBuilder } from '../param-builder';
 import { JsonbQueryError } from '../errors';
-
-const CASTS: Record<JsonbScalarType, string> = {
-  string: '',
-  numeric: '::numeric',
-  date: '::timestamptz',
-  boolean: '::boolean',
-};
 
 const ARRAY_CASTS: Record<JsonbScalarType, string> = {
   string: '::text[]',
@@ -33,7 +27,7 @@ function renderScalarOp(
   value: JsonbValue | JsonbValue[] | undefined,
   params: ParamBuilder,
 ): string {
-  const Fc = `${F}${CASTS[dataType]}`;
+  const Fc = `${F}${SCALAR_CASTS[dataType]}`;
   switch (operator) {
     case 'eq':
       return `(${Fc} = ${params.add(assertScalarValue(operator, value))})`;

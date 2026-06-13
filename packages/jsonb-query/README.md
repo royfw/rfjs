@@ -97,7 +97,7 @@ try {
     // e.code: 'INVALID_COLUMN' | 'INVALID_DIALECT' | 'UNSUPPORTED_OPERATOR'
     //       | 'INVALID_ELEMENT_TYPE' | 'INVALID_SCALAR_VALUE' | 'INVALID_ARRAY_VALUE'
     //       | 'INVALID_OBJECT_VALUE' | 'EMPTY_FILTER_GROUP' | 'INVALID_PREFIX'
-    //       | 'PARAM_MISMATCH'
+    //       | 'PARAM_MISMATCH' | 'INVALID_SORT'
   }
 }
 ```
@@ -114,6 +114,47 @@ try {
 `iendswith` are **not** index-served (they scan); for heavy substring search use
 a `pg_trgm` GIN index. The jsonpath `elemmatch` SQL-fallback fragment (object or
 `containsall` leaf) is not served by a `jsonb_path_ops` GIN index.
+
+## Sorting
+
+`buildJsonbOrderBy` turns sort metadata into a parameterized `ORDER BY` fragment,
+reusing the same path extraction and casts as the `WHERE` builder. It is
+**dialect-independent** (ordering always extracts a scalar; there is no jsonpath
+ordering construct), so it takes no `dialect` option. Use `paramOffset` to
+compose it after a `WHERE`:
+
+```typescript
+import { buildJsonbQuery, buildJsonbOrderBy } from '@rfjs/jsonb-query';
+
+const { where, values } = buildJsonbQuery('data', filter);
+const ob = buildJsonbOrderBy('data', [
+  { field: 'age', dataType: 'numeric', direction: 'desc', nulls: 'last' },
+  { field: 'name', dataType: 'string' }, // direction defaults to 'asc'
+], { paramOffset: values.length });
+// ob.orderBy: '("data" #>> $3)::numeric desc nulls last, ("data" #>> $4) asc'
+await client.query(
+  `SELECT * FROM t WHERE ${where} ORDER BY ${ob.orderBy}`,
+  [...values, ...ob.values],
+);
+```
+
+`nulls` is optional; omit it to use PostgreSQL's default (`NULLS LAST` for `asc`,
+`NULLS FIRST` for `desc`). Empty `sorts` yields an empty `orderBy` string (just
+omit the `ORDER BY` clause). Only scalar `dataType`s are orderable; an invalid
+`dataType` / `direction` / `nulls` throws `JsonbQueryError` with code
+`INVALID_SORT`.
+
+For named-binding query layers (TypeORM QueryBuilder, Knex), use
+`buildNamedJsonbOrderBy` (`:pN` output) — the ORDER BY counterpart to
+`buildNamedJsonbQuery`:
+
+```typescript
+const { orderBy, params } = buildNamedJsonbOrderBy('data', [
+  { field: 'age', dataType: 'numeric', direction: 'desc' },
+], { prefix: 'o' });
+// orderBy: '("data" #>> :o1)::numeric desc'   params: { o1: ['age'] }
+qb.addOrderBy(orderBy).setParameters(params);
+```
 
 ## Safety
 

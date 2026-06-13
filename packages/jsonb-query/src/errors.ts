@@ -13,7 +13,8 @@ export type JsonbQueryErrorCode =
   | 'INVALID_OBJECT_VALUE'  // operator expected a plain object value
   | 'EMPTY_FILTER_GROUP'    // elemmatch requires a group with >= 1 condition
   | 'INVALID_PREFIX'        // named-parameter prefix is not a valid identifier
-  | 'PARAM_MISMATCH';       // toNamedParams: placeholders do not match the values array
+  | 'PARAM_MISMATCH'        // toNamedParams: placeholders do not match the values array
+  | 'INVALID_SORT';         // sort spec has an invalid dataType / direction / nulls
 
 export class JsonbQueryError extends Error {
   readonly code: JsonbQueryErrorCode;

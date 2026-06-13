@@ -12,6 +12,14 @@ import type {
 import type { ParamBuilder } from '../param-builder';
 import { JsonbQueryError } from '../errors';
 
+/** Scalar `#>>`-text cast suffixes shared by the legacy dialect and ORDER BY. */
+export const SCALAR_CASTS: Record<JsonbScalarType, string> = {
+  string: '',
+  numeric: '::numeric',
+  date: '::timestamptz',
+  boolean: '::boolean',
+};
+
 export interface RenderContext {
   params: ParamBuilder;
   /** Allocate a unique table alias (e1, e2, …) for EXISTS subqueries. */
