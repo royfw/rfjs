@@ -4,6 +4,7 @@ export const toolRegistry: ToolDefinition[] = [
   {
     id: 'object-flatten',
     category: 'transform',
+    surface: 'web',
     href: '/tools/object-flatten',
     status: 'planned',
     relatedPackages: ['@rfjs/object-utils'],
@@ -12,6 +13,7 @@ export const toolRegistry: ToolDefinition[] = [
   {
     id: 'type-converter',
     category: 'transform',
+    surface: 'web',
     href: '/tools/type-converter',
     status: 'planned',
     relatedPackages: ['@rfjs/data-transform'],
@@ -20,6 +22,7 @@ export const toolRegistry: ToolDefinition[] = [
   {
     id: 'data-filter-tester',
     category: 'filter',
+    surface: 'web',
     href: '/tools/data-filter-tester',
     status: 'planned',
     relatedPackages: ['@rfjs/data-filter'],
@@ -28,6 +31,7 @@ export const toolRegistry: ToolDefinition[] = [
   {
     id: 'jwt-decoder',
     category: 'inspect',
+    surface: 'web',
     href: '/tools/jwt-decoder',
     status: 'planned',
     relatedPackages: ['@rfjs/jwt'],
@@ -36,6 +40,7 @@ export const toolRegistry: ToolDefinition[] = [
   {
     id: 'jsonb-query-generator',
     category: 'query',
+    surface: 'web',
     href: '/tools/jsonb-query-generator',
     status: 'planned',
     relatedPackages: ['@rfjs/jsonb-query'],
@@ -44,6 +49,7 @@ export const toolRegistry: ToolDefinition[] = [
   {
     id: 'mongo-query-generator',
     category: 'query',
+    surface: 'web',
     href: '/tools/mongo-query-generator',
     status: 'planned',
     relatedPackages: ['@rfjs/mongo-query'],
@@ -52,6 +58,7 @@ export const toolRegistry: ToolDefinition[] = [
   {
     id: 'data-filter-builder',
     category: 'filter',
+    surface: 'workbench',
     href: '/playground/data-filter-builder',
     status: 'planned',
     relatedPackages: ['@rfjs/data-filter'],
@@ -60,6 +67,7 @@ export const toolRegistry: ToolDefinition[] = [
   {
     id: 'object-transformer',
     category: 'transform',
+    surface: 'workbench',
     href: '/playground/object-transformer',
     status: 'planned',
     relatedPackages: ['@rfjs/object-utils', '@rfjs/data-transform'],

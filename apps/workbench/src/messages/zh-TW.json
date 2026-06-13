@@ -1,0 +1,32 @@
+{
+  "Common": {
+    "appName": "rfjs workbench",
+    "comingSoon": "即將推出",
+    "github": "GitHub"
+  },
+  "Nav": {
+    "dashboard": "儀表板",
+    "datasets": "資料集",
+    "apps": "應用",
+    "admin": "管理",
+    "adminLocked": "需登入 — 即將推出",
+    "toggleSidebar": "切換側欄"
+  },
+  "Pages": {
+    "dashboardTitle": "儀表板",
+    "dashboardDescription": "資料集總覽與應用捷徑。",
+    "datasetsTitle": "資料集",
+    "datasetsDescription": "內建範例與匯入的 JSON/CSV 資料集。管理功能將於後續階段推出。",
+    "appsTitle": "應用",
+    "appsDescription": "以資料集驅動、組合 @rfjs 套件的應用。",
+    "adminTitle": "管理",
+    "adminDescription": "保留區域。後續階段以 demo 登入解鎖。"
+  },
+  "CommandMenu": {
+    "placeholder": "輸入指令或搜尋…",
+    "navigation": "導覽"
+  },
+  "LocaleSwitcher": {
+    "label": "語言"
+  }
+}
