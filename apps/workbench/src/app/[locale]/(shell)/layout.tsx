@@ -1,4 +1,5 @@
 import { CommandMenu } from "@/components/shell/command-menu";
+import { ShellDrawer } from "@/components/shell/shell-drawer";
 import { ShellSidebar } from "@/components/shell/shell-sidebar";
 import { ShellTopbar } from "@/components/shell/shell-topbar";
 
@@ -10,6 +11,7 @@ export default function ShellLayout({ children }: { children: React.ReactNode })
         <ShellTopbar />
         <main className="flex-1 p-6">{children}</main>
       </div>
+      <ShellDrawer />
       <CommandMenu />
     </div>
   );

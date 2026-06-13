@@ -38,6 +38,7 @@ export function CommandMenu() {
         className="w-full border-b bg-transparent px-2 py-2 text-sm outline-none"
       />
       <Command.List className="max-h-60 overflow-auto pt-2">
+        <Command.Empty className="px-2 py-4 text-sm text-muted-foreground">{t("empty")}</Command.Empty>
         <Command.Group
           heading={t("navigation")}
           className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-muted-foreground"
