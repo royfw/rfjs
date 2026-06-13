@@ -366,10 +366,35 @@ describe('buildJsonbQuery — phase 2', () => {
     const legacy = buildJsonbQuery('data', filter);
     expect(legacy.where).toContain('jsonb_array_elements(');
     expect(legacy.where).toContain('@>');
-    // jsonpath: object leaf forces the SQL EXISTS fallback — enabled in Task 4.
-    // (The hybrid fallback delegation is implemented in jsonpath.ts in Task 4;
-    // until then the jsonpath dialect cannot render an object leaf inside
-    // elemmatch. Task 4 re-enables these assertions.)
+    // jsonpath: the object leaf forces the SQL EXISTS hybrid fallback, whose
+    // body still renders each leaf through the jsonpath dialect.
+    const jp = buildJsonbQuery('data', filter, { dialect: 'jsonpath' });
+    expect(jp.where).toContain('jsonb_array_elements(');
+    expect(jp.where).toContain('jsonb_path_exists(e1.value,');
+    expect(jp.where).toContain('@>');
+  });
+
+  it('scalar-array neq inside elemmatch negates existence (both dialects)', () => {
+    const filter: JsonbFilterGroup = {
+      logic: 'and',
+      filters: [
+        {
+          field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
+          filters: {
+            logic: 'and',
+            filters: [{ field: 'codes', dataType: 'array', elementType: 'string', operator: 'neq', value: 'x' }],
+          },
+        },
+      ],
+    };
+    // legacy: outer EXISTS over elements; the inner scalar-array neq is a
+    // negated nested EXISTS.
+    const legacy = buildJsonbQuery('data', filter).where;
+    expect(legacy).toContain('as e1 where (not (exists');
+    expect(legacy).toContain('where (e2.v = $3)');
+    // jsonpath: native path predicate with the negated inner exists.
+    const jp = buildJsonbQuery('data', filter, { dialect: 'jsonpath' });
+    expect(jp.values[0]).toContain('(!exists (@."codes"[*] ? (@ == $v0)))');
   });
 
   it('elemmatch with empty OWN filters throws; empty NESTED group renders as identity', () => {

@@ -151,8 +151,9 @@ operators match with **"some element matches"** (∃) semantics; `isnull`/
 requires every listed value to be present.
 
 `neq` means **"value not present"** (∀ element ≠ value) — the negation of `eq`'s
-"some element matches"; a missing / non-array field counts as not-present and
-matches. It is the inline equivalent of wrapping `eq` in a `not` group.
+"some element matches"; a missing field counts as not-present and matches. It is
+the inline equivalent of wrapping `eq` in a `not` group. (A *non-array* stored
+value diverges between dialects — see the Semantics notes below.)
 
 ```typescript
 { field: 'tags', dataType: 'array', elementType: 'string', operator: 'eq', value: 'a' }
@@ -216,7 +217,9 @@ Group `logic` is aligned with `@rfjs/data-filter`'s `LogicalOperator`:
 }
 // legacy:   not ((exists (select 1 from jsonb_array_elements_text(...) where (e1.v = $2))))
 // jsonpath: not (jsonb_path_exists("data", $1::jsonpath, $2::jsonb))
-// A missing field or non-array value counts as "does not contain" in both dialects.
+// A missing field counts as "does not contain" in both dialects. A non-array
+// stored value diverges (legacy: treated as empty array; jsonpath lax mode
+// wraps the scalar into a one-element array) — see the Semantics notes.
 ```
 
 > **SQL three-valued logic caveat:** negating a **scalar** condition on a
@@ -224,8 +227,9 @@ Group `logic` is aligned with `@rfjs/data-filter`'s `LogicalOperator`:
 > `@rfjs/data-filter`, which evaluates the same `not` in memory and matches.
 > When "missing field" should match, add an explicit `isnull` condition:
 > `{ logic: 'or', filters: [{ logic: 'not', ... }, { field, dataType, operator: 'isnull' }] }`.
-> Array conditions are not affected (the empty-array guard keeps both dialects
-> consistent).
+> Array conditions on a *missing* field are not affected (the empty-array guard
+> keeps both dialects consistent); a *non-array stored value* still diverges
+> between dialects (jsonpath lax mode wraps the scalar — see the Semantics notes).
 
 ### Semantics notes
 

@@ -297,9 +297,14 @@ describe('jsonpathDialect.renderElemMatch', () => {
     expect(values[0]).toEqual(['items']);
   });
 
-  it('renders an empty nested group as the jsonpath identity literal', () => {
-    const { values } = runElem('items', { logic: 'and', filters: [{ logic: 'or', filters: [] }] });
-    expect(values[0]).toContain('1 == 0');
+  it.each([
+    ['and', '1 == 1'],
+    ['or', '1 == 0'],
+    ['not', '1 == 0'],
+    ['nor', '1 == 1'],
+  ] as const)('renders an empty nested %s group as its jsonpath identity literal', (logic, identity) => {
+    const { values } = runElem('items', { logic: 'and', filters: [{ logic, filters: [] }] });
+    expect(values[0]).toContain(identity);
   });
 });
 
