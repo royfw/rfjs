@@ -63,10 +63,17 @@ function buildGroup(
   return joinLogic(parts, group.logic);
 }
 
+const EMPTY_GROUP_IDENTITY: Record<JsonbFilterGroup['logic'], string> = {
+  and: 'true',
+  or: 'false',
+  not: 'false', // not(AND of nothing) = not(true)
+  nor: 'true', // not(OR of nothing) = not(false)
+};
+
 /** Join rendered parts per group logic; `not`/`nor` negate the joined result. */
 function joinLogic(parts: string[], logic: JsonbFilterGroup['logic']): string {
   if (parts.length === 0) {
-    return '';
+    return EMPTY_GROUP_IDENTITY[logic];
   }
   const joined = parts.join(logic === 'or' || logic === 'nor' ? ' or ' : ' and ');
   return logic === 'not' || logic === 'nor' ? `not (${joined})` : joined;

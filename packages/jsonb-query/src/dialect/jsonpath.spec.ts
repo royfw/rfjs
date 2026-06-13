@@ -297,10 +297,9 @@ describe('jsonpathDialect.renderElemMatch', () => {
     expect(values[0]).toEqual(['items']);
   });
 
-  it('throws when the group renders empty', () => {
-    expect(() =>
-      runElem('items', { logic: 'and', filters: [{ logic: 'or', filters: [] }] }),
-    ).toThrow(/requires a filter group with at least one condition/i);
+  it('renders an empty nested group as the jsonpath identity literal', () => {
+    const { values } = runElem('items', { logic: 'and', filters: [{ logic: 'or', filters: [] }] });
+    expect(values[0]).toContain('1 == 0');
   });
 });
 

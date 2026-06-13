@@ -191,6 +191,13 @@ function sequentialSink(): VarSink {
   };
 }
 
+const JSONPATH_EMPTY_IDENTITY: Record<JsonbFilterGroup['logic'], string> = {
+  and: '1 == 1',
+  or: '1 == 0',
+  not: '1 == 0', // !(AND of nothing) = !(true)
+  nor: '1 == 1', // !(OR of nothing) = !(false)
+};
+
 function groupPredicate(group: JsonbFilterGroup, sink: VarSink): string {
   const parts = group.filters
     .map((node) => {
@@ -202,7 +209,7 @@ function groupPredicate(group: JsonbFilterGroup, sink: VarSink): string {
     })
     .filter((part) => part.length > 0);
   if (parts.length === 0) {
-    return '';
+    return JSONPATH_EMPTY_IDENTITY[group.logic];
   }
   const joined = parts.join(group.logic === 'or' || group.logic === 'nor' ? ' || ' : ' && ');
   return group.logic === 'not' || group.logic === 'nor' ? `!(${joined})` : joined;

@@ -73,12 +73,21 @@ describe('buildJsonbQuery', () => {
     });
   });
 
-  it('returns empty where for an empty group', () => {
-    expect(buildJsonbQuery('data', { logic: 'and', filters: [] })).toEqual({
-      where: '',
-      values: [],
-      from: [],
-    });
+  it('emits the logic boolean identity for an empty group', () => {
+    expect(buildJsonbQuery('data', { logic: 'and', filters: [] })).toEqual({ where: 'true', values: [], from: [] });
+    expect(buildJsonbQuery('data', { logic: 'or', filters: [] }).where).toBe('false');
+  });
+
+  it('empty inner groups participate as their identity', () => {
+    expect(
+      buildJsonbQuery('data', {
+        logic: 'and',
+        filters: [
+          { field: 'name', dataType: 'string', operator: 'eq', value: 'bob' },
+          { logic: 'or', filters: [] },
+        ],
+      }).where,
+    ).toBe('(("data" #>> $1) = $2) and (false)');
   });
 
   it('does not mutate across calls (fresh state each time)', () => {
@@ -363,7 +372,7 @@ describe('buildJsonbQuery — phase 2', () => {
     // elemmatch. Task 4 re-enables these assertions.)
   });
 
-  it('throws when elemmatch filters are empty or render empty', () => {
+  it('elemmatch with empty OWN filters throws; empty NESTED group renders as identity', () => {
     const empty: JsonbFilterGroup = {
       logic: 'and',
       filters: [
@@ -375,7 +384,7 @@ describe('buildJsonbQuery — phase 2', () => {
     };
     expect(() => buildJsonbQuery('data', empty)).toThrow(/requires a filter group/i);
 
-    const rendersEmpty: JsonbFilterGroup = {
+    const nestedEmpty: JsonbFilterGroup = {
       logic: 'and',
       filters: [
         {
@@ -384,10 +393,9 @@ describe('buildJsonbQuery — phase 2', () => {
         },
       ],
     };
-    expect(() => buildJsonbQuery('data', rendersEmpty)).toThrow(/at least one condition/i);
-    expect(() => buildJsonbQuery('data', rendersEmpty, { dialect: 'jsonpath' })).toThrow(
-      /at least one condition/i,
-    );
+    // legacy renders `where (false)`; jsonpath renders the `1 == 0` identity.
+    expect(buildJsonbQuery('data', nestedEmpty).where).toContain('where (false)');
+    expect(buildJsonbQuery('data', nestedEmpty, { dialect: 'jsonpath' }).values[0]).toContain('1 == 0');
   });
 
   it('rejects invalid phase-2 operator combinations', () => {
@@ -497,8 +505,8 @@ describe('buildJsonbQuery — nor/not logical operators', () => {
     );
   });
 
-  it('drops empty not/nor groups (phase-1 empty-group convention)', () => {
-    expect(buildJsonbQuery('data', { logic: 'not', filters: [] }).where).toBe('');
-    expect(buildJsonbQuery('data', { logic: 'nor', filters: [] }).where).toBe('');
+  it('emits identity for empty not/nor groups', () => {
+    expect(buildJsonbQuery('data', { logic: 'not', filters: [] }).where).toBe('false');
+    expect(buildJsonbQuery('data', { logic: 'nor', filters: [] }).where).toBe('true');
   });
 });
