@@ -208,7 +208,7 @@ function groupPredicate(group: JsonbFilterGroup, sink: VarSink): string {
 }
 
 function conditionPredicate(node: JsonbCondition, sink: VarSink): string {
-  assertCondition(node, 'elemmatch');
+  assertCondition(node);
   if (node.dataType === 'array' && node.elementType === 'object') {
     const inner = groupPredicate(node.filters, sink);
     if (inner.length === 0) {

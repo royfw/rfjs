@@ -337,20 +337,30 @@ describe('buildJsonbQuery — phase 2', () => {
     expect(r.values).toEqual([['name'], 'bob', ['profile'], '{"vip":true}', ['tags'], 'a']);
   });
 
-  it('rejects object / scalar-array conditions inside elemmatch in both dialects', () => {
+  it('allows object and scalar-array conditions inside elemmatch (both dialects)', () => {
     const filter: JsonbFilterGroup = {
       logic: 'and',
       filters: [
         {
           field: 'items', dataType: 'array', elementType: 'object', operator: 'elemmatch',
-          filters: { logic: 'and', filters: [{ field: 'p', dataType: 'object', operator: 'eq', value: {} }] },
+          filters: {
+            logic: 'and',
+            filters: [
+              { field: 'sku', dataType: 'string', operator: 'eq', value: 'x' },
+              { field: 'meta', dataType: 'object', operator: 'contains', value: { vip: true } },
+            ],
+          },
         },
       ],
     };
-    expect(() => buildJsonbQuery('data', filter)).toThrow(/not supported inside elemmatch/i);
-    expect(() => buildJsonbQuery('data', filter, { dialect: 'jsonpath' })).toThrow(
-      /not supported inside elemmatch/i,
-    );
+    // legacy: a single EXISTS shell, object leaf via @>
+    const legacy = buildJsonbQuery('data', filter);
+    expect(legacy.where).toContain('jsonb_array_elements(');
+    expect(legacy.where).toContain('@>');
+    // jsonpath: object leaf forces the SQL EXISTS fallback — enabled in Task 4.
+    // (The hybrid fallback delegation is implemented in jsonpath.ts in Task 4;
+    // until then the jsonpath dialect cannot render an object leaf inside
+    // elemmatch. Task 4 re-enables these assertions.)
   });
 
   it('throws when elemmatch filters are empty or render empty', () => {

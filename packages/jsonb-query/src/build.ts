@@ -9,7 +9,6 @@ import type {
 import { ParamBuilder } from './param-builder';
 import { quoteJsonbColumn } from './column';
 import {
-  type ConditionScope,
   type JsonbQueryDialect,
   type RenderContext,
   assertCondition,
@@ -34,9 +33,8 @@ function renderCondition(
   column: string,
   dialect: JsonbQueryDialect,
   ctx: RenderContext,
-  scope: ConditionScope,
 ): string {
-  assertCondition(node, scope);
+  assertCondition(node);
   if (isElemMatch(node)) {
     return dialect.renderElemMatch(column, node, ctx);
   }
@@ -54,13 +52,12 @@ function buildGroup(
   column: string,
   dialect: JsonbQueryDialect,
   ctx: RenderContext,
-  scope: ConditionScope,
 ): string {
   const parts = group.filters
     .map((node) =>
       isFilterGroup(node)
-        ? wrap(buildGroup(node, column, dialect, ctx, scope))
-        : renderCondition(node, column, dialect, ctx, scope),
+        ? wrap(buildGroup(node, column, dialect, ctx))
+        : renderCondition(node, column, dialect, ctx),
     )
     .filter((sql) => sql.length > 0);
   return joinLogic(parts, group.logic);
@@ -98,8 +95,8 @@ export function buildJsonbQuery(
       aliasCount += 1;
       return `e${aliasCount}`;
     },
-    renderGroup: (group, col) => buildGroup(group, col, dialect, ctx, 'elemmatch'),
+    renderGroup: (group, col) => buildGroup(group, col, dialect, ctx),
   };
-  const where = buildGroup(filter, quoted, dialect, ctx, 'root');
+  const where = buildGroup(filter, quoted, dialect, ctx);
   return { where, values: params.values, from: [] };
 }

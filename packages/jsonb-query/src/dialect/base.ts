@@ -143,15 +143,13 @@ const ARRAY_OPERATORS_BY_ELEMENT: Record<JsonbScalarType, ReadonlySet<string>> =
   boolean: new Set(['eq', 'isnull', 'isnotnull']),
 };
 
-export type ConditionScope = 'root' | 'elemmatch';
-
-export function assertCondition(node: JsonbCondition, scope: ConditionScope): void {
+export function assertCondition(node: JsonbCondition): void {
   if (node.dataType === 'object') {
-    if (scope === 'elemmatch') {
-      throw new JsonbQueryError('Object conditions are not supported inside elemmatch', 'UNSUPPORTED_OPERATOR');
-    }
     if (!OBJECT_OPERATORS.has(node.operator)) {
-      throw new JsonbQueryError(`Unsupported operator "${node.operator as string}" for type "object"`, 'UNSUPPORTED_OPERATOR');
+      throw new JsonbQueryError(
+        `Unsupported operator "${node.operator as string}" for type "object"`,
+        'UNSUPPORTED_OPERATOR',
+      );
     }
     return;
   }
@@ -164,12 +162,12 @@ export function assertCondition(node: JsonbCondition, scope: ConditionScope): vo
         );
       }
       if (!node.filters || !Array.isArray(node.filters.filters) || node.filters.filters.length === 0) {
-        throw new JsonbQueryError('Operator "elemmatch" requires a filter group with at least one condition', 'EMPTY_FILTER_GROUP');
+        throw new JsonbQueryError(
+          'Operator "elemmatch" requires a filter group with at least one condition',
+          'EMPTY_FILTER_GROUP',
+        );
       }
       return;
-    }
-    if (scope === 'elemmatch') {
-      throw new JsonbQueryError('Array conditions with scalar elements are not supported inside elemmatch', 'UNSUPPORTED_OPERATOR');
     }
     const ops = ARRAY_OPERATORS_BY_ELEMENT[node.elementType];
     if (!ops) {

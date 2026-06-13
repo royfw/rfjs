@@ -50,8 +50,7 @@ describe('assertObjectValue', () => {
 });
 
 describe('assertCondition', () => {
-  const c = (node: unknown) => () => assertCondition(node as JsonbCondition, 'root');
-  const e = (node: unknown) => () => assertCondition(node as JsonbCondition, 'elemmatch');
+  const c = (node: unknown) => () => assertCondition(node as JsonbCondition);
 
   it('delegates scalar validation unchanged', () => {
     expect(c({ field: 'x', dataType: 'boolean', operator: 'gt' })).toThrow(
@@ -92,20 +91,13 @@ describe('assertCondition', () => {
     expect(c({ ...ok, filters: undefined })).toThrow(/requires a filter group/i);
   });
 
-  it('rejects object and scalar-array conditions inside elemmatch', () => {
-    expect(e({ field: 'p', dataType: 'object', operator: 'eq', value: {} })).toThrow(
-      /object conditions are not supported inside elemmatch/i,
+  it('validates object and scalar-array conditions uniformly (no elemmatch scope)', () => {
+    // Previously rejected inside elemmatch; now scope-independent.
+    expect(c({ field: 'p', dataType: 'object', operator: 'eq', value: {} })).not.toThrow();
+    expect(c({ field: 'a', dataType: 'array', elementType: 'string', operator: 'eq', value: 'x' })).not.toThrow();
+    // Operator-set checks still apply.
+    expect(c({ field: 'p', dataType: 'object', operator: 'gt', value: {} })).toThrow(
+      /unsupported operator "gt" for type "object"/i,
     );
-    expect(
-      e({ field: 'a', dataType: 'array', elementType: 'string', operator: 'eq', value: 'x' }),
-    ).toThrow(/array conditions with scalar elements are not supported inside elemmatch/i);
-    // scalar + nested elemmatch ARE allowed inside elemmatch
-    expect(e({ field: 's', dataType: 'string', operator: 'eq', value: 'x' })).not.toThrow();
-    expect(
-      e({
-        field: 'sub', dataType: 'array', elementType: 'object', operator: 'elemmatch',
-        filters: { logic: 'and', filters: [{ field: 's', dataType: 'string', operator: 'eq', value: 'x' }] },
-      }),
-    ).not.toThrow();
   });
 });

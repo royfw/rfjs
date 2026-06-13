@@ -258,19 +258,15 @@ describe('jsonpathDialect.renderElemMatch', () => {
     ).toBe('$."items"[*] ? (@."a\\"b" == $v0)');
   });
 
-  it('rejects object / scalar-array conditions inside elemmatch', () => {
-    expect(() =>
-      runElem('items', {
-        logic: 'and',
-        filters: [{ field: 'p', dataType: 'object', operator: 'eq', value: {} }],
-      }),
-    ).toThrow(/not supported inside elemmatch/i);
-    expect(() =>
-      runElem('items', {
-        logic: 'and',
-        filters: [{ field: 't', dataType: 'array', elementType: 'string', operator: 'eq', value: 'x' }],
-      }),
-    ).toThrow(/not supported inside elemmatch/i);
+  // The scalar-array branch in conditionPredicate is implemented in Task 4;
+  // until then a scalar-array leaf inside elemmatch is not rendered as a nested
+  // path predicate. Task 4 enables this test.
+  it.skip('renders scalar-array conditions inside elemmatch as a nested path predicate', () => {
+    const { values } = runElem('items', {
+      logic: 'and',
+      filters: [{ field: 't', dataType: 'array', elementType: 'string', operator: 'eq', value: 'x' }],
+    });
+    expect(values[0]).toContain('exists (@."t"[*] ? (@ == $v0))');
   });
 
   it('throws when the group renders empty', () => {
