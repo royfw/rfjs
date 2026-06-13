@@ -23,7 +23,6 @@ export default async function HomePage({
   const features = [
     { title: tf("showcaseTitle"), body: tf("showcaseBody"), href: "/packages" },
     { title: tf("toolsTitle"), body: tf("toolsBody"), href: "/tools" },
-    { title: tf("playgroundTitle"), body: tf("playgroundBody"), href: "/playground" },
     { title: tf("templatesTitle"), body: tf("templatesBody"), href: "/templates" },
   ];
   return (
