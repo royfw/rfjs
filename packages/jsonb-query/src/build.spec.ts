@@ -552,7 +552,8 @@ describe('buildJsonbQuery — array emptiness', () => {
 
   it('isempty renders identical SQL in both dialects', () => {
     const filter = one({ field: 'tags', dataType: 'array', elementType: 'string', operator: 'isempty' });
-    const expected = "(jsonb_typeof(\"data\" #> $1) = 'array' and jsonb_array_length(\"data\" #> $1) = 0)";
+    const expected =
+      "(case when jsonb_typeof(\"data\" #> $1) = 'array' then jsonb_array_length(\"data\" #> $1) = 0 else false end)";
     expect(buildJsonbQuery('data', filter).where).toBe(expected);
     expect(buildJsonbQuery('data', filter, { dialect: 'jsonpath' }).where).toBe(expected);
   });

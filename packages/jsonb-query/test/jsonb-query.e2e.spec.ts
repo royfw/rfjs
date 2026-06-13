@@ -57,8 +57,8 @@ const SEED: Array<[number, unknown]> = [
       items: [{ sku: 'y', qty: 1 }],
     },
   ],
-  // JSON null age; everything else missing.
-  [3, { name: 'carol', age: null }],
+  // JSON null age; profile present with a null-valued key (for haskey vs isnotnull).
+  [3, { name: 'carol', age: null, profile: { vip: null } }],
   // Malformed shapes: tags is a scalar, items is an object (not an array).
   [4, { name: 'dave', tags: 'a', items: { sku: 'x', qty: 99 } }],
   // Regex metacharacters + hostile value stored as data.
@@ -228,8 +228,9 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
             [2],
           );
           await expectIds(
+            // id 3 now seeds profile: { vip: null }, so it is no longer null.
             { logic: 'and', filters: [{ field: 'profile', dataType: 'object', operator: 'isnull' }] },
-            [3, 4, 5, 6, 7, 8],
+            [4, 5, 6, 7, 8],
           );
         });
       });
@@ -527,6 +528,32 @@ describe.skipIf(URLS.length === 0)('jsonb-query e2e', () => {
             },
             { legacy: [2], jsonpath: [2, 3, 4, 5, 6, 7, 8] },
           );
+        });
+      });
+
+      describe('operator expansion', () => {
+        const one = (f: JsonbFilterGroup['filters'][number]): JsonbFilterGroup => ({ logic: 'and', filters: [f] });
+
+        it('haskey detects a null-valued key that isnotnull misses', async () => {
+          // id 3 has profile.vip = null: the KEY exists (haskey) but the VALUE is null (isnotnull false).
+          await expectIds(one({ field: 'profile', dataType: 'object', operator: 'haskey', value: 'vip' }), [1, 2, 3]);
+          await expectIds(one({ field: 'profile.vip', dataType: 'boolean', operator: 'isnotnull' }), [1, 2]);
+        });
+
+        it('hasanykey / hasallkeys', async () => {
+          await expectIds(one({ field: 'profile', dataType: 'object', operator: 'hasallkeys', value: ['vip', 'level'] }), [1]);
+          await expectIds(one({ field: 'profile', dataType: 'object', operator: 'hasanykey', value: ['level', 'nope'] }), [1]);
+        });
+
+        it('case-insensitive contains matches regardless of case', async () => {
+          await expectIds(one({ field: 'name', dataType: 'string', operator: 'icontains', value: 'BO' }), [1]);
+          await expectIds(one({ field: 'name', dataType: 'string', operator: 'ieq', value: 'ALICE' }), [2]);
+        });
+
+        it('isempty / isnotempty on the tags array', async () => {
+          // id 1 tags:[a,b], id 2 tags:[b,c] → isnotempty [1,2]; none seeded with [] → isempty [].
+          await expectIds(one({ field: 'tags', dataType: 'array', elementType: 'string', operator: 'isnotempty' }), [1, 2]);
+          await expectIds(one({ field: 'tags', dataType: 'array', elementType: 'string', operator: 'isempty' }), []);
         });
       });
 

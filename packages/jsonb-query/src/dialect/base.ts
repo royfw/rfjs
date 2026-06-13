@@ -71,7 +71,9 @@ export function renderArrayEmptiness(
 ): string {
   const arr = `${column} #> ${params.add(fieldSegments(field))}`;
   const cmp = operator === 'isempty' ? '= 0' : '> 0';
-  return `(jsonb_typeof(${arr}) = 'array' and jsonb_array_length(${arr}) ${cmp})`;
+  // CASE (not AND): Postgres does not guarantee AND short-circuits, so
+  // jsonb_array_length must never reach a non-array value (it errors on scalars).
+  return `(case when jsonb_typeof(${arr}) = 'array' then jsonb_array_length(${arr}) ${cmp} else false end)`;
 }
 
 /**
