@@ -1,8 +1,11 @@
 {
   "Common": {
     "appName": "rfjs workbench",
+    "appNameShort": "rf",
     "comingSoon": "Coming soon",
-    "github": "GitHub"
+    "github": "GitHub",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "Nav": {
     "dashboard": "Dashboard",
@@ -24,7 +27,8 @@
   },
   "CommandMenu": {
     "placeholder": "Type a command or search…",
-    "navigation": "Navigation"
+    "navigation": "Navigation",
+    "empty": "No results found."
   },
   "LocaleSwitcher": {
     "label": "Language"

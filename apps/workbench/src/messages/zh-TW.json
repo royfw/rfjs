@@ -1,8 +1,11 @@
 {
   "Common": {
     "appName": "rfjs workbench",
+    "appNameShort": "rf",
     "comingSoon": "即將推出",
-    "github": "GitHub"
+    "github": "GitHub",
+    "openMenu": "開啟選單",
+    "closeMenu": "關閉選單"
   },
   "Nav": {
     "dashboard": "儀表板",
@@ -24,7 +27,8 @@
   },
   "CommandMenu": {
     "placeholder": "輸入指令或搜尋…",
-    "navigation": "導覽"
+    "navigation": "導覽",
+    "empty": "找不到結果。"
   },
   "LocaleSwitcher": {
     "label": "語言"
