@@ -62,6 +62,20 @@ function renderScalarOp(
       const v = params.add(assertScalarValue(operator, value));
       return `(right(${F}, char_length(${v})) = ${v})`;
     }
+    case 'ieq':
+      return `(lower(${F}) = lower(${params.add(assertScalarValue(operator, value))}))`;
+    case 'ineq':
+      return `(lower(${F}) <> lower(${params.add(assertScalarValue(operator, value))}))`;
+    case 'icontains':
+      return `(position(lower(${params.add(assertScalarValue(operator, value))}) in lower(${F})) > 0)`;
+    case 'istartswith': {
+      const v = params.add(assertScalarValue(operator, value));
+      return `(left(lower(${F}), char_length(${v})) = lower(${v}))`;
+    }
+    case 'iendswith': {
+      const v = params.add(assertScalarValue(operator, value));
+      return `(right(lower(${F}), char_length(${v})) = lower(${v}))`;
+    }
     default:
       throw new JsonbQueryError(`Unsupported operator "${operator as string}"`, 'UNSUPPORTED_OPERATOR');
   }

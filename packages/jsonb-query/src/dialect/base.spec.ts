@@ -73,6 +73,14 @@ describe('assertCondition', () => {
     expect(c({ field: 'p', dataType: 'object', operator: 'hasallkeys', value: ['a', 'b'] })).not.toThrow();
   });
 
+  it('accepts case-insensitive operators only for string', () => {
+    expect(c({ field: 'x', dataType: 'string', operator: 'icontains', value: 'a' })).not.toThrow();
+    expect(c({ field: 'x', dataType: 'string', operator: 'ieq', value: 'a' })).not.toThrow();
+    expect(c({ field: 'x', dataType: 'numeric', operator: 'icontains', value: 1 })).toThrow(
+      /unsupported operator "icontains" for type "numeric"/i,
+    );
+  });
+
   it('validates array element operators per elementType', () => {
     const arr = (elementType: string, operator: string) =>
       c({ field: 'a', dataType: 'array', elementType, operator, value: 1 });

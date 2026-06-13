@@ -29,7 +29,12 @@ export type JsonbScalarOperator =
   | 'lt'
   | 'lte'
   | 'range'
-  | 'terms';
+  | 'terms'
+  | 'icontains'
+  | 'istartswith'
+  | 'iendswith'
+  | 'ieq'
+  | 'ineq';
 
 export type JsonbObjectOperator =
   | 'eq'
