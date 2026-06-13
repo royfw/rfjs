@@ -1,6 +1,8 @@
-import { Seam } from "@rfjs/web-ui/components/seam";
 import type { ReactNode } from "react";
 
+// Operation label sits as a centered chip ABOVE the panes (Seam badge
+// vocabulary: "▸ op" mono), not floating between them — a between-panes badge
+// is wider than the gutter and overlaps the panels' inner edges/content.
 export function ToolShell({
   operation,
   input,
@@ -11,13 +13,16 @@ export function ToolShell({
   output: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-stretch gap-3 lg:flex-row">
-      <div className="min-w-0 flex-1">{input}</div>
-      <div className="flex shrink-0 items-center justify-center py-1 lg:px-1 lg:py-0">
-        <Seam state="current" operation={operation} orientation="horizontal" className="lg:hidden" />
-        <Seam state="current" operation={operation} orientation="vertical" className="hidden lg:flex" />
+    <div className="flex flex-col gap-3">
+      <div className="flex justify-center">
+        <span className="rounded-sm border border-border bg-slab px-1.5 py-0.5 font-mono text-[10px] leading-none text-signal/65">
+          ▸ {operation}
+        </span>
       </div>
-      <div className="min-w-0 flex-1">{output}</div>
+      <div className="flex flex-col items-stretch gap-3 lg:flex-row">
+        <div className="min-w-0 flex-1">{input}</div>
+        <div className="min-w-0 flex-1">{output}</div>
+      </div>
     </div>
   );
 }
