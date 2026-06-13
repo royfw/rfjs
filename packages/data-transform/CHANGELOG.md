@@ -1,5 +1,16 @@
 # @rfjs/data-transform
 
+## 0.1.1
+
+### Patch Changes
+
+- 333b1b5: Internal type-safety cleanup with no behavior or public API change: replace an unsafe `JSON.parse` return in `toBoolean` with an explicit `value === 'true'` check, and collapse the redundant `MgoDataType | DataType` union in `typeTransfer` to `DataType` (`MgoDataType` is a literal alias of `DataType`, so the signature is semantically identical). All 38 existing tests pass unchanged.
+- a72251f: chore(packages): add npm metadata for the public repo
+
+  - Add `repository` (with per-package `directory`), `bugs`, and `homepage` fields so npm package pages link back to the now-public GitHub repo
+  - Fill in `keywords` for npm search discoverability
+  - Fix pg-toolkit README titles to the published `@rfjs/pg-toolkit` scope
+
 ## 0.1.0
 
 ### Minor Changes
