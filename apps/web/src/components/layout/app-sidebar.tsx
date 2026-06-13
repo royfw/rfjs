@@ -25,7 +25,7 @@ export function AppSidebar() {
   return (
     <nav aria-label={tNav("packagesTitle")} className="flex flex-col gap-5 p-4">
       <div className="flex flex-col gap-1">
-        <span className="px-2 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+        <span className="px-2 font-mono text-xs uppercase tracking-wide text-muted-foreground">
           {tNav("packagesTitle")}
         </span>
         {packages.map((pkg) => {
@@ -39,7 +39,7 @@ export function AppSidebar() {
         })}
       </div>
       <div className="flex flex-col gap-1">
-        <span className="px-2 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+        <span className="px-2 font-mono text-xs uppercase tracking-wide text-muted-foreground">
           {tNav("toolsTitle")}
         </span>
         {tools.map((tool) => {

@@ -132,11 +132,13 @@ interface Session {
 
 ## 13. 階段路線圖
 
-1. **Phase 1 — workbench 骨架**：app scaffold（Next 16 + turbo 接線）、admin shell（sidebar / topbar / ⌘K）、i18n + 主題、四路由區空殼（dashboard / datasets / apps / admin 預留）、registry `surface` 擴充。版型基礎元件進 `@rfjs/web-ui`，供後續 web 工具共用。
-2. **Phase 2 — web 收斂**（小，可與 Phase 1 交錯）：§3 的 1/2/4/5/6（sidebar、index 連結、redirect、套件頁補實）。
-3. **Phase 3 — workbench datasets + data-filter-builder**：招牌動線（dataset → 篩選 → query 輸出）。
-4. **Phase 4 — web 快速工具**：第一批 3 工具 + 第二批接續。
-5. **Phase 5 — PWA**：兩站接 Serwist。
+> **執行順序修訂（2026-06-13）**：原排程為 3→4→5；改為 **web 快速工具 → PWA → workbench**（workbench 規模較大、後排），即下方標號的 Phase 1、2 已完成，接著 Phase 4 → Phase 5 → Phase 3。Phase 編號保留原意義（不重新編號），僅執行順序調整。
+
+1. **Phase 1 — workbench 骨架**（✅ 已完成，#140/#141）：app scaffold（Next 16 + turbo 接線）、admin shell（sidebar / topbar / ⌘K）、i18n + 主題、四路由區空殼（dashboard / datasets / apps / admin 預留）、registry `surface` 擴充。版型基礎元件進 `@rfjs/web-ui`，供後續 web 工具共用。
+2. **Phase 2 — web 收斂**（✅ 已完成，#143）：§3 的 1/2/4/5/6（sidebar、index 連結、redirect、套件頁補實）。
+3. **Phase 4 — web 快速工具**（下一個）：第一批 3 工具 + 第二批接續。
+4. **Phase 5 — PWA**：兩站接 Serwist。
+5. **Phase 3 — workbench datasets + data-filter-builder**：招牌動線（dataset → 篩選 → query 輸出）。
 6. **Phase 6 — demo auth（v2）**：登入頁 + @rfjs/jwt session + `/admin` 區 + jwt sign/verify 升級。
 7. **Phase 7+（不排程）**：better-auth 多 provider、pg-toolkit 沙箱 demo、index 分組。
 
