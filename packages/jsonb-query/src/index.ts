@@ -8,3 +8,4 @@ export {
   type BuildNamedJsonbOptions,
   type NamedParamsResult,
 } from './named-params';
+export { JsonbQueryError, type JsonbQueryErrorCode } from './errors';
