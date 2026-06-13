@@ -52,8 +52,11 @@ Scalars and nested `elemmatch` already work inside `elemmatch`.
 
 **Shared:** Remove both `scope === 'elemmatch'` throws in `assertCondition`.
 Validation of object / scalar-array conditions becomes scope-independent
-(operator-set checks still apply). The `scope` parameter is retained on the
-signature but no longer gates these two cases.
+(operator-set checks still apply). Once the throws are gone, `scope` is read
+nowhere, so it is removed entirely: drop the `scope` parameter from
+`assertCondition`, delete the `ConditionScope` type, and drop the `'root'` /
+`'elemmatch'` arguments at the two call sites (`build.ts` `buildGroup`/`ctx`,
+`jsonpath.ts` `conditionPredicate`).
 
 **legacy dialect — no rendering change required.** `renderElemMatch` already
 renders its body via `ctx.renderGroup(condition.filters, '<alias>.value')`,
@@ -173,12 +176,16 @@ New `src/errors.ts`:
 
 ```ts
 export type JsonbQueryErrorCode =
-  | 'INVALID_COLUMN'
-  | 'INVALID_DIALECT'
-  | 'UNSUPPORTED_OPERATOR'
-  | 'INVALID_VALUE'
-  | 'INVALID_PREFIX'
-  | 'PARAM_MISMATCH';
+  | 'INVALID_COLUMN'        // column identifier is not a plain (qualified) reference
+  | 'INVALID_DIALECT'       // unknown dialect name
+  | 'UNSUPPORTED_OPERATOR'  // operator not valid for the (element) type
+  | 'INVALID_ELEMENT_TYPE'  // unknown array elementType
+  | 'INVALID_SCALAR_VALUE'  // operator expected a single scalar value
+  | 'INVALID_ARRAY_VALUE'   // operator expected an array of a given arity / non-empty
+  | 'INVALID_OBJECT_VALUE'  // operator expected a plain object value
+  | 'EMPTY_FILTER_GROUP'    // elemmatch requires a group with >= 1 condition
+  | 'INVALID_PREFIX'        // named-parameter prefix is not a valid identifier
+  | 'PARAM_MISMATCH';       // toNamedParams: placeholders do not match the values array
 
 export class JsonbQueryError extends Error {
   readonly code: JsonbQueryErrorCode;
@@ -191,14 +198,18 @@ export class JsonbQueryError extends Error {
 ```
 
 Every `throw new Error(...)` in the package becomes `throw new
-JsonbQueryError(msg, code)`, mapped:
+JsonbQueryError(msg, code)`. One code per throw site:
 
 | throw site | code |
 |------------|------|
-| `quoteJsonbColumn` invalid segment | `INVALID_COLUMN` |
+| `quoteJsonbColumn` invalid segment (`column.ts`) | `INVALID_COLUMN` |
 | unknown dialect (`build.ts`) | `INVALID_DIALECT` |
-| operator/type mismatch, unsupported operator, unknown elementType (`base.ts`, dialects, `object-condition.ts`) | `UNSUPPORTED_OPERATOR` |
-| value guards — `assertScalarValue` / `assertArrayValue` / `assertObjectValue`, empty elemmatch group | `INVALID_VALUE` |
+| `assertOperatorForType`, `assertCondition` operator checks (object / array-of-objects / array elements), dialect `renderScalarOp` default, `object-condition.ts` default | `UNSUPPORTED_OPERATOR` |
+| `assertCondition` unknown `elementType` | `INVALID_ELEMENT_TYPE` |
+| `assertScalarValue` (`base.ts`) | `INVALID_SCALAR_VALUE` |
+| `assertArrayValue` — wrong arity / empty (`base.ts`) | `INVALID_ARRAY_VALUE` |
+| `assertObjectValue` (`base.ts`) | `INVALID_OBJECT_VALUE` |
+| empty elemmatch group (`assertCondition`, both dialects' `renderElemMatch`) | `EMPTY_FILTER_GROUP` |
 | invalid named-param prefix (`named-params.ts`) | `INVALID_PREFIX` |
 | `toNamedParams` placeholder/value mismatch | `PARAM_MISMATCH` |
 
@@ -234,9 +245,10 @@ thrown type is an internal bug. Documented in the README.
 ## Testing
 
 - **Unit (co-located `*.spec.ts`):**
-  - `base.spec.ts` — `assertCondition` no longer throws for object / scalar-array
-    in elemmatch scope; `groupNeedsSqlFallback` truth table; new `neq` in
-    operator sets; `JsonbQueryError` thrown with correct `code` from each guard.
+  - `base.spec.ts` — `assertCondition` (now scope-less) validates object /
+    scalar-array conditions uniformly; `groupNeedsSqlFallback` truth table; new
+    `neq` in operator sets; `JsonbQueryError` thrown with correct `code` from
+    each guard.
   - `legacy.spec.ts` — object / scalar-array / nested-elemmatch inside elemmatch;
     array `neq`.
   - `jsonpath.spec.ts` — scalar-array inside elemmatch as native path predicate;
@@ -263,8 +275,9 @@ thrown type is an internal bug. Documented in the README.
 
 1. `errors.ts` + wire `JsonbQueryError` through all throw sites (C) — isolated,
    no behavior change; lands first.
-2. Remove elemmatch scope guards + `groupNeedsSqlFallback` + jsonpath
-   scalar-array branch + jsonpath fallback delegation (A).
+2. Remove elemmatch scope guards (and the now-dead `scope` param /
+   `ConditionScope` type) + `groupNeedsSqlFallback` + jsonpath scalar-array
+   branch + jsonpath fallback delegation (A).
 3. Empty-group identity in `joinLogic` (B).
 4. Array `neq` type + operator sets + dialect rendering (D).
 5. README + changeset + E2E cases.
