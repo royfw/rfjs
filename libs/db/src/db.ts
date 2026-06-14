@@ -1,7 +1,7 @@
 import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Client, Pool } from 'pg';
-import * as schema from './schema';
-import { getConnectionStringInfo } from './utils';
+import * as schema from '@/schema';
+import { getConnectionStringInfo } from '@/utils';
 
 export type Schema = typeof schema;
 export type Db = NodePgDatabase<Schema>;

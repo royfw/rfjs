@@ -15,8 +15,7 @@
     "seed": "pnpm exec tsx src/scripts/run-seed.ts",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --passWithNoTests --run",
-    "vitest:run": "vitest --passWithNoTests --run",
-    "vitest:e2e:run": "vitest --config vitest.config.e2e.mts --passWithNoTests --run"
+    "vitest:run": "vitest --passWithNoTests --run"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",
