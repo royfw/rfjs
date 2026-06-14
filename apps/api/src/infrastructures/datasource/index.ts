@@ -8,7 +8,7 @@ import {
 } from '@rfjs/core';
 import { configs } from '@/configs';
 
-const { db } = createDb(configs.databaseUrl);
+const { db, pool } = createDb(configs.databaseUrl);
 const datasetRepository = makeDatasetRepository(db);
 
 export const datasetUsecases = {
@@ -17,3 +17,6 @@ export const datasetUsecases = {
   create: makeCreateDataset({ repo: datasetRepository }),
   search: makeSearchDatasets({ repo: datasetRepository }),
 };
+
+/** Drains and closes the shared PG pool — wired into Fastify's `onClose` for graceful shutdown. */
+export const closeDatasource = (): Promise<void> => pool.end();

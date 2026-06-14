@@ -20,6 +20,8 @@
     "dashboardDescription": "資料集總覽與應用捷徑。",
     "datasetsTitle": "資料集",
     "datasetsDescription": "內建範例與匯入的 JSON/CSV 資料集。管理功能將於後續階段推出。",
+    "datasetsEmpty": "尚無資料集。",
+    "datasetsError": "無法連線資料集 API。",
     "appsTitle": "應用",
     "appsDescription": "以資料集驅動、組合 @rfjs 套件的應用。",
     "adminTitle": "管理",
