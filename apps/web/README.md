@@ -40,7 +40,7 @@ tools index, and sitemap are all driven by these registries.
 |-------|-------|
 | `/` | Home — polished intro page |
 | `/packages`, `/packages/[slug]` | Package showcase — index lists all `@rfjs/*` packages; detail shows install command, npm/GitHub links, and related tools |
-| `/tools`, `/tools/[slug]` | Tools index lists web-native quick tools (internal) **and** workbench apps as cross-site links. Detail pages: `type-converter` and `object-flatten` are live interactive tools; the rest are coming-soon placeholders |
+| `/tools`, `/tools/[slug]` | Tools index lists web-native quick tools (internal) **and** workbench apps as cross-site links. All six quick tools are live: type-converter, object-flatten, data-filter-tester, mongo-query-generator, jsonb-query-generator (jwt-decoder ships with Phase 6) |
 | `/playground` | Redirects to `/tools` (the playground concept moved to the workbench app) |
 | `/templates` | Templates gallery (placeholder) |
 
