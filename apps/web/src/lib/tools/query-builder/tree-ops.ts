@@ -38,7 +38,7 @@ export function setLogic(group: BuilderGroup, targetId: string, logic: LogicOp):
 export function updateNode(
   group: BuilderGroup,
   targetId: string,
-  patch: Partial<BuilderCondition>,
+  patch: Omit<Partial<BuilderCondition>, "kind" | "id">,
 ): BuilderGroup {
   return {
     ...group,

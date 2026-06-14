@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { addCondition, addGroup, emptyGroup, removeNode, setLogic, updateNode } from "./tree-ops";
 import type { BuilderCondition, BuilderGroup } from "./types";
@@ -7,6 +7,10 @@ let counter = 0;
 const id = () => `id-${counter++}`;
 
 describe("tree-ops", () => {
+  beforeEach(() => {
+    counter = 0;
+  });
+
   it("emptyGroup creates an and-group with no children", () => {
     const g = emptyGroup(id);
     expect(g.kind).toBe("group");
