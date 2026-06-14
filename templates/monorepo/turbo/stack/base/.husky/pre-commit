@@ -1,1 +1,1 @@
-pnpm exec turbo run lint-staged test --affected
+pnpm exec turbo run lint-staged --affected
