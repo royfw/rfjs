@@ -31,4 +31,30 @@ describe("runLiveMatch", () => {
     const empty: BuilderGroup = { kind: "group", id: "g", logic: "and", children: [] };
     expect(runLiveMatch(rows, empty).count).toBe(3);
   });
+
+  it("flags uncoverable for a jsonb-only op nested inside a group", () => {
+    const tree: BuilderGroup = {
+      kind: "group", id: "outer", logic: "and",
+      children: [{
+        kind: "group", id: "inner", logic: "or",
+        children: [{ kind: "condition", id: "c", field: "name", dataType: "string", operator: "icontains", value: "x" }],
+      }],
+    };
+    expect(runLiveMatch([{ name: "X" }], tree).uncoverable).toBe(true);
+  });
+
+  it("flags uncoverable for a jsonb-only op inside an elemmatch filter", () => {
+    const tree: BuilderGroup = {
+      kind: "group", id: "g", logic: "and",
+      children: [{
+        kind: "condition", id: "c", field: "tags", dataType: "array", elementType: "object",
+        operator: "elemmatch",
+        filters: {
+          kind: "group", id: "fg", logic: "and",
+          children: [{ kind: "condition", id: "fc", field: "name", dataType: "string", operator: "icontains", value: "x" }],
+        },
+      }],
+    };
+    expect(runLiveMatch([{ tags: [{ name: "X" }] }], tree).uncoverable).toBe(true);
+  });
 });
