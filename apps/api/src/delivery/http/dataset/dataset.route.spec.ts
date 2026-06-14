@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { CreateDatasetInputSchema } from '@rfjs/core';
+import { JsonbQueryError } from '@rfjs/jsonb-query';
 
 vi.mock('@/infrastructures/datasource', () => ({
   datasetUsecases: {
@@ -25,6 +26,16 @@ vi.mock('@/infrastructures/datasource', () => ({
         ...input,
       }),
     ),
+    search: vi.fn().mockResolvedValue([
+      {
+        id: '1',
+        name: 'A',
+        description: null,
+        data: { region: 'apac' },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]),
   },
 }));
 
@@ -86,6 +97,37 @@ describe('dataset routes', () => {
       CreateDatasetInputSchema.safeParse({}).error!,
     );
     const res = await app.inject({ method: 'POST', url: '/datasets', payload: {} });
+    expect(res.statusCode).toBe(400);
+    expect(res.json<{ error: string }>().error).toBe('Bad Request');
+  });
+
+  it('POST /datasets/query returns 200 with the filtered list', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/datasets/query',
+      payload: {
+        filter: {
+          logic: 'and',
+          filters: [
+            { field: 'region', dataType: 'string', operator: 'eq', value: 'apac' },
+          ],
+        },
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toHaveLength(1);
+  });
+
+  it('POST /datasets/query maps JsonbQueryError to 400', async () => {
+    const { datasetUsecases } = await import('@/infrastructures/datasource');
+    vi.mocked(datasetUsecases.search).mockRejectedValueOnce(
+      new JsonbQueryError('bad operator', 'UNSUPPORTED_OPERATOR'),
+    );
+    const res = await app.inject({
+      method: 'POST',
+      url: '/datasets/query',
+      payload: { filter: { logic: 'and', filters: [] } },
+    });
     expect(res.statusCode).toBe(400);
     expect(res.json<{ error: string }>().error).toBe('Bad Request');
   });
