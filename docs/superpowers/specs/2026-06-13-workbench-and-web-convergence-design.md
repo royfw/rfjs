@@ -125,7 +125,7 @@ PWA 拆兩步交付，先低風險的「可安裝」、再延後「離線」：
 
 | 工具 | 套件函式 | 輸入面板 | 輸出面板 |
 |---|---|---|---|
-| data-filter-tester | `matchQuery(item, filter)`（@rfjs/data-filter） | 兩個 textarea：Data（JSON 物件陣列）+ Filter（`{logic, filters:[{field,operator,value}]}`） | 通過 filter 的子集（pretty JSON）+ 命中數 |
+| data-filter-tester | `matchQuery(item, filter)`（@rfjs/data-filter） | 兩個 textarea：Data（JSON 物件陣列）+ Filter（`{logic, filters:[{field,dataType,operator,value}]}` — dataType 必填：string/numeric/date/boolean/object/array） | 通過 filter 的子集（pretty JSON）+ 命中數 |
 | mongo-query-generator | `genFilterQuery(meta)`（@rfjs/mongo-query） | filter metadata textarea（`{logic, filters:[{field,condition,dataType,value}]}`） | MongoDB query document（pretty JSON）+ copy |
 | jsonb-query-generator | `buildJsonbQuery(col, filter, {dialect})`（@rfjs/jsonb-query） | column 文字框 + dialect DropdownMenu（legacy/jsonpath）+ filter textarea（`{logic, filters:[{field,dataType,operator,value}]}`） | SQL `where` 字串 + `values` 參數陣列 + copy |
 
