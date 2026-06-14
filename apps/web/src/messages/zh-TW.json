@@ -50,7 +50,8 @@
     "jsonb-query-generator": { "title": "篩選 → JSONB SQL", "description": "從篩選 metadata 產生 PostgreSQL JSONB 查詢。" },
     "mongo-query-generator": { "title": "篩選 → Mongo 查詢", "description": "從篩選 metadata 產生 MongoDB 查詢。" },
     "data-filter-builder": { "title": "資料篩選建構器", "description": "視覺化組合巢狀篩選條件並匯出。" },
-    "object-transformer": { "title": "物件轉換器", "description": "互動式物件轉換 playground。" }
+    "object-transformer": { "title": "物件轉換器", "description": "互動式物件轉換 playground。" },
+    "query-builder": { "title": "查詢建構器", "description": "視覺化建構巢狀 JSONB 查詢，並即時預覽命中結果。" }
   },
   "ToolUI": {
     "input": "輸入",
@@ -64,6 +65,9 @@
     "column": "欄位",
     "dialect": "方言",
     "matched": "命中 {count} 筆",
+    "notPreviewable": "此 operator 無法在瀏覽器預覽",
+    "builder": "Builder",
+    "elemMatchPlaceholder": "elemmatch（巢狀比對，本切片暫以單層條件呈現）",
     "types": {
       "string": "字串",
       "number": "數字",
