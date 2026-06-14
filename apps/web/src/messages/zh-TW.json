@@ -63,6 +63,13 @@
     "filter": "篩選條件",
     "column": "欄位",
     "dialect": "方言",
+    "token": "JWT",
+    "header": "Header",
+    "payload": "Payload",
+    "signature": "簽章",
+    "expiresIn": "{duration}後過期",
+    "expired": "已過期",
+    "noExpiry": "無有效期",
     "matched": "命中 {count} 筆",
     "types": {
       "string": "字串",
@@ -78,7 +85,9 @@
       "invalidJson": "無效的 JSON",
       "notObject": "需要 JSON 物件",
       "notArray": "需要 JSON 陣列",
-      "queryFailed": "無法產生查詢"
+      "queryFailed": "無法產生查詢",
+      "invalidJwt": "不是有效的 JWT",
+      "request": "解碼請求失敗"
     }
   },
   "Packages": {

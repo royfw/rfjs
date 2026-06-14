@@ -63,6 +63,13 @@
     "filter": "Filter",
     "column": "Column",
     "dialect": "Dialect",
+    "token": "JWT",
+    "header": "Header",
+    "payload": "Payload",
+    "signature": "Signature",
+    "expiresIn": "expires in {duration}",
+    "expired": "expired",
+    "noExpiry": "no expiry",
     "matched": "{count} matched",
     "types": {
       "string": "String",
@@ -78,7 +85,9 @@
       "invalidJson": "Invalid JSON",
       "notObject": "Expected a JSON object",
       "notArray": "Expected a JSON array",
-      "queryFailed": "Could not build the query"
+      "queryFailed": "Could not build the query",
+      "invalidJwt": "Not a valid JWT",
+      "request": "Decode request failed"
     }
   },
   "Packages": {
