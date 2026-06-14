@@ -2,6 +2,7 @@
 
 import { Button } from "@rfjs/web-ui/components/button";
 import { Panel } from "@rfjs/web-ui/components/panel";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { treeToFilterGroup } from "@/lib/tools/query-builder/compile";
@@ -28,6 +29,7 @@ const SAMPLE = JSON.stringify(
 const id = () => crypto.randomUUID();
 
 export function QueryBuilder() {
+  const t = useTranslations("ToolUI");
   const [sampleText, setSampleText] = useState(SAMPLE);
   const [schema, setSchema] = useState<FieldSchema[]>(() => safeInfer(SAMPLE).schema);
   const [error, setError] = useState<string | null>(() => safeInfer(SAMPLE).error);
@@ -57,7 +59,7 @@ export function QueryBuilder() {
             onSampleChange={onSample}
             onSchemaChange={setSchema}
           />
-          <Panel title="Builder">
+          <Panel title={t("builder")}>
             <div className="mb-3 flex gap-2">
               {ENGINE_IDS.map((eid) => (
                 <Button

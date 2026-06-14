@@ -2,6 +2,7 @@
 
 import { Button } from "@rfjs/web-ui/components/button";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { getEngine, type EngineId } from "@/lib/tools/query-builder/engines";
 import { addCondition, addGroup, removeNode, setLogic, updateNode } from "@/lib/tools/query-builder/tree-ops";
@@ -101,6 +102,7 @@ function ConditionRow({
   onChange: (patch: Omit<Partial<BuilderCondition>, "kind" | "id">) => void;
   onRemove: () => void;
 }) {
+  const t = useTranslations("ToolUI");
   const fields = schema.filter((f) => f.include);
   const engine = getEngine(engineId);
   const ops = engine.operators(condition.dataType, condition.elementType);
@@ -143,7 +145,7 @@ function ConditionRow({
         ))}
       </select>
       {condition.operator === "elemmatch" ? (
-        <span className="text-xs text-muted-foreground">elemmatch（巢狀比對，本切片暫以單層條件呈現）</span>
+        <span className="text-xs text-muted-foreground">{t("elemMatchPlaceholder")}</span>
       ) : (
         <ValueEditor
           dataType={condition.dataType}
