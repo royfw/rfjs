@@ -47,4 +47,23 @@ describe("inferSchema", () => {
     expect(() => inferSchema(42 as unknown)).toThrow();
     expect(() => inferSchema([1, 2] as unknown)).toThrow();
   });
+
+  // Fix A: ISO date regex must be anchored
+  it("does not classify a date-prefixed string with trailing text as date", () => {
+    expect(inferSchema([{ note: "2020-01-15 follow up" }])).toEqual([
+      { path: "note", dataType: "string", include: true },
+    ]);
+  });
+
+  it("classifies YYYY-MM-DDThh:mm as date", () => {
+    expect(inferSchema([{ ts: "2020-01-15T10:30" }])).toEqual([
+      { path: "ts", dataType: "date", include: true },
+    ]);
+  });
+
+  // Fix B: orphaned dotted paths under a non-object parent must be dropped
+  it("does not emit leaf paths when an object field conflicts with a scalar in another row", () => {
+    const s = inferSchema([{ a: { b: 1 } }, { a: "x" }]);
+    expect(s).toEqual([{ path: "a", dataType: "string", include: true }]);
+  });
 });

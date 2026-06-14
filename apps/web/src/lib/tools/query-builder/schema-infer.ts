@@ -1,6 +1,6 @@
 import type { ElementType, FieldSchema, FieldType, ScalarType } from "./types";
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2})?/;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?Z?)?)?$/;
 
 function scalarOf(v: unknown): ScalarType {
   if (typeof v === "number") return "numeric";
@@ -15,6 +15,7 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 
 function elementTypeOf(arr: unknown[]): ElementType {
   const first = arr.find((x) => x !== null && x !== undefined);
+  if (first === undefined) return "string"; // empty array defaults to string
   if (isPlainObject(first)) return "object";
   return scalarOf(first);
 }
@@ -41,7 +42,9 @@ function walk(
     } else if (!prev) {
       acc.set(path, inferred);
     }
-    if (inferred.dataType === "object") walk(value as Record<string, unknown>, path, acc);
+    if (inferred.dataType === "object" && acc.get(path)?.dataType === "object") {
+      walk(value as Record<string, unknown>, path, acc);
+    }
   }
 }
 
@@ -51,6 +54,14 @@ export function inferSchema(rows: unknown): FieldSchema[] {
   for (const row of rows) {
     if (!isPlainObject(row)) throw new Error("expected an array of objects");
     walk(row, "", acc);
+  }
+  // drop leaf paths orphaned under a non-object parent (heterogeneous data)
+  for (const path of [...acc.keys()]) {
+    const dot = path.lastIndexOf(".");
+    if (dot === -1) continue;
+    const parent = path.slice(0, dot);
+    const parentEntry = acc.get(parent);
+    if (parentEntry && parentEntry.dataType !== "object") acc.delete(path);
   }
   return [...acc.entries()].map(([path, t]) => ({
     path,
