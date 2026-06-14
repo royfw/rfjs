@@ -64,6 +64,11 @@
     "targetType": "Target type",
     "jsonInput": "JSON",
     "copy": "Copy",
+    "data": "Data",
+    "filter": "Filter",
+    "column": "Column",
+    "dialect": "Dialect",
+    "matched": "{count} matched",
     "types": {
       "string": "String",
       "number": "Number",
@@ -76,7 +81,9 @@
       "nan": "Not a number",
       "invalidDate": "Invalid date",
       "invalidJson": "Invalid JSON",
-      "notObject": "Expected a JSON object"
+      "notObject": "Expected a JSON object",
+      "notArray": "Expected a JSON array",
+      "queryFailed": "Could not build the query"
     }
   },
   "Packages": {

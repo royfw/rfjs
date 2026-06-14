@@ -121,7 +121,15 @@ PWA 拆兩步交付，先低風險的「可安裝」、再延後「離線」：
 | type-converter | data-transform | `typeTransfer(value, type)`，純函式 |
 | object-flatten | object-utils | `flatten(obj)`，JSON.parse → flatten |
 
-第二批：data-filter-tester、mongo-query-generator、jsonb-query-generator（皆純函式輸出字串，client 可跑）。
+**第二批（2026-06-14 定案，套 batch 1 ToolShell 模式）：** 皆純函式、client 可跑、各附 sample 預設值、錯誤非破壞性顯示於輸出面板。
+
+| 工具 | 套件函式 | 輸入面板 | 輸出面板 |
+|---|---|---|---|
+| data-filter-tester | `matchQuery(item, filter)`（@rfjs/data-filter） | 兩個 textarea：Data（JSON 物件陣列）+ Filter（`{logic, filters:[{field,dataType,operator,value}]}` — dataType 必填：string/numeric/date/boolean/object/array） | 通過 filter 的子集（pretty JSON）+ 命中數 |
+| mongo-query-generator | `genFilterQuery(meta)`（@rfjs/mongo-query） | filter metadata textarea（`{logic, filters:[{field,condition,dataType,value}]}`） | MongoDB query document（pretty JSON）+ copy |
+| jsonb-query-generator | `buildJsonbQuery(col, filter, {dialect})`（@rfjs/jsonb-query） | column 文字框 + dialect DropdownMenu（legacy/jsonpath）+ filter textarea（`{logic, filters:[{field,dataType,operator,value}]}`） | SQL `where` 字串 + `values` 參數陣列 + copy |
+
+各工具邏輯抽 `lib/tools/<tool>.ts`（try/catch → `{ok}|{ok:false,error}`），元件套 ToolShell，註冊於 `registry.tsx`，`ToolUI` messages 擴充。完成後 `/tools` 6 個工具全部為真。
 
 **jwt-decoder 退至 Phase 6（auth）**：`@rfjs/jwt` 由 `jsonwebtoken` 包裝，module 頂層 `require('crypto')`，無法乾淨進 client bundle。要 dogfood `@rfjs/jwt` 就得走 route handler — 與 Phase 6 的 jwt sign/verify 升級同期。
 

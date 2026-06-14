@@ -1,5 +1,8 @@
 import type { ComponentType } from "react";
 
+import { DataFilterTester } from "./data-filter-tester";
+import { JsonbQueryGenerator } from "./jsonb-query-generator";
+import { MongoQueryGenerator } from "./mongo-query-generator";
 import { ObjectFlatten } from "./object-flatten";
 import { TypeConverter } from "./type-converter";
 
@@ -8,4 +11,7 @@ import { TypeConverter } from "./type-converter";
 export const TOOL_COMPONENTS: Record<string, ComponentType> = {
   "type-converter": TypeConverter,
   "object-flatten": ObjectFlatten,
+  "data-filter-tester": DataFilterTester,
+  "mongo-query-generator": MongoQueryGenerator,
+  "jsonb-query-generator": JsonbQueryGenerator,
 };

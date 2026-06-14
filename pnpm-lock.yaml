@@ -281,9 +281,18 @@ importers:
 
   apps/web:
     dependencies:
+      '@rfjs/data-filter':
+        specifier: workspace:*
+        version: link:../../packages/data-filter
       '@rfjs/data-transform':
         specifier: workspace:*
         version: link:../../packages/data-transform
+      '@rfjs/jsonb-query':
+        specifier: workspace:*
+        version: link:../../packages/jsonb-query
+      '@rfjs/mongo-query':
+        specifier: workspace:*
+        version: link:../../packages/mongo-query
       '@rfjs/object-utils':
         specifier: workspace:*
         version: link:../../packages/object-utils
