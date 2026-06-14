@@ -61,5 +61,11 @@ export function renderColumnCondition(
   if (operator === 'startswith') {
     return `${quotedColumn} ilike ${params.add(value)} || '%'`;
   }
-  return `${quotedColumn} ${COMPARATORS[operator]} ${params.add(value)}`;
+  const comparator = COMPARATORS[operator];
+  if (comparator === undefined) {
+    // Unreachable for the current operator set (nullary/contains/startswith are handled above),
+    // but guards against silently emitting `undefined` if the operator union grows.
+    throw new ColumnQueryError(`Operator "${operator}" is not a comparison operator`, 'UNSUPPORTED_OPERATOR');
+  }
+  return `${quotedColumn} ${comparator} ${params.add(value)}`;
 }
