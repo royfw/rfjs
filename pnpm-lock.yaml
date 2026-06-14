@@ -302,6 +302,9 @@ importers:
       '@rfjs/jsonb-query':
         specifier: workspace:*
         version: link:../../packages/jsonb-query
+      '@rfjs/jwt':
+        specifier: workspace:*
+        version: link:../../packages/jwt
       '@rfjs/mongo-query':
         specifier: workspace:*
         version: link:../../packages/mongo-query
