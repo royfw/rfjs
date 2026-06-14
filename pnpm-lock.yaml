@@ -281,6 +281,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@rfjs/data-filter':
+        specifier: workspace:*
+        version: link:../../packages/data-filter
       '@rfjs/data-transform':
         specifier: workspace:*
         version: link:../../packages/data-transform
