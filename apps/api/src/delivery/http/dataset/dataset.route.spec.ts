@@ -1,33 +1,30 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { CreateDatasetInputSchema } from '@rfjs/core';
 
 vi.mock('@/infrastructures/datasource', () => ({
   datasetUsecases: {
-    list: vi
-      .fn()
-      .mockResolvedValue([
-        {
-          id: '1',
-          name: 'A',
-          description: null,
-          data: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ]),
+    list: vi.fn().mockResolvedValue([
+      {
+        id: '1',
+        name: 'A',
+        description: null,
+        data: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]),
     get: vi.fn().mockResolvedValue(undefined),
-    create: vi
-      .fn()
-      .mockImplementation((input) =>
-        Promise.resolve({
-          id: '2',
-          description: null,
-          data: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          ...input,
-        }),
-      ),
+    create: vi.fn().mockImplementation((input) =>
+      Promise.resolve({
+        id: '2',
+        description: null,
+        data: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...input,
+      }),
+    ),
   },
 }));
 
@@ -81,5 +78,15 @@ describe('dataset routes', () => {
     vi.mocked(datasetUsecases.get).mockResolvedValueOnce(undefined);
     const res = await app.inject({ method: 'GET', url: '/datasets/missing' });
     expect(res.statusCode).toBe(404);
+  });
+
+  it('POST /datasets with invalid body returns 400 (ZodError mapped)', async () => {
+    const { datasetUsecases } = await import('@/infrastructures/datasource');
+    vi.mocked(datasetUsecases.create).mockRejectedValueOnce(
+      CreateDatasetInputSchema.safeParse({}).error!,
+    );
+    const res = await app.inject({ method: 'POST', url: '/datasets', payload: {} });
+    expect(res.statusCode).toBe(400);
+    expect(res.json<{ error: string }>().error).toBe('Bad Request');
   });
 });

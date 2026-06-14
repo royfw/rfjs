@@ -1,6 +1,11 @@
 import Fastify, { FastifyInstance, FastifyServerOptions } from 'fastify';
 import { configs } from '@/configs';
-import { registerBasicPlugins, registerMiddlewares, registerApiDocs } from './registers';
+import {
+  registerBasicPlugins,
+  registerMiddlewares,
+  registerApiDocs,
+  registerErrorHandler,
+} from './registers';
 import { FastifyAppOptions, registerHttpRouteModules } from '.';
 import { pinoTransport } from '@/helpers/pino';
 
@@ -24,6 +29,9 @@ export async function initializeFastifyApp(
 
   // 建立 Fastify 實例
   const app = Fastify(fastifyOptions);
+
+  // 註冊全域錯誤處理器
+  registerErrorHandler(app);
 
   // 註冊 API 文件（如果啟用）
   if (isApiDocEnabled) {
