@@ -18,8 +18,6 @@
     "showcaseBody": "每個工具都是某個 @rfjs/* 套件的即時示範。",
     "toolsTitle": "資料工具",
     "toolsBody": "壓平、轉型、解碼 —— 全在瀏覽器完成。",
-    "playgroundTitle": "查詢與篩選 Playground",
-    "playgroundBody": "組合篩選條件,編譯成 SQL 或 Mongo 查詢。",
     "templatesTitle": "範本",
     "templatesBody": "用 start-ts-by 建立 TypeScript 專案。"
   },
@@ -28,8 +26,6 @@
     "packagesDescription": "@rfjs/* 工具組。",
     "toolsTitle": "工具",
     "toolsDescription": "開發者資料工具,每個都由某個 @rfjs/* 套件驅動。",
-    "playgroundTitle": "Playground",
-    "playgroundDescription": "@rfjs/* 工作流的互動式建構器。",
     "templatesTitle": "範本",
     "templatesDescription": "start-ts-by 專案範本。",
     "templatesBody": "範本藝廊(資料源自 templates/registry.json)會在後續階段推出。"
@@ -38,7 +34,6 @@
   "Status": { "ready": "可用", "preview": "預覽", "planned": "規劃中" },
   "Detail": {
     "toolComingSoon": "此工具會在後續階段推出。",
-    "playgroundComingSoon": "此 playground 會在後續階段推出。",
     "packageComingSoon": "套件詳情與 playground 會在後續階段推出。",
     "status": "狀態:{status}",
     "workbenchBadge": "Workbench ↗",

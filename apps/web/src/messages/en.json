@@ -18,8 +18,6 @@
     "showcaseBody": "Every tool is a live demo of an @rfjs/* package.",
     "toolsTitle": "Data Tools",
     "toolsBody": "Flatten, convert, decode — all in your browser.",
-    "playgroundTitle": "Query & Filter Playground",
-    "playgroundBody": "Build filters, compile them to SQL or Mongo.",
     "templatesTitle": "Templates",
     "templatesBody": "Scaffold TypeScript projects with start-ts-by."
   },
@@ -28,8 +26,6 @@
     "packagesDescription": "The @rfjs/* utility toolkit.",
     "toolsTitle": "Tools",
     "toolsDescription": "Developer data tools, each powered by an @rfjs/* package.",
-    "playgroundTitle": "Playground",
-    "playgroundDescription": "Interactive builders for @rfjs/* workflows.",
     "templatesTitle": "Templates",
     "templatesDescription": "start-ts-by project templates.",
     "templatesBody": "Template gallery (sourced from templates/registry.json) arrives in a later phase."
@@ -38,7 +34,6 @@
   "Status": { "ready": "Ready", "preview": "Preview", "planned": "Planned" },
   "Detail": {
     "toolComingSoon": "This tool ships in a later phase.",
-    "playgroundComingSoon": "This playground ships in a later phase.",
     "packageComingSoon": "Package detail and playground arrive in a later phase.",
     "status": "Status: {status}",
     "workbenchBadge": "Workbench ↗",
