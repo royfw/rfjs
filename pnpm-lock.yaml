@@ -287,6 +287,9 @@ importers:
       '@rfjs/data-transform':
         specifier: workspace:*
         version: link:../../packages/data-transform
+      '@rfjs/mongo-query':
+        specifier: workspace:*
+        version: link:../../packages/mongo-query
       '@rfjs/object-utils':
         specifier: workspace:*
         version: link:../../packages/object-utils
