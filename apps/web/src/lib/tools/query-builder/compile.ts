@@ -1,4 +1,4 @@
-import type { BuilderCondition, BuilderGroup, BuilderItem } from "./types";
+import type { BuilderCondition, BuilderGroup } from "./types";
 
 // Structural filter shape shared with @rfjs/jsonb-query / @rfjs/data-filter (no id).
 export interface FilterGroupLike {
@@ -31,7 +31,7 @@ function conditionToFilter(c: BuilderCondition): FilterConditionLike {
 
 export function treeToFilterGroup(group: BuilderGroup): FilterGroupLike {
   const filters: FilterGroupLike["filters"] = [];
-  for (const child of group.children as BuilderItem[]) {
+  for (const child of group.children) {
     if (child.kind === "group") filters.push(treeToFilterGroup(child));
     else if (isComplete(child)) filters.push(conditionToFilter(child));
   }
