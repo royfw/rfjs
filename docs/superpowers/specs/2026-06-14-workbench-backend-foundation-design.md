@@ -116,6 +116,42 @@ Minimal columns to prove the slice; refined during planning if needed:
 - `data` (jsonb) — payload; the `@rfjs/jsonb-query` filter target
 - `createdAt` / `updatedAt` (timestamptz)
 
+## Future: Workflow / Story Module (roadmap, not this iteration)
+
+A likely next direction is a **workflow/story** capability — chaining workbench tools
+(parse → flatten → filter → convert, etc.) into a named, repeatable pipeline. Recorded
+here so the foundation stays compatible with it.
+
+**Where it lives — two boundaries kept distinct:**
+
+- A workflow is **business logic**, so its home is a **`libs/core` slice**
+  (`libs/core/workflow/`), *not* a separate app. A workflow is a **higher-order usecase**
+  that composes other tools/usecases.
+- A separate app is justified only by a **deployment boundary** (independent scaling,
+  different runtime e.g. serverless, separate team/cadence) — never by "it has its own
+  business logic". Putting logic in an app would break the runtime-agnostic principle
+  this whole design rests on.
+
+Sketch (when built):
+
+```
+libs/core/workflow/
+  schema.ts            zod for a workflow definition (ordered steps)
+  usecase/
+    run-workflow.ts    compose: parse → flatten → filter → convert (call tool usecases)
+    save-workflow.ts
+```
+
+exposed via `apps/api` `delivery/http/workflow/`; a future `apps/serverless` would reuse
+the same usecases.
+
+**Open question (decide before building it):** does a workflow even need a backend?
+Many workbench tools are pure `@rfjs` functions that run in the browser — if a "story" is
+only a chain of pure tools, it is a **client-side workflow** (composed in the workbench
+frontend) and needs no API. A backend earns its place only when workflows must be
+**persisted / shared / replayed**, or touch **server-side resources** (DB, secrets,
+external APIs). This decision is deferred; it determines client-side vs `libs/core` + API.
+
 ## Deployment / Serverless Stance
 
 Default runtime is **Fastify (`apps/api`) on k8s**. Serverless is **not built now**;
@@ -145,3 +181,5 @@ evaluated separately only if such workloads materialise.
 - `apps/serverless` — deferred.
 - `domain/` and `services/` layers — added only when earned.
 - Additional modules beyond `dataset`.
+- **Workflow / story module** — recorded as roadmap above; its backend-or-not decision is
+  deferred. Not built this iteration.
