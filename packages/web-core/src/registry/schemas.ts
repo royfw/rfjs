@@ -17,7 +17,6 @@ export const toolDefinitionSchema = z.object({
   id: z.string().min(1),
   category: toolCategorySchema,
   surface: toolSurfaceSchema,
-  href: z.string().startsWith('/'),
   status: registryStatusSchema,
   relatedPackages: z.array(z.string().startsWith('@rfjs/')).optional(),
   tags: z.array(z.string()).optional(),
