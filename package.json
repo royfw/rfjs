@@ -4,7 +4,8 @@
   "scripts": {
     "build": "turbo build",
     "build:packages": "turbo run build --filter='@rfjs/*'",
-    "dev": "turbo dev",
+    "dev": "turbo dev --filter=./apps/*",
+    "dev:all": "turbo dev --concurrency=22",
     "test": "turbo test",
     "lint": "turbo lint",
     "lint-staged": "turbo lint-staged",
