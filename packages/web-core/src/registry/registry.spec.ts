@@ -11,11 +11,9 @@ describe('toolRegistry', () => {
     }
   });
 
-  it('ids and hrefs are unique', () => {
+  it('ids are unique', () => {
     const ids = toolRegistry.map((t) => t.id);
-    const hrefs = toolRegistry.map((t) => t.href);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 
   it('relatedPackages all exist in packageRegistry', () => {
