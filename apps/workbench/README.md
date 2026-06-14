@@ -6,6 +6,12 @@ app hosts the stateful, dataset-first experiences.
 
 Spec: `docs/superpowers/specs/2026-06-13-workbench-and-web-convergence-design.md`
 
+## PWA
+
+Installable on modern Chromium/Safari via `app/manifest.ts` + build-time
+generated icons (`app/icon-{192,512}.png` via `next/og`). No service worker /
+offline yet — deferred to a later phase (4b, Serwist).
+
 ## Develop
 
 ```bash

@@ -8,6 +8,13 @@ Package showcase, interactive playgrounds, and developer data tools for the
 Next.js App Router · TypeScript strict · Tailwind CSS v4 · shadcn/ui
 (components live in `@rfjs/web-ui`) · registry data in `@rfjs/web-core`.
 
+## PWA
+
+Installable on modern Chromium/Safari via `app/manifest.ts` + app icons
+generated at build with `next/og` `ImageResponse` (`app/icon-{192,512}.png`,
+at dotted paths so they bypass the next-intl middleware). No service worker /
+offline caching yet — that's a later phase (4b, Serwist).
+
 ## Develop
 
 ```bash

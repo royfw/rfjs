@@ -89,13 +89,20 @@ interface Session {
 - **v3**：better-auth 多 provider（email、Google、Microsoft Entra ID）。session shape 不變、元件零改動。Auth0 與直連 provider 二選一（聚合器），不混用。
 - **授權歸屬**：角色永遠存自己的層（v2 = JWT claim，v3 = 自有 DB），IdP 只管身份；帳號歸戶錨點 email。
 
-## 8. PWA（雙站）
+## 8. PWA（雙站，兩步法 — 2026-06-14 修訂）
 
-- 工具：`@serwist/next` + Next 內建 `app/manifest.ts`。dev mode 停用 SW。
-- **apps/web**：static assets precache + 造訪頁 runtime cache；快速工具為純 client 函式 → **離線直接可用**。
-- **apps/workbench**：離線優先 — app shell 全 precache；應用純函式 + dataset 在 IndexedDB + 公開區不經 auth middleware → 斷網全功能。
-- 注意：兩個 locale 的 shell 都要 precache；`/admin`（v2 起）離線以 client-side RoleGuard fallback。
-- PWA 設定模式兩站共用，可抽 factory。
+PWA 拆兩步交付，先低風險的「可安裝」、再延後「離線」：
+
+**4a — 可安裝（本輪 Phase 4）**
+- 兩站各加 Next 16 原生 `app/manifest.ts`：`name`/`short_name`（web=`rfjs`、workbench=`workbench`）/`description`/`display: standalone`/`start_url: /`/`theme_color` + `background_color` = dark 預設底色 `#11151c`（避免安裝後 splash 閃白）/`icons`（192 + 512）。
+- icon 用 Next `ImageResponse` 從「rfjs」wordmark + 品牌色程式生成（深底 `#11151c` + 淺墨 `#e2e8f1`），無靜態資產、無設計工具。
+- 不抽共用 factory：兩站各一份 `manifest.ts` + icon route（設定面小、名稱本就不同，YAGNI）。品牌 hex 集中常數引用，避免 theme_color 與 icon 底色不同步。
+- 現代 Chromium/Edge 已放寬安裝門檻：manifest + 192/512 icons + standalone + start_url 即可安裝（iOS Safari 靠 manifest + apple-touch-icon 加到主畫面）。**不需要 service worker 即可安裝。**
+
+**4b — 離線 service worker（延後）**
+- Serwist 選型未定：`@serwist/turbopack`（pin 9.5.11，Turbopack 原生，但套件較新、env 需 workaround）vs `@serwist/next` + build `--webpack`（成熟，但放棄 Turbopack build、形成工具分裂）。等 turbopack 套件更成熟、或 Phase 5 workbench dataset 真正需要離線時再定。
+- 屆時策略：apps/web 快速工具為純 client 函式 → 離線直接可用；apps/workbench 離線優先（dataset 在 IndexedDB）。兩 locale 的 shell 都要 precache；`/admin` 離線以 client-side RoleGuard fallback。
+- subdomain 部署（§12）已讓兩站各有乾淨的 SW scope，4b 落地無 scope 衝突。
 
 ## 9. Registry 擴充（@rfjs/web-core）
 
@@ -139,8 +146,8 @@ interface Session {
 
 1. **Phase 1 — workbench 骨架**（✅ 已完成，#140/#141）：app scaffold（Next 16 + turbo 接線）、admin shell（sidebar / topbar / ⌘K）、i18n + 主題、四路由區空殼（dashboard / datasets / apps / admin 預留）、registry `surface` 擴充。
 2. **Phase 2 — web 收斂**（✅ 已完成，#143）：§3 的 1/2/4/5/6（sidebar、index 連結、redirect、套件頁補實）。
-3. **Phase 3 — web 快速工具**（下一個）：共用工具版型（§10）+ 第一批 type-converter、object-flatten；第二批 data-filter-tester、兩個 query generator 接續。
-4. **Phase 4 — PWA**：兩站接 Serwist。
+3. **Phase 3 — web 快速工具**：共用工具版型（§10）+ 第一批 type-converter、object-flatten（✅ batch 1 完成，#148）；第二批 data-filter-tester、兩個 query generator 待做。
+4. **Phase 4 — PWA**（§8 兩步法）：**4a 可安裝**（manifest + 生成 icon，兩站，本輪）；**4b 離線 SW**（Serwist，延後至套件成熟或 Phase 5 需要）。
 5. **Phase 5 — workbench datasets + data-filter-builder**：招牌動線（dataset → 篩選 → query 輸出）。
 6. **Phase 6 — demo auth（v2）**：登入頁 + @rfjs/jwt session + `/admin` 區 + jwt sign/verify 升級 + **jwt-decoder 工具**（§10，需 route handler）。
 7. **Phase 7+（不排程）**：better-auth 多 provider、pg-toolkit 沙箱 demo、index 分組。
