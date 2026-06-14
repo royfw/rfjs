@@ -42,4 +42,18 @@ describe('buildFilterGroup', () => {
     const sql = buildFilterGroup({ logic: 'and', filters: [{ token: 'a' }] }, renderFake, p);
     expect(sql).toBe('a=$6');
   });
+
+  it('treats a leaf carrying logic/filters-like fields as a leaf, not a group', () => {
+    type TrickyLeaf = { token: string; logic?: string; filters?: unknown[] };
+    const renderTricky = (leaf: TrickyLeaf, p: ParamBuilder) => `${leaf.token}=${p.add(leaf.token)}`;
+    const p = new ParamBuilder();
+    // `logic: 'xor'` is NOT a valid LogicalOperator -> must be treated as a leaf
+    const sql = buildFilterGroup<TrickyLeaf>(
+      { logic: 'and', filters: [{ token: 'a', logic: 'xor', filters: [] }] },
+      renderTricky,
+      p,
+    );
+    expect(sql).toBe('a=$1');
+    expect(p.values).toEqual(['a']);
+  });
 });

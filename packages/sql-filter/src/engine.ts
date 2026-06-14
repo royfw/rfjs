@@ -8,11 +8,14 @@ const EMPTY_GROUP_IDENTITY: Record<LogicalOperator, string> = {
   nor: 'true', // not(OR of nothing) = not(false)
 };
 
+const LOGICS = new Set<LogicalOperator>(['and', 'or', 'nor', 'not']);
+
 function isFilterGroup<L>(node: L | FilterGroup<L>): node is FilterGroup<L> {
   return (
     typeof node === 'object' &&
     node !== null &&
     'logic' in node &&
+    LOGICS.has((node as { logic: unknown }).logic as LogicalOperator) &&
     'filters' in node &&
     Array.isArray((node as { filters: unknown }).filters)
   );
