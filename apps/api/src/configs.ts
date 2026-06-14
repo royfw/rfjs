@@ -20,6 +20,7 @@ export interface AppConfig {
   host: string;
   port: number;
   tz?: string;
+  databaseUrl: string;
 }
 
 // 類型安全的配置物件
@@ -31,6 +32,9 @@ const configs: AppConfig = {
   host: process.env.HOST || '0.0.0.0',
   port: parseInt(process.env.PORT || '3000', 10),
   tz: process.env.TZ,
+  databaseUrl:
+    process.env.DATABASE_URL ||
+    'postgresql://user:password@localhost:5432/workbench?options=-csearch_path=workbench',
 };
 
 export { configs };
