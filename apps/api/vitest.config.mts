@@ -16,7 +16,7 @@ export default defineConfig({
       junit: '.test/vitest/results.xml',
     },
     coverage: {
-      enabled: true,
+      enabled: false,
       all: true,
       include: ['src/*'],
       reporter: [
