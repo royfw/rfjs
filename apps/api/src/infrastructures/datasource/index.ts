@@ -4,6 +4,7 @@ import {
   makeListDatasets,
   makeGetDataset,
   makeCreateDataset,
+  makeSearchDatasets,
 } from '@rfjs/core';
 import { configs } from '@/configs';
 
@@ -14,4 +15,5 @@ export const datasetUsecases = {
   list: makeListDatasets({ repo: datasetRepository }),
   get: makeGetDataset({ repo: datasetRepository }),
   create: makeCreateDataset({ repo: datasetRepository }),
+  search: makeSearchDatasets({ repo: datasetRepository }),
 };

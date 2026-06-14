@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
+import { JsonbQueryError } from '@rfjs/jsonb-query';
 
 /**
  * Maps known error types to HTTP responses. ZodError (validation) -> 400,
@@ -16,6 +17,15 @@ export function registerErrorHandler(app: FastifyInstance): void {
         error: 'Bad Request',
         message: 'Request validation failed',
         issues: error.issues.map((i) => ({ path: i.path, message: i.message })),
+      });
+    }
+    if (error instanceof JsonbQueryError) {
+      request.log.info({ code: error.code }, 'jsonb filter build failed');
+      return reply.status(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'Invalid filter',
+        code: error.code,
       });
     }
     // Preserve default behavior for all other errors.

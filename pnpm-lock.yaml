@@ -81,6 +81,9 @@ importers:
       '@rfjs/db':
         specifier: workspace:*
         version: link:../../libs/db
+      '@rfjs/jsonb-query':
+        specifier: workspace:*
+        version: link:../../packages/jsonb-query
       dotenv-flow:
         specifier: ^4.1.0
         version: 4.1.0

@@ -86,6 +86,7 @@
   "dependencies": {
     "@rfjs/core": "workspace:*",
     "@rfjs/db": "workspace:*",
+    "@rfjs/jsonb-query": "workspace:*",
     "zod": "^4.0.0",
     "@fastify/cors": "^11.1.0",
     "@fastify/formbody": "^8.0.2",
