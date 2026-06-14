@@ -64,6 +64,11 @@
     "targetType": "目標型別",
     "jsonInput": "JSON",
     "copy": "複製",
+    "data": "資料",
+    "filter": "篩選條件",
+    "column": "欄位",
+    "dialect": "方言",
+    "matched": "命中 {count} 筆",
     "types": {
       "string": "字串",
       "number": "數字",
@@ -76,7 +81,9 @@
       "nan": "不是數字",
       "invalidDate": "無效日期",
       "invalidJson": "無效的 JSON",
-      "notObject": "需要 JSON 物件"
+      "notObject": "需要 JSON 物件",
+      "notArray": "需要 JSON 陣列",
+      "queryFailed": "無法產生查詢"
     }
   },
   "Packages": {
