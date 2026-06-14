@@ -10,24 +10,12 @@ export default defineConfig({
   test: {
     // ... Specify options here.
     include: ['src/**/*.test.(ts|js)', 'src/**/*.spec.(ts|js)'],
-    reporters: ['verbose', 'junit', 'html'],
+    reporters: ['verbose', 'junit'],
     outputFile: {
-      html: '.test/vitest/html/index.html',
       junit: '.test/vitest/results.xml',
     },
     coverage: {
       enabled: false,
-      all: true,
-      include: ['src/*'],
-      reporter: [
-        'cobertura',
-        'text',
-        process.env.VITEST_COV_PATH
-          ? ['html', { subdir: `${process.env.VITEST_COV_PATH}` }]
-          : 'html',
-      ],
-      provider: 'istanbul', // or 'v8'
-      reportsDirectory: '.test/vitest/coverage',
     },
   },
 });
