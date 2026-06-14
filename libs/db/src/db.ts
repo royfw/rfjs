@@ -4,7 +4,7 @@ import * as schema from '@/schema';
 import { getConnectionStringInfo } from '@/utils';
 
 export type Schema = typeof schema;
-export type Db = NodePgDatabase<Schema>;
+export type Db = NodePgDatabase<Schema> & { $client: Pool };
 
 export function createDb(
   connectionString: string,

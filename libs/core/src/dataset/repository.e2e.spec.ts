@@ -39,4 +39,16 @@ describe('makeDatasetRepository (real PG)', () => {
     const all = await repo.list();
     expect(all.length).toBeGreaterThanOrEqual(1);
   });
+
+  it('filters by a data jsonb field via jsonb-query', async () => {
+    await repo.create({ name: 'APAC', data: { region: 'apac' } });
+    await repo.create({ name: 'EMEA', data: { region: 'emea' } });
+    const results = await repo.search({
+      logic: 'and',
+      filters: [{ field: 'region', dataType: 'string', operator: 'eq', value: 'apac' }],
+    });
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results.every((d) => d.data.region === 'apac')).toBe(true);
+    expect(results.some((d) => d.data.region === 'emea')).toBe(false);
+  });
 });

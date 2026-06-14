@@ -4,7 +4,7 @@ import type { DatasetRepository } from '../repository';
 
 describe('makeListDatasets', () => {
   it('returns whatever the repository lists', async () => {
-    const repo = { list: vi.fn().mockResolvedValue([]), getById: vi.fn(), create: vi.fn() } satisfies DatasetRepository;
+    const repo = { list: vi.fn().mockResolvedValue([]), getById: vi.fn(), create: vi.fn(), search: vi.fn() } satisfies DatasetRepository;
     const listDatasets = makeListDatasets({ repo });
     expect(await listDatasets()).toEqual([]);
     expect(repo.list).toHaveBeenCalledOnce();
