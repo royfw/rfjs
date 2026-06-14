@@ -1,4 +1,4 @@
-import { matchQuery, type FilterMatchQuery } from "@rfjs/data-filter";
+import { matchQuery, type FilterMatchQuery, type ObjectData } from "@rfjs/data-filter";
 
 import { treeToFilterGroup, type FilterConditionLike, type FilterGroupLike } from "./compile";
 import { DATA_FILTER_OPS } from "./engines/data-filter";
@@ -24,7 +24,7 @@ export function runLiveMatch(rows: unknown[], tree: BuilderGroup): LiveMatchResu
   const uncoverable = hasUncoverableOp(group);
   if (uncoverable) return { matched: [], count: 0, uncoverable: true };
   try {
-    const matched = rows.filter((row) => matchQuery(row, group as unknown as FilterMatchQuery));
+    const matched = rows.filter((row) => matchQuery(row as ObjectData, group as unknown as FilterMatchQuery));
     return { matched, count: matched.length, uncoverable: false };
   } catch {
     return { matched: [], count: 0, uncoverable: true };
