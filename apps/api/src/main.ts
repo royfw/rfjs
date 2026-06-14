@@ -9,6 +9,7 @@
  */
 // import 'module-alias/register';
 import { FastifyServerManager, HttpRouteModule } from '@/infrastructures';
+import { closeDatasource } from '@/infrastructures/datasource';
 import * as _indexHttpRouteModules from '@/delivery/http';
 
 const main = async () => {
@@ -18,6 +19,7 @@ const main = async () => {
 
   const serverManager = new FastifyServerManager({
     httpRouteModules,
+    onClose: closeDatasource,
   });
 
   try {

@@ -17,7 +17,12 @@ import { pinoTransport } from '@/helpers/pino';
 export async function initializeFastifyApp(
   options: FastifyAppOptions = {},
 ): Promise<FastifyInstance> {
-  const { httpRouteModules = [], middlewares = [], isApiDocEnabled = true } = options;
+  const {
+    httpRouteModules = [],
+    middlewares = [],
+    isApiDocEnabled = true,
+    onClose,
+  } = options;
 
   // Fastify 伺服器選項
   const fastifyOptions: FastifyServerOptions = {
@@ -46,6 +51,11 @@ export async function initializeFastifyApp(
 
   // 註冊 HTTP 路由模組
   await registerHttpRouteModules(app, httpRouteModules);
+
+  // 註冊優雅關閉清理（例如關閉 DB 連線池）
+  if (onClose) {
+    app.addHook('onClose', onClose);
+  }
 
   return app;
 }

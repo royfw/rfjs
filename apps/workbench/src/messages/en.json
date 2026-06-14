@@ -20,6 +20,8 @@
     "dashboardDescription": "Datasets at a glance and shortcuts into the apps.",
     "datasetsTitle": "Datasets",
     "datasetsDescription": "Built-in samples and imported JSON/CSV datasets. Management arrives in a later phase.",
+    "datasetsEmpty": "No datasets yet.",
+    "datasetsError": "Couldn't reach the datasets API.",
     "appsTitle": "Apps",
     "appsDescription": "Dataset-driven applications composing the @rfjs packages.",
     "adminTitle": "Admin",
