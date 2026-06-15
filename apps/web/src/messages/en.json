@@ -43,7 +43,6 @@
     "viewOnGithub": "GitHub"
   },
   "Tools": {
-    "object-flatten": { "title": "Object Flatten / Unflatten", "description": "Flatten nested objects to dot-path keys and back." },
     "data-filter-tester": { "title": "JSONPath Filter Tester", "description": "Run @rfjs/data-filter conditions against sample data live." },
     "jwt-decoder": { "title": "JWT Decoder", "description": "Decode a JWT's header and payload, with a live expiry status." },
     "jsonb-query-generator": { "title": "Filter → JSONB SQL", "description": "Generate PostgreSQL JSONB queries from filter metadata." },
@@ -55,7 +54,6 @@
   "ToolUI": {
     "input": "Input",
     "output": "Output",
-    "jsonInput": "JSON",
     "copy": "Copy",
     "data": "Data",
     "filter": "Filter",

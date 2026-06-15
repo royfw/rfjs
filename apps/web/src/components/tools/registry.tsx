@@ -4,7 +4,7 @@ import { DataFilterTester } from "./data-filter-tester";
 import { JsonbQueryGenerator } from "./jsonb-query-generator";
 import { JwtDecoder } from "./jwt-decoder";
 import { MongoQueryGenerator } from "./mongo-query-generator";
-import { ObjectFlatten } from "./object-flatten";
+import { ObjectFlatten } from "@/tools/object-flatten/ui";
 import { QueryBuilder } from "./query-builder";
 import { TypeConverter } from "@/tools/type-converter/ui";
 
