@@ -6,7 +6,7 @@ import { JwtDecoder } from "./jwt-decoder";
 import { MongoQueryGenerator } from "./mongo-query-generator";
 import { ObjectFlatten } from "./object-flatten";
 import { QueryBuilder } from "./query-builder";
-import { TypeConverter } from "./type-converter";
+import { TypeConverter } from "@/tools/type-converter/ui";
 
 // Web quick tools with a live implementation. Tool ids absent here render the
 // "coming soon" placeholder on /tools/[slug].

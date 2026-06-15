@@ -44,7 +44,6 @@
   },
   "Tools": {
     "object-flatten": { "title": "Object Flatten / Unflatten", "description": "Flatten nested objects to dot-path keys and back." },
-    "type-converter": { "title": "Data Type Converter", "description": "Convert values between string, number, boolean, and date." },
     "data-filter-tester": { "title": "JSONPath Filter Tester", "description": "Run @rfjs/data-filter conditions against sample data live." },
     "jwt-decoder": { "title": "JWT Decoder", "description": "Decode a JWT's header and payload, with a live expiry status." },
     "jsonb-query-generator": { "title": "Filter → JSONB SQL", "description": "Generate PostgreSQL JSONB queries from filter metadata." },
@@ -56,8 +55,6 @@
   "ToolUI": {
     "input": "Input",
     "output": "Output",
-    "inputValue": "Value",
-    "targetType": "Target type",
     "jsonInput": "JSON",
     "copy": "Copy",
     "data": "Data",

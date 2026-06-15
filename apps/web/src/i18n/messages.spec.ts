@@ -19,8 +19,11 @@ describe("deepMerge", () => {
 });
 
 describe("assembleMessages", () => {
-  it("with no tool fragments equals the central catalog", () => {
-    expect(assembleMessages("en")).toEqual(en);
-    expect(assembleMessages("zh-TW")).toEqual(zhTW);
+  // Tool fragments only ADD to the central catalog (each migrated tool moves its
+  // keys out of the central json and back in via a fragment), so the central
+  // catalog is always a subset of the assembled result — at every migration step.
+  it("preserves every central catalog key", () => {
+    expect(assembleMessages("en")).toMatchObject(en);
+    expect(assembleMessages("zh-TW")).toMatchObject(zhTW);
   });
 });
