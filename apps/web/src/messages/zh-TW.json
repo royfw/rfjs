@@ -46,7 +46,7 @@
     "object-flatten": { "title": "物件壓平 / 還原", "description": "把巢狀物件壓平成點路徑鍵,並可還原。" },
     "type-converter": { "title": "資料型別轉換器", "description": "在字串、數字、布林、日期之間轉換值。" },
     "data-filter-tester": { "title": "JSONPath 篩選測試器", "description": "對範例資料即時執行 @rfjs/data-filter 條件。" },
-    "jwt-decoder": { "title": "JWT 解碼器", "description": "在本機解碼 JWT 標頭與內容 —— 資料不離開瀏覽器。" },
+    "jwt-decoder": { "title": "JWT 解碼器", "description": "解碼 JWT 的 header 與 payload，並顯示即時有效期狀態。" },
     "jsonb-query-generator": { "title": "篩選 → JSONB SQL", "description": "從篩選 metadata 產生 PostgreSQL JSONB 查詢。" },
     "mongo-query-generator": { "title": "篩選 → Mongo 查詢", "description": "從篩選 metadata 產生 MongoDB 查詢。" },
     "data-filter-builder": { "title": "資料篩選建構器", "description": "視覺化組合巢狀篩選條件並匯出。" },
@@ -63,6 +63,13 @@
     "filter": "篩選條件",
     "column": "欄位",
     "dialect": "方言",
+    "token": "JWT",
+    "header": "Header",
+    "payload": "Payload",
+    "signature": "簽章",
+    "expiresIn": "{duration}後過期",
+    "expired": "已過期",
+    "noExpiry": "無有效期",
     "matched": "命中 {count} 筆",
     "types": {
       "string": "字串",
@@ -78,7 +85,9 @@
       "invalidJson": "無效的 JSON",
       "notObject": "需要 JSON 物件",
       "notArray": "需要 JSON 陣列",
-      "queryFailed": "無法產生查詢"
+      "queryFailed": "無法產生查詢",
+      "invalidJwt": "不是有效的 JWT",
+      "request": "解碼請求失敗"
     }
   },
   "Packages": {

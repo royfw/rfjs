@@ -16,6 +16,7 @@
     "@rfjs/data-filter": "workspace:*",
     "@rfjs/data-transform": "workspace:*",
     "@rfjs/jsonb-query": "workspace:*",
+    "@rfjs/jwt": "workspace:*",
     "@rfjs/mongo-query": "workspace:*",
     "@rfjs/object-utils": "workspace:*",
     "@rfjs/web-core": "workspace:*",

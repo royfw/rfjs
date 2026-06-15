@@ -46,7 +46,7 @@
     "object-flatten": { "title": "Object Flatten / Unflatten", "description": "Flatten nested objects to dot-path keys and back." },
     "type-converter": { "title": "Data Type Converter", "description": "Convert values between string, number, boolean, and date." },
     "data-filter-tester": { "title": "JSONPath Filter Tester", "description": "Run @rfjs/data-filter conditions against sample data live." },
-    "jwt-decoder": { "title": "JWT Decoder", "description": "Decode JWT header and payload locally — nothing leaves your browser." },
+    "jwt-decoder": { "title": "JWT Decoder", "description": "Decode a JWT's header and payload, with a live expiry status." },
     "jsonb-query-generator": { "title": "Filter → JSONB SQL", "description": "Generate PostgreSQL JSONB queries from filter metadata." },
     "mongo-query-generator": { "title": "Filter → Mongo Query", "description": "Generate MongoDB queries from filter metadata." },
     "data-filter-builder": { "title": "Data Filter Builder", "description": "Compose nested filter conditions visually and export them." },
@@ -63,6 +63,13 @@
     "filter": "Filter",
     "column": "Column",
     "dialect": "Dialect",
+    "token": "JWT",
+    "header": "Header",
+    "payload": "Payload",
+    "signature": "Signature",
+    "expiresIn": "expires in {duration}",
+    "expired": "expired",
+    "noExpiry": "no expiry",
     "matched": "{count} matched",
     "types": {
       "string": "String",
@@ -78,7 +85,9 @@
       "invalidJson": "Invalid JSON",
       "notObject": "Expected a JSON object",
       "notArray": "Expected a JSON array",
-      "queryFailed": "Could not build the query"
+      "queryFailed": "Could not build the query",
+      "invalidJwt": "Not a valid JWT",
+      "request": "Decode request failed"
     }
   },
   "Packages": {
