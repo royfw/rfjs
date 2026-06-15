@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import { JsonbQueryError } from '@rfjs/jsonb-query';
+import { ColumnQueryError } from '@rfjs/sql-filter';
+import { PgFilterError } from '@rfjs/pg-filter';
 
 /**
  * Maps known error types to HTTP responses. ZodError (validation) -> 400,
@@ -21,6 +23,15 @@ export function registerErrorHandler(app: FastifyInstance): void {
     }
     if (error instanceof JsonbQueryError) {
       request.log.info({ code: error.code }, 'jsonb filter build failed');
+      return reply.status(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'Invalid filter',
+        code: error.code,
+      });
+    }
+    if (error instanceof ColumnQueryError || error instanceof PgFilterError) {
+      request.log.info({ code: error.code }, 'pg filter build failed');
       return reply.status(400).send({
         statusCode: 400,
         error: 'Bad Request',

@@ -26,16 +26,21 @@ vi.mock('@/infrastructures/datasource', () => ({
         ...input,
       }),
     ),
-    search: vi.fn().mockResolvedValue([
-      {
-        id: '1',
-        name: 'A',
-        description: null,
-        data: { region: 'apac' },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ]),
+    query: vi.fn().mockResolvedValue({
+      items: [
+        {
+          id: '1',
+          name: 'A',
+          description: null,
+          data: { region: 'apac' },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    }),
   },
 }));
 
@@ -101,7 +106,7 @@ describe('dataset routes', () => {
     expect(res.json<{ error: string }>().error).toBe('Bad Request');
   });
 
-  it('POST /datasets/query returns 200 with the filtered list', async () => {
+  it('POST /datasets/query returns 200 with items and total', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/datasets/query',
@@ -109,18 +114,26 @@ describe('dataset routes', () => {
         filter: {
           logic: 'and',
           filters: [
-            { field: 'region', dataType: 'string', operator: 'eq', value: 'apac' },
+            {
+              target: 'jsonb',
+              field: 'region',
+              dataType: 'string',
+              operator: 'eq',
+              value: 'apac',
+            },
           ],
         },
       },
     });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toHaveLength(1);
+    const body = res.json<{ items: unknown[]; total: number }>();
+    expect(body.items).toHaveLength(1);
+    expect(body.total).toBe(1);
   });
 
   it('POST /datasets/query maps JsonbQueryError to 400', async () => {
     const { datasetUsecases } = await import('@/infrastructures/datasource');
-    vi.mocked(datasetUsecases.search).mockRejectedValueOnce(
+    vi.mocked(datasetUsecases.query).mockRejectedValueOnce(
       new JsonbQueryError('bad operator', 'UNSUPPORTED_OPERATOR'),
     );
     const res = await app.inject({

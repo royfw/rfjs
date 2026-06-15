@@ -84,6 +84,12 @@ importers:
       '@rfjs/jsonb-query':
         specifier: workspace:*
         version: link:../../packages/jsonb-query
+      '@rfjs/pg-filter':
+        specifier: workspace:*
+        version: link:../../packages/pg-filter
+      '@rfjs/sql-filter':
+        specifier: workspace:*
+        version: link:../../packages/sql-filter
       dotenv-flow:
         specifier: ^4.1.0
         version: 4.1.0

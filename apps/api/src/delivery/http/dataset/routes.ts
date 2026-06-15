@@ -3,7 +3,7 @@ import {
   listDatasetsHandler,
   getDatasetHandler,
   createDatasetHandler,
-  searchDatasetsHandler,
+  queryDatasetsHandler,
 } from './handlers';
 
 export const datasetRoutes: RouteOptions[] = [
@@ -29,6 +29,6 @@ export const datasetRoutes: RouteOptions[] = [
     method: 'POST',
     url: '/datasets/query',
     schema: { tags: ['dataset'] },
-    handler: searchDatasetsHandler,
+    handler: queryDatasetsHandler,
   },
 ];
