@@ -5,11 +5,12 @@ import { CopyButton } from "@rfjs/web-ui/components/copy-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@rfjs/web-ui/components/dropdown-menu";
 import { Panel } from "@rfjs/web-ui/components/panel";
-import { Check, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -54,12 +55,16 @@ export function JsonbQueryGenerator() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {JSONB_DIALECTS.map((d) => (
-                  <DropdownMenuItem key={d} onSelect={() => setDialect(d)}>
-                    <Check className={d === dialect ? "size-4 opacity-100" : "size-4 opacity-0"} />
-                    {d}
-                  </DropdownMenuItem>
-                ))}
+                <DropdownMenuRadioGroup
+                  value={dialect}
+                  onValueChange={(next) => setDialect(next as JsonbDialect)}
+                >
+                  {JSONB_DIALECTS.map((d) => (
+                    <DropdownMenuRadioItem key={d} value={d}>
+                      {d}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">

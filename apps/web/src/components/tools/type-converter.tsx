@@ -6,11 +6,12 @@ import { CopyButton } from "@rfjs/web-ui/components/copy-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@rfjs/web-ui/components/dropdown-menu";
 import { Panel } from "@rfjs/web-ui/components/panel";
-import { Check, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -44,12 +45,16 @@ export function TypeConverter() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {CONVERT_TYPES.map((ty) => (
-                  <DropdownMenuItem key={ty} onSelect={() => setType(ty)}>
-                    <Check className={ty === type ? "size-4 opacity-100" : "size-4 opacity-0"} />
-                    {t(`types.${ty}`)}
-                  </DropdownMenuItem>
-                ))}
+                <DropdownMenuRadioGroup
+                  value={type}
+                  onValueChange={(next) => setType(next as DataType)}
+                >
+                  {CONVERT_TYPES.map((ty) => (
+                    <DropdownMenuRadioItem key={ty} value={ty}>
+                      {t(`types.${ty}`)}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
