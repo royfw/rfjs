@@ -25,13 +25,16 @@ All root-level commands delegate to Turborepo. Run from repo root unless noted.
 pnpm install              # install dependencies (use --frozen-lockfile in CI)
 pnpm build                # build all apps and packages
 pnpm build:packages       # build only @rfjs/* packages
-pnpm dev                  # start all dev servers
+pnpm dev                  # start the app dev servers (apps/*); see note below
+pnpm dev -F web           # start only one app/package's dev server
 pnpm test                 # run all tests
 pnpm lint                 # lint all packages
 pnpm typecheck            # type check all packages
 pnpm format               # prettier write
 pnpm commit               # commitizen (conventional commits)
 ```
+
+`pnpm dev` runs `scripts/dev.mjs`: with no filter it scopes to the app dev servers (`--filter=./apps/*`) so the 15 library watchers don't all start at once (that trips the inotify watch limit); pass `-F`/`--filter` and it steps aside so turbo scopes to exactly what you asked (`pnpm dev -F web` → only `web`). All run with `--concurrency=22`. `pnpm dev:all` still starts every package's watcher.
 
 ### Per-package commands
 
