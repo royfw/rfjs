@@ -7,14 +7,12 @@ const webTool: ToolDefinition = {
   id: "jwt-decoder",
   category: "inspect",
   surface: "web",
-  href: "/legacy",
   status: "planned",
 };
 const wbApp: ToolDefinition = {
   id: "data-filter-builder",
   category: "filter",
   surface: "workbench",
-  href: "/legacy",
   status: "planned",
 };
 

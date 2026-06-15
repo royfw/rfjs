@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 
 import { DataFilterTester } from "./data-filter-tester";
 import { JsonbQueryGenerator } from "./jsonb-query-generator";
+import { JwtDecoder } from "./jwt-decoder";
 import { MongoQueryGenerator } from "./mongo-query-generator";
 import { ObjectFlatten } from "./object-flatten";
 import { QueryBuilder } from "./query-builder";
@@ -15,5 +16,6 @@ export const TOOL_COMPONENTS: Record<string, ComponentType> = {
   "data-filter-tester": DataFilterTester,
   "mongo-query-generator": MongoQueryGenerator,
   "jsonb-query-generator": JsonbQueryGenerator,
+  "jwt-decoder": JwtDecoder,
   "query-builder": QueryBuilder,
 };

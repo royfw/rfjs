@@ -101,4 +101,19 @@ describe('helpers jwt test', () => {
       expect(result.err).toHaveProperty('name', 'JsonWebTokenError');
     });
   });
+
+  describe('decodeComplete', () => {
+    it('returns header, payload and signature for a valid token', () => {
+      const token = Jwt.initial('secret').createToken({ id: 1 });
+      const decoded = Jwt.decodeComplete(token);
+      expect(decoded).not.toBeNull();
+      expect(decoded?.header).toMatchObject({ alg: 'HS256', typ: 'JWT' });
+      expect(decoded?.payload).toMatchObject({ id: 1 });
+      expect(typeof decoded?.signature).toBe('string');
+    });
+
+    it('returns null for a malformed token', () => {
+      expect(Jwt.decodeComplete('not-a-jwt')).toBeNull();
+    });
+  });
 });
