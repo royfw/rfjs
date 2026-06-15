@@ -5,6 +5,7 @@ import { JsonbQueryGenerator } from "./jsonb-query-generator";
 import { JwtDecoder } from "./jwt-decoder";
 import { MongoQueryGenerator } from "./mongo-query-generator";
 import { ObjectFlatten } from "./object-flatten";
+import { QueryBuilder } from "./query-builder";
 import { TypeConverter } from "./type-converter";
 
 // Web quick tools with a live implementation. Tool ids absent here render the
@@ -16,4 +17,5 @@ export const TOOL_COMPONENTS: Record<string, ComponentType> = {
   "mongo-query-generator": MongoQueryGenerator,
   "jsonb-query-generator": JsonbQueryGenerator,
   "jwt-decoder": JwtDecoder,
+  "query-builder": QueryBuilder,
 };
