@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { makeQueryDatasets } from './query-datasets';
 import type { DatasetRepository } from '../repository';
 
-function repoWith(query: ReturnType<typeof vi.fn>): DatasetRepository {
+function repoWith(query: DatasetRepository['query']): DatasetRepository {
   return { list: vi.fn(), getById: vi.fn(), create: vi.fn(), query } satisfies DatasetRepository;
 }
 
