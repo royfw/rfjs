@@ -148,7 +148,7 @@ function ConditionRow({
         <span className="text-xs text-muted-foreground">{t("elemMatchPlaceholder")}</span>
       ) : (
         <ValueEditor
-          dataType={condition.dataType}
+          dataType={condition.dataType === "array" ? (condition.elementType ?? "string") : condition.dataType}
           arity={arity}
           value={condition.value}
           onChange={(v) => onChange({ value: v })}
