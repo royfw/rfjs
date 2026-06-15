@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { CreateDatasetInputSchema } from '@rfjs/core';
 import { JsonbQueryError } from '@rfjs/jsonb-query';
+import { ColumnQueryError } from '@rfjs/sql-filter';
+import { PgFilterError } from '@rfjs/pg-filter';
 
 vi.mock('@/infrastructures/datasource', () => ({
   datasetUsecases: {
@@ -143,5 +145,33 @@ describe('dataset routes', () => {
     });
     expect(res.statusCode).toBe(400);
     expect(res.json<{ error: string }>().error).toBe('Bad Request');
+  });
+
+  it('POST /datasets/query maps ColumnQueryError to 400', async () => {
+    const { datasetUsecases } = await import('@/infrastructures/datasource');
+    vi.mocked(datasetUsecases.query).mockRejectedValueOnce(
+      new ColumnQueryError('unknown column', 'UNKNOWN_COLUMN'),
+    );
+    const res = await app.inject({
+      method: 'POST',
+      url: '/datasets/query',
+      payload: { filter: { logic: 'and', filters: [] } },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json<{ code: string }>().code).toBe('UNKNOWN_COLUMN');
+  });
+
+  it('POST /datasets/query maps PgFilterError to 400', async () => {
+    const { datasetUsecases } = await import('@/infrastructures/datasource');
+    vi.mocked(datasetUsecases.query).mockRejectedValueOnce(
+      new PgFilterError('bad target', 'INVALID_TARGET'),
+    );
+    const res = await app.inject({
+      method: 'POST',
+      url: '/datasets/query',
+      payload: { filter: { logic: 'and', filters: [] } },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json<{ code: string }>().code).toBe('INVALID_TARGET');
   });
 });
