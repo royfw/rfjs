@@ -36,4 +36,19 @@ describe('QueryDatasetsBodySchema', () => {
   it('rejects an invalid logic', () => {
     expect(() => QueryDatasetsBodySchema.parse({ filter: { logic: 'xor', filters: [] } })).toThrow();
   });
+
+  it('rejects unknown/misspelled keys on a leaf (strict) instead of silently dropping them', () => {
+    expect(() =>
+      QueryDatasetsBodySchema.parse({
+        filter: {
+          logic: 'and',
+          filters: [{ target: 'column', column: 'name', operator: 'eq', value: 'x', feild: 'oops' }],
+        },
+      }),
+    ).toThrow();
+  });
+
+  it('rejects unknown top-level keys (strict)', () => {
+    expect(() => QueryDatasetsBodySchema.parse({ limt: 5 })).toThrow();
+  });
 });
