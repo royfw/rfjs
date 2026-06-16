@@ -5,7 +5,7 @@ export const messages: LocaleMessages = {
     Tools: {
       "query-builder": {
         title: "Query Builder",
-        description: "Build nested JSONB queries visually and preview live matches.",
+        description: "Build nested filters over real columns and JSONB, and preview the generated SQL (jsonb / data-filter / pg-filter).",
       },
     },
     ToolUI: {
@@ -19,7 +19,7 @@ export const messages: LocaleMessages = {
   },
   "zh-TW": {
     Tools: {
-      "query-builder": { title: "查詢建構器", description: "視覺化建構巢狀 JSONB 查詢，並即時預覽命中結果。" },
+      "query-builder": { title: "查詢建構器", description: "在真實欄位與 JSONB 上建構巢狀過濾，並預覽產生的 SQL（jsonb / data-filter / pg-filter）。" },
     },
     ToolUI: {
       notPreviewable: "此 operator 無法在瀏覽器預覽",
