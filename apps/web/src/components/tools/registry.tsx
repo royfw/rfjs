@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import { DataFilterTester } from "@/tools/data-filter-tester/ui";
 import { JsonbQueryGenerator } from "./jsonb-query-generator";
 import { JwtDecoder } from "./jwt-decoder";
-import { MongoQueryGenerator } from "./mongo-query-generator";
+import { MongoQueryGenerator } from "@/tools/mongo-query-generator/ui";
 import { ObjectFlatten } from "@/tools/object-flatten/ui";
 import { QueryBuilder } from "./query-builder";
 import { TypeConverter } from "@/tools/type-converter/ui";
