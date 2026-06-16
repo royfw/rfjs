@@ -4,9 +4,9 @@ import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
-import { decodeJwt, describeExp, formatDuration, type DecodeResult } from "@/lib/tools/jwt-decoder";
+import { decodeJwt, describeExp, formatDuration, type DecodeResult } from "./jwt-decoder";
 
-import { ToolShell } from "./tool-shell";
+import { ToolShell } from "@/components/tools/tool-shell";
 
 const SAMPLE =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";

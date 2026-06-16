@@ -2,7 +2,7 @@ import type { ComponentType } from "react";
 
 import { DataFilterTester } from "@/tools/data-filter-tester/ui";
 import { JsonbQueryGenerator } from "@/tools/jsonb-query-generator/ui";
-import { JwtDecoder } from "./jwt-decoder";
+import { JwtDecoder } from "@/tools/jwt-decoder/ui";
 import { MongoQueryGenerator } from "@/tools/mongo-query-generator/ui";
 import { ObjectFlatten } from "@/tools/object-flatten/ui";
 import { QueryBuilder } from "./query-builder";

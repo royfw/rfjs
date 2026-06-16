@@ -4,6 +4,7 @@ import type { ToolModule } from "./types";
 
 import { tool as dataFilterTester } from "./data-filter-tester";
 import { tool as jsonbQueryGenerator } from "./jsonb-query-generator";
+import { tool as jwtDecoder } from "./jwt-decoder";
 import { tool as mongoQueryGenerator } from "./mongo-query-generator";
 import { tool as objectFlatten } from "./object-flatten";
 import { tool as typeConverter } from "./type-converter";
@@ -15,6 +16,7 @@ export const toolModules: ToolModule[] = [
   dataFilterTester,
   mongoQueryGenerator,
   jsonbQueryGenerator,
+  jwtDecoder,
 ];
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = Object.fromEntries(
