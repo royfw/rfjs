@@ -18,7 +18,7 @@ describe('makeCreateDataset', () => {
       list: vi.fn(),
       getById: vi.fn(),
       create: vi.fn().mockResolvedValue(fakeDataset),
-      search: vi.fn(),
+      query: vi.fn(),
     };
     const createDataset = makeCreateDataset({ repo });
     const result = await createDataset({ name: 'X' });
@@ -31,7 +31,7 @@ describe('makeCreateDataset', () => {
       list: vi.fn(),
       getById: vi.fn(),
       create: vi.fn(),
-      search: vi.fn(),
+      query: vi.fn(),
     };
     const createDataset = makeCreateDataset({ repo });
     await expect(createDataset({ name: '' })).rejects.toThrow();

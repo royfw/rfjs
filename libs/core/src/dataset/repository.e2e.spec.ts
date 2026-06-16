@@ -40,15 +40,27 @@ describe('makeDatasetRepository (real PG)', () => {
     expect(all.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('filters by a data jsonb field via jsonb-query', async () => {
-    await repo.create({ name: 'APAC', data: { region: 'apac' } });
-    await repo.create({ name: 'EMEA', data: { region: 'emea' } });
-    const results = await repo.search({
-      logic: 'and',
-      filters: [{ field: 'region', dataType: 'string', operator: 'eq', value: 'apac' }],
+  it('queries with mixed column + jsonb filter, sort, pagination, and total', async () => {
+    await repo.create({ name: 'APAC-1', data: { region: 'apac', score: 90 } });
+    await repo.create({ name: 'APAC-2', data: { region: 'apac', score: 10 } });
+    await repo.create({ name: 'EMEA-1', data: { region: 'emea', score: 99 } });
+
+    const { items, total } = await repo.query({
+      filter: {
+        logic: 'and',
+        filters: [
+          { target: 'column', column: 'name', operator: 'startswith', value: 'APAC' },
+          { target: 'jsonb', field: 'region', dataType: 'string', operator: 'eq', value: 'apac' },
+        ],
+      },
+      sort: [{ target: 'jsonb', field: 'score', dataType: 'numeric', direction: 'desc' }],
+      page: 1,
+      pageSize: 1,
     });
-    expect(results.length).toBeGreaterThanOrEqual(1);
-    expect(results.every((d) => d.data.region === 'apac')).toBe(true);
-    expect(results.some((d) => d.data.region === 'emea')).toBe(false);
+
+    expect(total).toBeGreaterThanOrEqual(2); // at least the two APAC rows match the WHERE
+    expect(items).toHaveLength(1); // pageSize 1
+    expect(items[0].name).toBe('APAC-1'); // score 90 sorts before 10
+    expect(items.every((d) => d.data.region === 'apac')).toBe(true);
   });
 });

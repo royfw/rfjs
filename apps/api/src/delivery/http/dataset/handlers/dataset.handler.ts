@@ -17,6 +17,6 @@ export const createDatasetHandler: RouteHandlerMethod = async (req, reply) => {
   reply.code(201).send(created);
 };
 
-export const searchDatasetsHandler: RouteHandlerMethod = async (req, reply) => {
-  reply.send(await datasetUsecases.search(req.body));
+export const queryDatasetsHandler: RouteHandlerMethod = async (req, reply) => {
+  reply.send(await datasetUsecases.query(req.body));
 };
