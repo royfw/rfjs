@@ -11,7 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-06-16-query-builder-pg-filter-design.md`
 **Decisions locked:** D1 default kind `jsonb` + one-click "top-level scalars → column"; D2 dialect `legacy`; D3 no sort/pagination in builder (WHERE preview only); D4 `lg` 3-column else stacked.
 
-All paths are under `apps/web/src/tools/query-builder/` unless noted. Run tests with `pnpm -F web vitest:run <pattern>`. Commit subjects lowercase (commitlint); never `--no-verify`. Commit messages in English.
+All paths are under `apps/web/src/tools/query-builder/` unless noted. Run tests with `pnpm -F web vitest:run <pattern>`. **Typecheck command is `pnpm -F web check-types`** (web has no `typecheck` script). Workspace `@rfjs/*` deps must be built once (`pnpm build:packages`) for vitest/build to resolve them — already done at baseline. Commit subjects lowercase (commitlint); never `--no-verify`. Commit messages in English.
 
 ---
 
@@ -225,7 +225,7 @@ Replace the `output` memo so it passes a `CompileContext` built from the include
 
 - [ ] **Step 3: Verify typecheck + existing engine tests still pass**
 
-Run: `pnpm -F web vitest:run engines && pnpm -F web typecheck`
+Run: `pnpm -F web vitest:run engines && pnpm -F web check-types`
 Expected: PASS (jsonb/data-filter unchanged and still satisfy `Engine`).
 
 - [ ] **Step 4: Commit**
@@ -455,7 +455,7 @@ export type {
 
 - [ ] **Step 7: Run, expect PASS + typecheck**
 
-Run: `pnpm -F web vitest:run pg-filter engines && pnpm -F web typecheck`
+Run: `pnpm -F web vitest:run pg-filter engines && pnpm -F web check-types`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -539,7 +539,7 @@ Add a one-click button above or below the field list (inside the Panel, after th
 
 - [ ] **Step 3: Verify typecheck + build**
 
-Run: `pnpm -F web typecheck`
+Run: `pnpm -F web check-types`
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -688,7 +688,7 @@ import { FieldCombobox } from "./field-combobox";
 
 - [ ] **Step 7: Verify typecheck + tests**
 
-Run: `pnpm -F web vitest:run field-create && pnpm -F web typecheck`
+Run: `pnpm -F web vitest:run field-create && pnpm -F web check-types`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -771,7 +771,7 @@ export function dataTypeColor(dataType: string): string {
 
 - [ ] **Step 5: Run, expect PASS + typecheck**
 
-Run: `pnpm -F web vitest:run colors && pnpm -F web typecheck`
+Run: `pnpm -F web vitest:run colors && pnpm -F web check-types`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -939,7 +939,7 @@ function safeInfer(text: string): { schema: FieldSchema[]; error: string | null 
 
 - [ ] **Step 3: Verify typecheck + build (SSG)**
 
-Run: `pnpm -F web typecheck && pnpm -F web build`
+Run: `pnpm -F web check-types && pnpm -F web build`
 Expected: typecheck clean; Next build + SSG prerender succeed.
 
 - [ ] **Step 4: Commit**
@@ -969,7 +969,7 @@ zh-TW:
 
 - [ ] **Step 2: Full verification**
 
-Run: `pnpm -F web vitest:run && pnpm -F web typecheck && pnpm -F web build`
+Run: `pnpm -F web vitest:run && pnpm -F web check-types && pnpm -F web build`
 Expected: all query-builder unit tests pass; typecheck clean; build + SSG succeed.
 
 - [ ] **Step 3: Manual smoke (optional but recommended)**
