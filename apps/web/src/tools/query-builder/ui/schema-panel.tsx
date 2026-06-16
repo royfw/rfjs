@@ -3,8 +3,8 @@
 import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 
-import { canBeColumn } from "@/tools/query-builder/logic/field-kind";
-import type { FieldKind, FieldSchema, FieldType } from "@/tools/query-builder/logic/types";
+import { canBeColumn } from "@rfjs/filter-builder";
+import type { FieldKind, FieldSchema, FieldType } from "@rfjs/filter-builder";
 
 const TYPES: FieldType[] = ["string", "numeric", "date", "boolean", "object", "array"];
 

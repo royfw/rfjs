@@ -1,4 +1,4 @@
-import type { LogicOp } from "./types";
+import type { LogicOp } from "@rfjs/filter-builder";
 
 const LOGIC: Record<LogicOp, string> = {
   and: "text-signal",

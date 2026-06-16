@@ -5,14 +5,8 @@ import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
-import { treeToFilterGroup } from "@/tools/query-builder/logic/compile";
-import { ENGINE_IDS, getEngine, type EngineId } from "@/tools/query-builder/logic/engines";
-import { addInferredField } from "@/tools/query-builder/logic/field-create";
-import { runLiveMatch } from "@/tools/query-builder/logic/live-match";
-import { filterGroupToTree, mergeFieldsFromTree, parseFilterGroup, type ReverseError } from "@/tools/query-builder/logic/reverse";
-import { inferSchema } from "@/tools/query-builder/logic/schema-infer";
-import { emptyGroup } from "@/tools/query-builder/logic/tree-ops";
-import type { BuilderGroup, FieldSchema } from "@/tools/query-builder/logic/types";
+import { treeToFilterGroup, ENGINE_IDS, getEngine, addInferredField, runLiveMatch, filterGroupToTree, mergeFieldsFromTree, parseFilterGroup, inferSchema, emptyGroup } from "@rfjs/filter-builder";
+import type { EngineId, ReverseError, BuilderGroup, FieldSchema } from "@rfjs/filter-builder";
 
 import { GroupNode } from "./builder-tree";
 import { CanonicalEditor } from "./canonical-editor";

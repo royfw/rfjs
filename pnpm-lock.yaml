@@ -305,6 +305,9 @@ importers:
       '@rfjs/data-transform':
         specifier: workspace:*
         version: link:../../packages/data-transform
+      '@rfjs/filter-builder':
+        specifier: workspace:*
+        version: link:../../packages/filter-builder
       '@rfjs/jsonb-query':
         specifier: workspace:*
         version: link:../../packages/jsonb-query

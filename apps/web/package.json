@@ -13,6 +13,7 @@
     "vitest:run": "vitest run"
   },
   "dependencies": {
+    "@rfjs/filter-builder": "workspace:*",
     "@rfjs/data-filter": "workspace:*",
     "@rfjs/pg-filter": "workspace:*",
     "@rfjs/data-transform": "workspace:*",
