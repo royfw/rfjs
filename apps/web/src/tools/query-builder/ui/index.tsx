@@ -44,7 +44,15 @@ export function QueryBuilder() {
   }
 
   const rows = useMemo(() => parseRows(sampleText), [sampleText]);
-  const output = useMemo(() => getEngine(engineId).compile(treeToFilterGroup(tree)), [engineId, tree]);
+  const output = useMemo(
+    () =>
+      getEngine(engineId).compile(treeToFilterGroup(tree), {
+        fields: schema
+          .filter((f) => f.include)
+          .map((f) => ({ path: f.path, kind: f.kind, dataType: f.dataType, elementType: f.elementType })),
+      }),
+    [engineId, tree, schema],
+  );
   const live = useMemo(() => runLiveMatch(rows, tree), [rows, tree]);
 
   return (
