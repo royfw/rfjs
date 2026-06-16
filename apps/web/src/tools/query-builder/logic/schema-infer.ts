@@ -68,5 +68,6 @@ export function inferSchema(rows: unknown): FieldSchema[] {
     dataType: t.dataType,
     ...(t.elementType ? { elementType: t.elementType } : {}),
     include: true,
+    kind: "jsonb" as const,
   }));
 }

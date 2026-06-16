@@ -1,4 +1,5 @@
 export type LogicOp = "and" | "or" | "nor" | "not";
+export type FieldKind = "column" | "jsonb";
 export type ScalarType = "string" | "numeric" | "date" | "boolean";
 export type FieldType = ScalarType | "object" | "array";
 export type ElementType = ScalarType | "object";
@@ -28,4 +29,5 @@ export interface FieldSchema {
   dataType: FieldType;
   elementType?: ElementType;
   include: boolean;
+  kind: FieldKind; // whether this field is queried as a typed SQL column or via JSONB
 }

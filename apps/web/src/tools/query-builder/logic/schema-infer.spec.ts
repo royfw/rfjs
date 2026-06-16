@@ -6,40 +6,40 @@ describe("inferSchema", () => {
   it("infers scalar types from the first non-null value", () => {
     const s = inferSchema([{ name: "a", age: 30, active: true }]);
     expect(s).toEqual([
-      { path: "name", dataType: "string", include: true },
-      { path: "age", dataType: "numeric", include: true },
-      { path: "active", dataType: "boolean", include: true },
+      { path: "name", dataType: "string", include: true, kind: "jsonb" },
+      { path: "age", dataType: "numeric", include: true, kind: "jsonb" },
+      { path: "active", dataType: "boolean", include: true, kind: "jsonb" },
     ]);
   });
 
   it("detects ISO date strings as date", () => {
     expect(inferSchema([{ created: "2020-01-15" }])).toEqual([
-      { path: "created", dataType: "date", include: true },
+      { path: "created", dataType: "date", include: true, kind: "jsonb" },
     ]);
   });
 
   it("emits both the object field and its leaf paths", () => {
     expect(inferSchema([{ address: { city: "TP" } }])).toEqual([
-      { path: "address", dataType: "object", include: true },
-      { path: "address.city", dataType: "string", include: true },
+      { path: "address", dataType: "object", include: true, kind: "jsonb" },
+      { path: "address.city", dataType: "string", include: true, kind: "jsonb" },
     ]);
   });
 
   it("infers arrays of scalars with elementType", () => {
     expect(inferSchema([{ tags: ["a", "b"] }])).toEqual([
-      { path: "tags", dataType: "array", elementType: "string", include: true },
+      { path: "tags", dataType: "array", elementType: "string", include: true, kind: "jsonb" },
     ]);
   });
 
   it("infers arrays of objects as elementType object", () => {
     expect(inferSchema([{ items: [{ sku: "x" }] }])).toEqual([
-      { path: "items", dataType: "array", elementType: "object", include: true },
+      { path: "items", dataType: "array", elementType: "object", include: true, kind: "jsonb" },
     ]);
   });
 
   it("falls back to string on conflicting types across rows", () => {
     expect(inferSchema([{ v: 1 }, { v: "x" }])).toEqual([
-      { path: "v", dataType: "string", include: true },
+      { path: "v", dataType: "string", include: true, kind: "jsonb" },
     ]);
   });
 
@@ -51,19 +51,19 @@ describe("inferSchema", () => {
   // Fix A: ISO date regex must be anchored
   it("does not classify a date-prefixed string with trailing text as date", () => {
     expect(inferSchema([{ note: "2020-01-15 follow up" }])).toEqual([
-      { path: "note", dataType: "string", include: true },
+      { path: "note", dataType: "string", include: true, kind: "jsonb" },
     ]);
   });
 
   it("classifies YYYY-MM-DDThh:mm as date", () => {
     expect(inferSchema([{ ts: "2020-01-15T10:30" }])).toEqual([
-      { path: "ts", dataType: "date", include: true },
+      { path: "ts", dataType: "date", include: true, kind: "jsonb" },
     ]);
   });
 
   // Fix B: orphaned dotted paths under a non-object parent must be dropped
   it("does not emit leaf paths when an object field conflicts with a scalar in another row", () => {
     const s = inferSchema([{ a: { b: 1 } }, { a: "x" }]);
-    expect(s).toEqual([{ path: "a", dataType: "string", include: true }]);
+    expect(s).toEqual([{ path: "a", dataType: "string", include: true, kind: "jsonb" }]);
   });
 });

@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@rfjs/data-filter": "workspace:*",
+    "@rfjs/pg-filter": "workspace:*",
     "@rfjs/data-transform": "workspace:*",
     "@rfjs/jsonb-query": "workspace:*",
     "@rfjs/jwt": "workspace:*",

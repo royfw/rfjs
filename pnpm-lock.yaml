@@ -317,6 +317,9 @@ importers:
       '@rfjs/object-utils':
         specifier: workspace:*
         version: link:../../packages/object-utils
+      '@rfjs/pg-filter':
+        specifier: workspace:*
+        version: link:../../packages/pg-filter
       '@rfjs/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
