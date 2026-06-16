@@ -3,12 +3,19 @@ import type { ComponentType } from "react";
 import type { ToolModule } from "./types";
 
 import { tool as dataFilterTester } from "./data-filter-tester";
+import { tool as jsonbQueryGenerator } from "./jsonb-query-generator";
 import { tool as mongoQueryGenerator } from "./mongo-query-generator";
 import { tool as objectFlatten } from "./object-flatten";
 import { tool as typeConverter } from "./type-converter";
 
 // As each tool is migrated, add its descriptor to this array.
-export const toolModules: ToolModule[] = [typeConverter, objectFlatten, dataFilterTester, mongoQueryGenerator];
+export const toolModules: ToolModule[] = [
+  typeConverter,
+  objectFlatten,
+  dataFilterTester,
+  mongoQueryGenerator,
+  jsonbQueryGenerator,
+];
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = Object.fromEntries(
   toolModules.map((t) => [t.id, t.Component]),

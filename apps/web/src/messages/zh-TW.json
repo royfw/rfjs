@@ -44,7 +44,6 @@
   },
   "Tools": {
     "jwt-decoder": { "title": "JWT 解碼器", "description": "解碼 JWT 的 header 與 payload，並顯示即時有效期狀態。" },
-    "jsonb-query-generator": { "title": "篩選 → JSONB SQL", "description": "從篩選 metadata 產生 PostgreSQL JSONB 查詢。" },
     "data-filter-builder": { "title": "資料篩選建構器", "description": "視覺化組合巢狀篩選條件並匯出。" },
     "object-transformer": { "title": "物件轉換器", "description": "互動式物件轉換 playground。" },
     "query-builder": { "title": "查詢建構器", "description": "視覺化建構巢狀 JSONB 查詢，並即時預覽命中結果。" }
@@ -55,8 +54,6 @@
     "copy": "複製",
     "data": "資料",
     "filter": "篩選條件",
-    "column": "欄位",
-    "dialect": "方言",
     "token": "JWT",
     "header": "Header",
     "payload": "Payload",

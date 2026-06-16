@@ -44,7 +44,6 @@
   },
   "Tools": {
     "jwt-decoder": { "title": "JWT Decoder", "description": "Decode a JWT's header and payload, with a live expiry status." },
-    "jsonb-query-generator": { "title": "Filter → JSONB SQL", "description": "Generate PostgreSQL JSONB queries from filter metadata." },
     "data-filter-builder": { "title": "Data Filter Builder", "description": "Compose nested filter conditions visually and export them." },
     "object-transformer": { "title": "Object Transformer", "description": "Interactive object transformation playground." },
     "query-builder": { "title": "Query Builder", "description": "Build nested JSONB queries visually and preview live matches." }
@@ -55,8 +54,6 @@
     "copy": "Copy",
     "data": "Data",
     "filter": "Filter",
-    "column": "Column",
-    "dialect": "Dialect",
     "token": "JWT",
     "header": "Header",
     "payload": "Payload",
