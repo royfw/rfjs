@@ -34,7 +34,7 @@ describe("dataFilterEngine.compile", () => {
       kind: "group", id: "g", logic: "and",
       children: [{ kind: "condition", id: "c", field: "age", dataType: "numeric", operator: "gt", value: 18 }],
     };
-    const out = dataFilterEngine.compile(treeToFilterGroup(tree));
+    const out = dataFilterEngine.compile(treeToFilterGroup(tree), { fields: [] });
     expect(out).toEqual({
       ok: true,
       primary: JSON.stringify({ logic: "and", filters: [{ field: "age", dataType: "numeric", operator: "gt", value: 18 }] }, null, 2),

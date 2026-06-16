@@ -7,15 +7,16 @@ import { useMemo, useState } from "react";
 
 import { treeToFilterGroup } from "@/tools/query-builder/logic/compile";
 import { ENGINE_IDS, getEngine, type EngineId } from "@/tools/query-builder/logic/engines";
+import { addInferredField } from "@/tools/query-builder/logic/field-create";
 import { runLiveMatch } from "@/tools/query-builder/logic/live-match";
 import { inferSchema } from "@/tools/query-builder/logic/schema-infer";
 import { emptyGroup } from "@/tools/query-builder/logic/tree-ops";
 import type { BuilderGroup, FieldSchema } from "@/tools/query-builder/logic/types";
 
-import { ToolShell } from "@/tools/_shared/tool-shell";
 import { GroupNode } from "./builder-tree";
 import { PreviewPanel } from "./preview-panel";
 import { SchemaPanel } from "./schema-panel";
+import { ThreePane } from "./three-pane";
 
 const SAMPLE = JSON.stringify(
   [
@@ -33,7 +34,7 @@ export function QueryBuilder() {
   const [sampleText, setSampleText] = useState(SAMPLE);
   const [schema, setSchema] = useState<FieldSchema[]>(() => safeInfer(SAMPLE).schema);
   const [error, setError] = useState<string | null>(() => safeInfer(SAMPLE).error);
-  const [engineId, setEngineId] = useState<EngineId>("jsonb");
+  const [engineId, setEngineId] = useState<EngineId>("pg-filter");
   const [tree, setTree] = useState<BuilderGroup>(() => emptyGroup(id));
 
   function onSample(text: string) {
@@ -44,39 +45,59 @@ export function QueryBuilder() {
   }
 
   const rows = useMemo(() => parseRows(sampleText), [sampleText]);
-  const output = useMemo(() => getEngine(engineId).compile(treeToFilterGroup(tree)), [engineId, tree]);
+  const output = useMemo(
+    () =>
+      getEngine(engineId).compile(treeToFilterGroup(tree), {
+        fields: schema.map((f) => ({
+          path: f.path,
+          kind: f.kind,
+          dataType: f.dataType,
+          elementType: f.elementType,
+        })),
+      }),
+    [engineId, tree, schema],
+  );
   const live = useMemo(() => runLiveMatch(rows, tree), [rows, tree]);
 
   return (
-    <ToolShell
-      operation="buildJsonbQuery() · matchQuery()"
-      input={
-        <div className="flex flex-col gap-3">
-          <SchemaPanel
-            sampleText={sampleText}
+    <ThreePane
+      source={
+        <SchemaPanel
+          sampleText={sampleText}
+          schema={schema}
+          error={error}
+          onSampleChange={onSample}
+          onSchemaChange={setSchema}
+        />
+      }
+      builder={
+        <Panel title={t("builder")}>
+          <GroupNode
+            group={tree}
+            engineId={engineId}
             schema={schema}
-            error={error}
-            onSampleChange={onSample}
-            onSchemaChange={setSchema}
+            onChange={setTree}
+            onCreateField={(path) => setSchema((s) => addInferredField(s, path))}
           />
-          <Panel title={t("builder")}>
-            <div className="mb-3 flex gap-2">
-              {ENGINE_IDS.map((eid) => (
-                <Button
-                  key={eid}
-                  size="sm"
-                  variant={eid === engineId ? "default" : "outline"}
-                  onClick={() => setEngineId(eid)}
-                >
-                  {getEngine(eid).label}
-                </Button>
-              ))}
-            </div>
-            <GroupNode group={tree} engineId={engineId} schema={schema} onChange={setTree} />
-          </Panel>
+        </Panel>
+      }
+      output={
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2">
+            {ENGINE_IDS.map((eid) => (
+              <Button
+                key={eid}
+                size="sm"
+                variant={eid === engineId ? "default" : "outline"}
+                onClick={() => setEngineId(eid)}
+              >
+                {getEngine(eid).label}
+              </Button>
+            ))}
+          </div>
+          <PreviewPanel output={output} live={live} />
         </div>
       }
-      output={<PreviewPanel output={output} live={live} />}
     />
   );
 }

@@ -1,13 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { Button } from "@rfjs/web-ui/components/button";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { getEngine, type EngineId } from "@/tools/query-builder/logic/engines";
+import { logicColor, dataTypeColor } from "@/tools/query-builder/logic/colors";
 import { addCondition, addGroup, removeNode, setLogic, updateNode } from "@/tools/query-builder/logic/tree-ops";
 import type { BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@/tools/query-builder/logic/types";
 
+import { FieldCombobox } from "./field-combobox";
 import { ValueEditor } from "./value-editor";
 
 const LOGIC_LABELS: Record<LogicOp, string> = {
@@ -25,6 +29,7 @@ export function GroupNode({
   schema,
   onChange,
   onRemove,
+  onCreateField,
   depth = 0,
 }: {
   group: BuilderGroup;
@@ -32,6 +37,7 @@ export function GroupNode({
   schema: FieldSchema[];
   onChange: (next: BuilderGroup) => void;
   onRemove?: () => void;
+  onCreateField: (path: string) => void;
   depth?: number;
 }) {
   return (
@@ -41,7 +47,7 @@ export function GroupNode({
           aria-label="logic"
           value={group.logic}
           onChange={(e) => onChange(setLogic(group, group.id, e.target.value as LogicOp))}
-          className="rounded-sm border bg-transparent px-2 py-1 text-sm"
+          className={`rounded-sm border bg-transparent px-2 py-1 text-sm ${logicColor(group.logic)}`}
         >
           {(Object.keys(LOGIC_LABELS) as LogicOp[]).map((l) => (
             <option key={l} value={l}>{LOGIC_LABELS[l]}</option>
@@ -72,6 +78,7 @@ export function GroupNode({
                 onChange({ ...group, children: group.children.map((c) => (c.id === child.id ? nextChild : c)) })
               }
               onRemove={() => onChange(removeNode(group, child.id))}
+              onCreateField={onCreateField}
             />
           ) : (
             <ConditionRow
@@ -81,6 +88,7 @@ export function GroupNode({
               schema={schema}
               onChange={(patch) => onChange(updateNode(group, child.id, patch))}
               onRemove={() => onChange(removeNode(group, child.id))}
+              onCreateField={onCreateField}
             />
           ),
         )}
@@ -95,45 +103,66 @@ function ConditionRow({
   schema,
   onChange,
   onRemove,
+  onCreateField,
 }: {
   condition: BuilderCondition;
   engineId: EngineId;
   schema: FieldSchema[];
   onChange: (patch: Omit<Partial<BuilderCondition>, "kind" | "id">) => void;
   onRemove: () => void;
+  onCreateField: (path: string) => void;
 }) {
   const t = useTranslations("ToolUI");
   const fields = schema.filter((f) => f.include);
   const engine = getEngine(engineId);
-  const ops = engine.operators(condition.dataType, condition.elementType);
+  const field = schema.find((s) => s.path === condition.field);
+  const dataType = field?.dataType ?? condition.dataType;
+  const elementType = field?.elementType ?? condition.elementType;
+  const fieldKind = field?.kind;
+  const ops = engine.operators(dataType, elementType, fieldKind);
   const arity = ops.find((o) => o.op === condition.operator)?.arity ?? "one";
+  const operatorValid = ops.some((o) => o.op === condition.operator);
+
+  // Keep the condition's snapshot reconciled with the schema field and selected
+  // engine: sync dataType/elementType and reset an operator that is no longer
+  // valid for the current matrix (prevents silently-wrong or erroring SQL).
+  useEffect(() => {
+    const patch: Omit<Partial<BuilderCondition>, "kind" | "id"> = {};
+    if (field) {
+      if (field.dataType !== condition.dataType) patch.dataType = field.dataType;
+      if (field.elementType !== condition.elementType) patch.elementType = field.elementType;
+    }
+    if (condition.operator && !operatorValid) {
+      patch.operator = ops[0]?.op ?? "";
+      patch.value = "";
+    }
+    if (Object.keys(patch).length > 0) onChange(patch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engineId, field?.dataType, field?.elementType, field?.kind, operatorValid]);
 
   function onField(path: string) {
     const f = schema.find((s) => s.path === path);
-    if (!f) return;
-    const nextOps = engine.operators(f.dataType, f.elementType);
-    onChange({
-      field: f.path,
-      dataType: f.dataType,
-      elementType: f.elementType,
-      operator: nextOps[0]?.op ?? "",
-      value: "",
-    });
+    const dataType = f?.dataType ?? "string";
+    const elementType = f?.elementType;
+    const kind = f?.kind ?? "jsonb";
+    const nextOps = engine.operators(dataType, elementType, kind);
+    onChange({ field: path, dataType, elementType, operator: nextOps[0]?.op ?? "", value: "" });
   }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <select
-        aria-label="field"
+      <FieldCombobox
+        ariaLabel="field"
         value={condition.field}
-        onChange={(e) => onField(e.target.value)}
-        className="rounded-sm border bg-transparent px-2 py-1 text-sm"
-      >
-        <option value="">—</option>
-        {fields.map((f) => (
-          <option key={f.path} value={f.path}>{f.path}</option>
-        ))}
-      </select>
+        options={fields.map((f) => f.path)}
+        onCommit={(path) => {
+          if (path && !schema.some((s) => s.path === path)) onCreateField(path);
+          onField(path);
+        }}
+      />
+      {condition.field ? (
+        <span className={`font-mono text-[10px] ${dataTypeColor(dataType)}`}>{dataType}</span>
+      ) : null}
       <select
         aria-label="operator"
         value={condition.operator}
@@ -148,7 +177,7 @@ function ConditionRow({
         <span className="text-xs text-muted-foreground">{t("elemMatchPlaceholder")}</span>
       ) : (
         <ValueEditor
-          dataType={condition.dataType === "array" ? (condition.elementType ?? "string") : condition.dataType}
+          dataType={dataType === "array" ? (elementType ?? "string") : dataType}
           arity={arity}
           value={condition.value}
           onChange={(v) => onChange({ value: v })}

@@ -43,7 +43,7 @@ describe("jsonbEngine.compile", () => {
   };
 
   it("produces a parameterized where + values", () => {
-    const out = jsonbEngine.compile(treeToFilterGroup(tree));
+    const out = jsonbEngine.compile(treeToFilterGroup(tree), { fields: [] });
     expect(out).toEqual({
       ok: true,
       primary: '(("data" #>> $1)::numeric > $2)',
@@ -52,7 +52,7 @@ describe("jsonbEngine.compile", () => {
   });
 
   it("reports a build failure as an error result", () => {
-    const out = jsonbEngine.compile({ logic: "and", filters: [{ field: "x" } as never] });
+    const out = jsonbEngine.compile({ logic: "and", filters: [{ field: "x" } as never] }, { fields: [] });
     expect(out.ok).toBe(false);
   });
 });
