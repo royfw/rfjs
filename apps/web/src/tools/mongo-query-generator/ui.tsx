@@ -5,9 +5,9 @@ import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { runMongoQuery } from "@/lib/tools/mongo-query-generator";
+import { runMongoQuery } from "./mongo-query-generator";
 
-import { ToolShell } from "./tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 
 const SAMPLE = `{
   "logic": "and",

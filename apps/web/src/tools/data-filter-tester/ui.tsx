@@ -5,9 +5,9 @@ import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { runFilterTest } from "@/lib/tools/data-filter-tester";
+import { runFilterTest } from "./data-filter-tester";
 
-import { ToolShell } from "./tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 
 const SAMPLE_DATA = `[
   { "name": "Ada", "age": 30 },

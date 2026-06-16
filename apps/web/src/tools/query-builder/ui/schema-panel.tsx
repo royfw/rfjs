@@ -3,7 +3,7 @@
 import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 
-import type { FieldSchema, FieldType } from "@/lib/tools/query-builder/types";
+import type { FieldSchema, FieldType } from "@/tools/query-builder/logic/types";
 
 const TYPES: FieldType[] = ["string", "numeric", "date", "boolean", "object", "array"];
 

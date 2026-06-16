@@ -14,9 +14,9 @@ import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { JSONB_DIALECTS, runJsonbQuery, type JsonbDialect } from "@/lib/tools/jsonb-query-generator";
+import { JSONB_DIALECTS, runJsonbQuery, type JsonbDialect } from "./jsonb-query-generator";
 
-import { ToolShell } from "./tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 
 const SAMPLE = `{
   "logic": "and",

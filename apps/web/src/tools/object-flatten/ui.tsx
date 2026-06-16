@@ -5,9 +5,9 @@ import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { flattenJson } from "@/lib/tools/object-flatten";
+import { flattenJson } from "./object-flatten";
 
-import { ToolShell } from "./tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 
 const SAMPLE = `{
   "user": {

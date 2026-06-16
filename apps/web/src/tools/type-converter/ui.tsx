@@ -15,9 +15,9 @@ import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { convertType, CONVERT_TYPES } from "@/lib/tools/type-converter";
+import { convertType, CONVERT_TYPES } from "./type-converter";
 
-import { ToolShell } from "./tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 
 export function TypeConverter() {
   const t = useTranslations("ToolUI");

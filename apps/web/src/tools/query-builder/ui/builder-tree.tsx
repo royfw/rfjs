@@ -4,9 +4,9 @@ import { Button } from "@rfjs/web-ui/components/button";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { getEngine, type EngineId } from "@/lib/tools/query-builder/engines";
-import { addCondition, addGroup, removeNode, setLogic, updateNode } from "@/lib/tools/query-builder/tree-ops";
-import type { BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@/lib/tools/query-builder/types";
+import { getEngine, type EngineId } from "@/tools/query-builder/logic/engines";
+import { addCondition, addGroup, removeNode, setLogic, updateNode } from "@/tools/query-builder/logic/tree-ops";
+import type { BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@/tools/query-builder/logic/types";
 
 import { ValueEditor } from "./value-editor";
 
