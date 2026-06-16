@@ -40,3 +40,44 @@ function toCondition(c: FilterConditionLike, makeId: () => string): BuilderCondi
   }
   return out;
 }
+
+export type ReverseError = "invalidJson" | "invalidShape";
+
+const LOGIC_OPS: readonly string[] = ["and", "or", "nor", "not"];
+
+export function parseFilterGroup(
+  text: string,
+): { ok: true; group: FilterGroupLike } | { ok: false; error: ReverseError } {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return { ok: false, error: "invalidJson" };
+  }
+  if (!isValidGroup(parsed)) return { ok: false, error: "invalidShape" };
+  return { ok: true, group: parsed as FilterGroupLike };
+}
+
+function isObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function isValidGroup(v: unknown): boolean {
+  if (!isObject(v)) return false;
+  if (typeof v.logic !== "string" || !LOGIC_OPS.includes(v.logic)) return false;
+  if (!Array.isArray(v.filters)) return false;
+  return v.filters.every(isValidItem);
+}
+
+function isValidItem(v: unknown): boolean {
+  if (!isObject(v)) return false;
+  return "field" in v ? isValidLeaf(v) : isValidGroup(v);
+}
+
+function isValidLeaf(v: Record<string, unknown>): boolean {
+  if (typeof v.field !== "string" || v.field.length === 0) return false;
+  if (typeof v.dataType !== "string") return false;
+  if (typeof v.operator !== "string" || v.operator.length === 0) return false;
+  if (v.operator === "elemmatch" && v.filters !== undefined) return isValidGroup(v.filters);
+  return true;
+}
