@@ -80,7 +80,7 @@ export function QueryBuilder() {
                 </Button>
               ))}
             </div>
-            <GroupNode group={tree} engineId={engineId} schema={schema} onChange={setTree} />
+            <GroupNode group={tree} engineId={engineId} schema={schema} onChange={setTree} onCreateField={() => {}} />
           </Panel>
         </div>
       }
