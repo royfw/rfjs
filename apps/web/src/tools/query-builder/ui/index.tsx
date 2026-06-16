@@ -48,9 +48,12 @@ export function QueryBuilder() {
   const output = useMemo(
     () =>
       getEngine(engineId).compile(treeToFilterGroup(tree), {
-        fields: schema
-          .filter((f) => f.include)
-          .map((f) => ({ path: f.path, kind: f.kind, dataType: f.dataType, elementType: f.elementType })),
+        fields: schema.map((f) => ({
+          path: f.path,
+          kind: f.kind,
+          dataType: f.dataType,
+          elementType: f.elementType,
+        })),
       }),
     [engineId, tree, schema],
   );

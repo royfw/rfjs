@@ -67,4 +67,58 @@ describe("pgFilterEngine.compile", () => {
     const out = pgFilterEngine.compile(group, ctx([{ path: "n", kind: "column", dataType: "numeric" }]));
     expect(out.ok).toBe(false);
   });
+
+  it("renders a nested group mixing column + jsonb with contiguous params", () => {
+    const group = {
+      logic: "and",
+      filters: [
+        { field: "name", dataType: "string", operator: "eq", value: "a" },
+        {
+          logic: "or",
+          filters: [
+            { field: "score", dataType: "numeric", operator: "gt", value: 1 },
+            { field: "age", dataType: "numeric", operator: "lt", value: 9 },
+          ],
+        },
+      ],
+    };
+    const out = pgFilterEngine.compile(
+      group,
+      ctx([
+        { path: "name", kind: "column", dataType: "string" },
+        { path: "score", kind: "jsonb", dataType: "numeric" },
+        { path: "age", kind: "column", dataType: "numeric" },
+      ]),
+    );
+    expect(out.ok).toBe(true);
+    if (out.ok) {
+      expect(out.primary).toContain("name");
+      expect(out.primary).toContain("data");
+      expect(out.primary).toContain("age");
+      expect(out.primary).toContain("$1");
+      expect(out.primary).toContain("$2");
+      expect(out.primary).toContain("$3");
+    }
+  });
+
+  it("passes an elemmatch jsonb leaf (nested filters) through to buildPgFilter", () => {
+    const group = {
+      logic: "and",
+      filters: [
+        {
+          field: "tags",
+          dataType: "array",
+          elementType: "object",
+          operator: "elemmatch",
+          filters: {
+            logic: "and",
+            filters: [{ field: "k", dataType: "string", operator: "eq", value: "v" }],
+          },
+        },
+      ],
+    };
+    const out = pgFilterEngine.compile(group, ctx([{ path: "tags", kind: "jsonb", dataType: "array", elementType: "object" }]));
+    expect(out.ok).toBe(true);
+    if (out.ok) expect(out.primary).toContain("data");
+  });
 });

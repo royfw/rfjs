@@ -1,6 +1,6 @@
 "use client";
 
-let nextId = 0;
+import { useId } from "react";
 
 export function FieldCombobox({
   value,
@@ -13,7 +13,7 @@ export function FieldCombobox({
   ariaLabel: string;
   onCommit: (path: string) => void;
 }) {
-  const listId = `fields-${(nextId += 1)}`;
+  const listId = `fields-${useId()}`;
   return (
     <>
       <input

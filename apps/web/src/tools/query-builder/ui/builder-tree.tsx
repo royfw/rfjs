@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { Button } from "@rfjs/web-ui/components/button";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -113,9 +115,30 @@ function ConditionRow({
   const t = useTranslations("ToolUI");
   const fields = schema.filter((f) => f.include);
   const engine = getEngine(engineId);
-  const fieldKind = schema.find((s) => s.path === condition.field)?.kind;
-  const ops = engine.operators(condition.dataType, condition.elementType, fieldKind);
+  const field = schema.find((s) => s.path === condition.field);
+  const dataType = field?.dataType ?? condition.dataType;
+  const elementType = field?.elementType ?? condition.elementType;
+  const fieldKind = field?.kind;
+  const ops = engine.operators(dataType, elementType, fieldKind);
   const arity = ops.find((o) => o.op === condition.operator)?.arity ?? "one";
+  const operatorValid = ops.some((o) => o.op === condition.operator);
+
+  // Keep the condition's snapshot reconciled with the schema field and selected
+  // engine: sync dataType/elementType and reset an operator that is no longer
+  // valid for the current matrix (prevents silently-wrong or erroring SQL).
+  useEffect(() => {
+    const patch: Omit<Partial<BuilderCondition>, "kind" | "id"> = {};
+    if (field) {
+      if (field.dataType !== condition.dataType) patch.dataType = field.dataType;
+      if (field.elementType !== condition.elementType) patch.elementType = field.elementType;
+    }
+    if (condition.operator && !operatorValid) {
+      patch.operator = ops[0]?.op ?? "";
+      patch.value = "";
+    }
+    if (Object.keys(patch).length > 0) onChange(patch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engineId, field?.dataType, field?.elementType, field?.kind, operatorValid]);
 
   function onField(path: string) {
     const f = schema.find((s) => s.path === path);
@@ -138,9 +161,7 @@ function ConditionRow({
         }}
       />
       {condition.field ? (
-        <span className={`font-mono text-[10px] ${dataTypeColor(condition.dataType)}`}>
-          {condition.dataType}
-        </span>
+        <span className={`font-mono text-[10px] ${dataTypeColor(dataType)}`}>{dataType}</span>
       ) : null}
       <select
         aria-label="operator"
@@ -156,7 +177,7 @@ function ConditionRow({
         <span className="text-xs text-muted-foreground">{t("elemMatchPlaceholder")}</span>
       ) : (
         <ValueEditor
-          dataType={condition.dataType === "array" ? (condition.elementType ?? "string") : condition.dataType}
+          dataType={dataType === "array" ? (elementType ?? "string") : dataType}
           arity={arity}
           value={condition.value}
           onChange={(v) => onChange({ value: v })}
