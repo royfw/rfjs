@@ -3,7 +3,8 @@
 import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 
-import type { FieldSchema, FieldType } from "@/tools/query-builder/logic/types";
+import { canBeColumn } from "@/tools/query-builder/logic/field-kind";
+import type { FieldKind, FieldSchema, FieldType } from "@/tools/query-builder/logic/types";
 
 const TYPES: FieldType[] = ["string", "numeric", "date", "boolean", "object", "array"];
 
@@ -51,16 +52,42 @@ export function SchemaPanel({
               <select
                 aria-label={`type ${f.path}`}
                 value={f.dataType}
-                onChange={(e) => patch(f.path, { dataType: e.target.value as FieldType })}
+                onChange={(e) => {
+                  const dataType = e.target.value as FieldType;
+                  patch(f.path, canBeColumn(dataType) ? { dataType } : { dataType, kind: "jsonb" });
+                }}
                 className="rounded-sm border bg-transparent px-1 py-0.5 text-xs"
               >
                 {TYPES.map((tp) => (
                   <option key={tp} value={tp}>{tp}</option>
                 ))}
               </select>
+              <select
+                aria-label={`kind ${f.path}`}
+                value={canBeColumn(f.dataType) ? f.kind : "jsonb"}
+                disabled={!canBeColumn(f.dataType)}
+                onChange={(e) => patch(f.path, { kind: e.target.value as FieldKind })}
+                className="rounded-sm border bg-transparent px-1 py-0.5 text-xs disabled:opacity-50"
+              >
+                <option value="jsonb">{t("kindJsonb")}</option>
+                <option value="column">{t("kindColumn")}</option>
+              </select>
             </div>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={() =>
+            onSchemaChange(
+              schema.map((f) =>
+                !f.path.includes(".") && canBeColumn(f.dataType) ? { ...f, kind: "column" } : f,
+              ),
+            )
+          }
+          className="self-start rounded-sm border border-border bg-transparent px-2 py-1 text-xs"
+        >
+          {t("topLevelToColumns")}
+        </button>
       </div>
     </Panel>
   );
