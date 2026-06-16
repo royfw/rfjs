@@ -12,7 +12,7 @@ import { inferSchema } from "@/tools/query-builder/logic/schema-infer";
 import { emptyGroup } from "@/tools/query-builder/logic/tree-ops";
 import type { BuilderGroup, FieldSchema } from "@/tools/query-builder/logic/types";
 
-import { ToolShell } from "@/components/tools/tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 import { GroupNode } from "./builder-tree";
 import { PreviewPanel } from "./preview-panel";
 import { SchemaPanel } from "./schema-panel";

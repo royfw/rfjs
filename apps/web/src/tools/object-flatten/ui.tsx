@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import { flattenJson } from "./object-flatten";
 
-import { ToolShell } from "@/components/tools/tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 
 const SAMPLE = `{
   "user": {

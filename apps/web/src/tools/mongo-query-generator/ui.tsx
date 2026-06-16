@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import { runMongoQuery } from "./mongo-query-generator";
 
-import { ToolShell } from "@/components/tools/tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 
 const SAMPLE = `{
   "logic": "and",

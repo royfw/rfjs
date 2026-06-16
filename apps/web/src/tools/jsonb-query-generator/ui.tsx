@@ -16,7 +16,7 @@ import { useState } from "react";
 
 import { JSONB_DIALECTS, runJsonbQuery, type JsonbDialect } from "./jsonb-query-generator";
 
-import { ToolShell } from "@/components/tools/tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 
 const SAMPLE = `{
   "logic": "and",

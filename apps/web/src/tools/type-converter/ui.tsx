@@ -17,7 +17,7 @@ import { useState } from "react";
 
 import { convertType, CONVERT_TYPES } from "./type-converter";
 
-import { ToolShell } from "@/components/tools/tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 
 export function TypeConverter() {
   const t = useTranslations("ToolUI");

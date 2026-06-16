@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import { runFilterTest } from "./data-filter-tester";
 
-import { ToolShell } from "@/components/tools/tool-shell";
+import { ToolShell } from "@/tools/_shared/tool-shell";
 
 const SAMPLE_DATA = `[
   { "name": "Ada", "age": 30 },
