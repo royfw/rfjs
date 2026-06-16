@@ -39,6 +39,21 @@ export const packageRegistry: PackageDefinition[] = [
     relatedTools: ['jsonb-query-generator'],
   },
   {
+    name: '@rfjs/sql-filter',
+    status: 'preview',
+    href: '/packages/sql-filter',
+    github: GITHUB,
+    tags: ['sql', 'filter'],
+  },
+  {
+    name: '@rfjs/pg-filter',
+    status: 'preview',
+    href: '/packages/pg-filter',
+    github: GITHUB,
+    tags: ['postgres', 'jsonb', 'sql', 'filter'],
+    relatedTools: ['query-builder'],
+  },
+  {
     name: '@rfjs/jwt',
     status: 'ready',
     href: '/packages/jwt',

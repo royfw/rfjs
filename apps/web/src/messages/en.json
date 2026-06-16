@@ -77,6 +77,8 @@
     "data-transform": { "description": "Data type transformation utilities (string/number/boolean/date)." },
     "data-label": { "description": "Compose display label strings from data paths, value maps, and templates." },
     "jsonb-query": { "description": "PostgreSQL JSONB query builder from filter metadata." },
+    "sql-filter": { "description": "Generic boolean filter-group to SQL with pluggable leaf renderers." },
+    "pg-filter": { "description": "Unified PostgreSQL filter builder over columns and JSONB." },
     "jwt": { "description": "JWT sign/verify/decode helper." },
     "mongo-query": { "description": "MongoDB query builder from filter metadata." },
     "object-utils": { "description": "Object manipulation utilities (flatten, paths, merge)." },
