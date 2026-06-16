@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { getEngine, type EngineId } from "@/tools/query-builder/logic/engines";
+import { logicColor, dataTypeColor } from "@/tools/query-builder/logic/colors";
 import { addCondition, addGroup, removeNode, setLogic, updateNode } from "@/tools/query-builder/logic/tree-ops";
 import type { BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@/tools/query-builder/logic/types";
 
@@ -44,7 +45,7 @@ export function GroupNode({
           aria-label="logic"
           value={group.logic}
           onChange={(e) => onChange(setLogic(group, group.id, e.target.value as LogicOp))}
-          className="rounded-sm border bg-transparent px-2 py-1 text-sm"
+          className={`rounded-sm border bg-transparent px-2 py-1 text-sm ${logicColor(group.logic)}`}
         >
           {(Object.keys(LOGIC_LABELS) as LogicOp[]).map((l) => (
             <option key={l} value={l}>{LOGIC_LABELS[l]}</option>
@@ -136,6 +137,11 @@ function ConditionRow({
           onField(path);
         }}
       />
+      {condition.field ? (
+        <span className={`font-mono text-[10px] ${dataTypeColor(condition.dataType)}`}>
+          {condition.dataType}
+        </span>
+      ) : null}
       <select
         aria-label="operator"
         value={condition.operator}
