@@ -8,7 +8,7 @@ export interface OperatorSpec {
   arity: OperatorArity;
 }
 
-export type EngineId = "jsonb" | "data-filter";
+export type EngineId = "jsonb" | "data-filter" | "pg-filter";
 
 export interface CompileField {
   path: string;
