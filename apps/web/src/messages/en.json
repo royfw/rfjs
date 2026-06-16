@@ -44,8 +44,7 @@
   },
   "Tools": {
     "data-filter-builder": { "title": "Data Filter Builder", "description": "Compose nested filter conditions visually and export them." },
-    "object-transformer": { "title": "Object Transformer", "description": "Interactive object transformation playground." },
-    "query-builder": { "title": "Query Builder", "description": "Build nested JSONB queries visually and preview live matches." }
+    "object-transformer": { "title": "Object Transformer", "description": "Interactive object transformation playground." }
   },
   "ToolUI": {
     "input": "Input",
@@ -54,9 +53,6 @@
     "data": "Data",
     "filter": "Filter",
     "matched": "{count} matched",
-    "notPreviewable": "This operator can't be previewed in the browser",
-    "builder": "Builder",
-    "elemMatchPlaceholder": "elemmatch (nested match — single-level in this slice)",
     "types": {
       "string": "String",
       "number": "Number",

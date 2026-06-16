@@ -4,8 +4,8 @@ import { CopyButton } from "@rfjs/web-ui/components/copy-button";
 import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 
-import type { EngineOutput } from "@/lib/tools/query-builder/engines";
-import type { LiveMatchResult } from "@/lib/tools/query-builder/live-match";
+import type { EngineOutput } from "@/tools/query-builder/logic/engines";
+import type { LiveMatchResult } from "@/tools/query-builder/logic/live-match";
 
 export function PreviewPanel({
   output,

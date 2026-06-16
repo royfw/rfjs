@@ -7,6 +7,7 @@ import { tool as jsonbQueryGenerator } from "./jsonb-query-generator";
 import { tool as jwtDecoder } from "./jwt-decoder";
 import { tool as mongoQueryGenerator } from "./mongo-query-generator";
 import { tool as objectFlatten } from "./object-flatten";
+import { tool as queryBuilder } from "./query-builder";
 import { tool as typeConverter } from "./type-converter";
 
 // As each tool is migrated, add its descriptor to this array.
@@ -17,6 +18,7 @@ export const toolModules: ToolModule[] = [
   mongoQueryGenerator,
   jsonbQueryGenerator,
   jwtDecoder,
+  queryBuilder,
 ];
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = Object.fromEntries(

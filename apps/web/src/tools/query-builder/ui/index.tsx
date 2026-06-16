@@ -5,14 +5,14 @@ import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
-import { treeToFilterGroup } from "@/lib/tools/query-builder/compile";
-import { ENGINE_IDS, getEngine, type EngineId } from "@/lib/tools/query-builder/engines";
-import { runLiveMatch } from "@/lib/tools/query-builder/live-match";
-import { inferSchema } from "@/lib/tools/query-builder/schema-infer";
-import { emptyGroup } from "@/lib/tools/query-builder/tree-ops";
-import type { BuilderGroup, FieldSchema } from "@/lib/tools/query-builder/types";
+import { treeToFilterGroup } from "@/tools/query-builder/logic/compile";
+import { ENGINE_IDS, getEngine, type EngineId } from "@/tools/query-builder/logic/engines";
+import { runLiveMatch } from "@/tools/query-builder/logic/live-match";
+import { inferSchema } from "@/tools/query-builder/logic/schema-infer";
+import { emptyGroup } from "@/tools/query-builder/logic/tree-ops";
+import type { BuilderGroup, FieldSchema } from "@/tools/query-builder/logic/types";
 
-import { ToolShell } from "../tool-shell";
+import { ToolShell } from "@/components/tools/tool-shell";
 import { GroupNode } from "./builder-tree";
 import { PreviewPanel } from "./preview-panel";
 import { SchemaPanel } from "./schema-panel";

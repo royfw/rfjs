@@ -44,8 +44,7 @@
   },
   "Tools": {
     "data-filter-builder": { "title": "資料篩選建構器", "description": "視覺化組合巢狀篩選條件並匯出。" },
-    "object-transformer": { "title": "物件轉換器", "description": "互動式物件轉換 playground。" },
-    "query-builder": { "title": "查詢建構器", "description": "視覺化建構巢狀 JSONB 查詢，並即時預覽命中結果。" }
+    "object-transformer": { "title": "物件轉換器", "description": "互動式物件轉換 playground。" }
   },
   "ToolUI": {
     "input": "輸入",
@@ -54,9 +53,6 @@
     "data": "資料",
     "filter": "篩選條件",
     "matched": "命中 {count} 筆",
-    "notPreviewable": "此 operator 無法在瀏覽器預覽",
-    "builder": "Builder",
-    "elemMatchPlaceholder": "elemmatch（巢狀比對，本切片暫以單層條件呈現）",
     "types": {
       "string": "字串",
       "number": "數字",

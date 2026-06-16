@@ -1,8 +1,8 @@
 "use client";
 
-import type { OperatorArity } from "@/lib/tools/query-builder/engines/types";
-import { coerceInput } from "@/lib/tools/query-builder/value-coerce";
-import type { FieldType } from "@/lib/tools/query-builder/types";
+import type { OperatorArity } from "@/tools/query-builder/logic/engines/types";
+import { coerceInput } from "@/tools/query-builder/logic/value-coerce";
+import type { FieldType } from "@/tools/query-builder/logic/types";
 
 function rawOf(value: unknown): string {
   if (value === undefined || value === null) return "";

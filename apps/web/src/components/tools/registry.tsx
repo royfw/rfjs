@@ -5,7 +5,7 @@ import { JsonbQueryGenerator } from "@/tools/jsonb-query-generator/ui";
 import { JwtDecoder } from "@/tools/jwt-decoder/ui";
 import { MongoQueryGenerator } from "@/tools/mongo-query-generator/ui";
 import { ObjectFlatten } from "@/tools/object-flatten/ui";
-import { QueryBuilder } from "./query-builder";
+import { QueryBuilder } from "@/tools/query-builder/ui";
 import { TypeConverter } from "@/tools/type-converter/ui";
 
 // Web quick tools with a live implementation. Tool ids absent here render the
