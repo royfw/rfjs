@@ -37,8 +37,8 @@ describe("filterGroupToTree", () => {
     };
     const tree = filterGroupToTree(g, idGen());
     const cond = tree.children[0];
-    expect(cond.kind).toBe("condition");
-    if (cond.kind === "condition") {
+    expect(cond?.kind).toBe("condition");
+    if (cond?.kind === "condition") {
       expect(cond.operator).toBe("elemmatch");
       expect(cond.filters?.kind).toBe("group");
       expect(cond.filters?.children).toHaveLength(1);
