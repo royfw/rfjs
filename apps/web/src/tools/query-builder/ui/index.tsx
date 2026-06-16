@@ -9,12 +9,14 @@ import { treeToFilterGroup } from "@/tools/query-builder/logic/compile";
 import { ENGINE_IDS, getEngine, type EngineId } from "@/tools/query-builder/logic/engines";
 import { addInferredField } from "@/tools/query-builder/logic/field-create";
 import { runLiveMatch } from "@/tools/query-builder/logic/live-match";
+import { filterGroupToTree, mergeFieldsFromTree, parseFilterGroup, type ReverseError } from "@/tools/query-builder/logic/reverse";
 import { inferSchema } from "@/tools/query-builder/logic/schema-infer";
 import { emptyGroup } from "@/tools/query-builder/logic/tree-ops";
 import type { BuilderGroup, FieldSchema } from "@/tools/query-builder/logic/types";
 
 import { GroupNode } from "./builder-tree";
-import { PreviewPanel } from "./preview-panel";
+import { CanonicalEditor } from "./canonical-editor";
+import { PreviewPanel, LiveMatchView } from "./preview-panel";
 import { SchemaPanel } from "./schema-panel";
 import { ThreePane } from "./three-pane";
 
@@ -36,6 +38,22 @@ export function QueryBuilder() {
   const [error, setError] = useState<string | null>(() => safeInfer(SAMPLE).error);
   const [engineId, setEngineId] = useState<EngineId>("pg-filter");
   const [tree, setTree] = useState<BuilderGroup>(() => emptyGroup(id));
+  const [reverseError, setReverseError] = useState<ReverseError | null>(null);
+
+  function onReverseParse(text: string) {
+    if (text.trim() === "") {
+      setReverseError(null);
+      return;
+    }
+    const r = parseFilterGroup(text);
+    if (r.ok) {
+      setTree(filterGroupToTree(r.group, id));
+      setSchema((s) => mergeFieldsFromTree(s, r.group));
+      setReverseError(null);
+    } else {
+      setReverseError(r.error);
+    }
+  }
 
   function onSample(text: string) {
     setSampleText(text);
@@ -95,7 +113,25 @@ export function QueryBuilder() {
               </Button>
             ))}
           </div>
-          <PreviewPanel output={output} live={live} />
+          {engineId === "data-filter" ? (
+            <>
+              <CanonicalEditor
+                serialized={JSON.stringify(treeToFilterGroup(tree), null, 2)}
+                errorText={
+                  reverseError === "invalidJson"
+                    ? t("reverseInvalidJson")
+                    : reverseError === "invalidShape"
+                      ? t("reverseInvalidShape")
+                      : null
+                }
+                hint={t("canonicalEditable")}
+                onParse={onReverseParse}
+              />
+              <LiveMatchView live={live} />
+            </>
+          ) : (
+            <PreviewPanel output={output} live={live} />
+          )}
         </div>
       }
     />

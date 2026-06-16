@@ -15,6 +15,9 @@ export const messages: LocaleMessages = {
       kindColumn: "column",
       kindJsonb: "jsonb",
       topLevelToColumns: "Top-level scalars → columns",
+      canonicalEditable: "Canonical filter (editable) — edit to rebuild the query",
+      reverseInvalidJson: "Invalid JSON",
+      reverseInvalidShape: "Not a valid filter group",
     },
   },
   "zh-TW": {
@@ -28,6 +31,9 @@ export const messages: LocaleMessages = {
       kindColumn: "欄位",
       kindJsonb: "jsonb",
       topLevelToColumns: "頂層 scalar 設為欄位",
+      canonicalEditable: "Canonical 篩選(可編輯)—— 編輯即反推查詢",
+      reverseInvalidJson: "無效的 JSON",
+      reverseInvalidShape: "不是合法的 filter group",
     },
   },
 };
