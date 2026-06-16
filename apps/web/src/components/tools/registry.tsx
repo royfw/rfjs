@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 
-import { DataFilterTester } from "./data-filter-tester";
+import { DataFilterTester } from "@/tools/data-filter-tester/ui";
 import { JsonbQueryGenerator } from "./jsonb-query-generator";
 import { JwtDecoder } from "./jwt-decoder";
 import { MongoQueryGenerator } from "./mongo-query-generator";

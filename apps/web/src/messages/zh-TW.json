@@ -43,7 +43,6 @@
     "viewOnGithub": "GitHub"
   },
   "Tools": {
-    "data-filter-tester": { "title": "JSONPath 篩選測試器", "description": "對範例資料即時執行 @rfjs/data-filter 條件。" },
     "jwt-decoder": { "title": "JWT 解碼器", "description": "解碼 JWT 的 header 與 payload，並顯示即時有效期狀態。" },
     "jsonb-query-generator": { "title": "篩選 → JSONB SQL", "description": "從篩選 metadata 產生 PostgreSQL JSONB 查詢。" },
     "mongo-query-generator": { "title": "篩選 → Mongo 查詢", "description": "從篩選 metadata 產生 MongoDB 查詢。" },
