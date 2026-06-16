@@ -77,6 +77,8 @@
     "data-transform": { "description": "資料型別轉換工具(字串/數字/布林/日期)。" },
     "data-label": { "description": "從資料路徑、值對應與樣板組合顯示用標籤字串。" },
     "jsonb-query": { "description": "從篩選 metadata 建構 PostgreSQL JSONB 查詢。" },
+    "sql-filter": { "description": "通用布林 filter-group 轉 SQL,可插拔 leaf 渲染器。" },
+    "pg-filter": { "description": "統一的 PostgreSQL 過濾建構器,涵蓋欄位與 JSONB。" },
     "jwt": { "description": "JWT 簽署/驗證/解碼工具。" },
     "mongo-query": { "description": "從篩選 metadata 建構 MongoDB 查詢。" },
     "object-utils": { "description": "物件操作工具(壓平、路徑、合併)。" },
