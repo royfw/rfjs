@@ -26,6 +26,30 @@ describe('toolRegistry', () => {
   });
 });
 
+describe('toolDefinitionSchema web-surface guard', () => {
+  const base = { id: 'x', category: 'inspect', status: 'planned' } as const;
+
+  it('rejects a web tool with no relatedPackages', () => {
+    expect(() => toolDefinitionSchema.parse({ ...base, surface: 'web' })).toThrow();
+  });
+
+  it('rejects a web tool with an empty relatedPackages array', () => {
+    expect(() =>
+      toolDefinitionSchema.parse({ ...base, surface: 'web', relatedPackages: [] }),
+    ).toThrow();
+  });
+
+  it('allows a web tool that declares a primary package', () => {
+    expect(() =>
+      toolDefinitionSchema.parse({ ...base, surface: 'web', relatedPackages: ['@rfjs/jwt'] }),
+    ).not.toThrow();
+  });
+
+  it('allows a workbench tool with no relatedPackages', () => {
+    expect(() => toolDefinitionSchema.parse({ ...base, surface: 'workbench' })).not.toThrow();
+  });
+});
+
 describe('tool surfaces', () => {
   it('every tool declares a surface', () => {
     for (const tool of toolRegistry) {

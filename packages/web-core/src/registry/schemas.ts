@@ -13,14 +13,21 @@ export const registryStatusSchema = z.enum(['ready', 'preview', 'planned']);
 
 export const toolSurfaceSchema = z.enum(['web', 'workbench']);
 
-export const toolDefinitionSchema = z.object({
-  id: z.string().min(1),
-  category: toolCategorySchema,
-  surface: toolSurfaceSchema,
-  status: registryStatusSchema,
-  relatedPackages: z.array(z.string().startsWith('@rfjs/')).optional(),
-  tags: z.array(z.string()).optional(),
-});
+export const toolDefinitionSchema = z
+  .object({
+    id: z.string().min(1),
+    category: toolCategorySchema,
+    surface: toolSurfaceSchema,
+    status: registryStatusSchema,
+    relatedPackages: z.array(z.string().startsWith('@rfjs/')).optional(),
+    tags: z.array(z.string()).optional(),
+  })
+  // A web-surface tool drives the sidebar's package tree via its primary package
+  // (relatedPackages[0]); without one it would be silently dropped from the nav.
+  .refine((tool) => tool.surface !== 'web' || (tool.relatedPackages?.length ?? 0) > 0, {
+    error: 'web-surface tools must declare at least one relatedPackages entry',
+    path: ['relatedPackages'],
+  });
 
 export const packageDefinitionSchema = z.object({
   name: z.string().startsWith('@rfjs/'),
