@@ -7,13 +7,25 @@ import { useTranslations } from "next-intl";
 import type { EngineOutput } from "@/tools/query-builder/logic/engines";
 import type { LiveMatchResult } from "@/tools/query-builder/logic/live-match";
 
-export function PreviewPanel({
-  output,
-  live,
-}: {
-  output: EngineOutput;
-  live: LiveMatchResult;
-}) {
+export function LiveMatchView({ live }: { live: LiveMatchResult }) {
+  const t = useTranslations("ToolUI");
+  return (
+    <div className="border-t border-border pt-2">
+      {live.uncoverable ? (
+        <p className="font-mono text-xs text-muted-foreground">{t("notPreviewable")}</p>
+      ) : (
+        <>
+          <p className="mb-1 font-mono text-xs text-muted-foreground">{t("matched", { count: live.count })}</p>
+          <pre className="max-h-48 overflow-auto font-mono text-xs text-muted-foreground">
+            {JSON.stringify(live.matched, null, 2)}
+          </pre>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function PreviewPanel({ output, live }: { output: EngineOutput; live: LiveMatchResult }) {
   const t = useTranslations("ToolUI");
   return (
     <Panel
@@ -31,18 +43,7 @@ export function PreviewPanel({
         ) : (
           <p className="font-mono text-sm text-fault">{output.error}</p>
         )}
-        <div className="border-t border-border pt-2">
-          {live.uncoverable ? (
-            <p className="font-mono text-xs text-muted-foreground">{t("notPreviewable")}</p>
-          ) : (
-            <>
-              <p className="mb-1 font-mono text-xs text-muted-foreground">{t("matched", { count: live.count })}</p>
-              <pre className="max-h-48 overflow-auto font-mono text-xs text-muted-foreground">
-                {JSON.stringify(live.matched, null, 2)}
-              </pre>
-            </>
-          )}
-        </div>
+        <LiveMatchView live={live} />
       </div>
     </Panel>
   );
