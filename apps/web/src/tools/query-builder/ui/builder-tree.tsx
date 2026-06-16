@@ -6,10 +6,9 @@ import { Button } from "@rfjs/web-ui/components/button";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { getEngine, type EngineId } from "@/tools/query-builder/logic/engines";
+import { getEngine, addCondition, addGroup, removeNode, setLogic, updateNode } from "@rfjs/filter-builder";
+import type { EngineId, BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@rfjs/filter-builder";
 import { logicColor, dataTypeColor } from "@/tools/query-builder/logic/colors";
-import { addCondition, addGroup, removeNode, setLogic, updateNode } from "@/tools/query-builder/logic/tree-ops";
-import type { BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@/tools/query-builder/logic/types";
 
 import { FieldCombobox } from "./field-combobox";
 import { ValueEditor } from "./value-editor";

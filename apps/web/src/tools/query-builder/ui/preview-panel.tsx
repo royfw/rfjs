@@ -4,8 +4,7 @@ import { CopyButton } from "@rfjs/web-ui/components/copy-button";
 import { Panel } from "@rfjs/web-ui/components/panel";
 import { useTranslations } from "next-intl";
 
-import type { EngineOutput } from "@/tools/query-builder/logic/engines";
-import type { LiveMatchResult } from "@/tools/query-builder/logic/live-match";
+import type { EngineOutput, LiveMatchResult } from "@rfjs/filter-builder";
 
 export function LiveMatchView({ live }: { live: LiveMatchResult }) {
   const t = useTranslations("ToolUI");
