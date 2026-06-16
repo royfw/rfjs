@@ -4,6 +4,7 @@ import type {
   BuilderGroup,
   BuilderItem,
   ElementType,
+  FieldSchema,
   FieldType,
   LogicOp,
 } from "./types";
@@ -80,4 +81,31 @@ function isValidLeaf(v: Record<string, unknown>): boolean {
   if (typeof v.operator !== "string" || v.operator.length === 0) return false;
   if (v.operator === "elemmatch" && v.filters !== undefined) return isValidGroup(v.filters);
   return true;
+}
+
+// Append fields referenced by the parsed group but absent from the schema, so
+// the builder's field options and the schema-authoritative compile see them.
+// Existing fields are left untouched (kind/dataType preserved).
+export function mergeFieldsFromTree(schema: FieldSchema[], group: FilterGroupLike): FieldSchema[] {
+  const known = new Set(schema.map((f) => f.path));
+  const additions: FieldSchema[] = [];
+
+  const walk = (g: FilterGroupLike): void => {
+    for (const item of g.filters) {
+      if ("field" in item) addLeaf(item);
+      else walk(item);
+    }
+  };
+  const addLeaf = (c: FilterConditionLike): void => {
+    if (!known.has(c.field)) {
+      known.add(c.field);
+      const f: FieldSchema = { path: c.field, dataType: c.dataType as FieldType, include: true, kind: "jsonb" };
+      if (c.elementType) f.elementType = c.elementType as ElementType;
+      additions.push(f);
+    }
+    if (c.operator === "elemmatch" && c.filters) walk(c.filters);
+  };
+
+  walk(group);
+  return additions.length ? [...schema, ...additions] : schema;
 }
