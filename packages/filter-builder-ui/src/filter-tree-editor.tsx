@@ -4,39 +4,42 @@ import { useEffect } from "react";
 
 import { Button } from "@rfjs/web-ui/components/button";
 import { X } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 import { getEngine, addCondition, addGroup, removeNode, setLogic, updateNode } from "@rfjs/filter-builder";
 import type { EngineId, BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@rfjs/filter-builder";
-import { logicColor, dataTypeColor } from "@/tools/query-builder/logic/colors";
 
+import { logicColor, dataTypeColor } from "./colors";
 import { FieldCombobox } from "./field-combobox";
 import { ValueEditor } from "./value-editor";
 
-const LOGIC_LABELS: Record<LogicOp, string> = {
-  and: "全部成立 / All",
-  or: "擇一成立 / Any",
-  nor: "皆不成立 / None",
-  not: "非全部 / Not all",
-};
+export interface FilterTreeLabels {
+  logic: Record<LogicOp, string>;
+  addCondition: string;
+  addGroup: string;
+  removeGroup: string;
+  removeCondition: string;
+  elemMatch: string;
+}
 
 const id = () => crypto.randomUUID();
 
-export function GroupNode({
+export function FilterTreeEditor({
   group,
   engineId,
   schema,
   onChange,
-  onRemove,
   onCreateField,
+  labels,
+  onRemove,
   depth = 0,
 }: {
   group: BuilderGroup;
   engineId: EngineId;
   schema: FieldSchema[];
   onChange: (next: BuilderGroup) => void;
-  onRemove?: () => void;
   onCreateField: (path: string) => void;
+  labels: FilterTreeLabels;
+  onRemove?: () => void;
   depth?: number;
 }) {
   return (
@@ -48,18 +51,18 @@ export function GroupNode({
           onChange={(e) => onChange(setLogic(group, group.id, e.target.value as LogicOp))}
           className={`rounded-sm border bg-transparent px-2 py-1 text-sm ${logicColor(group.logic)}`}
         >
-          {(Object.keys(LOGIC_LABELS) as LogicOp[]).map((l) => (
-            <option key={l} value={l}>{LOGIC_LABELS[l]}</option>
+          {(Object.keys(labels.logic) as LogicOp[]).map((l) => (
+            <option key={l} value={l}>{labels.logic[l]}</option>
           ))}
         </select>
         <Button size="sm" variant="outline" onClick={() => onChange(addCondition(group, group.id, id))}>
-          + 條件
+          {labels.addCondition}
         </Button>
         <Button size="sm" variant="outline" onClick={() => onChange(addGroup(group, group.id, id))}>
-          + 群組
+          {labels.addGroup}
         </Button>
         {onRemove ? (
-          <Button size="sm" variant="ghost" aria-label="remove group" onClick={onRemove}>
+          <Button size="sm" variant="ghost" aria-label={labels.removeGroup} onClick={onRemove}>
             <X className="size-4" />
           </Button>
         ) : null}
@@ -67,11 +70,12 @@ export function GroupNode({
       <div className="flex flex-col gap-2 pl-3">
         {group.children.map((child) =>
           child.kind === "group" ? (
-            <GroupNode
+            <FilterTreeEditor
               key={child.id}
               group={child}
               engineId={engineId}
               schema={schema}
+              labels={labels}
               depth={depth + 1}
               onChange={(nextChild) =>
                 onChange({ ...group, children: group.children.map((c) => (c.id === child.id ? nextChild : c)) })
@@ -85,6 +89,7 @@ export function GroupNode({
               condition={child}
               engineId={engineId}
               schema={schema}
+              labels={labels}
               onChange={(patch) => onChange(updateNode(group, child.id, patch))}
               onRemove={() => onChange(removeNode(group, child.id))}
               onCreateField={onCreateField}
@@ -103,6 +108,7 @@ function ConditionRow({
   onChange,
   onRemove,
   onCreateField,
+  labels,
 }: {
   condition: BuilderCondition;
   engineId: EngineId;
@@ -110,8 +116,8 @@ function ConditionRow({
   onChange: (patch: Omit<Partial<BuilderCondition>, "kind" | "id">) => void;
   onRemove: () => void;
   onCreateField: (path: string) => void;
+  labels: FilterTreeLabels;
 }) {
-  const t = useTranslations("ToolUI");
   const fields = schema.filter((f) => f.include);
   const engine = getEngine(engineId);
   const field = schema.find((s) => s.path === condition.field);
@@ -122,9 +128,6 @@ function ConditionRow({
   const arity = ops.find((o) => o.op === condition.operator)?.arity ?? "one";
   const operatorValid = ops.some((o) => o.op === condition.operator);
 
-  // Keep the condition's snapshot reconciled with the schema field and selected
-  // engine: sync dataType/elementType and reset an operator that is no longer
-  // valid for the current matrix (prevents silently-wrong or erroring SQL).
   useEffect(() => {
     const patch: Omit<Partial<BuilderCondition>, "kind" | "id"> = {};
     if (field) {
@@ -173,7 +176,7 @@ function ConditionRow({
         ))}
       </select>
       {condition.operator === "elemmatch" ? (
-        <span className="text-xs text-muted-foreground">{t("elemMatchPlaceholder")}</span>
+        <span className="text-xs text-muted-foreground">{labels.elemMatch}</span>
       ) : (
         <ValueEditor
           dataType={dataType === "array" ? (elementType ?? "string") : dataType}
@@ -182,7 +185,7 @@ function ConditionRow({
           onChange={(v) => onChange({ value: v })}
         />
       )}
-      <Button size="sm" variant="ghost" aria-label="remove condition" onClick={onRemove}>
+      <Button size="sm" variant="ghost" aria-label={labels.removeCondition} onClick={onRemove}>
         <X className="size-4" />
       </Button>
     </div>
