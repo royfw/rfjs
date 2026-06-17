@@ -417,6 +417,9 @@ importers:
       '@rfjs/filter-builder':
         specifier: workspace:*
         version: link:../../packages/filter-builder
+      '@rfjs/filter-builder-ui':
+        specifier: workspace:*
+        version: link:../../packages/filter-builder-ui
       '@rfjs/pg-filter':
         specifier: workspace:*
         version: link:../../packages/pg-filter

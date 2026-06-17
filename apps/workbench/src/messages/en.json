@@ -34,5 +34,23 @@
   },
   "LocaleSwitcher": {
     "label": "Language"
+  },
+  "Explorer": {
+    "title": "Dataset Explorer",
+    "description": "Filter the datasets catalog with nested conditions.",
+    "run": "Run",
+    "empty": "No datasets match.",
+    "error": "Query failed.",
+    "tree": {
+      "and": "AND",
+      "or": "OR",
+      "nor": "NOR",
+      "not": "NOT",
+      "addCondition": "+ condition",
+      "addGroup": "+ group",
+      "removeCondition": "remove condition",
+      "removeGroup": "remove group",
+      "elemMatch": "elemmatch (nested)"
+    }
   }
 }
