@@ -414,6 +414,12 @@ importers:
 
   apps/workbench:
     dependencies:
+      '@rfjs/filter-builder':
+        specifier: workspace:*
+        version: link:../../packages/filter-builder
+      '@rfjs/pg-filter':
+        specifier: workspace:*
+        version: link:../../packages/pg-filter
       '@rfjs/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
