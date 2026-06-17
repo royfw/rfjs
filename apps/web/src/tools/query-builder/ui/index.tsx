@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { treeToFilterGroup, ENGINE_IDS, getEngine, addInferredField, runLiveMatch, filterGroupToTree, mergeFieldsFromTree, parseFilterGroup, inferSchema, emptyGroup } from "@rfjs/filter-builder";
 import type { EngineId, ReverseError, BuilderGroup, FieldSchema } from "@rfjs/filter-builder";
 
-import { GroupNode } from "./builder-tree";
+import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui";
 import { CanonicalEditor } from "./canonical-editor";
 import { PreviewPanel, LiveMatchView } from "./preview-panel";
 import { SchemaPanel } from "./schema-panel";
@@ -27,6 +27,14 @@ const id = () => crypto.randomUUID();
 
 export function QueryBuilder() {
   const t = useTranslations("ToolUI");
+  const treeLabels: FilterTreeLabels = {
+    logic: { and: "全部成立 / All", or: "擇一成立 / Any", nor: "皆不成立 / None", not: "非全部 / Not all" },
+    addCondition: "+ 條件",
+    addGroup: "+ 群組",
+    removeGroup: "remove group",
+    removeCondition: "remove condition",
+    elemMatch: t("elemMatchPlaceholder"),
+  };
   const [sampleText, setSampleText] = useState(SAMPLE);
   const [schema, setSchema] = useState<FieldSchema[]>(() => safeInfer(SAMPLE).schema);
   const [error, setError] = useState<string | null>(() => safeInfer(SAMPLE).error);
@@ -84,12 +92,13 @@ export function QueryBuilder() {
       }
       builder={
         <Panel title={t("builder")}>
-          <GroupNode
+          <FilterTreeEditor
             group={tree}
             engineId={engineId}
             schema={schema}
             onChange={setTree}
             onCreateField={(path) => setSchema((s) => addInferredField(s, path))}
+            labels={treeLabels}
           />
         </Panel>
       }
