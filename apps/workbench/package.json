@@ -13,6 +13,9 @@
     "vitest:run": "vitest run"
   },
   "dependencies": {
+    "@rfjs/filter-builder": "workspace:*",
+    "@rfjs/filter-builder-ui": "workspace:*",
+    "@rfjs/pg-filter": "workspace:*",
     "@rfjs/web-core": "workspace:*",
     "@rfjs/web-ui": "workspace:*",
     "cmdk": "^1.1.1",

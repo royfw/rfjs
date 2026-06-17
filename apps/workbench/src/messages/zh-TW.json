@@ -10,6 +10,7 @@
   "Nav": {
     "dashboard": "儀表板",
     "datasets": "資料集",
+    "explore": "探索",
     "apps": "應用",
     "admin": "管理",
     "adminLocked": "需登入 — 即將推出",
@@ -34,5 +35,23 @@
   },
   "LocaleSwitcher": {
     "label": "語言"
+  },
+  "Explorer": {
+    "title": "資料集探索器",
+    "description": "以巢狀條件篩選資料集目錄。",
+    "run": "執行",
+    "empty": "沒有符合的資料集。",
+    "error": "查詢失敗。",
+    "tree": {
+      "and": "AND",
+      "or": "OR",
+      "nor": "NOR",
+      "not": "NOT",
+      "addCondition": "+ 條件",
+      "addGroup": "+ 群組",
+      "removeCondition": "移除條件",
+      "removeGroup": "移除群組",
+      "elemMatch": "elemmatch(巢狀)"
+    }
   }
 }
