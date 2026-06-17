@@ -54,6 +54,14 @@ export const packageRegistry: PackageDefinition[] = [
     relatedTools: ['query-builder'],
   },
   {
+    name: '@rfjs/filter-builder',
+    status: 'preview',
+    href: '/packages/filter-builder',
+    github: GITHUB,
+    tags: ['filter', 'query-builder', 'tree'],
+    relatedTools: ['query-builder'],
+  },
+  {
     name: '@rfjs/jwt',
     status: 'ready',
     href: '/packages/jwt',

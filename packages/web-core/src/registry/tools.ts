@@ -46,7 +46,7 @@ export const toolRegistry: ToolDefinition[] = [
     category: 'query',
     surface: 'web',
     status: 'preview',
-    relatedPackages: ['@rfjs/jsonb-query', '@rfjs/data-filter', '@rfjs/pg-filter'],
+    relatedPackages: ['@rfjs/jsonb-query', '@rfjs/data-filter', '@rfjs/pg-filter', '@rfjs/filter-builder'],
     tags: ['builder', 'jsonb', 'sql', 'nested'],
   },
   {

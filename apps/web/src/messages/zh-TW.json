@@ -79,6 +79,7 @@
     "jsonb-query": { "description": "從篩選 metadata 建構 PostgreSQL JSONB 查詢。" },
     "sql-filter": { "description": "通用布林 filter-group 轉 SQL,可插拔 leaf 渲染器。" },
     "pg-filter": { "description": "統一的 PostgreSQL 過濾建構器,涵蓋欄位與 JSONB。" },
+    "filter-builder": { "description": "框架無關的 canonical 過濾樹模型、schema 推斷與引擎編譯。" },
     "jwt": { "description": "JWT 簽署/驗證/解碼工具。" },
     "mongo-query": { "description": "從篩選 metadata 建構 MongoDB 查詢。" },
     "object-utils": { "description": "物件操作工具(壓平、路徑、合併)。" },

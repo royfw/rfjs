@@ -79,6 +79,7 @@
     "jsonb-query": { "description": "PostgreSQL JSONB query builder from filter metadata." },
     "sql-filter": { "description": "Generic boolean filter-group to SQL with pluggable leaf renderers." },
     "pg-filter": { "description": "Unified PostgreSQL filter builder over columns and JSONB." },
+    "filter-builder": { "description": "Framework-agnostic canonical filter-tree model, schema inference, and engine compilation." },
     "jwt": { "description": "JWT sign/verify/decode helper." },
     "mongo-query": { "description": "MongoDB query builder from filter metadata." },
     "object-utils": { "description": "Object manipulation utilities (flatten, paths, merge)." },
