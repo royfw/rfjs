@@ -1,10 +1,10 @@
-import { buildPgFilter, type PgFilterConfig, type PgFilterGroup, type PgLeaf } from "@rfjs/pg-filter";
+import { buildPgFilter, type PgFilterConfig } from "@rfjs/pg-filter";
 
-import type { FilterConditionLike, FilterGroupLike } from "../compile";
 import { mapColumnType } from "../field-kind";
+import { toPgGroup } from "../pg-group";
 import { arityOf } from "./arity";
 import { jsonbEngine } from "./jsonb";
-import type { CompileContext, CompileField, Engine, OperatorSpec } from "./types";
+import type { CompileContext, Engine, OperatorSpec } from "./types";
 
 const NULL_OPS = ["isnull", "isnotnull"];
 const COLUMN_TEXT_OPS = ["eq", "neq", "contains", "startswith", "gt", "gte", "lt", "lte", ...NULL_OPS];
@@ -19,35 +19,6 @@ function columnOps(dataType: string): string[] {
 
 function toSpecs(ops: string[]): OperatorSpec[] {
   return [...new Set(ops)].map((op) => ({ op, arity: arityOf(op) }));
-}
-
-function toPgLeaf(c: FilterConditionLike, byPath: Map<string, CompileField>): PgLeaf {
-  const f = byPath.get(c.field);
-  const kind = f?.kind ?? "jsonb";
-  if (kind === "column") {
-    return { target: "column", column: c.field, operator: c.operator, value: c.value } as PgLeaf;
-  }
-  const leaf = {
-    target: "jsonb",
-    field: c.field,
-    dataType: f?.dataType ?? c.dataType,
-    operator: c.operator,
-    ...(c.value !== undefined ? { value: c.value } : {}),
-    ...((f?.elementType ?? c.elementType) ? { elementType: f?.elementType ?? c.elementType } : {}),
-    ...(c.filters ? { filters: c.filters } : {}),
-  };
-  return leaf as unknown as PgLeaf;
-}
-
-function toPgGroup(group: FilterGroupLike, byPath: Map<string, CompileField>): PgFilterGroup {
-  return {
-    logic: group.logic as PgFilterGroup["logic"],
-    filters: group.filters.map((node) =>
-      "logic" in node
-        ? toPgGroup(node as FilterGroupLike, byPath)
-        : toPgLeaf(node as FilterConditionLike, byPath),
-    ),
-  };
 }
 
 export const pgFilterEngine: Engine = {

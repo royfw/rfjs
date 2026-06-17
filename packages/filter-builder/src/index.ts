@@ -8,3 +8,4 @@ export * from './field-create';
 export * from './schema-infer';
 export * from './live-match';
 export * from './engines';
+export * from './pg-group';
