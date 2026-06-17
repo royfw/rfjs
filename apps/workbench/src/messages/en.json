@@ -10,6 +10,7 @@
   "Nav": {
     "dashboard": "Dashboard",
     "datasets": "Datasets",
+    "explore": "Explore",
     "apps": "Apps",
     "admin": "Admin",
     "adminLocked": "Sign-in required — coming soon",

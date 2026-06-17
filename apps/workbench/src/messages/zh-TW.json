@@ -10,6 +10,7 @@
   "Nav": {
     "dashboard": "儀表板",
     "datasets": "資料集",
+    "explore": "探索",
     "apps": "應用",
     "admin": "管理",
     "adminLocked": "需登入 — 即將推出",
