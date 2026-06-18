@@ -1,6 +1,7 @@
 "use client";
 
 import { Panel } from "@rfjs/web-ui/components/panel";
+import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -56,13 +57,13 @@ export function JwtDecoder() {
       operation="decodeComplete()"
       input={
         <Panel title={t("token")}>
-          <textarea
+          <Textarea
             aria-label={t("token")}
             value={token}
             onChange={(e) => setToken(e.target.value)}
             spellCheck={false}
             rows={8}
-            className="w-full resize-y break-all rounded-sm border bg-transparent p-2 font-mono text-sm"
+            className="resize-y break-all font-mono"
           />
         </Panel>
       }

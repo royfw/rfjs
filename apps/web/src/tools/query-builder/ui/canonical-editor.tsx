@@ -1,6 +1,7 @@
 "use client";
 
 import { Panel } from "@rfjs/web-ui/components/panel";
+import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { useEffect, useRef, useState } from "react";
 
 // Editable view of the canonical FilterGroupLike JSON. The tree is the source of
@@ -40,7 +41,7 @@ export function CanonicalEditor({
 
   return (
     <Panel title={hint}>
-      <textarea
+      <Textarea
         aria-label={hint}
         value={draft}
         onChange={(e) => onChange(e.target.value)}
@@ -48,7 +49,7 @@ export function CanonicalEditor({
         onBlur={() => setEditing(false)}
         spellCheck={false}
         rows={12}
-        className="w-full resize-y rounded-sm border bg-transparent p-2 font-mono text-sm"
+        className="resize-y font-mono"
       />
       {errorText ? <p className="mt-1 font-mono text-sm text-fault">{errorText}</p> : null}
     </Panel>

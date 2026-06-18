@@ -2,6 +2,7 @@
 
 import { CopyButton } from "@rfjs/web-ui/components/copy-button";
 import { Panel } from "@rfjs/web-ui/components/panel";
+import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -27,13 +28,13 @@ export function MongoQueryGenerator() {
       operation="genFilterQuery()"
       input={
         <Panel title={t("filter")}>
-          <textarea
+          <Textarea
             aria-label={t("filter")}
             value={text}
             onChange={(e) => setText(e.target.value)}
             spellCheck={false}
             rows={10}
-            className="w-full resize-y rounded-sm border bg-transparent p-2 font-mono text-sm"
+            className="resize-y font-mono"
           />
         </Panel>
       }
