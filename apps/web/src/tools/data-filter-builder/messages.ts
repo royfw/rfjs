@@ -40,6 +40,7 @@ export const messages: LocaleMessages = {
       dfbElemMatch: "elemmatch (nested match)",
       dfbValueHint: "type, Enter to add",
       dfbCopy: "Copy",
+      dfbUpload: "Upload JSON/CSV",
     },
   },
   "zh-TW": {
@@ -81,6 +82,7 @@ export const messages: LocaleMessages = {
       dfbElemMatch: "elemmatch（巢狀比對）",
       dfbValueHint: "輸入後按 Enter 加入",
       dfbCopy: "複製",
+      dfbUpload: "上傳 JSON/CSV",
     },
   },
 };

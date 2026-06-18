@@ -1,7 +1,7 @@
 "use client";
 
 import { Textarea } from "@rfjs/web-ui/components/textarea";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -106,6 +106,16 @@ export function DataFilterBuilder() {
     if (!err) setSchema(next);
   }
 
+  async function onUpload(file: File | undefined) {
+    if (!file) return;
+    const text = await file.text();
+    // CSV is converted to the JSON array the tool works in; JSON is used as-is.
+    const json = file.name.toLowerCase().endsWith(".csv")
+      ? JSON.stringify(parseCsv(text), null, 2)
+      : text;
+    onSample(json);
+  }
+
   const reverseText =
     reverseError === "invalidJson"
       ? t("dfbReverseInvalidJson")
@@ -138,7 +148,22 @@ export function DataFilterBuilder() {
           )}
         </button>
         {sampleOpen ? (
-          <div className="border-t p-4">
+          <div className="flex flex-col gap-2 border-t p-4">
+            <div className="flex justify-end">
+              <label className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 font-mono text-xs transition-colors hover:bg-accent">
+                <Upload className="size-3.5" />
+                {t("dfbUpload")}
+                <input
+                  type="file"
+                  accept=".json,.csv,application/json,text/csv"
+                  className="sr-only"
+                  onChange={(e) => {
+                    void onUpload(e.target.files?.[0]);
+                    e.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
             <Textarea
               aria-label={t("dfbSample")}
               value={sampleText}
@@ -148,7 +173,7 @@ export function DataFilterBuilder() {
               className="resize-y font-mono"
             />
             {error ? (
-              <p className="mt-1 font-mono text-sm text-fault">{t("dfbInvalidSample")}</p>
+              <p className="font-mono text-sm text-fault">{t("dfbInvalidSample")}</p>
             ) : null}
           </div>
         ) : null}
@@ -238,4 +263,53 @@ function safeInfer(text: string): { schema: FieldSchema[]; error: string | null 
   } catch {
     return { schema: [], error: "invalidJson" };
   }
+}
+
+function coerceCell(v: string): unknown {
+  const t = v.trim();
+  if (t === "") return "";
+  if (t === "true") return true;
+  if (t === "false") return false;
+  if (/^-?\d+(\.\d+)?$/.test(t)) return Number(t);
+  return t;
+}
+
+// Minimal CSV parser (header row + quoted-field handling) -> array of objects.
+function parseCsv(text: string): unknown[] {
+  const lines = text
+    .replace(/\r\n/g, "\n")
+    .trim()
+    .split("\n")
+    .filter(Boolean);
+  if (lines.length < 2) return [];
+  const cells = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "";
+    let q = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (q) {
+        if (c === '"' && line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else if (c === '"') q = false;
+        else cur += c;
+      } else if (c === '"') q = true;
+      else if (c === ",") {
+        out.push(cur);
+        cur = "";
+      } else cur += c;
+    }
+    out.push(cur);
+    return out;
+  };
+  const headers = cells(lines[0] ?? "").map((h) => h.trim());
+  return lines.slice(1).map((line) => {
+    const cs = cells(line);
+    const row: Record<string, unknown> = {};
+    headers.forEach((h, i) => {
+      row[h] = coerceCell(cs[i] ?? "");
+    });
+    return row;
+  });
 }
