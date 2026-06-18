@@ -141,17 +141,21 @@ export function DataPanel({
           {tab === "raw" ? <RowsTable rows={asRows(rows)} empty={labels.empty} /> : null}
           {tab === "json" ? (
             <div className="flex flex-col gap-1">
-              <div className="flex justify-end">
-                <CopyButton text={canonicalJson} label={labels.copy} />
+              <div className="relative">
+                <Textarea
+                  aria-label={labels.canonicalHint}
+                  value={canonicalJson}
+                  onChange={(e) => onCanonicalChange(e.target.value)}
+                  spellCheck={false}
+                  rows={12}
+                  className="resize-y pr-24 font-mono"
+                />
+                <CopyButton
+                  text={canonicalJson}
+                  label={labels.copy}
+                  className="absolute top-2 right-2"
+                />
               </div>
-              <Textarea
-                aria-label={labels.canonicalHint}
-                value={canonicalJson}
-                onChange={(e) => onCanonicalChange(e.target.value)}
-                spellCheck={false}
-                rows={12}
-                className="resize-y font-mono"
-              />
               {error ? <p className="font-mono text-sm text-fault">{error}</p> : null}
             </div>
           ) : null}
