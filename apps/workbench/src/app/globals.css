@@ -1,1 +1,7 @@
 @import "@rfjs/web-ui/globals.css";
+
+/* @rfjs/filter-builder-ui ships its own Tailwind classes (the filter-tree
+   editor in the dataset explorer), rendered via transpilePackages. Tailwind
+   only generates CSS for classes it can scan, so its src must be an explicit
+   @source — otherwise classes unique to that package produce no CSS. */
+@source "../../../../packages/filter-builder-ui/src";
