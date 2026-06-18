@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 
 import type { ToolModule } from "./types";
 
+import { tool as dataFilterBuilder } from "./data-filter-builder";
 import { tool as dataFilterTester } from "./data-filter-tester";
 import { tool as jsonbQueryGenerator } from "./jsonb-query-generator";
 import { tool as jwtDecoder } from "./jwt-decoder";
@@ -19,6 +20,7 @@ export const toolModules: ToolModule[] = [
   jsonbQueryGenerator,
   jwtDecoder,
   queryBuilder,
+  dataFilterBuilder,
 ];
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = Object.fromEntries(
