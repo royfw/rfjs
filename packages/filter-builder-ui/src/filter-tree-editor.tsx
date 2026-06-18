@@ -15,7 +15,7 @@ import { X } from "lucide-react";
 import { getEngine, addCondition, addGroup, removeNode, setLogic, updateNode } from "@rfjs/filter-builder";
 import type { EngineId, BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@rfjs/filter-builder";
 
-import { logicColor, dataTypeColor } from "./colors";
+import { logicBadge, dataTypeColor } from "./colors";
 import { FieldCombobox } from "./field-combobox";
 import { ValueEditor } from "./value-editor";
 
@@ -51,7 +51,7 @@ export function FilterTreeEditor({
 }) {
   return (
     <div className={depth > 0 ? "rounded-md border border-border p-2" : ""}>
-      <div className="mb-2 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <Select
           value={group.logic}
           onValueChange={(v) => onChange(setLogic(group, group.id, v as LogicOp))}
@@ -59,7 +59,7 @@ export function FilterTreeEditor({
           <SelectTrigger
             size="sm"
             aria-label="logic"
-            className={`w-auto ${logicColor(group.logic)}`}
+            className={`h-7 w-auto gap-1.5 rounded-md border-0 px-2.5 text-xs font-bold tracking-wide shadow-none ${logicBadge(group.logic)}`}
           >
             <SelectValue />
           </SelectTrigger>
@@ -71,15 +71,21 @@ export function FilterTreeEditor({
             ))}
           </SelectContent>
         </Select>
-        <Button size="sm" variant="outline" onClick={() => onChange(addCondition(group, group.id, id))}>
+        <Button size="xs" variant="outline" onClick={() => onChange(addCondition(group, group.id, id))}>
           {labels.addCondition}
         </Button>
-        <Button size="sm" variant="outline" onClick={() => onChange(addGroup(group, group.id, id))}>
+        <Button size="xs" variant="outline" onClick={() => onChange(addGroup(group, group.id, id))}>
           {labels.addGroup}
         </Button>
         {onRemove ? (
-          <Button size="sm" variant="ghost" aria-label={labels.removeGroup} onClick={onRemove}>
-            <X className="size-4" />
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            aria-label={labels.removeGroup}
+            onClick={onRemove}
+            className="ml-auto text-muted-foreground"
+          >
+            <X className="size-3.5" />
           </Button>
         ) : null}
       </div>

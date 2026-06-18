@@ -20,6 +20,19 @@ export function logicColor(op: LogicOp): string {
   return LOGIC[op];
 }
 
+// Badge-style background + text per logic op (matches the design mockup, where
+// the group operator reads as a colored pill rather than a bordered input).
+const LOGIC_BADGE: Record<LogicOp, string> = {
+  and: "bg-intake/12 text-intake",
+  or: "bg-yield/15 text-yield",
+  nor: "bg-muted text-muted-foreground",
+  not: "bg-fault/12 text-fault",
+};
+
+export function logicBadge(op: LogicOp): string {
+  return LOGIC_BADGE[op];
+}
+
 export function dataTypeColor(dataType: string): string {
   return DATATYPE[dataType] ?? "text-muted-foreground";
 }
