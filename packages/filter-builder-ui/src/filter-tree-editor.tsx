@@ -168,7 +168,7 @@ function ConditionRow({
   }
 
   return (
-    <div className="grid grid-cols-[minmax(9rem,1fr)_2.25rem_9.5rem_minmax(7rem,1.3fr)_auto] items-center gap-2">
+    <div className="grid grid-cols-[12rem_2.25rem_9.5rem_minmax(10rem,18rem)_auto] items-center gap-2">
       <FieldCombobox
         ariaLabel="field"
         value={condition.field}
