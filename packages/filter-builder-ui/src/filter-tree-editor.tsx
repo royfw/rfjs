@@ -168,7 +168,7 @@ function ConditionRow({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="grid grid-cols-[minmax(9rem,1fr)_2.25rem_9.5rem_minmax(7rem,1.3fr)_auto] items-center gap-2">
       <FieldCombobox
         ariaLabel="field"
         value={condition.field}
@@ -179,13 +179,17 @@ function ConditionRow({
         }}
       />
       {condition.field ? (
-        <span className={`font-mono text-[10px] ${dataTypeColor(dataType)}`}>{dataType}</span>
-      ) : null}
+        <span className={`text-center font-mono text-[10px] ${dataTypeColor(dataType)}`}>
+          {dataType}
+        </span>
+      ) : (
+        <span aria-hidden />
+      )}
       <Select
         value={condition.operator}
         onValueChange={(v) => onChange({ operator: v, value: "" })}
       >
-        <SelectTrigger size="sm" aria-label="operator" className="w-auto font-mono">
+        <SelectTrigger size="sm" aria-label="operator" className="w-full min-w-0 font-mono">
           <SelectValue placeholder="—" />
         </SelectTrigger>
         <SelectContent>
@@ -197,7 +201,7 @@ function ConditionRow({
         </SelectContent>
       </Select>
       {condition.operator === "elemmatch" ? (
-        <span className="text-xs text-muted-foreground">{labels.elemMatch}</span>
+        <span className="truncate text-xs text-muted-foreground">{labels.elemMatch}</span>
       ) : (
         <ValueEditor
           dataType={dataType === "array" ? (elementType ?? "string") : dataType}
@@ -206,7 +210,12 @@ function ConditionRow({
           onChange={(v) => onChange({ value: v })}
         />
       )}
-      <Button size="sm" variant="ghost" aria-label={labels.removeCondition} onClick={onRemove}>
+      <Button
+        size="icon-sm"
+        variant="ghost"
+        aria-label={labels.removeCondition}
+        onClick={onRemove}
+      >
         <X className="size-4" />
       </Button>
     </div>

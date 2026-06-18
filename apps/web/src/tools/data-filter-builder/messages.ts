@@ -10,6 +10,9 @@ export const messages: LocaleMessages = {
     },
     ToolUI: {
       dfbEyebrow: "DATA FILTER BUILDER",
+      dfbFilterLogic: "Filter logic",
+      dfbStatLabel: "matched",
+      dfbInvalidSample: "Invalid JSON — open to fix",
       dfbCounts: "raw {raw} · matched {matched}",
       dfbBuilder: "Filter",
       dfbFields: "Fields",
@@ -46,6 +49,9 @@ export const messages: LocaleMessages = {
     },
     ToolUI: {
       dfbEyebrow: "資料過濾建構器",
+      dfbFilterLogic: "篩選邏輯",
+      dfbStatLabel: "命中",
+      dfbInvalidSample: "JSON 無效 —— 展開修正",
       dfbCounts: "原始 {raw} · 命中 {matched}",
       dfbBuilder: "過濾條件",
       dfbFields: "欄位",

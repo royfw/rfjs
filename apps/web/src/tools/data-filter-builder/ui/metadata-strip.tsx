@@ -44,14 +44,14 @@ export function MetadataStrip({
       {schema.map((f) => (
         <div
           key={f.path}
-          className="flex items-center gap-1.5 rounded-md border bg-card px-2 py-1"
+          className="flex h-9 w-[170px] items-center gap-1.5 rounded-md border bg-card pr-1 pl-2"
         >
           <Checkbox
             aria-label={`${labels.include} ${f.path}`}
             checked={f.include}
             onCheckedChange={(c) => patch(f.path, { include: c === true })}
           />
-          <span className="max-w-[7rem] truncate font-mono text-xs text-foreground">{f.path}</span>
+          <span className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">{f.path}</span>
           <Select
             value={f.dataType}
             onValueChange={(v) => patch(f.path, { dataType: v as FieldType })}
@@ -59,7 +59,7 @@ export function MetadataStrip({
             <SelectTrigger
               size="sm"
               aria-label={`${labels.type} ${f.path}`}
-              className="h-6 w-auto gap-1 text-xs"
+              className="h-7 w-[68px] shrink-0 gap-1 text-xs"
             >
               <SelectValue />
             </SelectTrigger>

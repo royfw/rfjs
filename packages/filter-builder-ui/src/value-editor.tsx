@@ -31,7 +31,7 @@ export function ValueEditor({
       value={rawOf(value)}
       placeholder={placeholder}
       onChange={(e) => onChange(coerceInput(dataType, arity, e.target.value))}
-      className="h-8 min-w-[8rem] flex-1 font-mono"
+      className="h-8 w-full min-w-0 font-mono"
     />
   );
 }

@@ -47,7 +47,7 @@ export function FieldCombobox({
           aria-expanded={open}
           variant="outline"
           size="sm"
-          className="min-w-[10rem] flex-1 justify-between font-normal"
+          className="w-full min-w-0 justify-between font-normal"
         >
           <span className={value ? "truncate" : "truncate text-muted-foreground"}>
             {value || ariaLabel}
