@@ -215,6 +215,7 @@ export function DataFilterBuilder() {
             json: t("dfbJson"),
             empty: t("dfbEmpty"),
             canonicalHint: t("dfbCanonicalHint"),
+            copy: t("dfbCopy"),
           }}
         />
       </div>

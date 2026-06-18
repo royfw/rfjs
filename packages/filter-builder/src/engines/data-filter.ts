@@ -46,7 +46,12 @@ export const dataFilterEngine: Engine = {
   label: "data-filter (in-memory)",
   operators(dataType, elementType) {
     if (dataType === "object") return toSpecs(OBJECT_OPS);
-    if (dataType === "array") return toSpecs(arrayOps(elementType));
+    if (dataType === "array") {
+      // string-element arrays support multi-value `contains` (contains-any) too —
+      // ArrayMatch routes `contains` through TextMatch, which evaluates over a list.
+      const listOps = elementType === undefined || elementType === "string" ? STRING_LIST_OPS : undefined;
+      return toSpecs(arrayOps(elementType), listOps);
+    }
     if (dataType === "string") return toSpecs(STRING_OPS, STRING_LIST_OPS);
     return toSpecs(scalarOps(dataType));
   },

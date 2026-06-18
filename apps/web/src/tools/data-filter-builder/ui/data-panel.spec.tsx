@@ -11,6 +11,7 @@ const labels = {
   json: "json",
   empty: "no rows",
   canonicalHint: "canonical",
+  copy: "copy",
 };
 
 describe("DataPanel", () => {

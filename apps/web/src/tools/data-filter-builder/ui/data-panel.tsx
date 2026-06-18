@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@rfjs/web-ui/components/button";
+import { CopyButton } from "@rfjs/web-ui/components/copy-button";
 import {
   Table,
   TableBody,
@@ -21,6 +22,7 @@ export interface DataPanelLabels {
   json: string;
   empty: string;
   canonicalHint: string;
+  copy: string;
 }
 
 type Tab = "matched" | "raw" | "json";
@@ -139,6 +141,9 @@ export function DataPanel({
           {tab === "raw" ? <RowsTable rows={asRows(rows)} empty={labels.empty} /> : null}
           {tab === "json" ? (
             <div className="flex flex-col gap-1">
+              <div className="flex justify-end">
+                <CopyButton text={canonicalJson} label={labels.copy} />
+              </div>
               <Textarea
                 aria-label={labels.canonicalHint}
                 value={canonicalJson}

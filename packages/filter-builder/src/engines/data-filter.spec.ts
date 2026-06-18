@@ -36,6 +36,11 @@ describe("dataFilterEngine.operators", () => {
     const contains = dataFilterEngine.operators("object").find((o) => o.op === "contains");
     expect(contains?.arity).toBe("one");
   });
+
+  it("exposes `contains` as a multi-value (list) op on string-element arrays", () => {
+    const contains = dataFilterEngine.operators("array", "string").find((o) => o.op === "contains");
+    expect(contains?.arity).toBe("list");
+  });
 });
 
 describe("dataFilterEngine.compile", () => {
