@@ -153,23 +153,29 @@ export function DataFilterBuilder() {
         ) : null}
       </section>
 
-      {/* Metadata converter */}
-      <div className="dfb-rise" style={{ animationDelay: "70ms" }}>
-        <MetadataStrip
-          schema={schema}
-          onChange={setSchema}
-          onInfer={() => {
-            const { schema: next, error: err } = safeInfer(sampleText);
-            if (!err) setSchema(next);
-          }}
-          labels={{
-            fields: t("dfbFields"),
-            infer: t("dfbInfer"),
-            include: t("dfbInclude", { field: "" }).trim(),
-            type: t("dfbType", { field: "" }).trim(),
-          }}
-        />
-      </div>
+      {/* Metadata converter — framed like the hero card */}
+      <section className="dfb-rise rounded-lg border bg-card" style={{ animationDelay: "70ms" }}>
+        <div className="border-b px-5 py-3">
+          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+            {t("dfbFields")}
+          </span>
+        </div>
+        <div className="p-4">
+          <MetadataStrip
+            schema={schema}
+            onChange={setSchema}
+            onInfer={() => {
+              const { schema: next, error: err } = safeInfer(sampleText);
+              if (!err) setSchema(next);
+            }}
+            labels={{
+              infer: t("dfbInfer"),
+              include: t("dfbInclude", { field: "" }).trim(),
+              type: t("dfbType", { field: "" }).trim(),
+            }}
+          />
+        </div>
+      </section>
 
       {/* Hero — the filter-logic canvas, with a live match stat */}
       <section className="dfb-rise rounded-lg border bg-card" style={{ animationDelay: "140ms" }}>

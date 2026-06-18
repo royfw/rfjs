@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 
+import { Badge } from "@rfjs/web-ui/components/badge";
 import { Button } from "@rfjs/web-ui/components/button";
 import {
   Select,
@@ -15,7 +16,7 @@ import { X } from "lucide-react";
 import { getEngine, addCondition, addGroup, removeNode, setLogic, updateNode } from "@rfjs/filter-builder";
 import type { EngineId, BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@rfjs/filter-builder";
 
-import { logicBadge, dataTypeColor } from "./colors";
+import { logicBadge, dataTypeBadge, dataTypeShort } from "./colors";
 import { FieldCombobox } from "./field-combobox";
 import { ValueEditor } from "./value-editor";
 
@@ -174,7 +175,7 @@ function ConditionRow({
   }
 
   return (
-    <div className="grid grid-cols-[12rem_2.25rem_9.5rem_minmax(10rem,18rem)_auto] items-center gap-2">
+    <div className="grid grid-cols-[12rem_3.25rem_9.5rem_minmax(10rem,18rem)_auto] items-center gap-2">
       <FieldCombobox
         ariaLabel="field"
         value={condition.field}
@@ -185,9 +186,12 @@ function ConditionRow({
         }}
       />
       {condition.field ? (
-        <span className={`text-center font-mono text-[10px] ${dataTypeColor(dataType)}`}>
-          {dataType}
-        </span>
+        <Badge
+          variant="secondary"
+          className={`justify-center px-1 py-0 font-mono text-[10px] ${dataTypeBadge(dataType)}`}
+        >
+          {dataTypeShort(dataType)}
+        </Badge>
       ) : (
         <span aria-hidden />
       )}

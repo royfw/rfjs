@@ -11,11 +11,11 @@ import {
 } from "@rfjs/web-ui/components/select";
 
 import type { FieldSchema, FieldType } from "@rfjs/filter-builder";
+import { dataTypeBadge } from "@rfjs/filter-builder-ui";
 
 const TYPES: FieldType[] = ["string", "numeric", "date", "boolean", "object", "array"];
 
 export interface MetadataStripLabels {
-  fields: string;
   infer: string;
   include: string;
   type: string;
@@ -38,9 +38,6 @@ export function MetadataStrip({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-        {labels.fields}
-      </span>
       {schema.map((f) => (
         <div
           key={f.path}
@@ -59,7 +56,7 @@ export function MetadataStrip({
             <SelectTrigger
               size="sm"
               aria-label={`${labels.type} ${f.path}`}
-              className="h-7 w-[68px] shrink-0 gap-1 text-xs"
+              className={`h-7 w-auto shrink-0 gap-1 rounded-md border-0 px-2 font-mono text-xs ${dataTypeBadge(f.dataType)}`}
             >
               <SelectValue />
             </SelectTrigger>

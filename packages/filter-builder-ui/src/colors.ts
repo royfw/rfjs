@@ -36,3 +36,31 @@ export function logicBadge(op: LogicOp): string {
 export function dataTypeColor(dataType: string): string {
   return DATATYPE[dataType] ?? "text-muted-foreground";
 }
+
+// Badge-style background + text per data type — used for the type indicator and
+// for value tags, so each is clearly colored (more visible than plain text).
+const DATATYPE_BADGE: Record<string, string> = {
+  string: "bg-intake/15 text-intake",
+  numeric: "bg-yield/18 text-yield",
+  boolean: "bg-fault/15 text-fault",
+  date: "bg-signal/10 text-signal",
+  object: "bg-muted text-muted-foreground",
+  array: "bg-muted text-muted-foreground",
+};
+
+export function dataTypeBadge(dataType: string): string {
+  return DATATYPE_BADGE[dataType] ?? "bg-muted text-muted-foreground";
+}
+
+const DATATYPE_SHORT: Record<string, string> = {
+  string: "str",
+  numeric: "num",
+  date: "date",
+  boolean: "bool",
+  object: "obj",
+  array: "arr",
+};
+
+export function dataTypeShort(dataType: string): string {
+  return DATATYPE_SHORT[dataType] ?? dataType;
+}

@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 
+import { Badge } from "@rfjs/web-ui/components/badge";
 import { Input } from "@rfjs/web-ui/components/input";
 import { X } from "lucide-react";
 
 import { coerceInput } from "@rfjs/filter-builder";
 import type { OperatorArity, FieldType } from "@rfjs/filter-builder";
+
+import { dataTypeBadge } from "./colors";
 
 function rawOf(value: unknown): string {
   if (value === undefined || value === null) return "";
@@ -47,20 +50,21 @@ function TagsInput({
   return (
     <div className="flex min-h-8 w-full min-w-0 flex-wrap items-center gap-1 rounded-md border border-input bg-transparent px-1.5 py-1 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
       {items.map((it, i) => (
-        <span
+        <Badge
           key={`${String(it)}-${i}`}
-          className="inline-flex items-center gap-1 rounded-sm bg-muted py-0.5 pr-1 pl-1.5 font-mono text-xs"
+          variant="secondary"
+          className={`gap-1 py-0.5 pr-1 pl-1.5 font-mono ${dataTypeBadge(dataType)}`}
         >
           {String(it)}
           <button
             type="button"
             aria-label={`remove ${String(it)}`}
             onClick={() => removeAt(i)}
-            className="text-muted-foreground hover:text-fault"
+            className="opacity-70 hover:opacity-100"
           >
             <X className="size-3" />
           </button>
-        </span>
+        </Badge>
       ))}
       <input
         aria-label="value"
