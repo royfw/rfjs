@@ -1,38 +1,30 @@
-orm-app
-===
+# orm-app
 
-This project is a `royfw/start-ts-templates/templates/app-tsdown` template for creating a new project using the [start-ts-by](https://www.npmjs.com/package/start-ts-by) CLI.
+ORM integration demo (bundled with tsdown). It consumes all four ORM wrapper
+libs — `@rfjs/orm-drizzle`, `@rfjs/orm-kysely`, `@rfjs/orm-prisma`, and
+`@rfjs/orm-typeorm` — to exercise their shared `migrateToLatest` /
+`seedToLatest` API against a common database.
 
-## Getting Started
+## Develop
+
+Run from the repo root with a package filter (or omit `-F orm-app` inside this dir):
 
 ```bash
-# 1. Install dependencies
-npm install
-## or pnpm
-pnpm install
-# 2. Run the project
-npm run dev
-# 3. Build the project
-npm run build
-# 4. Run tests
-npm run test
-# 5. Run lint
-npm run lint
+pnpm -F orm-app dev        # watch build (tsdown) + typecheck
+pnpm -F orm-app build      # production bundle to ./dist
+pnpm -F orm-app test       # unit tests (vitest)
+pnpm -F orm-app lint
 ```
 
-## Release
+### Migrations
+
+Each ORM has its own migrate entrypoint under `src/scripts/`:
+
 ```bash
-# 1. Release the project
-npx standard-version
-## or
-npm run release
-# dry run
-npm run release -- --dry-run
-
-# 2. Release the project with version
-npm run release -- --version 1.0.0
+pnpm -F orm-app migrate:drizzle
+pnpm -F orm-app migrate:kysely
+pnpm -F orm-app migrate:typeorm
+pnpm -F orm-app migrate:prisma
 ```
 
-## Reference
-- [Original README](./START_BY_README.md)
-  
+See each ORM wrapper's own README under `libs/orm-*` for the underlying flow.
