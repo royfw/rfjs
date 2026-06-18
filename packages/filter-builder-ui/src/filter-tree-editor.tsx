@@ -3,6 +3,13 @@
 import { useEffect } from "react";
 
 import { Button } from "@rfjs/web-ui/components/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@rfjs/web-ui/components/select";
 import { X } from "lucide-react";
 
 import { getEngine, addCondition, addGroup, removeNode, setLogic, updateNode } from "@rfjs/filter-builder";
@@ -45,16 +52,25 @@ export function FilterTreeEditor({
   return (
     <div className={depth > 0 ? "rounded-sm border border-border p-2" : ""}>
       <div className="mb-2 flex items-center gap-2">
-        <select
-          aria-label="logic"
+        <Select
           value={group.logic}
-          onChange={(e) => onChange(setLogic(group, group.id, e.target.value as LogicOp))}
-          className={`rounded-sm border bg-transparent px-2 py-1 text-sm ${logicColor(group.logic)}`}
+          onValueChange={(v) => onChange(setLogic(group, group.id, v as LogicOp))}
         >
-          {(Object.keys(labels.logic) as LogicOp[]).map((l) => (
-            <option key={l} value={l}>{labels.logic[l]}</option>
-          ))}
-        </select>
+          <SelectTrigger
+            size="sm"
+            aria-label="logic"
+            className={`w-auto ${logicColor(group.logic)}`}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(labels.logic) as LogicOp[]).map((l) => (
+              <SelectItem key={l} value={l}>
+                {labels.logic[l]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button size="sm" variant="outline" onClick={() => onChange(addCondition(group, group.id, id))}>
           {labels.addCondition}
         </Button>
@@ -165,16 +181,21 @@ function ConditionRow({
       {condition.field ? (
         <span className={`font-mono text-[10px] ${dataTypeColor(dataType)}`}>{dataType}</span>
       ) : null}
-      <select
-        aria-label="operator"
+      <Select
         value={condition.operator}
-        onChange={(e) => onChange({ operator: e.target.value, value: "" })}
-        className="rounded-sm border bg-transparent px-2 py-1 font-mono text-sm"
+        onValueChange={(v) => onChange({ operator: v, value: "" })}
       >
-        {ops.map((o) => (
-          <option key={o.op} value={o.op}>{o.op}</option>
-        ))}
-      </select>
+        <SelectTrigger size="sm" aria-label="operator" className="w-auto font-mono">
+          <SelectValue placeholder="—" />
+        </SelectTrigger>
+        <SelectContent>
+          {ops.map((o) => (
+            <SelectItem key={o.op} value={o.op} className="font-mono">
+              {o.op}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       {condition.operator === "elemmatch" ? (
         <span className="text-xs text-muted-foreground">{labels.elemMatch}</span>
       ) : (
