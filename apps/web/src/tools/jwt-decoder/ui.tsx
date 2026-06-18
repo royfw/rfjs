@@ -72,7 +72,7 @@ export function JwtDecoder() {
           {result === null ? null : !result.ok ? (
             <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               <span
                 className={`font-mono text-xs ${info.state === "expired" ? "text-fault" : "text-muted-foreground"}`}
               >
@@ -102,7 +102,7 @@ function JsonBlock({ label, value }: { label: string; value: unknown }) {
       <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
-      <pre className="overflow-x-auto font-mono text-sm text-signal">
+      <pre className="overflow-x-auto font-mono text-sm text-foreground">
         {JSON.stringify(value, null, 2)}
       </pre>
     </div>

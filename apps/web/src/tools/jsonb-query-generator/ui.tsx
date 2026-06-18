@@ -39,7 +39,7 @@ export function JsonbQueryGenerator() {
       operation="buildJsonbQuery()"
       input={
         <Panel title={t("input")}>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               {t("column")}
               <Input
@@ -87,7 +87,7 @@ export function JsonbQueryGenerator() {
         <Panel title={t("output")} action={result.ok ? <CopyButton text={result.where} label={t("copy")} /> : null}>
           {result.ok ? (
             <div className="flex flex-col gap-2">
-              <pre className="overflow-x-auto font-mono text-sm text-signal">{result.where}</pre>
+              <pre className="overflow-x-auto font-mono text-sm text-foreground">{result.where}</pre>
               <pre className="overflow-x-auto font-mono text-xs text-muted-foreground">{result.values}</pre>
             </div>
           ) : (

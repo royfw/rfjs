@@ -39,7 +39,7 @@ export function SchemaPanel({
 
   return (
     <Panel title={t("data")}>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         <Textarea
           aria-label={t("data")}
           value={sampleText}

@@ -32,14 +32,28 @@ export function DataFilterTester() {
       operation="matchQuery()"
       input={
         <Panel title={t("input")}>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               {t("data")}
-              <Textarea aria-label={t("data")} value={data} onChange={(e) => setData(e.target.value)} spellCheck={false} rows={6} className="resize-y font-mono" />
+              <Textarea
+                aria-label={t("data")}
+                value={data}
+                onChange={(e) => setData(e.target.value)}
+                spellCheck={false}
+                rows={6}
+                className="resize-y font-mono"
+              />
             </label>
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               {t("filter")}
-              <Textarea aria-label={t("filter")} value={filter} onChange={(e) => setFilter(e.target.value)} spellCheck={false} rows={6} className="resize-y font-mono" />
+              <Textarea
+                aria-label={t("filter")}
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                spellCheck={false}
+                rows={6}
+                className="resize-y font-mono"
+              />
             </label>
           </div>
         </Panel>
@@ -49,7 +63,7 @@ export function DataFilterTester() {
           {result.ok ? (
             <div className="flex flex-col gap-1">
               <span className="font-mono text-[10px] text-muted-foreground">{t("matched", { count: result.count })}</span>
-              <pre className="overflow-x-auto font-mono text-sm text-signal">{result.output}</pre>
+              <pre className="overflow-x-auto font-mono text-sm text-foreground">{result.output}</pre>
             </div>
           ) : (
             <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>

@@ -44,7 +44,7 @@ export function ObjectFlatten() {
           action={result.ok ? <CopyButton text={result.output} label={t("copy")} /> : null}
         >
           {result.ok ? (
-            <pre className="overflow-x-auto font-mono text-sm text-signal">{result.output}</pre>
+            <pre className="overflow-x-auto font-mono text-sm text-foreground">{result.output}</pre>
           ) : (
             <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>
           )}

@@ -48,7 +48,7 @@ export function MongoQueryGenerator() {
           }
         >
           {result.ok ? (
-            <pre className="overflow-x-auto font-mono text-sm text-signal">
+            <pre className="overflow-x-auto font-mono text-sm text-foreground">
               {result.output}
             </pre>
           ) : (

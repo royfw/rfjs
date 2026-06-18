@@ -68,7 +68,7 @@ export function TypeConverter() {
         >
           {result.ok ? (
             <div className="flex flex-col gap-1">
-              <pre className="overflow-x-auto font-mono text-sm text-signal">{result.output}</pre>
+              <pre className="overflow-x-auto font-mono text-sm text-foreground">{result.output}</pre>
               <span className="font-mono text-[10px] text-muted-foreground">{result.runtimeType}</span>
             </div>
           ) : (
