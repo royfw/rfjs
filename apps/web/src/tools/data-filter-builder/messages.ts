@@ -38,6 +38,7 @@ export const messages: LocaleMessages = {
       dfbRemoveGroup: "remove group",
       dfbRemoveCondition: "remove condition",
       dfbElemMatch: "elemmatch (nested match)",
+      dfbValueHint: "type, Enter to add",
     },
   },
   "zh-TW": {
@@ -77,6 +78,7 @@ export const messages: LocaleMessages = {
       dfbRemoveGroup: "移除群組",
       dfbRemoveCondition: "移除條件",
       dfbElemMatch: "elemmatch（巢狀比對）",
+      dfbValueHint: "輸入後按 Enter 加入",
     },
   },
 };

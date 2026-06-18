@@ -53,6 +53,7 @@ export function DataFilterBuilder() {
     removeGroup: t("dfbRemoveGroup"),
     removeCondition: t("dfbRemoveCondition"),
     elemMatch: t("dfbElemMatch"),
+    valueHint: t("dfbValueHint"),
   };
 
   const [sampleText, setSampleText] = useState(SAMPLE);
@@ -164,12 +165,7 @@ export function DataFilterBuilder() {
           <MetadataStrip
             schema={schema}
             onChange={setSchema}
-            onInfer={() => {
-              const { schema: next, error: err } = safeInfer(sampleText);
-              if (!err) setSchema(next);
-            }}
             labels={{
-              infer: t("dfbInfer"),
               include: t("dfbInclude", { field: "" }).trim(),
               type: t("dfbType", { field: "" }).trim(),
             }}
@@ -191,7 +187,7 @@ export function DataFilterBuilder() {
             </span>
           </span>
         </div>
-        <div className="p-5 sm:p-6">
+        <div className="overflow-x-auto p-5 sm:p-6">
           <FilterTreeEditor
             group={tree}
             engineId="data-filter"

@@ -29,10 +29,12 @@ function TagsInput({
   dataType,
   value,
   onChange,
+  hint,
 }: {
   dataType: FieldType;
   value: unknown;
   onChange: (next: unknown) => void;
+  hint?: string;
 }) {
   const items = toItems(value);
   const [draft, setDraft] = useState("");
@@ -79,8 +81,8 @@ function TagsInput({
           }
         }}
         onBlur={commit}
-        placeholder={items.length === 0 ? dataType : ""}
-        className="min-w-[3rem] flex-1 bg-transparent font-mono text-sm outline-none placeholder:text-muted-foreground"
+        placeholder={items.length === 0 ? (hint ?? dataType) : ""}
+        className="min-w-[5rem] flex-1 bg-transparent font-mono text-sm outline-none placeholder:text-muted-foreground"
       />
     </div>
   );
@@ -91,14 +93,17 @@ export function ValueEditor({
   arity,
   value,
   onChange,
+  hint,
 }: {
   dataType: FieldType;
   arity: OperatorArity;
   value: unknown;
   onChange: (next: unknown) => void;
+  hint?: string;
 }) {
   if (arity === "none") return null;
-  if (arity === "list") return <TagsInput dataType={dataType} value={value} onChange={onChange} />;
+  if (arity === "list")
+    return <TagsInput dataType={dataType} value={value} onChange={onChange} hint={hint} />;
   const placeholder = arity === "two" ? "min, max" : dataType;
   return (
     <Input

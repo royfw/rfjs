@@ -27,6 +27,8 @@ export interface FilterTreeLabels {
   removeGroup: string;
   removeCondition: string;
   elemMatch: string;
+  /** Placeholder hint for multi-value (list) operators, e.g. "type, Enter to add". */
+  valueHint?: string;
 }
 
 const id = () => crypto.randomUUID();
@@ -188,7 +190,7 @@ function ConditionRow({
       {condition.field ? (
         <Badge
           variant="secondary"
-          className={`justify-center px-1 py-0 font-mono text-[10px] ${dataTypeBadge(dataType)}`}
+          className={`justify-center px-1 py-0 font-mono text-[11px] ${dataTypeBadge(dataType)}`}
         >
           {dataTypeShort(dataType)}
         </Badge>
@@ -218,6 +220,7 @@ function ConditionRow({
           arity={arity}
           value={condition.value}
           onChange={(v) => onChange({ value: v })}
+          hint={labels.valueHint}
         />
       )}
       <Button
