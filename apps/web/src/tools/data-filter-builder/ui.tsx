@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@rfjs/web-ui/components/button";
 import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { ChevronDown, ChevronRight, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -149,29 +150,31 @@ export function DataFilterBuilder() {
         </button>
         {sampleOpen ? (
           <div className="flex flex-col gap-2 border-t p-4">
-            <div className="flex justify-end">
-              <label className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 font-mono text-xs transition-colors hover:bg-accent">
-                <Upload className="size-3.5" />
-                {t("dfbUpload")}
-                <input
-                  type="file"
-                  accept=".json,.csv,application/json,text/csv"
-                  className="sr-only"
-                  onChange={(e) => {
-                    void onUpload(e.target.files?.[0]);
-                    e.currentTarget.value = "";
-                  }}
-                />
-              </label>
+            <div className="relative">
+              <Textarea
+                aria-label={t("dfbSample")}
+                value={sampleText}
+                onChange={(e) => onSample(e.target.value)}
+                spellCheck={false}
+                rows={6}
+                className="resize-y pr-24 font-mono"
+              />
+              <Button asChild variant="outline" size="sm" className="absolute top-2 right-2">
+                <label className="cursor-pointer">
+                  <Upload className="size-3.5" />
+                  {t("dfbUpload")}
+                  <input
+                    type="file"
+                    accept=".json,.csv,application/json,text/csv"
+                    className="sr-only"
+                    onChange={(e) => {
+                      void onUpload(e.target.files?.[0]);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+              </Button>
             </div>
-            <Textarea
-              aria-label={t("dfbSample")}
-              value={sampleText}
-              onChange={(e) => onSample(e.target.value)}
-              spellCheck={false}
-              rows={6}
-              className="resize-y font-mono"
-            />
             {error ? (
               <p className="font-mono text-sm text-fault">{t("dfbInvalidSample")}</p>
             ) : null}
