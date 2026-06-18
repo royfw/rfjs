@@ -15,6 +15,7 @@ const EXPECTED_WEB_TOOL_IDS = [
   "jsonb-query-generator",
   "jwt-decoder",
   "query-builder",
+  "data-filter-builder",
 ].sort();
 
 describe("implementation registry", () => {

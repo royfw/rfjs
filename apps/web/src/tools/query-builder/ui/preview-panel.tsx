@@ -31,10 +31,10 @@ export function PreviewPanel({ output, live }: { output: EngineOutput; live: Liv
       title={t("output")}
       action={output.ok ? <CopyButton text={output.primary} label={t("copy")} /> : null}
     >
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         {output.ok ? (
           <>
-            <pre className="overflow-x-auto font-mono text-sm text-signal">{output.primary}</pre>
+            <pre className="overflow-x-auto font-mono text-sm text-foreground">{output.primary}</pre>
             {output.secondary ? (
               <pre className="overflow-x-auto font-mono text-xs text-muted-foreground">{output.secondary}</pre>
             ) : null}

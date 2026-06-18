@@ -13,13 +13,13 @@ export function ToolShell({
   output: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <div className="flex justify-center">
-        <span className="rounded-sm border border-border bg-slab px-1.5 py-0.5 font-mono text-[10px] leading-none text-signal/65">
+        <span className="rounded-sm border border-border bg-slab px-1.5 py-0.5 font-mono text-[10px] leading-none text-foreground/65">
           ▸ {operation}
         </span>
       </div>
-      <div className="flex flex-col items-stretch gap-3 lg:flex-row">
+      <div className="flex flex-col items-stretch gap-4 lg:flex-row">
         <div className="min-w-0 flex-1">{input}</div>
         <div className="min-w-0 flex-1">{output}</div>
       </div>

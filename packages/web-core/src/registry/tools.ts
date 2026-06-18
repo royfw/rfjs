@@ -60,9 +60,9 @@ export const toolRegistry: ToolDefinition[] = [
   {
     id: 'data-filter-builder',
     category: 'filter',
-    surface: 'workbench',
-    status: 'planned',
-    relatedPackages: ['@rfjs/data-filter'],
+    surface: 'web',
+    status: 'preview',
+    relatedPackages: ['@rfjs/data-filter', '@rfjs/filter-builder'],
     tags: ['builder', 'playground'],
   },
   {

@@ -26,6 +26,21 @@ describe("dataFilterEngine.operators", () => {
   it("array of objects -> elemmatch only", () => {
     expect(dataFilterEngine.operators("array", "object").map((o) => o.op)).toEqual(["elemmatch"]);
   });
+
+  it("exposes `contains` as a multi-value (list) op on strings (contains-any)", () => {
+    const contains = dataFilterEngine.operators("string").find((o) => o.op === "contains");
+    expect(contains?.arity).toBe("list");
+  });
+
+  it("keeps `contains` single-value on object fields", () => {
+    const contains = dataFilterEngine.operators("object").find((o) => o.op === "contains");
+    expect(contains?.arity).toBe("one");
+  });
+
+  it("exposes `contains` as a multi-value (list) op on string-element arrays", () => {
+    const contains = dataFilterEngine.operators("array", "string").find((o) => o.op === "contains");
+    expect(contains?.arity).toBe("list");
+  });
 });
 
 describe("dataFilterEngine.compile", () => {

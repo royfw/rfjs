@@ -1,6 +1,16 @@
 "use client";
 
+import { Button } from "@rfjs/web-ui/components/button";
+import { Checkbox } from "@rfjs/web-ui/components/checkbox";
 import { Panel } from "@rfjs/web-ui/components/panel";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@rfjs/web-ui/components/select";
+import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { useTranslations } from "next-intl";
 
 import { canBeColumn } from "@rfjs/filter-builder";
@@ -29,54 +39,67 @@ export function SchemaPanel({
 
   return (
     <Panel title={t("data")}>
-      <div className="flex flex-col gap-3">
-        <textarea
+      <div className="flex flex-col gap-4">
+        <Textarea
           aria-label={t("data")}
           value={sampleText}
           onChange={(e) => onSampleChange(e.target.value)}
           spellCheck={false}
           rows={6}
-          className="w-full resize-y rounded-sm border bg-transparent p-2 font-mono text-sm"
+          className="resize-y font-mono"
         />
         {error ? <p className="font-mono text-sm text-fault">{t(`error.${error}`)}</p> : null}
         <div className="flex flex-col gap-1">
           {schema.map((f) => (
             <div key={f.path} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+              <Checkbox
                 aria-label={`include ${f.path}`}
                 checked={f.include}
-                onChange={(e) => patch(f.path, { include: e.target.checked })}
+                onCheckedChange={(c) => patch(f.path, { include: c === true })}
               />
               <span className="min-w-0 flex-1 truncate font-mono text-xs">{f.path}</span>
-              <select
-                aria-label={`type ${f.path}`}
+              <Select
                 value={f.dataType}
-                onChange={(e) => {
-                  const dataType = e.target.value as FieldType;
+                onValueChange={(v) => {
+                  const dataType = v as FieldType;
                   patch(f.path, canBeColumn(dataType) ? { dataType } : { dataType, kind: "jsonb" });
                 }}
-                className="rounded-sm border bg-transparent px-1 py-0.5 text-xs"
               >
-                {TYPES.map((tp) => (
-                  <option key={tp} value={tp}>{tp}</option>
-                ))}
-              </select>
-              <select
-                aria-label={`kind ${f.path}`}
+                <SelectTrigger size="sm" aria-label={`type ${f.path}`} className="h-7 w-auto text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TYPES.map((tp) => (
+                    <SelectItem key={tp} value={tp} className="text-xs">
+                      {tp}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
                 value={canBeColumn(f.dataType) ? f.kind : "jsonb"}
                 disabled={!canBeColumn(f.dataType)}
-                onChange={(e) => patch(f.path, { kind: e.target.value as FieldKind })}
-                className="rounded-sm border bg-transparent px-1 py-0.5 text-xs disabled:opacity-50"
+                onValueChange={(v) => patch(f.path, { kind: v as FieldKind })}
               >
-                <option value="jsonb">{t("kindJsonb")}</option>
-                <option value="column">{t("kindColumn")}</option>
-              </select>
+                <SelectTrigger size="sm" aria-label={`kind ${f.path}`} className="h-7 w-auto text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="jsonb" className="text-xs">
+                    {t("kindJsonb")}
+                  </SelectItem>
+                  <SelectItem value="column" className="text-xs">
+                    {t("kindColumn")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           ))}
         </div>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="xs"
           onClick={() =>
             onSchemaChange(
               schema.map((f) =>
@@ -84,10 +107,10 @@ export function SchemaPanel({
               ),
             )
           }
-          className="self-start rounded-sm border border-border bg-transparent px-2 py-1 text-xs"
+          className="self-start"
         >
           {t("topLevelToColumns")}
-        </button>
+        </Button>
       </div>
     </Panel>
   );

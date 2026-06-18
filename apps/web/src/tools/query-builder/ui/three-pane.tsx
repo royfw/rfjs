@@ -10,10 +10,10 @@ export function ThreePane({
   output: ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-      <div className="flex flex-col gap-3">{source}</div>
-      <div className="flex flex-col gap-3">{builder}</div>
-      <div className="flex flex-col gap-3">{output}</div>
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="flex flex-col gap-4">{source}</div>
+      <div className="flex flex-col gap-4">{builder}</div>
+      <div className="flex flex-col gap-4">{output}</div>
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import { Panel } from "@rfjs/web-ui/components/panel";
+import { AlertTriangle, Inbox } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { PageHeader } from "@/components/shell/page-header";
 import { fetchDatasets } from "@/lib/datasets";
 
 export default async function DatasetsPage({
@@ -15,13 +17,18 @@ export default async function DatasetsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold">{t("datasetsTitle")}</h1>
-      <p className="text-sm text-muted-foreground">{t("datasetsDescription")}</p>
+      <PageHeader title={t("datasetsTitle")} description={t("datasetsDescription")} />
       <Panel>
         {!result.ok ? (
-          <span className="text-sm text-destructive">{t("datasetsError")}</span>
+          <div className="flex flex-col items-center gap-2 py-10 text-center text-sm text-fault">
+            <AlertTriangle className="size-6" />
+            <span>{t("datasetsError")}</span>
+          </div>
         ) : result.datasets.length === 0 ? (
-          <span className="text-sm text-muted-foreground">{t("datasetsEmpty")}</span>
+          <div className="flex flex-col items-center gap-2 py-10 text-center text-sm text-muted-foreground">
+            <Inbox className="size-6" />
+            <span>{t("datasetsEmpty")}</span>
+          </div>
         ) : (
           <ul className="flex flex-col gap-2">
             {result.datasets.map((d) => (

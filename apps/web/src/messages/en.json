@@ -43,7 +43,7 @@
     "viewOnGithub": "GitHub"
   },
   "Tools": {
-    "data-filter-builder": { "title": "Data Filter Builder", "description": "Compose nested filter conditions visually and export them." },
+    "data-filter-builder": { "title": "Data Filter Builder", "description": "Visually build an in-memory filter over sample JSON and see matching rows live." },
     "object-transformer": { "title": "Object Transformer", "description": "Interactive object transformation playground." }
   },
   "ToolUI": {

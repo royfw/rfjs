@@ -103,7 +103,7 @@ export function QueryBuilder() {
         </Panel>
       }
       output={
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-2">
             {ENGINE_IDS.map((eid) => (
               <Button

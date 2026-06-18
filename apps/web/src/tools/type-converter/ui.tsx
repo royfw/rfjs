@@ -10,6 +10,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@rfjs/web-ui/components/dropdown-menu";
+import { Input } from "@rfjs/web-ui/components/input";
 import { Panel } from "@rfjs/web-ui/components/panel";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -31,11 +32,11 @@ export function TypeConverter() {
       input={
         <Panel title={t("input")}>
           <div className="flex flex-col gap-2">
-            <input
+            <Input
               aria-label={t("inputValue")}
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              className="w-full rounded-sm border bg-transparent px-2 py-1.5 font-mono text-sm"
+              className="font-mono"
             />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -67,7 +68,7 @@ export function TypeConverter() {
         >
           {result.ok ? (
             <div className="flex flex-col gap-1">
-              <pre className="overflow-x-auto font-mono text-sm text-signal">{result.output}</pre>
+              <pre className="overflow-x-auto font-mono text-sm text-foreground">{result.output}</pre>
               <span className="font-mono text-[10px] text-muted-foreground">{result.runtimeType}</span>
             </div>
           ) : (

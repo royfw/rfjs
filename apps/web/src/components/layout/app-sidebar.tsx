@@ -14,9 +14,9 @@ export function AppSidebar() {
   const groups = sidebarToolGroups();
 
   const toolLinkClass =
-    "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-intake aria-[current=page]:text-signal";
+    "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-intake aria-[current=page]:text-foreground";
   const headerLinkClass =
-    "rounded-sm px-2 py-1.5 font-mono text-xs uppercase tracking-wide text-muted-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-intake aria-[current=page]:text-signal";
+    "rounded-sm px-2 py-1.5 font-mono text-xs uppercase tracking-wide text-muted-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-intake aria-[current=page]:text-foreground";
   const seam = (active: boolean) => (
     <span className="h-4 w-px">
       {active ? <Seam state="current" operation="" orientation="vertical" /> : null}

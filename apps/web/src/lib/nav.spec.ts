@@ -43,7 +43,6 @@ describe("sidebarToolGroups", () => {
 
   it("excludes workbench-surface tools", () => {
     const ids = sidebarToolGroups().flatMap((g) => g.tools.map((t) => t.id));
-    expect(ids).not.toContain("data-filter-builder");
     expect(ids).not.toContain("object-transformer");
   });
 });

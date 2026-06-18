@@ -1,6 +1,7 @@
 "use client";
 
 import { Panel } from "@rfjs/web-ui/components/panel";
+import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -56,13 +57,13 @@ export function JwtDecoder() {
       operation="decodeComplete()"
       input={
         <Panel title={t("token")}>
-          <textarea
+          <Textarea
             aria-label={t("token")}
             value={token}
             onChange={(e) => setToken(e.target.value)}
             spellCheck={false}
             rows={8}
-            className="w-full resize-y break-all rounded-sm border bg-transparent p-2 font-mono text-sm"
+            className="resize-y break-all font-mono"
           />
         </Panel>
       }
@@ -71,7 +72,7 @@ export function JwtDecoder() {
           {result === null ? null : !result.ok ? (
             <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               <span
                 className={`font-mono text-xs ${info.state === "expired" ? "text-fault" : "text-muted-foreground"}`}
               >
@@ -101,7 +102,7 @@ function JsonBlock({ label, value }: { label: string; value: unknown }) {
       <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
-      <pre className="overflow-x-auto font-mono text-sm text-signal">
+      <pre className="overflow-x-auto font-mono text-sm text-foreground">
         {JSON.stringify(value, null, 2)}
       </pre>
     </div>

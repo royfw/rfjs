@@ -2,13 +2,21 @@
 
 import { useEffect } from "react";
 
+import { Badge } from "@rfjs/web-ui/components/badge";
 import { Button } from "@rfjs/web-ui/components/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@rfjs/web-ui/components/select";
 import { X } from "lucide-react";
 
 import { getEngine, addCondition, addGroup, removeNode, setLogic, updateNode } from "@rfjs/filter-builder";
 import type { EngineId, BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@rfjs/filter-builder";
 
-import { logicColor, dataTypeColor } from "./colors";
+import { logicBadge, dataTypeBadge, dataTypeShort } from "./colors";
 import { FieldCombobox } from "./field-combobox";
 import { ValueEditor } from "./value-editor";
 
@@ -19,9 +27,24 @@ export interface FilterTreeLabels {
   removeGroup: string;
   removeCondition: string;
   elemMatch: string;
+  /** Placeholder hint for multi-value (list) operators, e.g. "type, Enter to add". */
+  valueHint?: string;
 }
 
 const id = () => crypto.randomUUID();
+
+// Condition row: a single aligned grid row on >=sm; on mobile it reflows to two
+// lines — [field · type] then [operator · value · remove] — instead of overflowing.
+const CROW_CSS = `
+.fbu-crow{display:grid;gap:.5rem;align-items:center;grid-template-columns:9rem 1fr auto;grid-template-areas:"field field type" "op value remove";}
+@media(min-width:640px){.fbu-crow{grid-template-columns:12rem 4.5rem 9.5rem minmax(9rem,1fr) auto;grid-template-areas:"field type op value remove";}}
+.fbu-field{grid-area:field;min-width:0}
+.fbu-type{grid-area:type;display:flex;align-items:center}
+@media(min-width:640px){.fbu-type{justify-content:center}}
+.fbu-op{grid-area:op;min-width:0}
+.fbu-value{grid-area:value;min-width:0}
+.fbu-remove{grid-area:remove;display:flex;justify-content:flex-end}
+`;
 
 export function FilterTreeEditor({
   group,
@@ -43,31 +66,47 @@ export function FilterTreeEditor({
   depth?: number;
 }) {
   return (
-    <div className={depth > 0 ? "rounded-sm border border-border p-2" : ""}>
-      <div className="mb-2 flex items-center gap-2">
-        <select
-          aria-label="logic"
+    <div className={depth > 0 ? "rounded-md border border-border p-2" : ""}>
+      {depth === 0 ? <style>{CROW_CSS}</style> : null}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Select
           value={group.logic}
-          onChange={(e) => onChange(setLogic(group, group.id, e.target.value as LogicOp))}
-          className={`rounded-sm border bg-transparent px-2 py-1 text-sm ${logicColor(group.logic)}`}
+          onValueChange={(v) => onChange(setLogic(group, group.id, v as LogicOp))}
         >
-          {(Object.keys(labels.logic) as LogicOp[]).map((l) => (
-            <option key={l} value={l}>{labels.logic[l]}</option>
-          ))}
-        </select>
-        <Button size="sm" variant="outline" onClick={() => onChange(addCondition(group, group.id, id))}>
+          <SelectTrigger
+            size="sm"
+            aria-label="logic"
+            className={`h-7 w-auto gap-1.5 rounded-md border-0 px-2.5 text-xs font-bold tracking-wide shadow-none ${logicBadge(group.logic)}`}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(labels.logic) as LogicOp[]).map((l) => (
+              <SelectItem key={l} value={l}>
+                {labels.logic[l]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button size="xs" variant="outline" onClick={() => onChange(addCondition(group, group.id, id))}>
           {labels.addCondition}
         </Button>
-        <Button size="sm" variant="outline" onClick={() => onChange(addGroup(group, group.id, id))}>
+        <Button size="xs" variant="outline" onClick={() => onChange(addGroup(group, group.id, id))}>
           {labels.addGroup}
         </Button>
         {onRemove ? (
-          <Button size="sm" variant="ghost" aria-label={labels.removeGroup} onClick={onRemove}>
-            <X className="size-4" />
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            aria-label={labels.removeGroup}
+            onClick={onRemove}
+            className="ml-auto text-muted-foreground"
+          >
+            <X className="size-3.5" />
           </Button>
         ) : null}
       </div>
-      <div className="flex flex-col gap-2 pl-3">
+      <div className="ml-1 flex flex-col gap-2 border-l border-slab-border pl-4">
         {group.children.map((child) =>
           child.kind === "group" ? (
             <FilterTreeEditor
@@ -152,42 +191,68 @@ function ConditionRow({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <FieldCombobox
-        ariaLabel="field"
-        value={condition.field}
-        options={fields.map((f) => f.path)}
-        onCommit={(path) => {
-          if (path && !schema.some((s) => s.path === path)) onCreateField(path);
-          onField(path);
-        }}
-      />
-      {condition.field ? (
-        <span className={`font-mono text-[10px] ${dataTypeColor(dataType)}`}>{dataType}</span>
-      ) : null}
-      <select
-        aria-label="operator"
-        value={condition.operator}
-        onChange={(e) => onChange({ operator: e.target.value, value: "" })}
-        className="rounded-sm border bg-transparent px-2 py-1 font-mono text-sm"
-      >
-        {ops.map((o) => (
-          <option key={o.op} value={o.op}>{o.op}</option>
-        ))}
-      </select>
-      {condition.operator === "elemmatch" ? (
-        <span className="text-xs text-muted-foreground">{labels.elemMatch}</span>
-      ) : (
-        <ValueEditor
-          dataType={dataType === "array" ? (elementType ?? "string") : dataType}
-          arity={arity}
-          value={condition.value}
-          onChange={(v) => onChange({ value: v })}
+    <div className="fbu-crow">
+      <div className="fbu-field">
+        <FieldCombobox
+          ariaLabel="field"
+          value={condition.field}
+          options={fields.map((f) => f.path)}
+          onCommit={(path) => {
+            if (path && !schema.some((s) => s.path === path)) onCreateField(path);
+            onField(path);
+          }}
         />
-      )}
-      <Button size="sm" variant="ghost" aria-label={labels.removeCondition} onClick={onRemove}>
-        <X className="size-4" />
-      </Button>
+      </div>
+      <div className="fbu-type">
+        {condition.field ? (
+          <Badge
+            variant="secondary"
+            className={`px-2 font-mono text-[11px] font-semibold ${dataTypeBadge(dataType)}`}
+          >
+            {dataTypeShort(dataType)}
+          </Badge>
+        ) : null}
+      </div>
+      <div className="fbu-op">
+        <Select
+          value={condition.operator}
+          onValueChange={(v) => onChange({ operator: v, value: "" })}
+        >
+          <SelectTrigger size="sm" aria-label="operator" className="w-full min-w-0 font-mono">
+            <SelectValue placeholder="—" />
+          </SelectTrigger>
+          <SelectContent>
+            {ops.map((o) => (
+              <SelectItem key={o.op} value={o.op} className="font-mono">
+                {o.op}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="fbu-value">
+        {condition.operator === "elemmatch" ? (
+          <span className="truncate text-xs text-muted-foreground">{labels.elemMatch}</span>
+        ) : (
+          <ValueEditor
+            dataType={dataType === "array" ? (elementType ?? "string") : dataType}
+            arity={arity}
+            value={condition.value}
+            onChange={(v) => onChange({ value: v })}
+            hint={labels.valueHint}
+          />
+        )}
+      </div>
+      <div className="fbu-remove">
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          aria-label={labels.removeCondition}
+          onClick={onRemove}
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
     </div>
   );
 }

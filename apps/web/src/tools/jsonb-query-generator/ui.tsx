@@ -2,6 +2,7 @@
 
 import { Button } from "@rfjs/web-ui/components/button";
 import { CopyButton } from "@rfjs/web-ui/components/copy-button";
+import { Input } from "@rfjs/web-ui/components/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@rfjs/web-ui/components/dropdown-menu";
 import { Panel } from "@rfjs/web-ui/components/panel";
+import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -37,14 +39,14 @@ export function JsonbQueryGenerator() {
       operation="buildJsonbQuery()"
       input={
         <Panel title={t("input")}>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               {t("column")}
-              <input
+              <Input
                 aria-label={t("column")}
                 value={column}
                 onChange={(e) => setColumn(e.target.value)}
-                className="w-full rounded-sm border bg-transparent px-2 py-1.5 font-mono text-sm"
+                className="font-mono"
               />
             </label>
             <DropdownMenu>
@@ -69,13 +71,13 @@ export function JsonbQueryGenerator() {
             </DropdownMenu>
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               {t("filter")}
-              <textarea
+              <Textarea
                 aria-label={t("filter")}
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 spellCheck={false}
                 rows={8}
-                className="w-full resize-y rounded-sm border bg-transparent p-2 font-mono text-sm"
+                className="resize-y font-mono"
               />
             </label>
           </div>
@@ -85,7 +87,7 @@ export function JsonbQueryGenerator() {
         <Panel title={t("output")} action={result.ok ? <CopyButton text={result.where} label={t("copy")} /> : null}>
           {result.ok ? (
             <div className="flex flex-col gap-2">
-              <pre className="overflow-x-auto font-mono text-sm text-signal">{result.where}</pre>
+              <pre className="overflow-x-auto font-mono text-sm text-foreground">{result.where}</pre>
               <pre className="overflow-x-auto font-mono text-xs text-muted-foreground">{result.values}</pre>
             </div>
           ) : (

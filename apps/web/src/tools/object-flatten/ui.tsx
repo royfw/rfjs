@@ -2,6 +2,7 @@
 
 import { CopyButton } from "@rfjs/web-ui/components/copy-button";
 import { Panel } from "@rfjs/web-ui/components/panel";
+import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -27,13 +28,13 @@ export function ObjectFlatten() {
       operation="flatten()"
       input={
         <Panel title={t("jsonInput")}>
-          <textarea
+          <Textarea
             aria-label={t("jsonInput")}
             value={text}
             onChange={(e) => setText(e.target.value)}
             spellCheck={false}
             rows={10}
-            className="w-full resize-y rounded-sm border bg-transparent p-2 font-mono text-sm"
+            className="resize-y font-mono"
           />
         </Panel>
       }
@@ -43,7 +44,7 @@ export function ObjectFlatten() {
           action={result.ok ? <CopyButton text={result.output} label={t("copy")} /> : null}
         >
           {result.ok ? (
-            <pre className="overflow-x-auto font-mono text-sm text-signal">{result.output}</pre>
+            <pre className="overflow-x-auto font-mono text-sm text-foreground">{result.output}</pre>
           ) : (
             <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>
           )}

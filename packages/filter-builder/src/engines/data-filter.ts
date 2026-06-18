@@ -8,6 +8,11 @@ const COMPARABLE_OPS = ["eq", "neq", "gt", "gte", "lt", "lte", "range", "terms",
 const BOOLEAN_OPS = ["eq", "neq", ...NULL_OPS];
 const OBJECT_OPS = ["eq", "neq", "contains", ...NULL_OPS];
 
+// data-filter evaluates `contains` over a list of values (match if the target
+// contains ANY of them — see @rfjs/data-filter TextMatch.contains), so on string
+// fields `contains` is exposed as a multi-value op rather than a single value.
+const STRING_LIST_OPS = new Set(["contains"]);
+
 function scalarOps(dataType: string): string[] {
   if (dataType === "string") return STRING_OPS;
   if (dataType === "boolean") return BOOLEAN_OPS;
@@ -23,8 +28,11 @@ function arrayOps(elementType?: string): string[] {
   return ["eq", "contains", "startswith", "endswith", "terms", "containsall", ...NULL_OPS]; // string
 }
 
-function toSpecs(ops: string[]): OperatorSpec[] {
-  return [...new Set(ops)].map((op) => ({ op, arity: arityOf(op) }));
+function toSpecs(ops: string[], listOps?: Set<string>): OperatorSpec[] {
+  return [...new Set(ops)].map((op) => ({
+    op,
+    arity: listOps?.has(op) ? "list" : arityOf(op),
+  }));
 }
 
 // Coverage set for live match: every operator data-filter can evaluate.
@@ -38,7 +46,13 @@ export const dataFilterEngine: Engine = {
   label: "data-filter (in-memory)",
   operators(dataType, elementType) {
     if (dataType === "object") return toSpecs(OBJECT_OPS);
-    if (dataType === "array") return toSpecs(arrayOps(elementType));
+    if (dataType === "array") {
+      // string-element arrays support multi-value `contains` (contains-any) too —
+      // ArrayMatch routes `contains` through TextMatch, which evaluates over a list.
+      const listOps = elementType === undefined || elementType === "string" ? STRING_LIST_OPS : undefined;
+      return toSpecs(arrayOps(elementType), listOps);
+    }
+    if (dataType === "string") return toSpecs(STRING_OPS, STRING_LIST_OPS);
     return toSpecs(scalarOps(dataType));
   },
   compile(group: FilterGroupLike) {

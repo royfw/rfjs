@@ -43,7 +43,7 @@
     "viewOnGithub": "GitHub"
   },
   "Tools": {
-    "data-filter-builder": { "title": "資料篩選建構器", "description": "視覺化組合巢狀篩選條件並匯出。" },
+    "data-filter-builder": { "title": "資料過濾建構器", "description": "在範例 JSON 上視覺化建構記憶體內過濾條件，並即時查看命中的資料列。" },
     "object-transformer": { "title": "物件轉換器", "description": "互動式物件轉換 playground。" }
   },
   "ToolUI": {

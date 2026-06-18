@@ -31,7 +31,7 @@ export function CommandMenu() {
       onOpenChange={setOpen}
       label={t("placeholder")}
       className="fixed left-1/2 top-1/4 z-50 w-full max-w-md -translate-x-1/2 rounded-lg border bg-popover p-2 text-popover-foreground shadow-lg"
-      overlayClassName="fixed inset-0 z-40 bg-black/50"
+      overlayClassName="fixed inset-0 z-40 bg-foreground/40"
     >
       <Command.Input
         placeholder={t("placeholder")}
@@ -50,7 +50,7 @@ export function CommandMenu() {
                 router.push(href);
                 setOpen(false);
               }}
-              className="cursor-pointer rounded-sm px-2 py-1.5 text-sm aria-selected:bg-accent"
+              className="cursor-pointer rounded-md px-2 py-1.5 text-sm aria-selected:bg-accent"
             >
               {tNav(key)}
             </Command.Item>
