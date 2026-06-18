@@ -50,7 +50,7 @@ export function FilterTreeEditor({
   depth?: number;
 }) {
   return (
-    <div className={depth > 0 ? "rounded-sm border border-border p-2" : ""}>
+    <div className={depth > 0 ? "rounded-md border border-border p-2" : ""}>
       <div className="mb-2 flex items-center gap-2">
         <Select
           value={group.logic}
@@ -83,7 +83,7 @@ export function FilterTreeEditor({
           </Button>
         ) : null}
       </div>
-      <div className="flex flex-col gap-2 pl-3">
+      <div className="ml-1 flex flex-col gap-2 border-l border-slab-border pl-4">
         {group.children.map((child) =>
           child.kind === "group" ? (
             <FilterTreeEditor
