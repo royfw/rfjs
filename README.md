@@ -2,7 +2,7 @@
 
 A Turborepo monorepo and template collection for the [start-ts-by](https://www.npmjs.com/package/start-ts-by) CLI. Contains production-ready TypeScript project templates for apps, libraries, CLIs, ORM wrappers, and monorepo scaffolds.
 
-`apps/web` is the rfjs web playground and developer tools site.
+`apps/web` is the rfjs web playground and developer-tools showcase; `apps/workbench` is an admin app whose dataset explorer offers a visual query builder, backed by `apps/api` + `libs/core` + `libs/db`.
 
 ## Packages
 
@@ -14,27 +14,34 @@ A Turborepo monorepo and template collection for the [start-ts-by](https://www.n
 | [@rfjs/data-filter](packages/data-filter) | In-memory filtering & mapping — scalar/object/array/elemmatch conditions, computed `=` expressions, logic operators |
 | [@rfjs/data-label](packages/data-label) | Compose display label strings from data paths, value maps, and templates |
 | [@rfjs/data-transform](packages/data-transform) | Data type transformation utilities — typeTransfer, jsonbTransfer, toBoolean, toDateString |
-| [@rfjs/jsonb-query](packages/jsonb-query) | PostgreSQL JSONB SQL query builder |
+| [@rfjs/filter-builder](packages/filter-builder) | Framework-agnostic canonical filter-tree — edit model, schema inference, reverse parse, compile to the SQL/in-memory engines below |
+| [@rfjs/jsonb-query](packages/jsonb-query) | PostgreSQL JSONB SQL query builder (WHERE/ORDER BY; legacy + jsonpath dialects) |
 | [@rfjs/jwt](packages/jwt) | JWT sign, verify, and decode helper |
 | [@rfjs/mongo-query](packages/mongo-query) | MongoDB query builder from structured filter metadata |
 | [@rfjs/object-utils](packages/object-utils) | Object utilities — flatten, keysToNested, toJSONString, toFlatString |
+| [@rfjs/pg-filter](packages/pg-filter) | Unified PostgreSQL filter builder — nests column + JSONB conditions in one tree, with sort and pagination |
 | [@rfjs/pg-toolkit](packages/pg-toolkit) | PostgreSQL utilities for Drizzle, Prisma, Kysely, and TypeORM |
 | [@rfjs/retry](packages/retry) | Retry helper with configurable delay and max attempts |
+| [@rfjs/sql-filter](packages/sql-filter) | Generic boolean filter-group → parameterized SQL with pluggable leaf renderers |
 | [@rfjs/tpl-toolkit](packages/tpl-toolkit) | Shared config factories and build helpers for project templates |
+
+The four filter packages layer together: `sql-filter` (generic engine) ← `pg-filter` / `jsonb-query` (Postgres specialists), with `filter-builder` as the high-level tree model that compiles to any of them (or to in-memory `data-filter`).
 
 ### Internal Packages (private)
 
 | Package | Description |
 |---------|-------------|
-| @rfjs/web-core | Tool/package registry, zod schemas, and fixtures for `apps/web` |
-| @rfjs/web-ui | Design tokens, Tailwind preset, and shadcn components for `apps/web` |
+| @rfjs/web-core | Tool/package registry, zod schemas, and fixtures for `apps/web` and `apps/workbench` |
+| @rfjs/web-ui | Design tokens, Tailwind preset, and shadcn components for `apps/web` and `apps/workbench` |
+| @rfjs/filter-builder-ui | React filter-tree editor (`<FilterTreeEditor>` + `useFilterTree`) over `@rfjs/filter-builder`; used by `apps/workbench` |
 
 ## Apps
 
 | App | Description |
 |-----|-------------|
-| [api](apps/api) | Fastify REST API (esbuild) |
-| [web](apps/web) | Next.js web app (turbopack) |
+| [api](apps/api) | Fastify REST API (esbuild) — serves the workbench dataset endpoints |
+| [web](apps/web) | Next.js web app — package & developer-tools showcase |
+| [workbench](apps/workbench) | Next.js admin app — dataset explorer with a visual query builder |
 | [orm-app](apps/orm-app) | ORM integration demo (tsdown) — consumes all 4 ORM libs |
 
 ## Templates
@@ -49,6 +56,12 @@ Standalone project templates distributed via `start-ts-by` CLI. See [templates/r
 - **BullMQ**: `bull-api`, `lib-queue`
 - **Monorepo**: `turbo`
 
-## ORM Libraries (internal)
+## Internal Libraries (`libs/`)
 
-`libs/orm-drizzle`, `orm-kysely`, `orm-prisma`, and `orm-typeorm` wrap each ORM's migrate/seed flow behind a common `migrateToLatest` / `seedToLatest` API. For runnable usage, see [`apps/orm-app`](apps/orm-app) and each package's own README.
+| Lib | Description |
+|-----|-------------|
+| @rfjs/core | Workbench business logic — one folder per module (currently `dataset`) following schema → repository → usecase |
+| @rfjs/db | Workbench Drizzle plumbing for PostgreSQL — connection, schema, migrations, seed |
+| orm-drizzle / orm-kysely / orm-prisma / orm-typeorm | ORM wrappers behind a common `migrateToLatest` / `seedToLatest` API |
+
+`@rfjs/core` and `@rfjs/db` back the `apps/workbench` dataset explorer (via `apps/api`). The four ORM wrappers are consumed by [`apps/orm-app`](apps/orm-app); see each package's own README for runnable usage.

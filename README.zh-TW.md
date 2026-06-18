@@ -2,6 +2,8 @@
 
 一個 Turborepo monorepo 與模板集合，供 [start-ts-by](https://www.npmjs.com/package/start-ts-by) CLI 使用。內含可用於正式環境的 TypeScript 專案模板，涵蓋應用程式、函式庫、CLI、ORM 封裝與 monorepo 骨架。
 
+`apps/web` 是 rfjs 的網頁遊樂場與開發者工具展示站；`apps/workbench` 是管理端應用，其 dataset explorer 提供視覺化查詢建構器，由 `apps/api` + `libs/core` + `libs/db` 支撐。
+
 ## 套件
 
 ### 已發布函式庫（`@rfjs/*`）
@@ -12,28 +14,34 @@
 | [@rfjs/data-filter](packages/data-filter) | 記憶體內過濾與映射 — scalar/object/array/elemmatch 條件、`=` 計算式、邏輯運算子 |
 | [@rfjs/data-label](packages/data-label) | 從資料路徑、值對照表與模板組合顯示用標籤字串 |
 | [@rfjs/data-transform](packages/data-transform) | 資料型別轉換工具 — typeTransfer、jsonbTransfer、toBoolean、toDateString |
-| [@rfjs/jsonb-query](packages/jsonb-query) | PostgreSQL JSONB SQL 查詢建構器 |
+| [@rfjs/filter-builder](packages/filter-builder) | 框架無關的 canonical 過濾樹 — 編輯模型、schema 推斷、反向解析，並可編譯到下列 SQL／記憶體引擎 |
+| [@rfjs/jsonb-query](packages/jsonb-query) | PostgreSQL JSONB SQL 查詢建構器（WHERE/ORDER BY；legacy 與 jsonpath 兩種 dialect） |
 | [@rfjs/jwt](packages/jwt) | JWT 簽發、驗證與解碼輔助工具 |
 | [@rfjs/mongo-query](packages/mongo-query) | 由結構化過濾 metadata 建構 MongoDB 查詢 |
 | [@rfjs/object-utils](packages/object-utils) | 物件工具 — flatten、keysToNested、toJSONString、toFlatString |
+| [@rfjs/pg-filter](packages/pg-filter) | 統一的 PostgreSQL 過濾建構器 — 在同一棵樹中巢狀組合欄位條件與 JSONB 條件，並支援排序與分頁 |
 | [@rfjs/pg-toolkit](packages/pg-toolkit) | 適用於 Drizzle、Prisma、Kysely、TypeORM 的 PostgreSQL 工具 |
 | [@rfjs/retry](packages/retry) | 可設定延遲與最大次數的重試輔助工具 |
+| [@rfjs/sql-filter](packages/sql-filter) | 通用的布林過濾群組 → 參數化 SQL，可插拔 leaf renderer |
 | [@rfjs/tpl-toolkit](packages/tpl-toolkit) | 專案模板共用的設定工廠與建置輔助工具 |
+
+四個過濾套件分層組合：`sql-filter`（通用引擎）← `pg-filter` / `jsonb-query`（Postgres 特化），`filter-builder` 則是高階樹模型，可編譯到上述任一引擎（或記憶體內的 `data-filter`）。
 
 ### 內部套件（private）
 
 | 套件 | 說明 |
 |------|------|
-| @repo/eslint-config | 共用 ESLint 設定 |
-| @repo/typescript-config | 共用 TypeScript 設定 |
-| @repo/ui | 共用 React 元件庫 |
+| @rfjs/web-core | `apps/web` 與 `apps/workbench` 的工具／套件 registry、zod schema 與 fixtures |
+| @rfjs/web-ui | `apps/web` 與 `apps/workbench` 的設計 token、Tailwind preset 與 shadcn 元件 |
+| @rfjs/filter-builder-ui | 建立在 `@rfjs/filter-builder` 之上的 React 過濾樹編輯器（`<FilterTreeEditor>` + `useFilterTree`）；由 `apps/workbench` 使用 |
 
 ## 應用程式
 
 | 應用程式 | 說明 |
 |----------|------|
-| [api](apps/api) | Fastify REST API（esbuild） |
-| [web](apps/web) | Next.js 網頁應用（turbopack） |
+| [api](apps/api) | Fastify REST API（esbuild）— 提供 workbench 的 dataset 端點 |
+| [web](apps/web) | Next.js 網頁應用 — 套件與開發者工具展示站 |
+| [workbench](apps/workbench) | Next.js 管理端應用 — 含視覺化查詢建構器的 dataset explorer |
 | [orm-app](apps/orm-app) | ORM 整合範例（tsdown）— 使用全部 4 個 ORM 函式庫 |
 
 ## 模板
@@ -48,6 +56,12 @@
 - **BullMQ**：`bull-api`、`lib-queue`
 - **Monorepo**：`turbo`
 
-## ORM 函式庫（內部）
+## 內部函式庫（`libs/`）
 
-`libs/orm-drizzle`、`orm-kysely`、`orm-prisma`、`orm-typeorm` 將各 ORM 的 migrate/seed 流程封裝在共用的 `migrateToLatest` / `seedToLatest` API 之後。可執行的使用範例見 [`apps/orm-app`](apps/orm-app) 以及各套件自身的 README。
+| 函式庫 | 說明 |
+|--------|------|
+| @rfjs/core | Workbench 業務邏輯 — 每個模組一個資料夾（目前為 `dataset`），遵循 schema → repository → usecase |
+| @rfjs/db | Workbench 的 Drizzle PostgreSQL plumbing — 連線、schema、migrations、seed |
+| orm-drizzle / orm-kysely / orm-prisma / orm-typeorm | 將各 ORM 封裝在共用的 `migrateToLatest` / `seedToLatest` API 之後 |
+
+`@rfjs/core` 與 `@rfjs/db` 支撐 `apps/workbench` 的 dataset explorer（透過 `apps/api`）。4 個 ORM 封裝由 [`apps/orm-app`](apps/orm-app) 使用；可執行範例見各套件自身的 README。
