@@ -62,7 +62,8 @@ describe('tool surfaces', () => {
       .filter((t) => t.surface === 'workbench')
       .map((t) => t.id)
       .sort();
-    expect(ids).toEqual(['data-filter-builder', 'object-transformer']);
+    // data-filter-builder shipped as a web tool (the per-engine scenario pilot).
+    expect(ids).toEqual(['object-transformer']);
   });
 });
 
