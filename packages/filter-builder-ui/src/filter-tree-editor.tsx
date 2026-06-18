@@ -177,7 +177,7 @@ function ConditionRow({
   }
 
   return (
-    <div className="grid grid-cols-[12rem_3.25rem_9.5rem_minmax(10rem,18rem)_auto] items-center gap-2">
+    <div className="grid grid-cols-[12rem_4rem_9.5rem_minmax(10rem,18rem)_auto] items-center gap-2">
       <FieldCombobox
         ariaLabel="field"
         value={condition.field}
@@ -190,7 +190,7 @@ function ConditionRow({
       {condition.field ? (
         <Badge
           variant="secondary"
-          className={`justify-center px-1 py-0 font-mono text-[11px] ${dataTypeBadge(dataType)}`}
+          className={`justify-center px-2 py-0.5 font-mono text-sm font-medium ${dataTypeBadge(dataType)}`}
         >
           {dataTypeShort(dataType)}
         </Badge>

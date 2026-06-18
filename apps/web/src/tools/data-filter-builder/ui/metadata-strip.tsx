@@ -60,7 +60,7 @@ export function MetadataStrip({
             <SelectTrigger
               size="sm"
               aria-label={`${labels.type} ${f.path}`}
-              className={`h-6 w-auto shrink-0 gap-0.5 rounded border-0 px-1.5 font-mono text-[11px] ${dataTypeBadge(f.dataType)}`}
+              className={`h-5 w-auto shrink-0 rounded border-0 px-1.5 font-mono text-[10px] [&>svg]:hidden ${dataTypeBadge(f.dataType)}`}
             >
               <SelectValue />
             </SelectTrigger>
