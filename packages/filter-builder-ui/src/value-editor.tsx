@@ -4,6 +4,13 @@ import { useState } from "react";
 
 import { Badge } from "@rfjs/web-ui/components/badge";
 import { Input } from "@rfjs/web-ui/components/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@rfjs/web-ui/components/select";
 import { X } from "lucide-react";
 
 import { coerceInput } from "@rfjs/filter-builder";
@@ -104,10 +111,28 @@ export function ValueEditor({
   if (arity === "none") return null;
   if (arity === "list")
     return <TagsInput dataType={dataType} value={value} onChange={onChange} hint={hint} />;
+
+  // Type-specific single-value editors (range/list stay text for now; date too).
+  if (arity === "one" && dataType === "boolean") {
+    const v = value === true ? "true" : value === false ? "false" : "";
+    return (
+      <Select value={v} onValueChange={(s) => onChange(coerceInput(dataType, "one", s))}>
+        <SelectTrigger size="sm" aria-label="value" className="h-8 w-full min-w-0 font-mono">
+          <SelectValue placeholder={dataType} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="true">true</SelectItem>
+          <SelectItem value="false">false</SelectItem>
+        </SelectContent>
+      </Select>
+    );
+  }
+
   const placeholder = arity === "two" ? "min, max" : dataType;
   return (
     <Input
       aria-label="value"
+      inputMode={arity === "one" && dataType === "numeric" ? "decimal" : undefined}
       value={rawOf(value)}
       placeholder={placeholder}
       onChange={(e) => onChange(coerceInput(dataType, arity, e.target.value))}
