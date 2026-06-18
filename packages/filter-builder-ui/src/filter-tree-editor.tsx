@@ -33,6 +33,19 @@ export interface FilterTreeLabels {
 
 const id = () => crypto.randomUUID();
 
+// Condition row: a single aligned grid row on >=sm; on mobile it reflows to two
+// lines — [field · type] then [operator · value · remove] — instead of overflowing.
+const CROW_CSS = `
+.fbu-crow{display:grid;gap:.5rem;align-items:center;grid-template-columns:9rem 1fr auto;grid-template-areas:"field field type" "op value remove";}
+@media(min-width:640px){.fbu-crow{grid-template-columns:12rem 4.5rem 9.5rem minmax(9rem,1fr) auto;grid-template-areas:"field type op value remove";}}
+.fbu-field{grid-area:field;min-width:0}
+.fbu-type{grid-area:type;display:flex;align-items:center}
+@media(min-width:640px){.fbu-type{justify-content:center}}
+.fbu-op{grid-area:op;min-width:0}
+.fbu-value{grid-area:value;min-width:0}
+.fbu-remove{grid-area:remove;display:flex;justify-content:flex-end}
+`;
+
 export function FilterTreeEditor({
   group,
   engineId,
@@ -54,7 +67,8 @@ export function FilterTreeEditor({
 }) {
   return (
     <div className={depth > 0 ? "rounded-md border border-border p-2" : ""}>
-      <div className="mb-3 flex items-center gap-2">
+      {depth === 0 ? <style>{CROW_CSS}</style> : null}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <Select
           value={group.logic}
           onValueChange={(v) => onChange(setLogic(group, group.id, v as LogicOp))}
@@ -177,60 +191,68 @@ function ConditionRow({
   }
 
   return (
-    <div className="grid grid-cols-[12rem_4rem_9.5rem_minmax(10rem,18rem)_auto] items-center gap-2">
-      <FieldCombobox
-        ariaLabel="field"
-        value={condition.field}
-        options={fields.map((f) => f.path)}
-        onCommit={(path) => {
-          if (path && !schema.some((s) => s.path === path)) onCreateField(path);
-          onField(path);
-        }}
-      />
-      {condition.field ? (
-        <Badge
-          variant="secondary"
-          className={`justify-center px-2 py-0.5 font-mono text-sm font-medium ${dataTypeBadge(dataType)}`}
-        >
-          {dataTypeShort(dataType)}
-        </Badge>
-      ) : (
-        <span aria-hidden />
-      )}
-      <Select
-        value={condition.operator}
-        onValueChange={(v) => onChange({ operator: v, value: "" })}
-      >
-        <SelectTrigger size="sm" aria-label="operator" className="w-full min-w-0 font-mono">
-          <SelectValue placeholder="—" />
-        </SelectTrigger>
-        <SelectContent>
-          {ops.map((o) => (
-            <SelectItem key={o.op} value={o.op} className="font-mono">
-              {o.op}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {condition.operator === "elemmatch" ? (
-        <span className="truncate text-xs text-muted-foreground">{labels.elemMatch}</span>
-      ) : (
-        <ValueEditor
-          dataType={dataType === "array" ? (elementType ?? "string") : dataType}
-          arity={arity}
-          value={condition.value}
-          onChange={(v) => onChange({ value: v })}
-          hint={labels.valueHint}
+    <div className="fbu-crow">
+      <div className="fbu-field">
+        <FieldCombobox
+          ariaLabel="field"
+          value={condition.field}
+          options={fields.map((f) => f.path)}
+          onCommit={(path) => {
+            if (path && !schema.some((s) => s.path === path)) onCreateField(path);
+            onField(path);
+          }}
         />
-      )}
-      <Button
-        size="icon-sm"
-        variant="ghost"
-        aria-label={labels.removeCondition}
-        onClick={onRemove}
-      >
-        <X className="size-4" />
-      </Button>
+      </div>
+      <div className="fbu-type">
+        {condition.field ? (
+          <Badge
+            variant="secondary"
+            className={`px-2 font-mono text-[11px] font-semibold ${dataTypeBadge(dataType)}`}
+          >
+            {dataTypeShort(dataType)}
+          </Badge>
+        ) : null}
+      </div>
+      <div className="fbu-op">
+        <Select
+          value={condition.operator}
+          onValueChange={(v) => onChange({ operator: v, value: "" })}
+        >
+          <SelectTrigger size="sm" aria-label="operator" className="w-full min-w-0 font-mono">
+            <SelectValue placeholder="—" />
+          </SelectTrigger>
+          <SelectContent>
+            {ops.map((o) => (
+              <SelectItem key={o.op} value={o.op} className="font-mono">
+                {o.op}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="fbu-value">
+        {condition.operator === "elemmatch" ? (
+          <span className="truncate text-xs text-muted-foreground">{labels.elemMatch}</span>
+        ) : (
+          <ValueEditor
+            dataType={dataType === "array" ? (elementType ?? "string") : dataType}
+            arity={arity}
+            value={condition.value}
+            onChange={(v) => onChange({ value: v })}
+            hint={labels.valueHint}
+          />
+        )}
+      </div>
+      <div className="fbu-remove">
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          aria-label={labels.removeCondition}
+          onClick={onRemove}
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
     </div>
   );
 }
