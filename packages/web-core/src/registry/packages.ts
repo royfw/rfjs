@@ -51,7 +51,7 @@ export const packageRegistry: PackageDefinition[] = [
     href: '/packages/pg-filter',
     github: GITHUB,
     tags: ['postgres', 'jsonb', 'sql', 'filter'],
-    relatedTools: ['query-builder'],
+    relatedTools: ['sql-filter-builder', 'jsonb-query-builder'],
   },
   {
     name: '@rfjs/filter-builder',
@@ -59,7 +59,7 @@ export const packageRegistry: PackageDefinition[] = [
     href: '/packages/filter-builder',
     github: GITHUB,
     tags: ['filter', 'query-builder', 'tree'],
-    relatedTools: ['query-builder'],
+    relatedTools: ['data-filter-builder', 'jsonb-query-builder', 'sql-filter-builder', 'mongo-query-builder'],
   },
   {
     name: '@rfjs/jwt',

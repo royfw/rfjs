@@ -32,15 +32,14 @@ describe("sidebarToolGroups", () => {
     const jsonb = groups.find((g) => g.pkg.name === "@rfjs/jsonb-query");
     const dataFilter = groups.find((g) => g.pkg.name === "@rfjs/data-filter");
 
-    expect(jsonb?.tools.map((t) => t.id)).toContain("query-builder");
-    expect(dataFilter?.tools.map((t) => t.id) ?? []).not.toContain("query-builder");
+    expect(jsonb?.tools.map((t) => t.id)).toContain("jsonb-query-builder");
+    expect(dataFilter?.tools.map((t) => t.id) ?? []).not.toContain("jsonb-query-builder");
   });
 
   it("keeps tools within a group in toolRegistry order", () => {
     const jsonb = sidebarToolGroups().find((g) => g.pkg.name === "@rfjs/jsonb-query");
     expect(jsonb?.tools.map((t) => t.id)).toEqual([
       "jsonb-query-generator",
-      "query-builder",
       "jsonb-query-builder",
     ]);
   });

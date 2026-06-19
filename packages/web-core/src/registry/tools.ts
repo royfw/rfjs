@@ -42,14 +42,6 @@ export const toolRegistry: ToolDefinition[] = [
     tags: ['postgres', 'jsonb', 'sql'],
   },
   {
-    id: 'query-builder',
-    category: 'query',
-    surface: 'web',
-    status: 'preview',
-    relatedPackages: ['@rfjs/jsonb-query', '@rfjs/data-filter', '@rfjs/pg-filter', '@rfjs/filter-builder'],
-    tags: ['builder', 'jsonb', 'sql', 'nested'],
-  },
-  {
     id: 'mongo-query-generator',
     category: 'query',
     surface: 'web',
