@@ -18,16 +18,21 @@ const TYPES: FieldType[] = ["string", "numeric", "date", "boolean", "object", "a
 export interface MetadataStripLabels {
   include: string;
   type: string;
+  /** a11y label for the column/jsonb toggle — only used when `showKind`. */
+  kind?: string;
 }
 
 export function MetadataStrip({
   schema,
   onChange,
   labels,
+  showKind = false,
 }: {
   schema: FieldSchema[];
   onChange: (next: FieldSchema[]) => void;
   labels: MetadataStripLabels;
+  /** Show a per-field column/jsonb toggle (pg-filter mixes both targets). */
+  showKind?: boolean;
 }) {
   function patch(path: string, p: Partial<FieldSchema>) {
     onChange(schema.map((f) => (f.path === path ? { ...f, ...p } : f)));
@@ -38,13 +43,26 @@ export function MetadataStrip({
       {schema.map((f) => (
         <div
           key={f.path}
-          className="flex h-8 w-[168px] items-center gap-1.5 rounded-md border bg-card pr-1 pl-2"
+          className={`flex h-8 ${showKind ? "w-[208px]" : "w-[168px]"} items-center gap-1.5 rounded-md border bg-card pr-1 pl-2`}
         >
           <Checkbox
             aria-label={`${labels.include} ${f.path}`}
             checked={f.include}
             onCheckedChange={(c) => patch(f.path, { include: c === true })}
           />
+          {showKind ? (
+            <button
+              type="button"
+              aria-label={`${labels.kind ?? "kind"} ${f.path}`}
+              title={f.kind === "column" ? "column" : "jsonb"}
+              onClick={() => patch(f.path, { kind: f.kind === "column" ? "jsonb" : "column" })}
+              className={`h-[22px] shrink-0 rounded-md px-1.5 font-mono text-[10px] font-semibold leading-none ${
+                f.kind === "column" ? "bg-signal/12 text-signal" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {f.kind === "column" ? "col" : "json"}
+            </button>
+          ) : null}
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="min-w-0 flex-1 truncate font-mono text-xs text-foreground">

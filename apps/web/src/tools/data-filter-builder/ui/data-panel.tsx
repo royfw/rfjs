@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@rfjs/web-ui/components/button";
-import { CopyButton } from "@rfjs/web-ui/components/copy-button";
 import {
   Table,
   TableBody,
@@ -10,9 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@rfjs/web-ui/components/table";
-import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
+
+import { CanonicalEditor } from "@/tools/_filter-builder";
 
 export interface DataPanelLabels {
   data: string;
@@ -140,24 +140,12 @@ export function DataPanel({
           {tab === "matched" ? <RowsTable rows={asRows(matched)} empty={labels.empty} /> : null}
           {tab === "raw" ? <RowsTable rows={asRows(rows)} empty={labels.empty} /> : null}
           {tab === "json" ? (
-            <div className="flex flex-col gap-1">
-              <div className="relative">
-                <Textarea
-                  aria-label={labels.canonicalHint}
-                  value={canonicalJson}
-                  onChange={(e) => onCanonicalChange(e.target.value)}
-                  spellCheck={false}
-                  rows={12}
-                  className="resize-y pr-24 font-mono"
-                />
-                <CopyButton
-                  text={canonicalJson}
-                  label={labels.copy}
-                  className="absolute top-2 right-2"
-                />
-              </div>
-              {error ? <p className="font-mono text-sm text-fault">{error}</p> : null}
-            </div>
+            <CanonicalEditor
+              value={canonicalJson}
+              onChange={onCanonicalChange}
+              error={error}
+              labels={{ canonicalHint: labels.canonicalHint, copy: labels.copy }}
+            />
           ) : null}
         </div>
       ) : null}

@@ -14,8 +14,11 @@ const EXPECTED_WEB_TOOL_IDS = [
   "mongo-query-generator",
   "jsonb-query-generator",
   "jwt-decoder",
-  "query-builder",
   "data-filter-builder",
+  "jsonb-query-builder",
+  "sql-filter-builder",
+  "mongo-query-builder",
+  "pg-filter-builder",
 ].sort();
 
 describe("implementation registry", () => {
