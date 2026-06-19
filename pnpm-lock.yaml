@@ -1162,12 +1162,21 @@ importers:
       '@rfjs/data-filter':
         specifier: workspace:*
         version: link:../data-filter
+      '@rfjs/data-transform':
+        specifier: workspace:*
+        version: link:../data-transform
       '@rfjs/jsonb-query':
         specifier: workspace:*
         version: link:../jsonb-query
+      '@rfjs/mongo-query':
+        specifier: workspace:*
+        version: link:../mongo-query
       '@rfjs/pg-filter':
         specifier: workspace:*
         version: link:../pg-filter
+      '@rfjs/sql-filter':
+        specifier: workspace:*
+        version: link:../sql-filter
     devDependencies:
       '@eslint/js':
         specifier: ^9.20.0

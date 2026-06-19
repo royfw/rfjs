@@ -37,6 +37,9 @@
   "dependencies": {
     "@rfjs/pg-filter": "workspace:*",
     "@rfjs/jsonb-query": "workspace:*",
+    "@rfjs/sql-filter": "workspace:*",
+    "@rfjs/mongo-query": "workspace:*",
+    "@rfjs/data-transform": "workspace:*",
     "@rfjs/data-filter": "workspace:*"
   },
   "devDependencies": {

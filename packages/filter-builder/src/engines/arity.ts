@@ -10,6 +10,7 @@ export const ARITY: Record<string, OperatorArity> = {
   range: "two",
   terms: "list",
   containsall: "list",
+  nin: "list",
   hasanykey: "list",
   hasallkeys: "list",
 };
