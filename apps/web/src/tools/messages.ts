@@ -8,6 +8,7 @@ import { messages as jwtDecoder } from "./jwt-decoder/messages";
 import { messages as mongoQueryBuilder } from "./mongo-query-builder/messages";
 import { messages as mongoQueryGenerator } from "./mongo-query-generator/messages";
 import { messages as objectFlatten } from "./object-flatten/messages";
+import { messages as pgFilterBuilder } from "./pg-filter-builder/messages";
 import { messages as sqlFilterBuilder } from "./sql-filter-builder/messages";
 import { messages as typeConverter } from "./type-converter/messages";
 
@@ -23,4 +24,5 @@ export const toolMessages: LocaleMessages[] = [
   jsonbQueryBuilder,
   sqlFilterBuilder,
   mongoQueryBuilder,
+  pgFilterBuilder,
 ];

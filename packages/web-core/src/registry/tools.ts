@@ -82,6 +82,14 @@ export const toolRegistry: ToolDefinition[] = [
     tags: ['builder', 'playground'],
   },
   {
+    id: 'pg-filter-builder',
+    category: 'query',
+    surface: 'web',
+    status: 'preview',
+    relatedPackages: ['@rfjs/pg-filter', '@rfjs/filter-builder'],
+    tags: ['builder', 'playground'],
+  },
+  {
     id: 'object-transformer',
     category: 'transform',
     surface: 'workbench',

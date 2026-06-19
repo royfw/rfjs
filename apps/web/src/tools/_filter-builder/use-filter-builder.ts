@@ -9,6 +9,7 @@ import {
   treeToFilterGroup,
   type BuilderGroup,
   type CompileContext,
+  type FieldKind,
   type FieldSchema,
   type ReverseError,
 } from "@rfjs/filter-builder";
@@ -37,10 +38,22 @@ export interface FilterBuilderState {
   onCreateField: (path: string) => void;
 }
 
-export function useFilterBuilder({ sample }: { sample: string }): FilterBuilderState {
+export function useFilterBuilder({
+  sample,
+  deriveKind,
+}: {
+  sample: string;
+  /** Optional per-field kind override applied on inference (e.g. pg-filter marks
+   * top-level scalars as `column`). Omitted → inferred kind (`jsonb`) is kept. */
+  deriveKind?: (f: FieldSchema) => FieldKind;
+}): FilterBuilderState {
+  function applyKind(list: FieldSchema[]): FieldSchema[] {
+    return deriveKind ? list.map((f) => ({ ...f, kind: deriveKind(f) })) : list;
+  }
+
   const [sampleText, setSampleText] = useState(sample);
   const [sampleOpen, setSampleOpen] = useState(false);
-  const [schema, setSchema] = useState<FieldSchema[]>(() => safeInfer(sample).schema);
+  const [schema, setSchema] = useState<FieldSchema[]>(() => applyKind(safeInfer(sample).schema));
   const [error, setError] = useState<string | null>(() => safeInfer(sample).error);
   const [tree, setTree] = useState<BuilderGroup>(() => emptyGroup(id));
 
@@ -84,7 +97,7 @@ export function useFilterBuilder({ sample }: { sample: string }): FilterBuilderS
     setSampleText(text);
     const { schema: next, error: err } = safeInfer(text);
     setError(err);
-    if (!err) setSchema(next);
+    if (!err) setSchema(applyKind(next));
   }
 
   async function onUpload(file: File | undefined) {
