@@ -38,7 +38,11 @@ describe("sidebarToolGroups", () => {
 
   it("keeps tools within a group in toolRegistry order", () => {
     const jsonb = sidebarToolGroups().find((g) => g.pkg.name === "@rfjs/jsonb-query");
-    expect(jsonb?.tools.map((t) => t.id)).toEqual(["jsonb-query-generator", "query-builder"]);
+    expect(jsonb?.tools.map((t) => t.id)).toEqual([
+      "jsonb-query-generator",
+      "query-builder",
+      "jsonb-query-builder",
+    ]);
   });
 
   it("excludes workbench-surface tools", () => {
