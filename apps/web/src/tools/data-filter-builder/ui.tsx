@@ -34,6 +34,10 @@ export function DataFilterBuilder() {
     removeCondition: t("dfbRemoveCondition"),
     elemMatch: t("dfbElemMatch"),
     valueHint: t("dfbValueHint"),
+    toggleGroup: t("dfbToggleGroup"),
+    collapsedConditions: t("dfbCollapsedConditions"),
+    collapsedGroups: t("dfbCollapsedGroups"),
+    collapsedEmpty: t("dfbCollapsedEmpty"),
   };
 
   const fb = useFilterBuilder({ sample: SAMPLE });

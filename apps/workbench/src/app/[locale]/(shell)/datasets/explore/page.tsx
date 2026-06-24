@@ -27,6 +27,10 @@ export default async function ExplorePage({ params }: { params: Promise<{ locale
       removeGroup: t("tree.removeGroup"),
       removeCondition: t("tree.removeCondition"),
       elemMatch: t("tree.elemMatch"),
+      toggleGroup: t("tree.toggleGroup"),
+      collapsedConditions: t("tree.collapsedConditions"),
+      collapsedGroups: t("tree.collapsedGroups"),
+      collapsedEmpty: t("tree.collapsedEmpty"),
     },
   };
   return <DatasetExplorer labels={labels} />;

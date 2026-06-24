@@ -40,6 +40,10 @@ export function JsonbQueryBuilder() {
     removeCondition: t("jqbRemoveCondition"),
     elemMatch: t("jqbElemMatch"),
     valueHint: t("jqbValueHint"),
+    toggleGroup: t("jqbToggleGroup"),
+    collapsedConditions: t("jqbCollapsedConditions"),
+    collapsedGroups: t("jqbCollapsedGroups"),
+    collapsedEmpty: t("jqbCollapsedEmpty"),
   };
 
   const compiled = useMemo(

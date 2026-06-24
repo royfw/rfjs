@@ -40,6 +40,10 @@ export function MongoQueryBuilder() {
     removeCondition: t("mqbRemoveCondition"),
     elemMatch: t("mqbElemMatch"),
     valueHint: t("mqbValueHint"),
+    toggleGroup: t("mqbToggleGroup"),
+    collapsedConditions: t("mqbCollapsedConditions"),
+    collapsedGroups: t("mqbCollapsedGroups"),
+    collapsedEmpty: t("mqbCollapsedEmpty"),
   };
 
   const compiled = useMemo(

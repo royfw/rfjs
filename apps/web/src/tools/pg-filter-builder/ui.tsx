@@ -50,6 +50,10 @@ export function PgFilterBuilder() {
     removeCondition: t("pfbRemoveCondition"),
     elemMatch: t("pfbElemMatch"),
     valueHint: t("pfbValueHint"),
+    toggleGroup: t("pfbToggleGroup"),
+    collapsedConditions: t("pfbCollapsedConditions"),
+    collapsedGroups: t("pfbCollapsedGroups"),
+    collapsedEmpty: t("pfbCollapsedEmpty"),
   };
 
   const compiled = useMemo(

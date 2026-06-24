@@ -40,6 +40,10 @@ export function SqlFilterBuilder() {
     removeCondition: t("sfbRemoveCondition"),
     elemMatch: t("sfbElemMatch"),
     valueHint: t("sfbValueHint"),
+    toggleGroup: t("sfbToggleGroup"),
+    collapsedConditions: t("sfbCollapsedConditions"),
+    collapsedGroups: t("sfbCollapsedGroups"),
+    collapsedEmpty: t("sfbCollapsedEmpty"),
   };
 
   const compiled = useMemo(
