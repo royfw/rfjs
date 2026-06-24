@@ -38,6 +38,9 @@ export interface FilterTreeLabels {
   collapsedGroups?: string;
   /** collapsed summary when the group has no children. Fallback: "empty". */
   collapsedEmpty?: string;
+  /** Map of operator key -> localized label for the operator Select and the
+   * collapsed-group preview. Missing keys fall back to the raw op. */
+  operatorLabels?: Record<string, string>;
 }
 
 const id = () => crypto.randomUUID();
@@ -62,14 +65,15 @@ function formatPreviewValue(v: unknown): string {
 }
 
 // Indented, label-free preview of a collapsed subtree for the hover tooltip.
-function previewLines(group: BuilderGroup, indent = ""): string[] {
+function previewLines(group: BuilderGroup, labels: FilterTreeLabels, indent = ""): string[] {
   const lines: string[] = [];
   for (const child of group.children) {
     if (child.kind === "group") {
-      lines.push(indent + child.logic.toUpperCase());
-      lines.push(...previewLines(child, indent + "   "));
+      lines.push(indent + (labels.logic[child.logic] ?? child.logic.toUpperCase()));
+      lines.push(...previewLines(child, labels, indent + "   "));
     } else {
-      lines.push(`${indent}${child.field || "—"} ${child.operator || "?"}${formatPreviewValue(child.value)}`);
+      const op = labels.operatorLabels?.[child.operator] ?? child.operator;
+      lines.push(`${indent}${child.field || "—"} ${op || "?"}${formatPreviewValue(child.value)}`);
     }
   }
   return lines;
@@ -146,7 +150,7 @@ export function FilterTreeEditor({
               </span>
             </TooltipTrigger>
             <TooltipContent className="max-w-[340px] whitespace-pre font-mono text-xs">
-              {previewLines(group).join("\n") || (labels.collapsedEmpty ?? "empty")}
+              {previewLines(group, labels).join("\n") || (labels.collapsedEmpty ?? "empty")}
             </TooltipContent>
           </Tooltip>
         ) : (
@@ -291,7 +295,7 @@ function ConditionRow({
           <SelectContent>
             {ops.map((o) => (
               <SelectItem key={o.op} value={o.op} className="font-mono">
-                {o.op}
+                {labels.operatorLabels?.[o.op] ?? o.op}
               </SelectItem>
             ))}
           </SelectContent>

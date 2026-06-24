@@ -84,6 +84,39 @@ function setup(onChange = vi.fn()) {
   return onChange;
 }
 
+describe("FilterTreeEditor — operator labels", () => {
+  it("shows the localized label for a condition's operator when operatorLabels is passed", () => {
+    render(
+      <FilterTreeEditor
+        group={tree}
+        engineId="data-filter"
+        schema={schema}
+        onChange={vi.fn()}
+        onCreateField={vi.fn()}
+        labels={{ ...collapseLabels, operatorLabels: { gt: "大於" } }}
+      />,
+    );
+    // the c1 condition uses operator "gt" → its Select trigger shows the localized label
+    expect(screen.getByText("大於")).toBeTruthy();
+  });
+
+  it("falls back to the raw op when operatorLabels is omitted", () => {
+    render(
+      <FilterTreeEditor
+        group={tree}
+        engineId="data-filter"
+        schema={schema}
+        onChange={vi.fn()}
+        onCreateField={vi.fn()}
+        labels={collapseLabels}
+      />,
+    );
+    // no operatorLabels → trigger shows the raw op "gt"
+    expect(screen.getByText("gt")).toBeTruthy();
+    expect(screen.queryByText("大於")).toBeNull();
+  });
+});
+
 describe("FilterTreeEditor — group collapse", () => {
   it("renders expanded by default (children visible, add buttons present)", () => {
     setup();
