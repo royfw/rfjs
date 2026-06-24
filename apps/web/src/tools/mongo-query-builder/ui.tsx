@@ -12,6 +12,7 @@ import {
   SampleCard,
   toCompileContext,
   useFilterBuilder,
+  useOperatorLabels,
 } from "@/tools/_filter-builder";
 
 const SAMPLE = JSON.stringify(
@@ -25,6 +26,7 @@ const SAMPLE = JSON.stringify(
 
 export function MongoQueryBuilder() {
   const t = useTranslations("ToolUI");
+  const operatorLabels = useOperatorLabels();
   const fb = useFilterBuilder({ sample: SAMPLE });
 
   const treeLabels: FilterTreeLabels = {
@@ -40,6 +42,11 @@ export function MongoQueryBuilder() {
     removeCondition: t("mqbRemoveCondition"),
     elemMatch: t("mqbElemMatch"),
     valueHint: t("mqbValueHint"),
+    toggleGroup: t("mqbToggleGroup"),
+    collapsedConditions: t("mqbCollapsedConditions"),
+    collapsedGroups: t("mqbCollapsedGroups"),
+    collapsedEmpty: t("mqbCollapsedEmpty"),
+    operatorLabels,
   };
 
   const compiled = useMemo(

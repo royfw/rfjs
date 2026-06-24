@@ -1,3 +1,4 @@
+import { OPERATOR_KEYS } from "@rfjs/filter-builder-ui";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { DatasetExplorer, type ExplorerLabels } from "@/components/explorer/dataset-explorer";
@@ -6,6 +7,7 @@ export default async function ExplorePage({ params }: { params: Promise<{ locale
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Explorer");
+  const tOp = await getTranslations("Operators");
   const labels: ExplorerLabels = {
     title: t("title"),
     description: t("description"),
@@ -27,6 +29,11 @@ export default async function ExplorePage({ params }: { params: Promise<{ locale
       removeGroup: t("tree.removeGroup"),
       removeCondition: t("tree.removeCondition"),
       elemMatch: t("tree.elemMatch"),
+      toggleGroup: t("tree.toggleGroup"),
+      collapsedConditions: t("tree.collapsedConditions"),
+      collapsedGroups: t("tree.collapsedGroups"),
+      collapsedEmpty: t("tree.collapsedEmpty"),
+      operatorLabels: Object.fromEntries(OPERATOR_KEYS.map((k) => [k, tOp(k)])),
     },
   };
   return <DatasetExplorer labels={labels} />;

@@ -72,6 +72,15 @@
       "request": "解碼請求失敗"
     }
   },
+  "Operators": {
+    "eq": "等於", "neq": "不等於", "ieq": "等於(不分大小寫)", "ineq": "不等於(不分大小寫)",
+    "gt": "大於", "gte": "大於等於", "lt": "小於", "lte": "小於等於", "range": "介於",
+    "contains": "包含", "icontains": "包含(不分大小寫)", "startswith": "開頭為", "istartswith": "開頭為(不分大小寫)", "endswith": "結尾為", "iendswith": "結尾為(不分大小寫)",
+    "terms": "屬於", "nin": "不屬於", "containsall": "全部包含",
+    "isnull": "為 null", "isnotnull": "不為 null", "isempty": "為空", "isnotempty": "非空",
+    "haskey": "含鍵", "hasanykey": "含任一鍵", "hasallkeys": "含所有鍵",
+    "elemmatch": "元素符合"
+  },
   "Packages": {
     "data-filter": { "description": "用 JSONPath 條件篩選記憶體內資料。" },
     "data-transform": { "description": "資料型別轉換工具(字串/數字/布林/日期)。" },

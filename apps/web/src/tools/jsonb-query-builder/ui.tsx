@@ -12,6 +12,7 @@ import {
   SampleCard,
   toCompileContext,
   useFilterBuilder,
+  useOperatorLabels,
 } from "@/tools/_filter-builder";
 
 const SAMPLE = JSON.stringify(
@@ -25,6 +26,7 @@ const SAMPLE = JSON.stringify(
 
 export function JsonbQueryBuilder() {
   const t = useTranslations("ToolUI");
+  const operatorLabels = useOperatorLabels();
   const fb = useFilterBuilder({ sample: SAMPLE });
 
   const treeLabels: FilterTreeLabels = {
@@ -40,6 +42,11 @@ export function JsonbQueryBuilder() {
     removeCondition: t("jqbRemoveCondition"),
     elemMatch: t("jqbElemMatch"),
     valueHint: t("jqbValueHint"),
+    toggleGroup: t("jqbToggleGroup"),
+    collapsedConditions: t("jqbCollapsedConditions"),
+    collapsedGroups: t("jqbCollapsedGroups"),
+    collapsedEmpty: t("jqbCollapsedEmpty"),
+    operatorLabels,
   };
 
   const compiled = useMemo(

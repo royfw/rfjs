@@ -5,7 +5,7 @@ import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
-import { MetadataStrip, RISE, SampleCard, useFilterBuilder } from "@/tools/_filter-builder";
+import { MetadataStrip, RISE, SampleCard, useFilterBuilder, useOperatorLabels } from "@/tools/_filter-builder";
 
 import { DataPanel } from "./ui/data-panel";
 
@@ -20,6 +20,7 @@ const SAMPLE = JSON.stringify(
 
 export function DataFilterBuilder() {
   const t = useTranslations("ToolUI");
+  const operatorLabels = useOperatorLabels();
 
   const treeLabels: FilterTreeLabels = {
     logic: {
@@ -34,6 +35,11 @@ export function DataFilterBuilder() {
     removeCondition: t("dfbRemoveCondition"),
     elemMatch: t("dfbElemMatch"),
     valueHint: t("dfbValueHint"),
+    toggleGroup: t("dfbToggleGroup"),
+    collapsedConditions: t("dfbCollapsedConditions"),
+    collapsedGroups: t("dfbCollapsedGroups"),
+    collapsedEmpty: t("dfbCollapsedEmpty"),
+    operatorLabels,
   };
 
   const fb = useFilterBuilder({ sample: SAMPLE });
