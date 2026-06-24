@@ -72,8 +72,8 @@
       "removeGroup": "remove group",
       "elemMatch": "elemmatch (nested)",
       "toggleGroup": "Collapse / expand group",
-      "collapsedConditions": "{count} cond",
-      "collapsedGroups": "{count} grp",
+      "collapsedConditions": "cond",
+      "collapsedGroups": "grp",
       "collapsedEmpty": "empty"
     }
   }

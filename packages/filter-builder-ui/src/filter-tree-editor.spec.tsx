@@ -44,8 +44,8 @@ const collapseLabels: FilterTreeLabels = {
   removeCondition: "remove condition",
   elemMatch: "elemmatch",
   toggleGroup: "toggle group",
-  collapsedConditions: "{count} cond",
-  collapsedGroups: "{count} grp",
+  collapsedConditions: "cond",
+  collapsedGroups: "grp",
   collapsedEmpty: "empty",
 };
 

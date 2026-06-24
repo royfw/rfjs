@@ -72,8 +72,8 @@
       "removeGroup": "移除群組",
       "elemMatch": "elemmatch(巢狀)",
       "toggleGroup": "收合 / 展開群組",
-      "collapsedConditions": "{count} 條件",
-      "collapsedGroups": "{count} 群組",
+      "collapsedConditions": "條件",
+      "collapsedGroups": "群組",
       "collapsedEmpty": "空群組"
     }
   }

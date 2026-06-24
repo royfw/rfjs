@@ -32,9 +32,11 @@ export interface FilterTreeLabels {
   valueHint?: string;
   /** aria-label for the collapse/expand chevron. Fallback: "toggle group". */
   toggleGroup?: string;
-  /** collapsed summary — conditions unit; "{count}" is substituted. Fallback: "{count} cond". */
+  /** collapsed summary — conditions unit word; the count is prepended by the
+   * component (e.g. "cond" → "2 cond"). Fallback: "cond". No "{count}" placeholder. */
   collapsedConditions?: string;
-  /** collapsed summary — groups unit; "{count}" is substituted. Fallback: "{count} grp". */
+  /** collapsed summary — groups unit word; the count is prepended by the
+   * component (e.g. "grp" → "1 grp"). Fallback: "grp". No "{count}" placeholder. */
   collapsedGroups?: string;
   /** collapsed summary when the group has no children. Fallback: "empty". */
   collapsedEmpty?: string;
@@ -102,8 +104,8 @@ export function FilterTreeEditor({
   const condCount = group.children.filter((c) => c.kind === "condition").length;
   const groupCount = group.children.filter((c) => c.kind === "group").length;
   const summaryParts: string[] = [];
-  if (condCount) summaryParts.push((labels.collapsedConditions ?? "{count} cond").replace("{count}", String(condCount)));
-  if (groupCount) summaryParts.push((labels.collapsedGroups ?? "{count} grp").replace("{count}", String(groupCount)));
+  if (condCount) summaryParts.push(`${condCount} ${labels.collapsedConditions ?? "cond"}`);
+  if (groupCount) summaryParts.push(`${groupCount} ${labels.collapsedGroups ?? "grp"}`);
   const summary = summaryParts.join(" · ") || (labels.collapsedEmpty ?? "empty");
   return (
     <div className={depth > 0 ? "rounded-md border border-border p-2" : ""}>
