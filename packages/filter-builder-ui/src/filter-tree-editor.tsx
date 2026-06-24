@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Badge } from "@rfjs/web-ui/components/badge";
 import { Button } from "@rfjs/web-ui/components/button";
@@ -11,7 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@rfjs/web-ui/components/select";
-import { X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@rfjs/web-ui/components/tooltip";
+import { ChevronDown, X } from "lucide-react";
 
 import { getEngine, addCondition, addGroup, removeNode, setLogic, updateNode } from "@rfjs/filter-builder";
 import type { EngineId, BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@rfjs/filter-builder";
@@ -29,6 +30,14 @@ export interface FilterTreeLabels {
   elemMatch: string;
   /** Placeholder hint for multi-value (list) operators, e.g. "type, Enter to add". */
   valueHint?: string;
+  /** aria-label for the collapse/expand chevron. Fallback: "toggle group". */
+  toggleGroup?: string;
+  /** collapsed summary — conditions unit; "{count}" is substituted. Fallback: "{count} cond". */
+  collapsedConditions?: string;
+  /** collapsed summary — groups unit; "{count}" is substituted. Fallback: "{count} grp". */
+  collapsedGroups?: string;
+  /** collapsed summary when the group has no children. Fallback: "empty". */
+  collapsedEmpty?: string;
 }
 
 const id = () => crypto.randomUUID();
@@ -45,6 +54,26 @@ const CROW_CSS = `
 .fbu-value{grid-area:value;min-width:0}
 .fbu-remove{grid-area:remove;display:flex;justify-content:flex-end}
 `;
+
+function formatPreviewValue(v: unknown): string {
+  if (v === undefined || v === null || v === "") return "";
+  if (Array.isArray(v)) return " " + v.map((x) => String(x)).join(", ");
+  return " " + String(v);
+}
+
+// Indented, label-free preview of a collapsed subtree for the hover tooltip.
+function previewLines(group: BuilderGroup, indent = ""): string[] {
+  const lines: string[] = [];
+  for (const child of group.children) {
+    if (child.kind === "group") {
+      lines.push(indent + child.logic.toUpperCase());
+      lines.push(...previewLines(child, indent + "   "));
+    } else {
+      lines.push(`${indent}${child.field || "—"} ${child.operator || "?"}${formatPreviewValue(child.value)}`);
+    }
+  }
+  return lines;
+}
 
 export function FilterTreeEditor({
   group,
@@ -65,10 +94,28 @@ export function FilterTreeEditor({
   onRemove?: () => void;
   depth?: number;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const condCount = group.children.filter((c) => c.kind === "condition").length;
+  const groupCount = group.children.filter((c) => c.kind === "group").length;
+  const summaryParts: string[] = [];
+  if (condCount) summaryParts.push((labels.collapsedConditions ?? "{count} cond").replace("{count}", String(condCount)));
+  if (groupCount) summaryParts.push((labels.collapsedGroups ?? "{count} grp").replace("{count}", String(groupCount)));
+  const summary = summaryParts.join(" · ") || (labels.collapsedEmpty ?? "empty");
   return (
     <div className={depth > 0 ? "rounded-md border border-border p-2" : ""}>
       {depth === 0 ? <style>{CROW_CSS}</style> : null}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className={`flex flex-wrap items-center gap-2 ${collapsed ? "" : "mb-3"}`}>
+        <button
+          type="button"
+          aria-label={labels.toggleGroup ?? "toggle group"}
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((v) => !v)}
+          className="flex size-6 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent/60 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <ChevronDown
+            className={`size-4 transition-transform motion-reduce:transition-none ${collapsed ? "-rotate-90" : ""}`}
+          />
+        </button>
         <Select
           value={group.logic}
           onValueChange={(v) => onChange(setLogic(group, group.id, v as LogicOp))}
@@ -88,12 +135,30 @@ export function FilterTreeEditor({
             ))}
           </SelectContent>
         </Select>
-        <Button size="xs" variant="outline" onClick={() => onChange(addCondition(group, group.id, id))}>
-          {labels.addCondition}
-        </Button>
-        <Button size="xs" variant="outline" onClick={() => onChange(addGroup(group, group.id, id))}>
-          {labels.addGroup}
-        </Button>
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                tabIndex={0}
+                className="cursor-help rounded font-mono text-xs text-muted-foreground underline decoration-dotted underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                {summary}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[340px] whitespace-pre font-mono text-xs">
+              {previewLines(group).join("\n") || (labels.collapsedEmpty ?? "empty")}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <>
+            <Button size="xs" variant="outline" onClick={() => onChange(addCondition(group, group.id, id))}>
+              {labels.addCondition}
+            </Button>
+            <Button size="xs" variant="outline" onClick={() => onChange(addGroup(group, group.id, id))}>
+              {labels.addGroup}
+            </Button>
+          </>
+        )}
         {onRemove ? (
           <Button
             size="icon-xs"
@@ -106,36 +171,38 @@ export function FilterTreeEditor({
           </Button>
         ) : null}
       </div>
-      <div className="ml-1 flex flex-col gap-2 border-l border-slab-border pl-4">
-        {group.children.map((child) =>
-          child.kind === "group" ? (
-            <FilterTreeEditor
-              key={child.id}
-              group={child}
-              engineId={engineId}
-              schema={schema}
-              labels={labels}
-              depth={depth + 1}
-              onChange={(nextChild) =>
-                onChange({ ...group, children: group.children.map((c) => (c.id === child.id ? nextChild : c)) })
-              }
-              onRemove={() => onChange(removeNode(group, child.id))}
-              onCreateField={onCreateField}
-            />
-          ) : (
-            <ConditionRow
-              key={child.id}
-              condition={child}
-              engineId={engineId}
-              schema={schema}
-              labels={labels}
-              onChange={(patch) => onChange(updateNode(group, child.id, patch))}
-              onRemove={() => onChange(removeNode(group, child.id))}
-              onCreateField={onCreateField}
-            />
-          ),
-        )}
-      </div>
+      {collapsed ? null : (
+        <div className="ml-1 flex flex-col gap-2 border-l border-slab-border pl-4">
+          {group.children.map((child) =>
+            child.kind === "group" ? (
+              <FilterTreeEditor
+                key={child.id}
+                group={child}
+                engineId={engineId}
+                schema={schema}
+                labels={labels}
+                depth={depth + 1}
+                onChange={(nextChild) =>
+                  onChange({ ...group, children: group.children.map((c) => (c.id === child.id ? nextChild : c)) })
+                }
+                onRemove={() => onChange(removeNode(group, child.id))}
+                onCreateField={onCreateField}
+              />
+            ) : (
+              <ConditionRow
+                key={child.id}
+                condition={child}
+                engineId={engineId}
+                schema={schema}
+                labels={labels}
+                onChange={(patch) => onChange(updateNode(group, child.id, patch))}
+                onRemove={() => onChange(removeNode(group, child.id))}
+                onCreateField={onCreateField}
+              />
+            ),
+          )}
+        </div>
+      )}
     </div>
   );
 }
