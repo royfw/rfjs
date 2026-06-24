@@ -12,6 +12,7 @@ import {
   SampleCard,
   toCompileContext,
   useFilterBuilder,
+  useOperatorLabels,
 } from "@/tools/_filter-builder";
 
 const SAMPLE = JSON.stringify(
@@ -25,6 +26,7 @@ const SAMPLE = JSON.stringify(
 
 export function SqlFilterBuilder() {
   const t = useTranslations("ToolUI");
+  const operatorLabels = useOperatorLabels();
   const fb = useFilterBuilder({ sample: SAMPLE });
 
   const treeLabels: FilterTreeLabels = {
@@ -44,6 +46,7 @@ export function SqlFilterBuilder() {
     collapsedConditions: t("sfbCollapsedConditions"),
     collapsedGroups: t("sfbCollapsedGroups"),
     collapsedEmpty: t("sfbCollapsedEmpty"),
+    operatorLabels,
   };
 
   const compiled = useMemo(

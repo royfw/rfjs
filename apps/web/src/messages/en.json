@@ -72,6 +72,15 @@
       "request": "Decode request failed"
     }
   },
+  "Operators": {
+    "eq": "equals", "neq": "not equals", "ieq": "equals (i)", "ineq": "not equals (i)",
+    "gt": "greater than", "gte": "greater or equal", "lt": "less than", "lte": "less or equal", "range": "between",
+    "contains": "contains", "icontains": "contains (i)", "startswith": "starts with", "istartswith": "starts with (i)", "endswith": "ends with", "iendswith": "ends with (i)",
+    "terms": "in", "nin": "not in", "containsall": "contains all",
+    "isnull": "is null", "isnotnull": "is not null", "isempty": "is empty", "isnotempty": "is not empty",
+    "haskey": "has key", "hasanykey": "has any key", "hasallkeys": "has all keys",
+    "elemmatch": "element matches"
+  },
   "Packages": {
     "data-filter": { "description": "Filter in-memory data with JSONPath-addressed conditions." },
     "data-transform": { "description": "Data type transformation utilities (string/number/boolean/date)." },

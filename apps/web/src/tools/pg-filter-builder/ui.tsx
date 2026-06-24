@@ -17,6 +17,7 @@ import {
   SampleCard,
   toCompileContext,
   useFilterBuilder,
+  useOperatorLabels,
 } from "@/tools/_filter-builder";
 
 const SAMPLE = JSON.stringify(
@@ -35,6 +36,7 @@ const deriveKind = (f: FieldSchema): FieldKind =>
 
 export function PgFilterBuilder() {
   const t = useTranslations("ToolUI");
+  const operatorLabels = useOperatorLabels();
   const fb = useFilterBuilder({ sample: SAMPLE, deriveKind });
 
   const treeLabels: FilterTreeLabels = {
@@ -54,6 +56,7 @@ export function PgFilterBuilder() {
     collapsedConditions: t("pfbCollapsedConditions"),
     collapsedGroups: t("pfbCollapsedGroups"),
     collapsedEmpty: t("pfbCollapsedEmpty"),
+    operatorLabels,
   };
 
   const compiled = useMemo(
