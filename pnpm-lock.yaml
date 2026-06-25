@@ -196,6 +196,12 @@ importers:
       '@rfjs/data-transform':
         specifier: workspace:*
         version: link:../../packages/data-transform
+      '@rfjs/es-client':
+        specifier: workspace:*
+        version: link:../../packages/es-client
+      '@rfjs/es-query':
+        specifier: workspace:*
+        version: link:../../packages/es-query
       '@rfjs/filter-builder':
         specifier: workspace:*
         version: link:../../packages/filter-builder

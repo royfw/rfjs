@@ -90,6 +90,14 @@ export const toolRegistry: ToolDefinition[] = [
     tags: ['builder', 'playground'],
   },
   {
+    id: 'es-client-demo',
+    category: 'query',
+    surface: 'web',
+    status: 'preview',
+    relatedPackages: ['@rfjs/es-client', '@rfjs/es-query'],
+    tags: ['client', 'playground'],
+  },
+  {
     id: 'pg-filter-builder',
     category: 'query',
     surface: 'web',
