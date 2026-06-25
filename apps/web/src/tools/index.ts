@@ -4,6 +4,7 @@ import type { ToolModule } from "./types";
 
 import { tool as dataFilterBuilder } from "./data-filter-builder";
 import { tool as dataFilterTester } from "./data-filter-tester";
+import { tool as esClientDemo } from "./es-client-demo";
 import { tool as esQueryBuilder } from "./es-query-builder";
 import { tool as jsonbQueryBuilder } from "./jsonb-query-builder";
 import { tool as jsonbQueryGenerator } from "./jsonb-query-generator";
@@ -28,6 +29,7 @@ export const toolModules: ToolModule[] = [
   sqlFilterBuilder,
   mongoQueryBuilder,
   esQueryBuilder,
+  esClientDemo,
   pgFilterBuilder,
 ];
 

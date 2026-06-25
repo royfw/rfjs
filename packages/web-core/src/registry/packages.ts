@@ -81,6 +81,7 @@ export const packageRegistry: PackageDefinition[] = [
     href: '/packages/es-client',
     github: GITHUB,
     tags: ['elasticsearch', 'opensearch', 'client'],
+    relatedTools: ['es-client-demo'],
   },
   {
     name: '@rfjs/jwt',

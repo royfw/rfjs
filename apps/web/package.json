@@ -16,6 +16,8 @@
     "@rfjs/filter-builder": "workspace:*",
     "@rfjs/filter-builder-ui": "workspace:*",
     "@rfjs/data-filter": "workspace:*",
+    "@rfjs/es-client": "workspace:*",
+    "@rfjs/es-query": "workspace:*",
     "@rfjs/pg-filter": "workspace:*",
     "@rfjs/data-transform": "workspace:*",
     "@rfjs/jsonb-query": "workspace:*",
