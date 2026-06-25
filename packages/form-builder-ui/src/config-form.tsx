@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { configToZod, type FormConfig } from '@rfjs/form-builder';
+import { configToZod, resolveLabel, type FormConfig } from '@rfjs/form-builder';
 import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
 
@@ -18,9 +18,11 @@ export interface ConfigFormProps {
   defaultValues?: Record<string, unknown>;
   onSubmit: (values: Record<string, unknown>) => void;
   submitLabel?: string;
+  /** BCP-47 locale used to resolve `LocalizedLabel` field labels. Defaults to `'en'`. */
+  locale?: string;
 }
 
-export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit' }: ConfigFormProps) {
+export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en' }: ConfigFormProps) {
   const resolver = React.useMemo(() => zodResolver(configToZod(config)), [config]);
   const { control, handleSubmit } = useForm({ resolver, defaultValues });
 
@@ -42,7 +44,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
             data-width={width}
             style={width === 'full' ? { gridColumn: '1 / -1' } : undefined}
           >
-            <Label htmlFor={field.key}>{field.label}</Label>
+            <Label htmlFor={field.key}>{resolveLabel(field.label, locale)}</Label>
             <Controller
               control={control}
               name={field.key}

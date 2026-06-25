@@ -34,6 +34,21 @@ describe('ConfigForm', () => {
   });
 });
 
+describe('localized labels', () => {
+  const cfg: FormConfig = {
+    version: 1,
+    fields: [{ key: 'name', label: { en: 'Name', 'zh-TW': '姓名' }, component: 'Input', dataType: 'string' }],
+  };
+  it('renders the label for the given locale', () => {
+    render(<ConfigForm config={cfg} locale="zh-TW" onSubmit={() => {}} />);
+    expect(screen.getByText('姓名')).toBeTruthy();
+  });
+  it('defaults to the en label', () => {
+    render(<ConfigForm config={cfg} onSubmit={() => {}} />);
+    expect(screen.getByText('Name')).toBeTruthy();
+  });
+});
+
 describe('grid layout', () => {
   const gridConfig: FormConfig = {
     version: 1,

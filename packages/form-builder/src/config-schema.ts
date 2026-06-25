@@ -10,7 +10,7 @@ const fieldOptionSchema = z.object({
 
 const fieldConfigSchema = z.object({
   key: z.string().min(1),
-  label: z.string(),
+  label: z.union([z.string(), z.record(z.string(), z.string())]),
   component: z.enum(['Input', 'Textarea', 'Select', 'Checkbox', 'Date']),
   dataType: z.enum(['string', 'numeric', 'date', 'boolean', 'object', 'array']),
   required: z.boolean().optional(),
