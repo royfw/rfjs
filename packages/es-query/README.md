@@ -73,12 +73,14 @@ buildSearchBody(tree, {
 
 ## Group logic → `bool`
 
-| group | bool clause |
-|---|---|
-| `and` | `must` |
-| `or`  | `should` (+ `minimum_should_match: 1`) |
-| `not` | `must_not` |
-| `nor` | `must_not` |
+| group | meaning | bool clause |
+|---|---|---|
+| `and` | all match | `must: [...]` |
+| `or`  | any match | `should: [...]` (+ `minimum_should_match: 1`) |
+| `not` | not all — `¬(a ∧ b)` | `must_not: [{ bool: { must: [...] } }]` |
+| `nor` | none match — `¬(a ∨ b)` | `must_not: [...]` |
+
+`not` and `nor` differ once a group has two or more children (for a single child both reduce to `must_not: [child]`) — matching `@rfjs/jsonb-query` / `@rfjs/sql-filter` (`not (a and b)` vs `not (a or b)`).
 
 ## Operators → clauses
 

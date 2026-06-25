@@ -63,13 +63,52 @@ describe('buildEsQuery', () => {
     });
   });
 
-  it('not group → must_not', () => {
+  it('not group (single child) → must_not', () => {
     const meta: EsFilterMetadata = {
       logic: 'not',
       filters: [{ field: 'status', condition: 'eq', value: 'archived' }],
     };
     expect(buildEsQuery(meta)).toEqual({
       bool: { must_not: [{ term: { status: 'archived' } }] },
+    });
+  });
+
+  // not = NOT(a AND b) = "not all"; the children must be wrapped in a single
+  // bool/must so must_not negates their conjunction (not each one).
+  it('not group (multi child) → must_not of bool/must (negated AND)', () => {
+    const meta: EsFilterMetadata = {
+      logic: 'not',
+      filters: [
+        { field: 'status', condition: 'eq', value: 'open' },
+        { field: 'age', condition: 'gt', dataType: 'number', value: 18 },
+      ],
+    };
+    expect(buildEsQuery(meta)).toEqual({
+      bool: {
+        must_not: [
+          {
+            bool: {
+              must: [{ term: { status: 'open' } }, { range: { age: { gt: 18 } } }],
+            },
+          },
+        ],
+      },
+    });
+  });
+
+  // nor = NOT(a OR b) = "none match" = each clause directly under must_not.
+  it('nor group (multi child) → must_not of each clause (negated OR)', () => {
+    const meta: EsFilterMetadata = {
+      logic: 'nor',
+      filters: [
+        { field: 'status', condition: 'eq', value: 'open' },
+        { field: 'age', condition: 'gt', dataType: 'number', value: 18 },
+      ],
+    };
+    expect(buildEsQuery(meta)).toEqual({
+      bool: {
+        must_not: [{ term: { status: 'open' } }, { range: { age: { gt: 18 } } }],
+      },
     });
   });
 });

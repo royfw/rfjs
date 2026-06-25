@@ -74,12 +74,14 @@ buildSearchBody(tree, {
 
 ## 群組邏輯 → `bool`
 
-| 群組 | bool 子句 |
-|---|---|
-| `and` | `must` |
-| `or`  | `should`（+ `minimum_should_match: 1`） |
-| `not` | `must_not` |
-| `nor` | `must_not` |
+| 群組 | 意義 | bool 子句 |
+|---|---|---|
+| `and` | 全部成立 | `must: [...]` |
+| `or`  | 擇一成立 | `should: [...]`（+ `minimum_should_match: 1`） |
+| `not` | 非全部 —— `¬(a ∧ b)` | `must_not: [{ bool: { must: [...] } }]` |
+| `nor` | 皆不成立 —— `¬(a ∨ b)` | `must_not: [...]` |
+
+`not` 與 `nor` 在群組有兩個以上子節點時才不同（單一子節點時兩者都化簡為 `must_not: [child]`）—— 與 `@rfjs/jsonb-query` / `@rfjs/sql-filter` 一致（`not (a and b)` vs `not (a or b)`）。
 
 ## 運算子 → 子句
 
