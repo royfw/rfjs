@@ -82,7 +82,6 @@ packages/                 # Shared internal packages + publishable libs
   web-core/               # apps/web + workbench tool/package registry + zod schemas (@rfjs/web-core)
   web-ui/                 # Tailwind preset + design tokens + shadcn components for web/workbench (@rfjs/web-ui)
   filter-builder-ui/      # React filter-tree editor over @rfjs/filter-builder (@rfjs/filter-builder-ui)
-  eslint-config/, ui/     # empty placeholders (no source, no consumers yet)
 
 libs/                     # Private workspace libs
   core/                   # Workbench business logic — per-module schema/repository/usecase (@rfjs/core)
@@ -169,7 +168,7 @@ Both Next.js apps are **registry-driven**. `@rfjs/web-core` holds the single sou
 
 - **`apps/web`** — public showcase. Each tool lives in `src/tools/<tool>/` as a self-contained module: `index.ts` (a `ToolModule` descriptor), `ui.tsx` (`"use client"`), pure logic file, `messages.ts` (i18n), and co-located `*.spec.ts`. Tools mount dynamically by slug. A tool's `surface` is `web` (sidebar/package-tree driven) or `workbench` (standalone).
 - **`apps/workbench`** — admin surface: `[locale]` routing (next-intl, en + zh-TW), a `(shell)` layout (sidebar/topbar/command-menu, Zustand stores), PWA manifest/icons, and the `dataset-explorer` (composes `filter-builder-ui` + `pg-filter`).
-- **UI/config packages**: `@rfjs/web-ui` is the shared design system (Tailwind preset + tokens + shadcn/Radix components) consumed by both apps; `@rfjs/filter-builder-ui` is the editor component. Private `@rfjs/*` UI packages are pulled in via Next.js **`transpilePackages`** (dev-time, no build/publish step). `packages/eslint-config` and `packages/ui` are empty placeholders — eslint config is currently app-local.
+- **UI/config packages**: `@rfjs/web-ui` is the shared design system (Tailwind preset + tokens + shadcn/Radix components) consumed by both apps; `@rfjs/filter-builder-ui` is the editor component. Private `@rfjs/*` UI packages are pulled in via Next.js **`transpilePackages`** (dev-time, no build/publish step). ESLint config is currently app-local.
 
 ## CI/CD
 
