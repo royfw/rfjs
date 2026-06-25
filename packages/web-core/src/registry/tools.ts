@@ -82,6 +82,14 @@ export const toolRegistry: ToolDefinition[] = [
     tags: ['builder', 'playground'],
   },
   {
+    id: 'es-query-builder',
+    category: 'query',
+    surface: 'web',
+    status: 'preview',
+    relatedPackages: ['@rfjs/es-query', '@rfjs/filter-builder'],
+    tags: ['builder', 'playground'],
+  },
+  {
     id: 'pg-filter-builder',
     category: 'query',
     surface: 'web',

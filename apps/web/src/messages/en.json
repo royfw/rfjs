@@ -89,6 +89,8 @@
     "sql-filter": { "description": "Generic boolean filter-group to SQL with pluggable leaf renderers." },
     "pg-filter": { "description": "Unified PostgreSQL filter builder over columns and JSONB." },
     "filter-builder": { "description": "Framework-agnostic canonical filter-tree model, schema inference, and engine compilation." },
+    "es-query": { "description": "Elasticsearch / OpenSearch query builder — compile a filter-tree to bool queries." },
+    "es-client": { "description": "Client-agnostic Elasticsearch / OpenSearch execution layer: search, pagination, highlight." },
     "jwt": { "description": "JWT sign/verify/decode helper." },
     "mongo-query": { "description": "MongoDB query builder from filter metadata." },
     "object-utils": { "description": "Object manipulation utilities (flatten, paths, merge)." },

@@ -2,6 +2,7 @@ import type { LocaleMessages } from "./types";
 
 import { messages as dataFilterBuilder } from "./data-filter-builder/messages";
 import { messages as dataFilterTester } from "./data-filter-tester/messages";
+import { messages as esQueryBuilder } from "./es-query-builder/messages";
 import { messages as jsonbQueryBuilder } from "./jsonb-query-builder/messages";
 import { messages as jsonbQueryGenerator } from "./jsonb-query-generator/messages";
 import { messages as jwtDecoder } from "./jwt-decoder/messages";
@@ -24,5 +25,6 @@ export const toolMessages: LocaleMessages[] = [
   jsonbQueryBuilder,
   sqlFilterBuilder,
   mongoQueryBuilder,
+  esQueryBuilder,
   pgFilterBuilder,
 ];
