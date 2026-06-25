@@ -937,6 +937,9 @@ importers:
       '@rfjs/web-ui':
         specifier: workspace:*
         version: link:../web-ui
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.7)
       react-hook-form:
         specifier: ^7.55.0
         version: 7.80.0(react@19.2.7)
