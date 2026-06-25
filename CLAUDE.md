@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **rfjs** is a Turborepo monorepo that serves as a template collection for the `start-ts-by` CLI (npm package). It contains production-ready TypeScript project templates for various use cases — apps, libraries, CLIs, docs sites, ORM wrappers, and full monorepo scaffolds.
 
 The repo has three content types:
-1. **Apps** (`apps/`) — runnable applications: `api`, `web`, `orm-app`, and `workbench`. Beyond demos, `web` + `workbench` + `api` + `libs/core` + `libs/db` form a real working product — a **dataset explorer** with a visual query builder (see "Workbench Stack" and "Web App" below).
+1. **Apps** (`apps/`) — runnable applications: `api`, `web`, and `workbench`. Beyond demos, `web` + `workbench` + `api` + `libs/core` + `libs/db` form a real working product — a **dataset explorer** with a visual query builder (see "Workbench Stack" and "Web App" below).
 2. **Packages/Libs** (`packages/`, `libs/`) — shared libraries; the publishable ones go to npm under `@rfjs/*`, the rest are private workspace deps.
 3. **Templates** (`templates/`) — standalone project templates distributed via `start-ts-by` CLI, registered in `templates/registry.json`
 
@@ -59,7 +59,6 @@ pnpm -F <pkg> vitest      # interactive watch mode
 ```
 apps/                     # Runnable applications
   api/                    # Fastify REST API (esbuild) — serves the workbench dataset endpoints
-  orm-app/                # ORM integration demo (tsdown) — consumes all 4 ORM libs
   web/                    # Next.js web app (port 3000) — package/tool showcase
   workbench/              # Next.js admin app (port 3001) — dataset explorer w/ visual query builder
 
@@ -88,10 +87,6 @@ packages/                 # Shared internal packages + publishable libs
 libs/                     # Private workspace libs
   core/                   # Workbench business logic — per-module schema/repository/usecase (@rfjs/core)
   db/                     # Workbench Drizzle plumbing — connection, schema, migrations, seed (@rfjs/db)
-  orm-drizzle/            # Drizzle ORM wrapper      (these 4 are consumed by orm-app)
-  orm-kysely/             # Kysely ORM wrapper
-  orm-prisma/             # Prisma ORM wrapper
-  orm-typeorm/            # TypeORM wrapper
 
 templates/                # Standalone project templates (start-ts-by CLI)
   apps/                   # App templates: app-esbuild, app-tsdown, fastify-*, koa-esbuild

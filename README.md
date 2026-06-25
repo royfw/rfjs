@@ -42,7 +42,6 @@ The four filter packages layer together: `sql-filter` (generic engine) ← `pg-f
 | [api](apps/api) | Fastify REST API (esbuild) — serves the workbench dataset endpoints |
 | [web](apps/web) | Next.js web app — package & developer-tools showcase |
 | [workbench](apps/workbench) | Next.js admin app — dataset explorer with a visual query builder |
-| [orm-app](apps/orm-app) | ORM integration demo (tsdown) — consumes all 4 ORM libs |
 
 ## Templates
 
@@ -62,6 +61,5 @@ Standalone project templates distributed via `start-ts-by` CLI. See [templates/r
 |-----|-------------|
 | @rfjs/core | Workbench business logic — one folder per module (currently `dataset`) following schema → repository → usecase |
 | @rfjs/db | Workbench Drizzle plumbing for PostgreSQL — connection, schema, migrations, seed |
-| orm-drizzle / orm-kysely / orm-prisma / orm-typeorm | ORM wrappers behind a common `migrateToLatest` / `seedToLatest` API |
 
-`@rfjs/core` and `@rfjs/db` back the `apps/workbench` dataset explorer (via `apps/api`). The four ORM wrappers are consumed by [`apps/orm-app`](apps/orm-app); see each package's own README for runnable usage.
+`@rfjs/core` and `@rfjs/db` back the `apps/workbench` dataset explorer (via `apps/api`). The ORM wrappers (Drizzle / Kysely / Prisma / TypeORM, behind a common `migrateToLatest` / `seedToLatest` API) ship as standalone scaffolds — see the **ORM** templates above.
