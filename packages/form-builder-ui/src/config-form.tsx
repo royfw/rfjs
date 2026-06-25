@@ -24,23 +24,40 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   const resolver = React.useMemo(() => zodResolver(configToZod(config)), [config]);
   const { control, handleSubmit } = useForm({ resolver, defaultValues });
 
+  const columns = config.columns ?? 1;
+
   return (
-    <form onSubmit={handleSubmit((values) => onSubmit(values as Record<string, unknown>))} className="flex flex-col gap-4">
-      {config.fields.map((field) => (
-        <div key={field.key} className="flex flex-col gap-1.5">
-          <Label htmlFor={field.key}>{field.label}</Label>
-          <Controller
-            control={control}
-            name={field.key}
-            render={({ field: rhf }) => (
-              <FieldControl field={field} value={rhf.value} onChange={rhf.onChange} />
-            )}
-          />
-        </div>
-      ))}
-      <Button type="submit" className="self-start">
-        {submitLabel}
-      </Button>
+    <form
+      onSubmit={handleSubmit((values) => onSubmit(values as Record<string, unknown>))}
+      className="grid grid-cols-1 gap-4 md:[grid-template-columns:repeat(var(--form-cols),minmax(0,1fr))]"
+      style={{ '--form-cols': String(columns) } as React.CSSProperties}
+      data-columns={columns}
+    >
+      {config.fields.map((field) => {
+        const width = field.width ?? 'full';
+        return (
+          <div
+            key={field.key}
+            className="flex flex-col gap-1.5"
+            data-width={width}
+            style={width === 'full' ? { gridColumn: '1 / -1' } : undefined}
+          >
+            <Label htmlFor={field.key}>{field.label}</Label>
+            <Controller
+              control={control}
+              name={field.key}
+              render={({ field: rhf }) => (
+                <FieldControl field={field} value={rhf.value} onChange={rhf.onChange} />
+              )}
+            />
+          </div>
+        );
+      })}
+      <div style={{ gridColumn: '1 / -1' }}>
+        <Button type="submit" className="self-start">
+          {submitLabel}
+        </Button>
+      </div>
     </form>
   );
 }

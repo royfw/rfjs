@@ -17,11 +17,13 @@ const fieldConfigSchema = z.object({
   placeholder: z.string().optional(),
   defaultValue: z.unknown().optional(),
   options: z.array(fieldOptionSchema).optional(),
+  width: z.enum(['full', 'half']).optional(),
 });
 
 export const FormConfigSchema: ZodType<FormConfig> = z.object({
   version: z.number().int(),
   fields: z.array(fieldConfigSchema),
+  columns: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
 });
 
 export function parseFormConfig(input: unknown): FormConfig {
