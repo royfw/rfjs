@@ -28,6 +28,11 @@ describe('FormConfigSchema', () => {
     expect(FormConfigSchema.safeParse(bad).success).toBe(false);
   });
 
+  it('rejects a field with an unknown dataType', () => {
+    const bad = { version: 1, fields: [{ key: 'x', label: 'X', component: 'Input', dataType: 'text' }] };
+    expect(FormConfigSchema.safeParse(bad).success).toBe(false);
+  });
+
   it('rejects a field with an empty key', () => {
     const bad = { version: 1, fields: [{ key: '', label: 'X', component: 'Input', dataType: 'string' }] };
     expect(FormConfigSchema.safeParse(bad).success).toBe(false);

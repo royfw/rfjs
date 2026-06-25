@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { ZodType } from 'zod';
 
 import type { FormConfig } from './types';
 
@@ -18,7 +19,7 @@ const fieldConfigSchema = z.object({
   options: z.array(fieldOptionSchema).optional(),
 });
 
-export const FormConfigSchema = z.object({
+export const FormConfigSchema: ZodType<FormConfig> = z.object({
   version: z.number().int(),
   fields: z.array(fieldConfigSchema),
 });
