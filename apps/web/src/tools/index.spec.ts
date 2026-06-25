@@ -19,6 +19,7 @@ const EXPECTED_WEB_TOOL_IDS = [
   "sql-filter-builder",
   "mongo-query-builder",
   "es-query-builder",
+  "es-client-demo",
   "pg-filter-builder",
 ].sort();
 

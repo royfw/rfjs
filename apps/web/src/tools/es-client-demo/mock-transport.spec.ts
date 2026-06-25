@@ -15,8 +15,8 @@ describe("makeMockTransport", () => {
     const res = await t.search({ index: "i", body: { size: 10 } });
     expect(res.hits.total.value).toBe(3);
     expect(res.hits.hits.map((h) => h._id)).toEqual(["a", "b", "c"]);
-    expect(res.hits.hits[0]._source).toEqual(docs[0]);
-    expect(res.hits.hits[0].sort).toEqual([0]);
+    expect(res.hits.hits[0]!._source).toEqual(docs[0]);
+    expect(res.hits.hits[0]!.sort).toEqual([0]);
   });
 
   it("honors size and from", async () => {
@@ -29,7 +29,7 @@ describe("makeMockTransport", () => {
     const t = makeMockTransport(docs);
     const p1 = await t.search({ index: "i", body: { size: 2 } });
     expect(p1.hits.hits.map((h) => h._id)).toEqual(["a", "b"]);
-    const after = p1.hits.hits[1].sort;
+    const after = p1.hits.hits[1]!.sort;
     const p2 = await t.search({ index: "i", body: { size: 2, search_after: after } });
     expect(p2.hits.hits.map((h) => h._id)).toEqual(["c"]);
   });
@@ -40,8 +40,8 @@ describe("makeMockTransport", () => {
       index: "i",
       body: { size: 10, highlight: { fields: { body: {} } } },
     });
-    expect(res.hits.hits[0].highlight).toEqual({ body: ["please <em>refund</em> my order"] });
-    expect(res.hits.hits[1].highlight).toBeUndefined();
+    expect(res.hits.hits[0]!.highlight).toEqual({ body: ["please <em>refund</em> my order"] });
+    expect(res.hits.hits[1]!.highlight).toBeUndefined();
   });
 
   it("openPit returns an id; closePit resolves", async () => {
