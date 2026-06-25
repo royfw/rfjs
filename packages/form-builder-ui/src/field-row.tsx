@@ -17,7 +17,7 @@ const DATATYPE_BY_COMPONENT: Record<FieldComponent, FieldConfig['dataType']> = {
   Date: 'date',
 };
 
-let counter = 0;
+let counter = Math.floor(Math.random() * 1_000_000);
 
 export function makeField(component: FieldComponent): FieldConfig {
   counter += 1;
