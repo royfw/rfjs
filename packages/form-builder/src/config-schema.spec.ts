@@ -43,6 +43,19 @@ describe('FormConfigSchema', () => {
   });
 });
 
+describe('localized labels', () => {
+  it('accepts a record label', () => {
+    const cfg = { version: 1, fields: [{ key: 'n', label: { en: 'Name', 'zh-TW': '姓名' }, component: 'Input', dataType: 'string' }] };
+    expect(parseFormConfig(cfg)).toEqual(cfg);
+  });
+  it('still accepts a string label', () => {
+    expect(FormConfigSchema.safeParse({ version: 1, fields: [{ key: 'n', label: 'Name', component: 'Input', dataType: 'string' }] }).success).toBe(true);
+  });
+  it('rejects a numeric label', () => {
+    expect(FormConfigSchema.safeParse({ version: 1, fields: [{ key: 'n', label: 5, component: 'Input', dataType: 'string' }] }).success).toBe(false);
+  });
+});
+
 describe('grid layout fields', () => {
   it('accepts columns and per-field width', () => {
     const cfg = {
