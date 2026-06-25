@@ -3,10 +3,10 @@ import {
   isEsFieldCondition,
   isEsFilterMetadata,
   type EsBoolQuery,
-  type EsClause,
   type EsDialect,
   type EsFilterMetadata,
   type EsLogicalOperator,
+  type EsQueryClause,
 } from './types';
 
 export interface BuildEsQueryOptions {
@@ -27,7 +27,7 @@ export function buildEsQuery(
   const dialect = opts.dialect ?? 'elasticsearch';
   const bucket = BUCKET[metadata.logic] ?? 'must';
 
-  const clauses: EsClause[] = metadata.filters.map((child) => {
+  const clauses: EsQueryClause[] = metadata.filters.map((child) => {
     if (isEsFilterMetadata(child)) return buildEsQuery(child, opts);
     if (isEsFieldCondition(child)) return toClause(child, dialect);
     return {};

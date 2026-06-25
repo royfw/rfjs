@@ -35,11 +35,14 @@ export interface EsFilterMetadata {
 
 export type EsClause = Record<string, unknown>;
 
+/** A node inside a bool bucket: a leaf clause or a nested bool query. */
+export type EsQueryClause = EsClause | EsBoolQuery;
+
 export interface EsBoolQuery {
   bool: {
-    must?: EsClause[];
-    should?: EsClause[];
-    must_not?: EsClause[];
+    must?: EsQueryClause[];
+    should?: EsQueryClause[];
+    must_not?: EsQueryClause[];
     minimum_should_match?: number;
   };
 }
