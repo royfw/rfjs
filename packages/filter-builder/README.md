@@ -1,5 +1,7 @@
 # @rfjs/filter-builder
 
+> 繁體中文 → [README.zh-TW.md](./README.zh-TW.md)
+
 Framework-agnostic **canonical filter-tree** builder: an editable tree model with
 stable node IDs, immutable tree-ops, schema inference, reverse-parse, live
 in-memory matching, and a registry of **engines** that compile the same tree to
