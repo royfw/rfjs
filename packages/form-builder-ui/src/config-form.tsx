@@ -30,7 +30,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     <form
       onSubmit={handleSubmit((values) => onSubmit(values as Record<string, unknown>))}
       className="grid grid-cols-1 gap-4 md:[grid-template-columns:repeat(var(--form-cols),minmax(0,1fr))]"
-      style={{ '--form-cols': columns } as React.CSSProperties}
+      style={{ '--form-cols': String(columns) } as React.CSSProperties}
       data-columns={columns}
     >
       {config.fields.map((field) => {
