@@ -10,6 +10,10 @@ import { Button } from '@rfjs/web-ui/components/button';
 import { FieldControl } from './field-control';
 
 export interface ConfigFormProps {
+  /**
+   * `config` is read once at mount (react-hook-form does not re-initialise from a changed resolver);
+   * remount with a React `key` to swap configs at runtime.
+   */
   config: FormConfig;
   defaultValues?: Record<string, unknown>;
   onSubmit: (values: Record<string, unknown>) => void;

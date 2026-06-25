@@ -27,4 +27,10 @@ describe('FieldControl', () => {
     fireEvent.click(screen.getByRole('checkbox'));
     expect(onChange).toHaveBeenCalledWith(true);
   });
+
+  it('renders a numeric Input with type="number"', () => {
+    const field: FieldConfig = { key: 'age', label: 'Age', component: 'Input', dataType: 'numeric' };
+    const { container } = render(<FieldControl field={field} value="" onChange={() => {}} />);
+    expect(container.querySelector('input[type="number"]')).toBeTruthy();
+  });
 });

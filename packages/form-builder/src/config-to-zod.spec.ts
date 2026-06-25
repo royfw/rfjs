@@ -30,9 +30,52 @@ describe('configToZod', () => {
     expect(schema.safeParse({ name: '', age: 1, agree: false, role: 'admin' }).success).toBe(false);
   });
 
-  it('omits optional fields', () => {
+  it('omits optional fields and their parsed value is undefined', () => {
     const schema = configToZod(config);
-    expect(schema.safeParse({ name: 'Ada', agree: false, role: 'user' }).success).toBe(true);
+    const result = schema.safeParse({ name: 'Ada', agree: false, role: 'user' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.age).toBeUndefined();
+    }
+  });
+
+  it('optional numeric with empty string parses to undefined (not 0)', () => {
+    const schema = configToZod(config);
+    const result = schema.safeParse({ name: 'Ada', age: '', agree: false, role: 'user' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.age).toBeUndefined();
+    }
+  });
+
+  it('required numeric with empty string fails validation', () => {
+    const requiredNumericConfig: FormConfig = {
+      version: 1,
+      fields: [{ key: 'score', label: 'Score', component: 'Input', dataType: 'numeric', required: true }],
+    };
+    const schema = configToZod(requiredNumericConfig);
+    expect(schema.safeParse({ score: '' }).success).toBe(false);
+  });
+
+  it('optional Select with empty string parses to undefined', () => {
+    const optionalSelectConfig: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'role',
+          label: 'Role',
+          component: 'Select',
+          dataType: 'string',
+          options: [{ label: 'Admin', value: 'admin' }, { label: 'User', value: 'user' }],
+        },
+      ],
+    };
+    const schema = configToZod(optionalSelectConfig);
+    const result = schema.safeParse({ role: '' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.role).toBeUndefined();
+    }
   });
 
   it('rejects a Select value outside its options', () => {
