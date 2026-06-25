@@ -42,7 +42,6 @@
 | [api](apps/api) | Fastify REST API（esbuild）— 提供 workbench 的 dataset 端點 |
 | [web](apps/web) | Next.js 網頁應用 — 套件與開發者工具展示站 |
 | [workbench](apps/workbench) | Next.js 管理端應用 — 含視覺化查詢建構器的 dataset explorer |
-| [orm-app](apps/orm-app) | ORM 整合範例（tsdown）— 使用全部 4 個 ORM 函式庫 |
 
 ## 模板
 
@@ -62,6 +61,5 @@
 |--------|------|
 | @rfjs/core | Workbench 業務邏輯 — 每個模組一個資料夾（目前為 `dataset`），遵循 schema → repository → usecase |
 | @rfjs/db | Workbench 的 Drizzle PostgreSQL plumbing — 連線、schema、migrations、seed |
-| orm-drizzle / orm-kysely / orm-prisma / orm-typeorm | 將各 ORM 封裝在共用的 `migrateToLatest` / `seedToLatest` API 之後 |
 
-`@rfjs/core` 與 `@rfjs/db` 支撐 `apps/workbench` 的 dataset explorer（透過 `apps/api`）。4 個 ORM 封裝由 [`apps/orm-app`](apps/orm-app) 使用；可執行範例見各套件自身的 README。
+`@rfjs/core` 與 `@rfjs/db` 支撐 `apps/workbench` 的 dataset explorer（透過 `apps/api`）。ORM 封裝（Drizzle / Kysely / Prisma / TypeORM,共用 `migrateToLatest` / `seedToLatest` API）以獨立 scaffold 形式提供 —— 見上方 **ORM** 模板。
