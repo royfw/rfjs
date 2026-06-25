@@ -311,6 +311,12 @@ importers:
       '@rfjs/filter-builder-ui':
         specifier: workspace:*
         version: link:../../packages/filter-builder-ui
+      '@rfjs/form-builder':
+        specifier: workspace:*
+        version: link:../../packages/form-builder
+      '@rfjs/form-builder-ui':
+        specifier: workspace:*
+        version: link:../../packages/form-builder-ui
       '@rfjs/pg-filter':
         specifier: workspace:*
         version: link:../../packages/pg-filter
