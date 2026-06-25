@@ -1,1 +1,2 @@
-export const PACKAGE_NAME = '@rfjs/form-builder';
+export * from './types';
+export * from './config-schema';
