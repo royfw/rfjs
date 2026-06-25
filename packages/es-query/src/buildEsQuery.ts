@@ -5,7 +5,6 @@ import {
   type EsBoolQuery,
   type EsDialect,
   type EsFilterMetadata,
-  type EsLogicalOperator,
   type EsQueryClause,
 } from './types';
 
@@ -13,19 +12,11 @@ export interface BuildEsQueryOptions {
   dialect?: EsDialect;
 }
 
-const BUCKET: Record<EsLogicalOperator, 'must' | 'should' | 'must_not'> = {
-  and: 'must',
-  or: 'should',
-  not: 'must_not',
-  nor: 'must_not',
-};
-
 export function buildEsQuery(
   metadata: EsFilterMetadata,
   opts: BuildEsQueryOptions = {},
 ): EsBoolQuery {
   const dialect = opts.dialect ?? 'elasticsearch';
-  const bucket = BUCKET[metadata.logic] ?? 'must';
 
   const clauses: EsQueryClause[] = metadata.filters.map((child) => {
     if (isEsFilterMetadata(child)) return buildEsQuery(child, opts);
@@ -33,7 +24,21 @@ export function buildEsQuery(
     return {};
   });
 
-  const bool: EsBoolQuery['bool'] = { [bucket]: clauses };
-  if (metadata.logic === 'or') bool.minimum_should_match = 1;
-  return { bool };
+  switch (metadata.logic) {
+    case 'or':
+      // any match
+      return { bool: { should: clauses, minimum_should_match: 1 } };
+    case 'nor':
+      // none match: NOT(a OR b) — each clause directly excluded
+      return { bool: { must_not: clauses } };
+    case 'not': {
+      // not all: NOT(a AND b) — exclude the conjunction, not each clause
+      const negated: EsQueryClause =
+        clauses.length === 1 ? clauses[0] : { bool: { must: clauses } };
+      return { bool: { must_not: [negated] } };
+    }
+    case 'and':
+    default:
+      return { bool: { must: clauses } };
+  }
 }
