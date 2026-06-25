@@ -4,7 +4,7 @@
   "description": "Config-driven form renderer (React) over @rfjs/form-builder; consumed via transpilePackages",
   "type": "module",
   "private": true,
-  "exports": { ".": "./src/index.tsx" },
+  "exports": { ".": "./src/index.ts" },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
