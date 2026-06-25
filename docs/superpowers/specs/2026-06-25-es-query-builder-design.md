@@ -20,13 +20,18 @@ ES2 / ES5 / ES7 mapping type，也不做多版本 client factory。
 
 兩個分層套件（對應 `sql-filter` 純核心 / `pg-filter` 組合 的切法）。
 
-### 2.1 `@rfjs/es-query` — 純建構器（零依賴、可發布 npm）
+### 2.1 `@rfjs/es-query` — 純建構器（可發布 npm）
 
 - 輸入：一棵 filter-tree（自有的 ES-aware leaf 型別，見 §4）。
-- 輸出：ES / OpenSearch 的 **search request body（不含 index）**：
-  `{ query, sort?, size?, from?, search_after? }`。
+- 輸出分兩段（R2，對齊 mongo-query 的單純核心）：
+  - `buildEsQuery(metadata)` → 只回 `bool` query 物件（與 mongo-query 的 `genFilterQuery`
+    對稱，只管 filter）。
+  - `buildSearchBody(metadata, opts)` → 薄包裝，在 query 之外加上
+    `{ sort?, size?, from?, search_after? }`，組成 **search request body（不含 index）**。
 - `dialect: 'elasticsearch' | 'opensearch'` 用來閘住少數分歧子句（見 §5）。
-- 零執行期依賴。純函式、可完整單元測試。無 client、無網路。
+- 無第三方執行期依賴；值轉換複用 workspace 的 `@rfjs/data-transform`（R1，與 mongo-query
+  一致 —— 取代來源專案那一整套 `validateFieldValue*` 型別驗證）。純函式、可完整單元測試。
+  無 client、無網路。
 
 ### 2.2 `@rfjs/es-client` — 執行 + 周邊（依賴 `es-query`）
 
@@ -113,8 +118,15 @@ field-schema 讓抽象運算子（`eq`、`in`…）依欄位型別自動解析�
 
 ### sort 與分頁形狀
 
-`es-query` 同時產出 `sort`（由 order-by metadata）與分頁欄位（`from`/`size`，或
-`search_after` 游標）。`es-client` 執行時消費這些。
+`sort`（由 order-by metadata）與分頁欄位（`from`/`size`，或 `search_after` 游標）由
+`buildSearchBody`（R2）加在 `bool` query 之外，`buildEsQuery` 本身不含這些。`es-client`
+執行時消費完整的 search body。
+
+### 值轉換（R1）
+
+leaf 的值轉換複用 `@rfjs/data-transform` 的 `typeTransfer(value, dataType)`，與 mongo-query
+的 `toQuery` 完全相同的做法（date/number/boolean/字串…）。欄位名做注入防護驗證（對應
+mongo-query 對 `$` 開頭的拒絕）。
 
 ## 5. ES vs OpenSearch（`dialect`）
 
@@ -164,7 +176,8 @@ fromOpenSearchClient(client)   // @opensearch-project/opensearch
 
 ## 9. 建置順序（高階）
 
-1. `@rfjs/es-query` —— 型別 + dialect 契約 + group/運算子 編譯 + sort + errors。
+1. `@rfjs/es-query` —— 型別 + dialect 契約 + leaf 子句（複用 data-transform 轉值）+
+   group/運算子 編譯（`buildEsQuery`）+ `buildSearchBody`（sort/分頁）+ errors。
 2. `@rfjs/es-client` —— `SearchTransport` + adapters + search 包裝 + 分頁 + highlight。
 3. `filter-builder` engine 註冊（`getEngine('es-query')`）+ 運算子宣告。
 4. `apps/web` 互動 demo tool + i18n。
