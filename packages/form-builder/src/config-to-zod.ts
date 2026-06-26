@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { FieldConfig, FormConfig } from './types';
+import { collectFieldItems } from './normalize';
 
 /** Converts empty string inputs to undefined so optional fields are omitted rather than coerced. */
 const emptyToUndefined = (v: unknown) => (v === '' ? undefined : v);
@@ -77,7 +78,7 @@ function fieldSchema(field: FieldConfig): z.ZodTypeAny {
 
 export function configToZod(config: FormConfig): z.ZodObject<Record<string, z.ZodTypeAny>> {
   const shape: Record<string, z.ZodTypeAny> = {};
-  for (const field of config.fields ?? []) {
+  for (const field of collectFieldItems(config)) {
     shape[field.key] = fieldSchema(field);
   }
   return z.object(shape);

@@ -265,3 +265,21 @@ describe('configToZod — validation rules', () => {
     expect(schema.safeParse({ test: 'anything' }).success).toBe(true);
   });
 });
+
+describe('configToZod — v1/v2 shape compatibility', () => {
+  it('builds the schema from a v2 sections config (field items only)', () => {
+    const cfg = { version: 1, sections: [{ id: 's1', rows: [
+      { id: 'r1', items: [{ id: 'name', kind: 'field', key: 'name', label: 'Name', component: 'Input', dataType: 'string', required: true }] },
+      { id: 'r2', items: [{ id: 'c', kind: 'content', text: 'note' }, { id: 'd', kind: 'divider' }] },
+    ] }] };
+    const schema = configToZod(cfg as any);
+    expect(schema.safeParse({ name: 'x' }).success).toBe(true);
+    expect(schema.safeParse({}).success).toBe(false);          // required name
+    expect(Object.keys(schema.shape)).toEqual(['name']);        // content/divider produce no keys
+  });
+
+  it('still builds the schema from a v1 fields[] config (back-compat)', () => {
+    const cfg = { version: 1, fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string', required: true }] };
+    expect(configToZod(cfg as any).safeParse({ name: 'a' }).success).toBe(true);
+  });
+});
