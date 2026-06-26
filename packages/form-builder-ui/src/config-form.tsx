@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { configToZod, resolveLabel, type FormConfig } from '@rfjs/form-builder';
+import { configToZod, evaluateConditional, resolveLabel, type FormConfig } from '@rfjs/form-builder';
 import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
 
@@ -24,26 +24,46 @@ export interface ConfigFormProps {
 }
 
 export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en' }: ConfigFormProps) {
-  const resolver = React.useMemo(() => zodResolver(configToZod(config)), [config]);
-  const { control, handleSubmit, reset, formState: { errors } } = useForm({ resolver, defaultValues });
+  // Keep the latest config reachable inside the stable resolver without re-creating it.
+  const configRef = React.useRef(config);
+  configRef.current = config;
+
+  // A single STABLE resolver passed once to useForm. RHF calls it at validation time with the
+  // current values; it builds the zod schema over ONLY the fields visible for those values, so
+  // hidden (e.g. required) fields never block submit. No private internals, no resolver swapping.
+  const resolver = React.useCallback<Resolver>((values, ctx, opts) => {
+    const cfg = configRef.current;
+    const visible = cfg.fields.filter((f) => evaluateConditional(f.conditional, values as Record<string, unknown>));
+    return zodResolver(configToZod({ ...cfg, fields: visible }))(values, ctx, opts);
+  }, []);
+
+  const { control, handleSubmit, reset, watch, formState: { errors } } = useForm({ resolver, defaultValues });
 
   // Re-initialise form state when `config` changes so stale field values are cleared.
-  // RHF v7 already picks up the new resolver reference on each validation call via _options,
-  // so only a reset of values is needed (not a full remount).
   React.useEffect(() => {
     reset(defaultValues ?? {});
   }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Subscribe to all form values to decide which fields to RENDER (live show/hide).
+  const values = watch();
+  const visibleFields = config.fields.filter((f) => evaluateConditional(f.conditional, values as Record<string, unknown>));
 
   const columns = config.columns ?? 1;
 
   return (
     <form
-      onSubmit={handleSubmit((values) => onSubmit(values as Record<string, unknown>))}
+      onSubmit={handleSubmit((all) => {
+        // Strip hidden fields' values from the submit payload.
+        const visible = config.fields.filter((f) => evaluateConditional(f.conditional, all as Record<string, unknown>));
+        const keys = new Set(visible.map((f) => f.key));
+        const out = Object.fromEntries(Object.entries(all).filter(([k]) => keys.has(k)));
+        onSubmit(out as Record<string, unknown>);
+      })}
       className="grid grid-cols-1 gap-4 md:[grid-template-columns:repeat(var(--form-cols),minmax(0,1fr))]"
       style={{ '--form-cols': String(columns) } as React.CSSProperties}
       data-columns={columns}
     >
-      {config.fields.map((field) => {
+      {visibleFields.map((field) => {
         const width = field.width ?? 'full';
         return (
           <div
