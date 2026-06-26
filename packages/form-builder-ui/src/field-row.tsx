@@ -83,30 +83,48 @@ function OptionsEditor({ field, onUpdate }: { field: FieldConfig; onUpdate: (pat
   );
 }
 
+/**
+ * Merge a single validation field into the existing validation object.
+ * For numeric keys an empty/`NaN` parse CLEARS the key (never stores `NaN`);
+ * for string keys an empty value CLEARS the key.
+ */
+export function mergeValidation(
+  current: FieldValidation | undefined,
+  key: keyof FieldValidation,
+  raw: string,
+  numeric: boolean,
+): FieldValidation {
+  const next: FieldValidation = { ...current };
+  if (numeric) {
+    const n = raw === '' ? undefined : Number(raw);
+    if (n === undefined || Number.isNaN(n)) {
+      delete next[key];
+    } else {
+      (next as Record<string, unknown>)[key] = n;
+    }
+  } else if (raw === '') {
+    delete next[key];
+  } else {
+    (next as Record<string, unknown>)[key] = raw;
+  }
+  return next;
+}
+
 function ValidationEditor({ field, onUpdate }: { field: FieldConfig; onUpdate: (patch: Partial<FieldConfig>) => void }) {
   const v = field.validation ?? {};
 
   function patchValidation(key: keyof FieldValidation, raw: string, numeric: boolean) {
-    const next: FieldValidation = { ...v };
-    if (numeric) {
-      const n = raw === '' ? undefined : Number(raw);
-      if (n === undefined) {
-        delete next[key];
-      } else {
-        (next as Record<string, unknown>)[key] = n;
-      }
-    } else {
-      if (raw === '') {
-        delete next[key];
-      } else {
-        (next as Record<string, unknown>)[key] = raw;
-      }
-    }
-    onUpdate({ validation: next });
+    onUpdate({ validation: mergeValidation(v, key, raw, numeric) });
   }
 
-  const isNumeric = field.dataType === 'numeric';
-  const isStringOrDate = field.dataType === 'string' || field.dataType === 'date';
+  // Fields with `options` (enum/Select) ignore numeric/length/pattern bounds in the
+  // engine's applyValidation, so don't offer dead controls for them.
+  const hasOptions = Boolean(field.options?.length);
+  const isNumeric = field.dataType === 'numeric' && !hasOptions;
+  const isStringOrDate = (field.dataType === 'string' || field.dataType === 'date') && !hasOptions;
+
+  // The `message` input only matters when at least one constraint block applies.
+  if (!isNumeric && !isStringOrDate) return null;
 
   return (
     <div className="col-span-full flex flex-col gap-2">
