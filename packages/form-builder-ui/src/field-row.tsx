@@ -3,8 +3,8 @@
 import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2 } from 'lucide-react';
-import type { FieldComponent, FieldConfig } from '@rfjs/form-builder';
+import { ChevronDown, ChevronRight, GripVertical, Trash2 } from 'lucide-react';
+import type { FieldComponent, FieldConfig, FieldWidth } from '@rfjs/form-builder';
 import { Input } from '@rfjs/web-ui/components/input';
 import { Checkbox } from '@rfjs/web-ui/components/checkbox';
 import { Button } from '@rfjs/web-ui/components/button';
@@ -16,6 +16,13 @@ const DATATYPE_BY_COMPONENT: Record<FieldComponent, FieldConfig['dataType']> = {
   Checkbox: 'boolean',
   Date: 'date',
 };
+
+const COMPONENTS: FieldComponent[] = ['Input', 'Textarea', 'Select', 'Checkbox', 'Date'];
+const SELECT_CLASS = 'h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground';
+
+function labelOf(label: FieldConfig['label']): string {
+  return typeof label === 'string' ? label : (Object.values(label)[0] ?? '');
+}
 
 let counter = Math.floor(Math.random() * 1_000_000);
 
@@ -38,48 +45,91 @@ export interface FieldRowProps {
 
 export function FieldRow({ field, onUpdate, onRemove }: FieldRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.key });
+  const [open, setOpen] = React.useState(true);
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition };
-  const labelText =
-    typeof field.label === 'string' ? field.label : (Object.values(field.label)[0] ?? '');
+
+  function changeComponent(component: FieldComponent) {
+    onUpdate({
+      component,
+      dataType: DATATYPE_BY_COMPONENT[component],
+      options: component === 'Select' ? (field.options ?? []) : undefined,
+    });
+  }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-2 rounded-md border border-input bg-background p-2"
-    >
-      <button
-        type="button"
-        className="cursor-grab text-muted-foreground"
-        aria-label="drag"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="size-4" />
-      </button>
-      <span className="font-mono text-xs text-muted-foreground">{field.component}</span>
-      <Input
-        className="h-8 flex-1"
-        value={labelText}
-        aria-label={`label for ${field.key}`}
-        onChange={(e) => onUpdate({ label: e.target.value })}
-      />
-      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Checkbox
-          checked={Boolean(field.required)}
-          onCheckedChange={(c) => onUpdate({ required: c === true })}
-        />
-        required
-      </label>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        aria-label="remove field"
-        onClick={onRemove}
-      >
-        <Trash2 className="size-4" />
-      </Button>
+    <div ref={setNodeRef} style={style} className="rounded-md border border-input bg-background">
+      <div className="flex items-center gap-2 p-2">
+        <button
+          type="button"
+          className="text-muted-foreground"
+          aria-label={open ? 'collapse field' : 'expand field'}
+          onClick={() => setOpen((o) => !o)}
+        >
+          {open ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+        </button>
+        <button
+          type="button"
+          className="cursor-grab text-muted-foreground"
+          aria-label="drag"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="size-4" />
+        </button>
+        <span className="font-mono text-xs text-muted-foreground">{field.component}</span>
+        <span className="flex-1 truncate text-sm">{labelOf(field.label)}</span>
+        {field.required ? <span className="text-xs text-destructive">required</span> : null}
+        <Button type="button" variant="ghost" size="icon" aria-label="remove field" onClick={onRemove}>
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+      {open ? (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 border-t border-input p-3">
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Type
+            <select
+              className={SELECT_CLASS}
+              aria-label={`type for ${field.key}`}
+              value={field.component}
+              onChange={(e) => changeComponent(e.target.value as FieldComponent)}
+            >
+              {COMPONENTS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Label
+            <Input
+              className="h-8"
+              aria-label={`label for ${field.key}`}
+              value={labelOf(field.label)}
+              onChange={(e) => onUpdate({ label: e.target.value })}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Width
+            <select
+              className={SELECT_CLASS}
+              aria-label={`width for ${field.key}`}
+              value={field.width ?? 'full'}
+              onChange={(e) => onUpdate({ width: e.target.value as FieldWidth })}
+            >
+              <option value="full">Full</option>
+              <option value="half">Half</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5 self-end text-xs text-muted-foreground">
+            <Checkbox
+              checked={Boolean(field.required)}
+              onCheckedChange={(c) => onUpdate({ required: c === true })}
+            />
+            required
+          </label>
+        </div>
+      ) : null}
     </div>
   );
 }
