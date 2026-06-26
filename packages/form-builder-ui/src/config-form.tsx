@@ -62,9 +62,12 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
 
   const spacerHeights: Record<string, number> = { sm: 8, md: 16, lg: 32 };
 
-  // In a v2 flex row, items size themselves with flex-basis; in the v1 grid they use grid-column.
-  const flexBasis = (width: 'full' | 'half') =>
-    width === 'full' ? 'basis-full' : 'basis-[calc(50%-0.5rem)]';
+  // Width is applied via INLINE styles, not Tailwind `basis-*` / `col-span-full`
+  // utilities — those aren't reliably emitted for this package, which left preview
+  // fields collapsed to their intrinsic width ("not full-width"). Inline is guaranteed.
+  // v2 flex row → flex-basis; v1 grid → grid-column span.
+  const fullSpan = (flow: 'grid' | 'flex'): React.CSSProperties =>
+    flow === 'flex' ? { flexBasis: '100%', minWidth: 0 } : { gridColumn: '1 / -1' };
 
   function renderItem(item: FormItem, flow: 'grid' | 'flex') {
     const vals = values as Record<string, unknown>;
@@ -75,21 +78,19 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
 
     if (item.kind === 'divider') {
       if (!evaluateConditional(item.conditional, vals)) return null;
-      const cls = flow === 'flex' ? 'basis-full border-input w-full' : 'col-span-full border-input w-full';
-      return <hr key={item.id} className={cls} />;
+      return <hr key={item.id} className="w-full border-input" style={fullSpan(flow)} />;
     }
 
     if (item.kind === 'spacer') {
       if (!evaluateConditional(item.conditional, vals)) return null;
       const height = spacerHeights[item.size ?? 'md'];
-      return <div key={item.id} className={flow === 'flex' ? 'basis-full' : undefined} style={{ height }} />;
+      return <div key={item.id} style={{ ...fullSpan(flow), height }} />;
     }
 
     if (item.kind === 'content') {
       if (!evaluateConditional(item.conditional, vals)) return null;
-      const cls = flow === 'flex' ? 'text-sm basis-full' : 'text-sm col-span-full';
       return (
-        <div key={item.id} className={cls}>
+        <div key={item.id} className="text-sm" style={fullSpan(flow)}>
           {resolveLabel(item.text, locale)}
         </div>
       );
@@ -98,13 +99,12 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     // kind === 'field'
     if (!evaluateConditional(item.conditional, vals)) return null;
     const width = item.width ?? 'full';
+    const fieldStyle: React.CSSProperties =
+      flow === 'flex'
+        ? { flexBasis: width === 'full' ? '100%' : 'calc(50% - 0.5rem)', minWidth: 0 }
+        : { gridColumn: width === 'full' ? '1 / -1' : undefined };
     return (
-      <div
-        key={item.key}
-        className={flow === 'flex' ? `flex flex-col gap-1.5 ${flexBasis(width)}` : 'flex flex-col gap-1.5'}
-        data-width={width}
-        style={flow === 'grid' && width === 'full' ? { gridColumn: '1 / -1' } : undefined}
-      >
+      <div key={item.key} className="flex min-w-0 flex-col gap-1.5" data-width={width} style={fieldStyle}>
         <Label htmlFor={item.key}>{resolveLabel(item.label, locale)}</Label>
         <Controller
           control={control}
@@ -145,13 +145,18 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       {sections.map((section) => (
         <React.Fragment key={section.id}>
           {section.title && (
-            <h3 className="col-span-full font-semibold text-sm">
+            <h3 className="font-semibold text-sm" style={{ gridColumn: '1 / -1' }}>
               {resolveLabel(section.title, locale)}
             </h3>
           )}
           {section.rows.map((row) =>
             isV2 ? (
-              <div key={row.id} data-testid="form-row" className="col-span-full flex flex-wrap gap-4">
+              <div
+                key={row.id}
+                data-testid="form-row"
+                className="flex flex-wrap gap-4"
+                style={{ gridColumn: '1 / -1' }}
+              >
                 {row.items.map((item) => renderItem(item, 'flex'))}
               </div>
             ) : (
