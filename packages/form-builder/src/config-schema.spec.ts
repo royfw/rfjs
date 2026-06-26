@@ -175,6 +175,36 @@ describe('FieldValidation schema', () => {
   });
 });
 
+describe('v1/v2 parse', () => {
+  it('parses a v1 flat fields[] config (back-compat)', () => {
+    const cfg = { version: 1, fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string' }] };
+    expect(parseFormConfig(cfg)).toEqual(cfg);
+  });
+
+  it('parses a v2 sections config with mixed item kinds', () => {
+    const cfg = {
+      version: 1,
+      sections: [{
+        id: 's1', rows: [
+          { id: 'r1', items: [{ id: 'i1', kind: 'field', key: 'name', label: 'Name', component: 'Input', dataType: 'string' }] },
+          { id: 'r2', items: [{ id: 'i2', kind: 'content', text: 'Hello' }, { id: 'i3', kind: 'divider' }] },
+          { id: 'r3', items: [{ id: 'i4', kind: 'spacer', size: 'md' }, { id: 'i5', kind: 'ai-note', text: 'fill carefully' }] },
+        ],
+      }],
+    };
+    expect(parseFormConfig(cfg)).toEqual(cfg);
+  });
+
+  it('rejects an item with an unknown kind', () => {
+    const cfg = { version: 1, sections: [{ id: 's1', rows: [{ id: 'r1', items: [{ id: 'i1', kind: 'nope' }] }] }] };
+    expect(() => parseFormConfig(cfg)).toThrow();
+  });
+
+  it('rejects a config with neither fields nor sections', () => {
+    expect(() => parseFormConfig({ version: 1 })).toThrow();
+  });
+});
+
 describe('conditional field visibility schema', () => {
   const baseField = { key: 'x', label: 'X', component: 'Input', dataType: 'string' };
 

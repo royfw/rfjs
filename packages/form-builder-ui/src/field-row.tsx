@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight, GripVertical, Trash2 } from 'lucide-react';
 import type { FieldComponent, FieldConfig, FieldOption, FieldValidation, FieldWidth, ConditionalRule } from '@rfjs/form-builder';
 import { Input } from '@rfjs/web-ui/components/input';
+import { Textarea } from '@rfjs/web-ui/components/textarea';
 import { Checkbox } from '@rfjs/web-ui/components/checkbox';
 import { Button } from '@rfjs/web-ui/components/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@rfjs/web-ui/components/select';
@@ -396,15 +397,122 @@ function ConditionalEditor({
   );
 }
 
-function localeText(label: FieldConfig['label'], loc: string, fallback: string): string {
+export function localeText(label: FieldConfig['label'], loc: string, fallback: string): string {
   if (typeof label === 'string') return loc === fallback ? label : '';
   return label[loc] ?? '';
 }
 
-function setLocaleLabel(label: FieldConfig['label'], loc: string, value: string, locales: string[]): FieldConfig['label'] {
+export function setLocaleLabel(label: FieldConfig['label'], loc: string, value: string, locales: string[]): FieldConfig['label'] {
   const base: Record<string, string> = typeof label === 'string' ? { [locales[0] ?? 'en']: label } : { ...label };
   base[loc] = value;
   return base;
+}
+
+export interface FieldItemEditorProps {
+  field: FieldConfig & { aiNote?: string };
+  onUpdate: (patch: Partial<FieldConfig & { aiNote?: string }>) => void;
+  locales?: string[];
+  siblingFields?: SiblingField[];
+}
+
+/**
+ * The expanded editor body for a field item.
+ * Extracted so it can be reused by both FieldRow and ItemEditor.
+ */
+export function FieldItemEditor({ field, onUpdate, locales = ['en'], siblingFields = [] }: FieldItemEditorProps) {
+  const [keyDraft, setKeyDraft] = React.useState(field.key);
+  React.useEffect(() => setKeyDraft(field.key), [field.key]);
+
+  function changeComponent(component: FieldComponent) {
+    onUpdate({
+      component,
+      dataType: DATATYPE_BY_COMPONENT[component],
+      options: component === 'Select' ? (field.options ?? []) : undefined,
+    });
+  }
+
+  return (
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 border-t border-input p-3">
+      <span className="flex flex-col gap-1 text-xs text-muted-foreground">
+        Type
+        <Select value={field.component} onValueChange={(v) => changeComponent(v as FieldComponent)}>
+          <SelectTrigger className="h-8" aria-label={`type for ${field.key}`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {COMPONENTS.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </span>
+      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+        Key
+        <Input
+          className="h-8 font-mono"
+          aria-label={`key for ${field.key}`}
+          value={keyDraft}
+          onChange={(e) => setKeyDraft(e.target.value)}
+          onBlur={() => { if (keyDraft && keyDraft !== field.key) onUpdate({ key: keyDraft }); }}
+        />
+      </label>
+      {locales.length <= 1 ? (
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          Label
+          <Input
+            className="h-8"
+            aria-label={`label for ${field.key}`}
+            value={labelOf(field.label)}
+            onChange={(e) => onUpdate({ label: e.target.value })}
+          />
+        </label>
+      ) : (
+        locales.map((loc) => (
+          <label key={loc} className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Label ({loc})
+            <Input
+              className="h-8"
+              aria-label={`label (${loc}) for ${field.key}`}
+              value={localeText(field.label, loc, locales[0] ?? 'en')}
+              onChange={(e) => onUpdate({ label: setLocaleLabel(field.label, loc, e.target.value, locales) })}
+            />
+          </label>
+        ))
+      )}
+      <span className="flex flex-col gap-1 text-xs text-muted-foreground">
+        Width
+        <Select value={field.width ?? 'full'} onValueChange={(v) => onUpdate({ width: v as FieldWidth })}>
+          <SelectTrigger className="h-8" aria-label={`width for ${field.key}`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="full">Full</SelectItem>
+            <SelectItem value="half">Half</SelectItem>
+          </SelectContent>
+        </Select>
+      </span>
+      <label className="flex items-center gap-1.5 self-end text-xs text-muted-foreground">
+        <Checkbox
+          aria-label="required"
+          checked={Boolean(field.required)}
+          onCheckedChange={(c) => onUpdate({ required: c === true })}
+        />
+        required
+      </label>
+      {field.component === 'Select' ? <OptionsEditor field={field} onUpdate={onUpdate} /> : null}
+      <ValidationEditor field={field} onUpdate={onUpdate} />
+      <ConditionalEditor field={field} siblingFields={siblingFields} onUpdate={onUpdate} />
+      <label className="col-span-full flex flex-col gap-1 text-xs text-muted-foreground">
+        AI note
+        <Textarea
+          aria-label="AI note for field"
+          value={field.aiNote ?? ''}
+          onChange={(e) => onUpdate({ aiNote: e.target.value })}
+          rows={2}
+        />
+      </label>
+    </div>
+  );
 }
 
 export interface FieldRowProps {
@@ -418,17 +526,7 @@ export interface FieldRowProps {
 export function FieldRow({ field, onUpdate, onRemove, locales = ['en'], siblingFields = [] }: FieldRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.key });
   const [open, setOpen] = React.useState(true);
-  const [keyDraft, setKeyDraft] = React.useState(field.key);
-  React.useEffect(() => setKeyDraft(field.key), [field.key]);
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition };
-
-  function changeComponent(component: FieldComponent) {
-    onUpdate({
-      component,
-      dataType: DATATYPE_BY_COMPONENT[component],
-      options: component === 'Select' ? (field.options ?? []) : undefined,
-    });
-  }
 
   return (
     <div ref={setNodeRef} style={style} className="rounded-md border border-input bg-background">
@@ -458,77 +556,7 @@ export function FieldRow({ field, onUpdate, onRemove, locales = ['en'], siblingF
         </Button>
       </div>
       {open ? (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 border-t border-input p-3">
-          <span className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Type
-            <Select value={field.component} onValueChange={(v) => changeComponent(v as FieldComponent)}>
-              <SelectTrigger className="h-8" aria-label={`type for ${field.key}`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {COMPONENTS.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </span>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Key
-            <Input
-              className="h-8 font-mono"
-              aria-label={`key for ${field.key}`}
-              value={keyDraft}
-              onChange={(e) => setKeyDraft(e.target.value)}
-              onBlur={() => { if (keyDraft && keyDraft !== field.key) onUpdate({ key: keyDraft }); }}
-            />
-          </label>
-          {locales.length <= 1 ? (
-            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-              Label
-              <Input
-                className="h-8"
-                aria-label={`label for ${field.key}`}
-                value={labelOf(field.label)}
-                onChange={(e) => onUpdate({ label: e.target.value })}
-              />
-            </label>
-          ) : (
-            locales.map((loc) => (
-              <label key={loc} className="flex flex-col gap-1 text-xs text-muted-foreground">
-                Label ({loc})
-                <Input
-                  className="h-8"
-                  aria-label={`label (${loc}) for ${field.key}`}
-                  value={localeText(field.label, loc, locales[0] ?? 'en')}
-                  onChange={(e) => onUpdate({ label: setLocaleLabel(field.label, loc, e.target.value, locales) })}
-                />
-              </label>
-            ))
-          )}
-          <span className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Width
-            <Select value={field.width ?? 'full'} onValueChange={(v) => onUpdate({ width: v as FieldWidth })}>
-              <SelectTrigger className="h-8" aria-label={`width for ${field.key}`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="full">Full</SelectItem>
-                <SelectItem value="half">Half</SelectItem>
-              </SelectContent>
-            </Select>
-          </span>
-          <label className="flex items-center gap-1.5 self-end text-xs text-muted-foreground">
-            <Checkbox
-              aria-label="required"
-              checked={Boolean(field.required)}
-              onCheckedChange={(c) => onUpdate({ required: c === true })}
-            />
-            required
-          </label>
-          {field.component === 'Select' ? <OptionsEditor field={field} onUpdate={onUpdate} /> : null}
-          <ValidationEditor field={field} onUpdate={onUpdate} />
-          <ConditionalEditor field={field} siblingFields={siblingFields} onUpdate={onUpdate} />
-        </div>
+        <FieldItemEditor field={field} onUpdate={onUpdate} locales={locales} siblingFields={siblingFields} />
       ) : null}
     </div>
   );

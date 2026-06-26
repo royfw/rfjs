@@ -296,3 +296,56 @@ describe('grid layout', () => {
     expect((container.querySelector('[data-width="full"]') as HTMLElement).style.gridColumn).toBe('1 / -1');
   });
 });
+
+describe('v2 sections rendering', () => {
+  it('renders a v2 sections config: field control + content + divider; ai-note absent', () => {
+    const cfg = { version: 1, sections: [{ id: 's1', title: 'Profile', rows: [
+      { id: 'r1', items: [{ id: 'name', kind: 'field', key: 'name', label: 'Name', component: 'Input', dataType: 'string' }] },
+      { id: 'r2', items: [{ id: 'c', kind: 'content', text: 'Please fill in' }, { id: 'div', kind: 'divider' }] },
+      { id: 'r3', items: [{ id: 'note', kind: 'ai-note', text: 'internal' }] },
+    ] }] };
+    render(<ConfigForm config={cfg as any} onSubmit={() => {}} />);
+    expect(screen.getByLabelText('Name')).toBeTruthy();
+    expect(screen.getByText('Please fill in')).toBeTruthy();
+    expect(screen.queryByText('internal')).toBeNull(); // ai-note never rendered
+  });
+
+  it('hides a content item whose conditional is false', () => {
+    const cfg = { version: 1, sections: [{ id: 's1', rows: [
+      { id: 'r1', items: [{ id: 'role', kind: 'field', key: 'role', label: 'Role', component: 'Input', dataType: 'string' }] },
+      { id: 'r2', items: [{ id: 'c', kind: 'content', text: 'admin only', conditional: { logic: 'and', filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'admin' }] } }] },
+    ] }] };
+    render(<ConfigForm config={cfg as any} onSubmit={() => {}} />);
+    expect(screen.queryByText('admin only')).toBeNull();
+    fireEvent.change(screen.getByLabelText('Role'), { target: { value: 'admin' } });
+    expect(screen.getByText('admin only')).toBeTruthy();
+  });
+
+  it('still renders a v1 fields[] config unchanged (back-compat)', () => {
+    const cfg = { version: 1, fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string' }] };
+    render(<ConfigForm config={cfg as any} onSubmit={() => {}} />);
+    expect(screen.getByLabelText('Name')).toBeTruthy();
+  });
+
+  it('puts two items of one v2 row in a single flex container, and a second row in its own', () => {
+    const cfg = { version: 1, sections: [{ id: 's1', rows: [
+      { id: 'r1', items: [
+        { id: 'first', kind: 'field', key: 'first', label: 'First', component: 'Input', dataType: 'string', width: 'half' },
+        { id: 'last', kind: 'field', key: 'last', label: 'Last', component: 'Input', dataType: 'string', width: 'half' },
+      ] },
+      { id: 'r2', items: [
+        { id: 'email', kind: 'field', key: 'email', label: 'Email', component: 'Input', dataType: 'string' },
+      ] },
+    ] }] };
+    const { container } = render(<ConfigForm config={cfg as any} onSubmit={() => {}} />);
+    const rows = container.querySelectorAll('[data-testid="form-row"]');
+    expect(rows).toHaveLength(2);
+    // both half-width fields share the first row container
+    expect(rows[0]!.querySelectorAll('[data-width="half"]')).toHaveLength(2);
+    expect(screen.getByLabelText('First')).toBeTruthy();
+    expect(screen.getByLabelText('Last')).toBeTruthy();
+    // the second row's item is in a distinct container
+    expect(rows[1]!.querySelector('[data-width="full"]')).toBeTruthy();
+    expect(screen.getByLabelText('Email')).toBeTruthy();
+  });
+});

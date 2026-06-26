@@ -62,11 +62,63 @@ const fieldConfigSchema = z.object({
   conditional: conditionalSchema.optional(),
 });
 
-export const FormConfigSchema: ZodType<FormConfig> = z.object({
-  version: z.number().int(),
-  fields: z.array(fieldConfigSchema),
+const localizedLabelSchema = z.union([z.string(), z.record(z.string(), z.string())]);
+
+const fieldItemSchema = fieldConfigSchema.extend({
+  id: z.string().min(1),
+  kind: z.literal('field'),
+  aiNote: z.string().optional(),
+});
+const contentItemSchema = z.object({
+  id: z.string().min(1),
+  kind: z.literal('content'),
+  text: localizedLabelSchema,
+  locked: z.boolean().optional(),
+  conditional: conditionalSchema.optional(),
+});
+const dividerItemSchema = z.object({
+  id: z.string().min(1),
+  kind: z.literal('divider'),
+  conditional: conditionalSchema.optional(),
+});
+const spacerItemSchema = z.object({
+  id: z.string().min(1),
+  kind: z.literal('spacer'),
+  size: z.enum(['sm', 'md', 'lg']).optional(),
+  conditional: conditionalSchema.optional(),
+});
+const aiNoteItemSchema = z.object({
+  id: z.string().min(1),
+  kind: z.literal('ai-note'),
+  text: z.string(),
+});
+
+const formItemSchema = z.discriminatedUnion('kind', [
+  fieldItemSchema,
+  contentItemSchema,
+  dividerItemSchema,
+  spacerItemSchema,
+  aiNoteItemSchema,
+]);
+const formRowSchema = z.object({ id: z.string().min(1), items: z.array(formItemSchema) });
+const formSectionSchema = z.object({
+  id: z.string().min(1),
+  title: localizedLabelSchema.optional(),
+  rows: z.array(formRowSchema),
   columns: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
 });
+
+export const FormConfigSchema: ZodType<FormConfig> = z
+  .object({
+    version: z.number().int(),
+    fields: z.array(fieldConfigSchema).optional(),
+    sections: z.array(formSectionSchema).optional(),
+    columns: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+  })
+  .refine(
+    (c) => c.fields !== undefined || c.sections !== undefined,
+    'config must have fields or sections'
+  );
 
 export function parseFormConfig(input: unknown): FormConfig {
   return FormConfigSchema.parse(input) as FormConfig;
