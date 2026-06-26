@@ -82,3 +82,95 @@ describe('grid layout fields', () => {
     expect(FormConfigSchema.safeParse({ version: 1, fields: [{ key: 'a', label: 'A', component: 'Input', dataType: 'string' }] }).success).toBe(true);
   });
 });
+
+describe('FieldValidation schema', () => {
+  const baseField = { key: 'x', label: 'X', component: 'Input', dataType: 'numeric' };
+
+  it('accepts a field with numeric min/max', () => {
+    const cfg = { version: 1, fields: [{ ...baseField, validation: { min: 0, max: 100 } }] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('accepts a field with string minLength/maxLength/pattern/message', () => {
+    const cfg = {
+      version: 1,
+      fields: [
+        {
+          key: 'zip',
+          label: 'Zip',
+          component: 'Input',
+          dataType: 'string',
+          validation: { minLength: 5, maxLength: 10, pattern: '^\\d+$', message: 'Invalid' },
+        },
+      ],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('rejects non-numeric min', () => {
+    const cfg = { version: 1, fields: [{ ...baseField, validation: { min: 'zero' } }] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+
+  it('rejects non-numeric max', () => {
+    const cfg = { version: 1, fields: [{ ...baseField, validation: { max: true } }] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+
+  it('rejects non-numeric minLength', () => {
+    const cfg = { version: 1, fields: [{ ...baseField, validation: { minLength: '3' } }] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+
+  it('rejects non-numeric maxLength', () => {
+    const cfg = { version: 1, fields: [{ ...baseField, validation: { maxLength: null } }] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+
+  it('rejects non-string pattern', () => {
+    const cfg = { version: 1, fields: [{ ...baseField, validation: { pattern: 123 } }] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+
+  it('accepts validation with no fields (all optional)', () => {
+    const cfg = { version: 1, fields: [{ ...baseField, validation: {} }] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('accepts a field without validation (backward compatible)', () => {
+    const cfg = { version: 1, fields: [{ ...baseField }] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('rejects a field with an invalid regex pattern', () => {
+    const cfg = {
+      version: 1,
+      fields: [
+        {
+          key: 'test',
+          label: 'Test',
+          component: 'Input',
+          dataType: 'string',
+          validation: { pattern: '[unclosed' },
+        },
+      ],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+
+  it('accepts a field with a valid regex pattern', () => {
+    const cfg = {
+      version: 1,
+      fields: [
+        {
+          key: 'test',
+          label: 'Test',
+          component: 'Input',
+          dataType: 'string',
+          validation: { pattern: '^[a-z]+$' },
+        },
+      ],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+});

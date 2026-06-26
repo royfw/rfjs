@@ -83,3 +83,185 @@ describe('configToZod', () => {
     expect(schema.safeParse({ name: 'Ada', agree: false, role: 'ghost' }).success).toBe(false);
   });
 });
+
+describe('configToZod — validation rules', () => {
+  it('rejects a numeric value below min', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'age',
+          label: 'Age',
+          component: 'Input',
+          dataType: 'numeric',
+          required: true,
+          validation: { min: 0 },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ age: -1 }).success).toBe(false);
+    expect(schema.safeParse({ age: 0 }).success).toBe(true);
+  });
+
+  it('rejects a numeric value above max', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'score',
+          label: 'Score',
+          component: 'Input',
+          dataType: 'numeric',
+          required: true,
+          validation: { max: 100 },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ score: 101 }).success).toBe(false);
+    expect(schema.safeParse({ score: 100 }).success).toBe(true);
+  });
+
+  it('rejects a string shorter than minLength', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'name',
+          label: 'Name',
+          component: 'Input',
+          dataType: 'string',
+          required: true,
+          validation: { minLength: 3 },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ name: 'ab' }).success).toBe(false);
+    expect(schema.safeParse({ name: 'abc' }).success).toBe(true);
+  });
+
+  it('rejects a string longer than maxLength', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'code',
+          label: 'Code',
+          component: 'Input',
+          dataType: 'string',
+          required: true,
+          validation: { maxLength: 5 },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ code: 'toolong' }).success).toBe(false);
+    expect(schema.safeParse({ code: 'ok' }).success).toBe(true);
+  });
+
+  it('rejects a string not matching the pattern', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'zip',
+          label: 'Zip',
+          component: 'Input',
+          dataType: 'string',
+          required: true,
+          validation: { pattern: '^\\d{5}$' },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ zip: '1234' }).success).toBe(false);
+    expect(schema.safeParse({ zip: '12345' }).success).toBe(true);
+  });
+
+  it('surfaces a custom message when validation fails', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'age',
+          label: 'Age',
+          component: 'Input',
+          dataType: 'numeric',
+          required: true,
+          validation: { min: 18, message: 'Must be at least 18' },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    const result = schema.safeParse({ age: 10 });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message);
+      expect(messages.some((m) => m.includes('Must be at least 18'))).toBe(true);
+    }
+  });
+
+  it('optional field with validation still omits on empty string', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'age',
+          label: 'Age',
+          component: 'Input',
+          dataType: 'numeric',
+          validation: { min: 0, max: 120 },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    // empty string → undefined (omitted), not a validation failure
+    const result = schema.safeParse({ age: '' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.age).toBeUndefined();
+    }
+  });
+
+  it('optional field with validation still validates present values', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'age',
+          label: 'Age',
+          component: 'Input',
+          dataType: 'numeric',
+          validation: { min: 0, max: 120 },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ age: -5 }).success).toBe(false);
+    expect(schema.safeParse({ age: 25 }).success).toBe(true);
+  });
+
+  it('does not throw when given a field with an invalid regex pattern (defensive try/catch)', () => {
+    // Construct config directly, bypassing schema validation
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'test',
+          label: 'Test',
+          component: 'Input',
+          dataType: 'string',
+          required: true,
+          validation: { pattern: '[unclosed' }, // malformed regex
+        },
+      ],
+    };
+    // Should not throw; invalid pattern is skipped silently
+    expect(() => configToZod(cfg)).not.toThrow();
+    // Schema is still usable (just without the regex constraint)
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ test: 'anything' }).success).toBe(true);
+  });
+});

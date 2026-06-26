@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight, GripVertical, Trash2 } from 'lucide-react';
-import type { FieldComponent, FieldConfig, FieldOption, FieldWidth } from '@rfjs/form-builder';
+import type { FieldComponent, FieldConfig, FieldOption, FieldValidation, FieldWidth } from '@rfjs/form-builder';
 import { Input } from '@rfjs/web-ui/components/input';
 import { Checkbox } from '@rfjs/web-ui/components/checkbox';
 import { Button } from '@rfjs/web-ui/components/button';
@@ -79,6 +79,124 @@ function OptionsEditor({ field, onUpdate }: { field: FieldConfig; onUpdate: (pat
       >
         + Add option
       </Button>
+    </div>
+  );
+}
+
+/**
+ * Merge a single validation field into the existing validation object.
+ * For numeric keys an empty/`NaN` parse CLEARS the key (never stores `NaN`);
+ * for string keys an empty value CLEARS the key.
+ */
+export function mergeValidation(
+  current: FieldValidation | undefined,
+  key: keyof FieldValidation,
+  raw: string,
+  numeric: boolean,
+): FieldValidation {
+  const next: FieldValidation = { ...current };
+  if (numeric) {
+    const n = raw === '' ? undefined : Number(raw);
+    if (n === undefined || Number.isNaN(n)) {
+      delete next[key];
+    } else {
+      (next as Record<string, unknown>)[key] = n;
+    }
+  } else if (raw === '') {
+    delete next[key];
+  } else {
+    (next as Record<string, unknown>)[key] = raw;
+  }
+  return next;
+}
+
+function ValidationEditor({ field, onUpdate }: { field: FieldConfig; onUpdate: (patch: Partial<FieldConfig>) => void }) {
+  const v = field.validation ?? {};
+
+  function patchValidation(key: keyof FieldValidation, raw: string, numeric: boolean) {
+    onUpdate({ validation: mergeValidation(v, key, raw, numeric) });
+  }
+
+  // Fields with `options` (enum/Select) ignore numeric/length/pattern bounds in the
+  // engine's applyValidation, so don't offer dead controls for them.
+  const hasOptions = Boolean(field.options?.length);
+  const isNumeric = field.dataType === 'numeric' && !hasOptions;
+  const isStringOrDate = (field.dataType === 'string' || field.dataType === 'date') && !hasOptions;
+
+  // The `message` input only matters when at least one constraint block applies.
+  if (!isNumeric && !isStringOrDate) return null;
+
+  return (
+    <div className="col-span-full flex flex-col gap-2">
+      <span className="text-xs font-medium text-muted-foreground">Validation</span>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2">
+        {isNumeric ? (
+          <>
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              Min
+              <Input
+                className="h-8"
+                type="number"
+                aria-label="validation min"
+                value={v.min ?? ''}
+                onChange={(e) => patchValidation('min', e.target.value, true)}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              Max
+              <Input
+                className="h-8"
+                type="number"
+                aria-label="validation max"
+                value={v.max ?? ''}
+                onChange={(e) => patchValidation('max', e.target.value, true)}
+              />
+            </label>
+          </>
+        ) : null}
+        {isStringOrDate ? (
+          <>
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              Min length
+              <Input
+                className="h-8"
+                type="number"
+                aria-label="validation minLength"
+                value={v.minLength ?? ''}
+                onChange={(e) => patchValidation('minLength', e.target.value, true)}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              Max length
+              <Input
+                className="h-8"
+                type="number"
+                aria-label="validation maxLength"
+                value={v.maxLength ?? ''}
+                onChange={(e) => patchValidation('maxLength', e.target.value, true)}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground col-span-2">
+              Pattern
+              <Input
+                className="h-8"
+                aria-label="validation pattern"
+                value={v.pattern ?? ''}
+                onChange={(e) => patchValidation('pattern', e.target.value, false)}
+              />
+            </label>
+          </>
+        ) : null}
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground col-span-full">
+          Message
+          <Input
+            className="h-8"
+            aria-label="validation message"
+            value={v.message ?? ''}
+            onChange={(e) => patchValidation('message', e.target.value, false)}
+          />
+        </label>
+      </div>
     </div>
   );
 }
@@ -211,6 +329,7 @@ export function FieldRow({ field, onUpdate, onRemove, locales = ['en'] }: FieldR
             required
           </label>
           {field.component === 'Select' ? <OptionsEditor field={field} onUpdate={onUpdate} /> : null}
+          <ValidationEditor field={field} onUpdate={onUpdate} />
         </div>
       ) : null}
     </div>
