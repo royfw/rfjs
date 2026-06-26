@@ -111,6 +111,44 @@ describe('config reactivity', () => {
   });
 });
 
+describe('field validation messages', () => {
+  const minLenConfig: FormConfig = {
+    version: 1,
+    fields: [
+      {
+        key: 'username',
+        label: 'Username',
+        component: 'Input',
+        dataType: 'string',
+        validation: { minLength: 3, message: 'At least 3 characters' },
+      },
+    ],
+  };
+
+  it('shows the validation message after submitting an invalid value', async () => {
+    render(<ConfigForm config={minLenConfig} onSubmit={() => {}} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Username' }), { target: { value: 'ab' } });
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() => expect(screen.getByText('At least 3 characters')).toBeTruthy());
+  });
+
+  it('does not show a validation message when the value is valid', async () => {
+    const onSubmit = vi.fn();
+    render(<ConfigForm config={minLenConfig} onSubmit={onSubmit} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Username' }), { target: { value: 'ada' } });
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(screen.queryByText('At least 3 characters')).toBeNull();
+  });
+
+  it('shows a minLength message when the value is too short after typing', async () => {
+    render(<ConfigForm config={minLenConfig} onSubmit={() => {}} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Username' }), { target: { value: 'x' } });
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() => expect(screen.getByText('At least 3 characters')).toBeTruthy());
+  });
+});
+
 describe('grid layout', () => {
   const gridConfig: FormConfig = {
     version: 1,

@@ -25,7 +25,7 @@ export interface ConfigFormProps {
 
 export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en' }: ConfigFormProps) {
   const resolver = React.useMemo(() => zodResolver(configToZod(config)), [config]);
-  const { control, handleSubmit, reset } = useForm({ resolver, defaultValues });
+  const { control, handleSubmit, reset, formState: { errors } } = useForm({ resolver, defaultValues });
 
   // Re-initialise form state when `config` changes so stale field values are cleared.
   // RHF v7 already picks up the new resolver reference on each validation call via _options,
@@ -60,6 +60,9 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
                 <FieldControl field={field} value={rhf.value} onChange={rhf.onChange} />
               )}
             />
+            {errors[field.key]?.message && (
+              <p className="text-xs text-destructive">{String(errors[field.key]?.message)}</p>
+            )}
           </div>
         );
       })}

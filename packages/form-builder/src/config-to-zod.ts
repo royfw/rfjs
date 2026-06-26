@@ -65,7 +65,7 @@ function fieldSchema(field: FieldConfig): z.ZodTypeAny {
     // enum already rejects invalid values including ''
     if (field.options?.length) return base;
     if (field.dataType === 'string' || field.dataType === 'date')
-      return (base as z.ZodString).min(1);
+      return (base as z.ZodString).min(1, field.validation?.message);
     // '' -> undefined -> number rejects (required empty fails)
     if (field.dataType === 'numeric') return z.preprocess(emptyToUndefined, base);
     // boolean / object / array
