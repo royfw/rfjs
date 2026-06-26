@@ -13,6 +13,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { FieldComponent, FormConfig } from '@rfjs/form-builder';
 import { parseFormConfig } from '@rfjs/form-builder';
 import { Button } from '@rfjs/web-ui/components/button';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@rfjs/web-ui/components/select';
 
 import { useConfigBuilder } from './use-config-builder';
 import { FieldRow, makeField } from './field-row';
@@ -91,42 +92,59 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
                 + {c}
               </Button>
             ))}
-            <label className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
               Columns
-              <select
-                className="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground"
-                aria-label="columns"
-                value={builder.config.columns ?? 1}
-                onChange={(e) => builder.setColumns(Number(e.target.value) as FormConfig['columns'])}
+              <Select
+                value={String(builder.config.columns ?? 1)}
+                onValueChange={(v) => builder.setColumns(Number(v) as FormConfig['columns'])}
               >
-                {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
-            </label>
+                <SelectTrigger className="h-8" aria-label="columns">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </span>
           </div>
 
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-2">
-                {builder.config.fields.map((field) => (
-                  <FieldRow
-                    key={field.key}
-                    field={field}
-                    locales={locales}
-                    onUpdate={(patch) => builder.update(field.key, patch)}
-                    onRemove={() => builder.remove(field.key)}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+          <div className="rounded-lg border bg-card p-4">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+              <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-2">
+                  {builder.config.fields.length === 0 ? (
+                    <p
+                      data-testid="empty-state-hint"
+                      className="py-8 text-center text-sm text-muted-foreground"
+                    >
+                      No fields yet — add one from the palette above
+                    </p>
+                  ) : (
+                    builder.config.fields.map((field) => (
+                      <FieldRow
+                        key={field.key}
+                        field={field}
+                        locales={locales}
+                        onUpdate={(patch) => builder.update(field.key, patch)}
+                        onRemove={() => builder.remove(field.key)}
+                      />
+                    ))
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
 
-          <div data-testid="config-form-preview" className="rounded-md border border-input p-4">
-            <ConfigForm
-              key={JSON.stringify(builder.config)}
-              config={builder.config}
-              locale={locale}
-              onSubmit={() => {}}
-            />
+          <div data-testid="config-form-preview" className="rounded-lg border bg-card p-4">
+            {builder.config.fields.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">Preview will appear here once you add fields</p>
+            ) : (
+              <ConfigForm
+                config={builder.config}
+                locale={locale}
+                onSubmit={() => {}}
+              />
+            )}
           </div>
         </>
       ) : (
