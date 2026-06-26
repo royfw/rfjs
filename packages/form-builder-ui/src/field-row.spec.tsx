@@ -51,6 +51,30 @@ describe('FieldRow', () => {
   });
 });
 
+const selectField: FieldConfig = { key: 'role', label: 'Role', component: 'Select', dataType: 'string', options: [{ label: 'Admin', value: 'admin' }] };
+
+describe('OptionsEditor', () => {
+  it('adds an option to a Select field', () => {
+    const { onUpdate } = renderRow(selectField);
+    fireEvent.click(screen.getByRole('button', { name: /add option/i }));
+    expect(onUpdate).toHaveBeenCalledWith({ options: [{ label: 'Admin', value: 'admin' }, { label: '', value: '' }] });
+  });
+  it('edits an option label', () => {
+    const { onUpdate } = renderRow(selectField);
+    fireEvent.change(screen.getByLabelText('option 0 label'), { target: { value: 'Administrator' } });
+    expect(onUpdate).toHaveBeenCalledWith({ options: [{ label: 'Administrator', value: 'admin' }] });
+  });
+  it('removes an option', () => {
+    const { onUpdate } = renderRow(selectField);
+    fireEvent.click(screen.getByRole('button', { name: /remove option 0/i }));
+    expect(onUpdate).toHaveBeenCalledWith({ options: [] });
+  });
+  it('shows no options editor for a non-Select field', () => {
+    renderRow({ key: 'name', label: 'Name', component: 'Input', dataType: 'string' });
+    expect(screen.queryByRole('button', { name: /add option/i })).toBeNull();
+  });
+});
+
 describe('makeField', () => {
   it('creates a defaulted field for a component with a unique-ish key', () => {
     const f = makeField('Select');

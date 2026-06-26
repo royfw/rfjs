@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight, GripVertical, Trash2 } from 'lucide-react';
-import type { FieldComponent, FieldConfig, FieldWidth } from '@rfjs/form-builder';
+import type { FieldComponent, FieldConfig, FieldOption, FieldWidth } from '@rfjs/form-builder';
 import { Input } from '@rfjs/web-ui/components/input';
 import { Checkbox } from '@rfjs/web-ui/components/checkbox';
 import { Button } from '@rfjs/web-ui/components/button';
@@ -37,6 +37,52 @@ export function makeField(component: FieldComponent): FieldConfig {
   return component === 'Select' ? { ...base, options: [] } : base;
 }
 
+function OptionsEditor({ field, onUpdate }: { field: FieldConfig; onUpdate: (patch: Partial<FieldConfig>) => void }) {
+  const options = field.options ?? [];
+  const optionsRef = React.useRef(options);
+  optionsRef.current = options;
+  const set = (next: FieldOption[]) => onUpdate({ options: next });
+  return (
+    <div className="col-span-full flex flex-col gap-2">
+      <span className="text-xs font-medium text-muted-foreground">Options</span>
+      {options.map((opt, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <Input
+            className="h-8"
+            aria-label={`option ${i} label`}
+            value={opt.label}
+            onChange={(e) => set(optionsRef.current.map((o, j) => (j === i ? { ...o, label: e.target.value } : o)))}
+          />
+          <Input
+            className="h-8"
+            aria-label={`option ${i} value`}
+            value={String(opt.value)}
+            onChange={(e) => set(optionsRef.current.map((o, j) => (j === i ? { ...o, value: e.target.value } : o)))}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`remove option ${i}`}
+            onClick={() => set(optionsRef.current.filter((_, j) => j !== i))}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="self-start"
+        onClick={() => set([...optionsRef.current, { label: '', value: '' }])}
+      >
+        + Add option
+      </Button>
+    </div>
+  );
+}
+
 export interface FieldRowProps {
   field: FieldConfig;
   onUpdate: (patch: Partial<FieldConfig>) => void;
@@ -61,7 +107,7 @@ export function FieldRow({ field, onUpdate, onRemove }: FieldRowProps) {
       <div className="flex items-center gap-2 p-2">
         <button
           type="button"
-          className="text-muted-foreground"
+          className="text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded"
           aria-label={open ? 'collapse field' : 'expand field'}
           onClick={() => setOpen((o) => !o)}
         >
@@ -128,6 +174,7 @@ export function FieldRow({ field, onUpdate, onRemove }: FieldRowProps) {
             />
             required
           </label>
+          {field.component === 'Select' ? <OptionsEditor field={field} onUpdate={onUpdate} /> : null}
         </div>
       ) : null}
     </div>
