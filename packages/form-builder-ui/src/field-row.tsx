@@ -92,6 +92,8 @@ export interface FieldRowProps {
 export function FieldRow({ field, onUpdate, onRemove }: FieldRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.key });
   const [open, setOpen] = React.useState(true);
+  const [keyDraft, setKeyDraft] = React.useState(field.key);
+  React.useEffect(() => setKeyDraft(field.key), [field.key]);
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition };
 
   function changeComponent(component: FieldComponent) {
@@ -145,6 +147,16 @@ export function FieldRow({ field, onUpdate, onRemove }: FieldRowProps) {
                 </option>
               ))}
             </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Key
+            <Input
+              className="h-8 font-mono"
+              aria-label={`key for ${field.key}`}
+              value={keyDraft}
+              onChange={(e) => setKeyDraft(e.target.value)}
+              onBlur={() => { if (keyDraft && keyDraft !== field.key) onUpdate({ key: keyDraft }); }}
+            />
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Label

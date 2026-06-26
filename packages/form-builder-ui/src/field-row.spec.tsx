@@ -49,6 +49,14 @@ describe('FieldRow', () => {
     fireEvent.click(screen.getByRole('button', { name: /remove field/i }));
     expect(onRemove).toHaveBeenCalled();
   });
+  it('commits a key change on blur', () => {
+    const { onUpdate } = renderRow(base);
+    const keyInput = screen.getByLabelText('key for name');
+    fireEvent.change(keyInput, { target: { value: 'full_name' } });
+    expect(onUpdate).not.toHaveBeenCalled(); // not on each keystroke
+    fireEvent.blur(keyInput);
+    expect(onUpdate).toHaveBeenCalledWith({ key: 'full_name' });
+  });
 });
 
 const selectField: FieldConfig = { key: 'role', label: 'Role', component: 'Select', dataType: 'string', options: [{ label: 'Admin', value: 'admin' }] };
