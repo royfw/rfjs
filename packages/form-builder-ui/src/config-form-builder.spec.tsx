@@ -32,4 +32,23 @@ describe('ConfigFormBuilder', () => {
     fireEvent.change(screen.getByLabelText(/columns/i), { target: { value: '2' } });
     expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ columns: 2 }));
   });
+
+  it('shows the config as JSON and applies edits back (round-trip)', () => {
+    const onChange = vi.fn();
+    render(<ConfigFormBuilder initialConfig={initial} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('tab', { name: /json/i }));
+    const ta = screen.getByLabelText(/config json/i) as HTMLTextAreaElement;
+    const next = { version: 1, fields: [{ key: 'email', label: 'Email', component: 'Input', dataType: 'string' }] };
+    fireEvent.change(ta, { target: { value: JSON.stringify(next) } });
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ fields: [expect.objectContaining({ key: 'email' })] }));
+  });
+
+  it('shows an error for invalid JSON and does not apply it', () => {
+    const onChange = vi.fn();
+    render(<ConfigFormBuilder initialConfig={initial} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('tab', { name: /json/i }));
+    fireEvent.change(screen.getByLabelText(/config json/i), { target: { value: '{ not json' } });
+    expect(screen.getByText(/invalid/i)).toBeTruthy();
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });
