@@ -145,7 +145,7 @@ export function FieldRow({ field, onUpdate, onRemove, locales = ['en'] }: FieldR
       </div>
       {open ? (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 border-t border-input p-3">
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          <span className="flex flex-col gap-1 text-xs text-muted-foreground">
             Type
             <Select value={field.component} onValueChange={(v) => changeComponent(v as FieldComponent)}>
               <SelectTrigger className="h-8" aria-label={`type for ${field.key}`}>
@@ -157,7 +157,7 @@ export function FieldRow({ field, onUpdate, onRemove, locales = ['en'] }: FieldR
                 ))}
               </SelectContent>
             </Select>
-          </label>
+          </span>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Key
             <Input
@@ -191,7 +191,7 @@ export function FieldRow({ field, onUpdate, onRemove, locales = ['en'] }: FieldR
               </label>
             ))
           )}
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          <span className="flex flex-col gap-1 text-xs text-muted-foreground">
             Width
             <Select value={field.width ?? 'full'} onValueChange={(v) => onUpdate({ width: v as FieldWidth })}>
               <SelectTrigger className="h-8" aria-label={`width for ${field.key}`}>
@@ -202,7 +202,7 @@ export function FieldRow({ field, onUpdate, onRemove, locales = ['en'] }: FieldR
                 <SelectItem value="half">Half</SelectItem>
               </SelectContent>
             </Select>
-          </label>
+          </span>
           <label className="flex items-center gap-1.5 self-end text-xs text-muted-foreground">
             <Checkbox
               checked={Boolean(field.required)}
