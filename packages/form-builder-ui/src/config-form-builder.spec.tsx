@@ -123,8 +123,11 @@ describe('ConfigFormBuilder', () => {
 
   it('removes a field', () => {
     render(<ConfigFormBuilder initialConfig={initial} />);
+    expect(screen.getAllByRole('button', { name: /remove item/i }).length).toBe(1);
     fireEvent.click(screen.getByRole('button', { name: /remove item/i }));
-    expect(screen.queryByLabelText('label for name')).toBeNull();
+    // The only item is gone — no item cards (hence no remove buttons) remain.
+    // (Collapse-independent: the card body isn't mounted while collapsed.)
+    expect(screen.queryByRole('button', { name: /remove item/i })).toBeNull();
   });
 
   it('columns trigger renders the current columns value', () => {

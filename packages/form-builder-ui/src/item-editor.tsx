@@ -189,28 +189,23 @@ export function ItemEditor({ item, siblingFields = [], locales = ['en'], onUpdat
     >
       <div className="flex items-center gap-2 p-2">
         {dragHandle}
+        {/* Single disclosure control: chevron + kind icon + summary all toggle the card. */}
         <button
           type="button"
-          className="text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded"
+          className="flex min-w-0 flex-1 items-center gap-2 text-left text-muted-foreground hover:text-foreground focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={open ? 'collapse item' : 'expand item'}
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
         >
-          {open ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-        </button>
-        <span
-          className="flex size-6 shrink-0 items-center justify-center rounded"
-          style={{ backgroundColor: `${meta.color}22`, color: meta.color }}
-          aria-hidden
-        >
-          <Icon className="size-3.5" />
-        </span>
-        <button
-          type="button"
-          className="flex min-w-0 flex-1 items-baseline gap-2 text-left"
-          onClick={() => setOpen((o) => !o)}
-        >
-          <span className="truncate text-sm font-medium">{title}</span>
+          {open ? <ChevronDown className="size-4 shrink-0" /> : <ChevronRight className="size-4 shrink-0" />}
+          <span
+            className="flex size-6 shrink-0 items-center justify-center rounded"
+            style={{ backgroundColor: `${meta.color}22`, color: meta.color }}
+            aria-hidden
+          >
+            <Icon className="size-3.5" />
+          </span>
+          <span className="truncate text-sm font-medium text-foreground">{title}</span>
           {sub ? <span className="truncate font-mono text-[11px] text-muted-foreground">{sub}</span> : null}
         </button>
         <div className="flex shrink-0 items-center gap-1">
