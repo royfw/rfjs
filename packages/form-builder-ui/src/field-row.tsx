@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight, GripVertical, Trash2 } from 'lucide-react';
-import type { FieldComponent, FieldConfig, FieldOption, FieldValidation, FieldWidth } from '@rfjs/form-builder';
+import type { FieldComponent, FieldConfig, FieldOption, FieldValidation, FieldWidth, ConditionalRule } from '@rfjs/form-builder';
 import { Input } from '@rfjs/web-ui/components/input';
 import { Checkbox } from '@rfjs/web-ui/components/checkbox';
 import { Button } from '@rfjs/web-ui/components/button';
@@ -20,7 +20,7 @@ const DATATYPE_BY_COMPONENT: Record<FieldComponent, FieldConfig['dataType']> = {
 
 const COMPONENTS: FieldComponent[] = ['Input', 'Textarea', 'Select', 'Checkbox', 'Date'];
 
-function labelOf(label: FieldConfig['label']): string {
+export function labelOf(label: FieldConfig['label']): string {
   return typeof label === 'string' ? label : (Object.values(label)[0] ?? '');
 }
 
@@ -201,6 +201,201 @@ function ValidationEditor({ field, onUpdate }: { field: FieldConfig; onUpdate: (
   );
 }
 
+// ---------------------------------------------------------------------------
+// Conditional display — pure helpers (exported for direct unit-testing)
+// ---------------------------------------------------------------------------
+
+/** A sibling field descriptor used to populate the condition-row field select. */
+export type SiblingField = { key: string; label: string; dataType: FieldConfig['dataType'] };
+
+/** Operators available per scalar dataType. */
+export function operatorsFor(dataType: FieldConfig['dataType']): string[] {
+  if (dataType === 'numeric' || dataType === 'date') {
+    return ['eq', 'neq', 'gt', 'gte', 'lt', 'lte'];
+  }
+  if (dataType === 'boolean') {
+    return ['eq', 'neq'];
+  }
+  // string (default)
+  return ['eq', 'neq', 'contains', 'startswith', 'endswith'];
+}
+
+/**
+ * Coerce a raw string value from an <Input> to the correct JS type for the given dataType.
+ * numeric → Number (NaN → '' rather than storing NaN); boolean → `raw === 'true'`; string/date → raw.
+ */
+export function coerceConditionValue(raw: string, dataType: FieldConfig['dataType']): string | number | boolean {
+  if (dataType === 'numeric') {
+    if (raw === '') return '';
+    const n = Number(raw);
+    return Number.isNaN(n) ? '' : n;
+  }
+  if (dataType === 'boolean') {
+    return raw === 'true';
+  }
+  return raw;
+}
+
+/** Build a fresh condition row for a given sibling field. */
+export function defaultCondition(sibling: SiblingField): { field: string; dataType: FieldConfig['dataType']; operator: string; value: string | number | boolean } {
+  return { field: sibling.key, dataType: sibling.dataType, operator: 'eq', value: '' };
+}
+
+/** Append a new condition row for `sibling` to the group (or create the group). */
+export function addCondition(
+  group: ConditionalRule | undefined,
+  sibling: SiblingField,
+): ConditionalRule {
+  const base = group ?? { logic: 'and' as const, filters: [] };
+  return { ...base, filters: [...base.filters, defaultCondition(sibling) as never] };
+}
+
+/** Remove condition row at index `i`. */
+export function removeCondition(group: ConditionalRule, i: number): ConditionalRule {
+  return { ...group, filters: group.filters.filter((_, j) => j !== i) };
+}
+
+/** Change the field + dataType for condition row `i`; resets operator to `eq` and clears value. */
+export function setConditionField(group: ConditionalRule, i: number, sibling: SiblingField): ConditionalRule {
+  return {
+    ...group,
+    filters: group.filters.map((f, j) =>
+      j === i ? { field: sibling.key, dataType: sibling.dataType, operator: 'eq', value: '' } as never : f,
+    ),
+  };
+}
+
+/** Change the operator for condition row `i`. */
+export function setConditionOperator(group: ConditionalRule, i: number, op: string): ConditionalRule {
+  return {
+    ...group,
+    filters: group.filters.map((f, j) =>
+      j === i ? { ...(f as object), operator: op } as never : f,
+    ),
+  };
+}
+
+/** Change the value for condition row `i`, coercing by dataType. */
+export function setConditionValue(group: ConditionalRule, i: number, raw: string, dataType: FieldConfig['dataType']): ConditionalRule {
+  return {
+    ...group,
+    filters: group.filters.map((f, j) =>
+      j === i ? { ...(f as object), value: coerceConditionValue(raw, dataType) } as never : f,
+    ),
+  };
+}
+
+// A loose leaf shape used only inside this editor (not the full discriminated union).
+type ConditionRow = { field: string; dataType: FieldConfig['dataType']; operator: string; value: string | number | boolean };
+
+function ConditionalEditor({
+  field,
+  siblingFields,
+  onUpdate,
+}: {
+  field: FieldConfig;
+  siblingFields: SiblingField[];
+  onUpdate: (patch: Partial<FieldConfig>) => void;
+}) {
+  const enabled = Boolean(field.conditional);
+  const group = field.conditional;
+
+  function toggle(checked: boolean | 'indeterminate') {
+    if (checked === true) {
+      onUpdate({ conditional: { logic: 'and', filters: [] } });
+    } else {
+      onUpdate({ conditional: undefined });
+    }
+  }
+
+  const rows = (group?.filters ?? []) as ConditionRow[];
+
+  return (
+    <div className="col-span-full flex flex-col gap-2">
+      <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Checkbox
+          aria-label="enable conditional display"
+          checked={enabled}
+          onCheckedChange={toggle}
+        />
+        Only show when conditions match
+      </label>
+      {enabled && group ? (
+        <div className="flex flex-col gap-2 pl-5">
+          {rows.map((row, i) => {
+            const ops = operatorsFor(row.dataType ?? 'string');
+            return (
+              <div key={i} className="flex flex-wrap items-center gap-2">
+                {/* Field select */}
+                <Select
+                  value={row.field}
+                  onValueChange={(v) => {
+                    const sib = siblingFields.find((s) => s.key === v);
+                    if (sib) onUpdate({ conditional: setConditionField(group, i, sib) });
+                  }}
+                >
+                  <SelectTrigger className="h-8 min-w-[120px]" aria-label={`condition ${i} field`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {siblingFields.map((s) => (
+                      <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {/* Operator select */}
+                <Select
+                  value={row.operator}
+                  onValueChange={(v) => onUpdate({ conditional: setConditionOperator(group, i, v) })}
+                >
+                  <SelectTrigger className="h-8 min-w-[100px]" aria-label={`condition ${i} operator`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ops.map((op) => (
+                      <SelectItem key={op} value={op}>{op}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {/* Value input */}
+                <Input
+                  className="h-8 min-w-[100px] flex-1"
+                  aria-label={`condition ${i} value`}
+                  value={String(row.value)}
+                  onChange={(e) => onUpdate({ conditional: setConditionValue(group, i, e.target.value, row.dataType ?? 'string') })}
+                />
+                {/* Remove button */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`remove condition ${i}`}
+                  onClick={() => onUpdate({ conditional: removeCondition(group, i) })}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            );
+          })}
+          {siblingFields.length > 0 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => onUpdate({ conditional: addCondition(group, siblingFields[0]!) })}
+            >
+              + Add condition
+            </Button>
+          ) : (
+            <p className="text-xs text-muted-foreground">No other fields available to condition on.</p>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function localeText(label: FieldConfig['label'], loc: string, fallback: string): string {
   if (typeof label === 'string') return loc === fallback ? label : '';
   return label[loc] ?? '';
@@ -217,9 +412,10 @@ export interface FieldRowProps {
   onUpdate: (patch: Partial<FieldConfig>) => void;
   onRemove: () => void;
   locales?: string[];
+  siblingFields?: SiblingField[];
 }
 
-export function FieldRow({ field, onUpdate, onRemove, locales = ['en'] }: FieldRowProps) {
+export function FieldRow({ field, onUpdate, onRemove, locales = ['en'], siblingFields = [] }: FieldRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.key });
   const [open, setOpen] = React.useState(true);
   const [keyDraft, setKeyDraft] = React.useState(field.key);
@@ -330,6 +526,7 @@ export function FieldRow({ field, onUpdate, onRemove, locales = ['en'] }: FieldR
           </label>
           {field.component === 'Select' ? <OptionsEditor field={field} onUpdate={onUpdate} /> : null}
           <ValidationEditor field={field} onUpdate={onUpdate} />
+          <ConditionalEditor field={field} siblingFields={siblingFields} onUpdate={onUpdate} />
         </div>
       ) : null}
     </div>

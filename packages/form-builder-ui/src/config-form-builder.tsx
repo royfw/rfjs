@@ -16,7 +16,7 @@ import { Button } from '@rfjs/web-ui/components/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@rfjs/web-ui/components/select';
 
 import { useConfigBuilder } from './use-config-builder';
-import { FieldRow, makeField } from './field-row';
+import { FieldRow, makeField, labelOf } from './field-row';
 import { ConfigForm } from './config-form';
 
 const PALETTE: FieldComponent[] = ['Input', 'Textarea', 'Select', 'Checkbox', 'Date'];
@@ -127,6 +127,9 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
                         locales={locales}
                         onUpdate={(patch) => builder.update(field.key, patch)}
                         onRemove={() => builder.remove(field.key)}
+                        siblingFields={builder.config.fields
+                          .filter((f) => f.key !== field.key && ['string', 'numeric', 'date', 'boolean'].includes(f.dataType))
+                          .map((f) => ({ key: f.key, label: labelOf(f.label), dataType: f.dataType }))}
                       />
                     ))
                   )}
