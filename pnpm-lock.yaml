@@ -894,6 +894,9 @@ importers:
 
   packages/form-builder:
     dependencies:
+      '@rfjs/data-filter':
+        specifier: workspace:*
+        version: link:../data-filter
       zod:
         specifier: ^4.0.0
         version: 4.4.3

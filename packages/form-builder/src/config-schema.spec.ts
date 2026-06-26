@@ -174,3 +174,62 @@ describe('FieldValidation schema', () => {
     expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
   });
 });
+
+describe('conditional field visibility schema', () => {
+  const baseField = { key: 'x', label: 'X', component: 'Input', dataType: 'string' };
+
+  it('accepts a field with a valid conditional rule', () => {
+    const cfg = {
+      version: 1,
+      fields: [
+        {
+          ...baseField,
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'admin' }],
+          },
+        },
+      ],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('accepts a field with an empty filters array', () => {
+    const cfg = {
+      version: 1,
+      fields: [{ ...baseField, conditional: { logic: 'and', filters: [] } }],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('accepts a field without conditional (backward compatible)', () => {
+    const cfg = { version: 1, fields: [{ ...baseField }] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('rejects a conditional with an invalid logic value', () => {
+    const cfg = {
+      version: 1,
+      fields: [
+        {
+          ...baseField,
+          conditional: { logic: 'xyz', filters: [] },
+        },
+      ],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+
+  it('rejects a conditional missing the logic key', () => {
+    const cfg = {
+      version: 1,
+      fields: [
+        {
+          ...baseField,
+          conditional: { filters: [] },
+        },
+      ],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+});

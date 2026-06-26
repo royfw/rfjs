@@ -25,8 +25,21 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DndContext } from '@dnd-kit/core';
 import { SortableContext } from '@dnd-kit/sortable';
-import { FieldRow, makeField, mergeValidation } from './field-row';
-import type { FieldConfig } from '@rfjs/form-builder';
+import {
+  FieldRow,
+  makeField,
+  mergeValidation,
+  operatorsFor,
+  coerceConditionValue,
+  defaultCondition,
+  addCondition,
+  removeCondition,
+  setConditionField,
+  setConditionOperator,
+  setConditionValue,
+  type SiblingField,
+} from './field-row';
+import type { FieldConfig, ConditionalRule } from '@rfjs/form-builder';
 
 function renderRow(field: FieldConfig, onUpdate = vi.fn(), onRemove = vi.fn()) {
   render(
@@ -71,7 +84,8 @@ describe('FieldRow', () => {
   });
   it('toggles required', () => {
     const { onUpdate } = renderRow(base);
-    fireEvent.click(screen.getByRole('checkbox'));
+    // Use the label text to target the correct checkbox now that there are two (required + conditional)
+    fireEvent.click(screen.getByRole('checkbox', { name: /required/i }));
     expect(onUpdate).toHaveBeenCalledWith({ required: true });
   });
   it('removes the field', () => {
@@ -239,5 +253,254 @@ describe('mergeValidation', () => {
   it('stores a string for a string key and clears it on empty', () => {
     expect(mergeValidation(undefined, 'pattern', '^x$', false)).toEqual({ pattern: '^x$' });
     expect(mergeValidation({ pattern: '^x$' }, 'pattern', '', false)).toEqual({});
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Conditional helpers — pure unit tests
+// ---------------------------------------------------------------------------
+
+const strSibling: SiblingField = { key: 'name', label: 'Name', dataType: 'string' };
+const numSibling: SiblingField = { key: 'age', label: 'Age', dataType: 'numeric' };
+const boolSibling: SiblingField = { key: 'active', label: 'Active', dataType: 'boolean' };
+const dateSibling: SiblingField = { key: 'dob', label: 'DOB', dataType: 'date' };
+
+describe('operatorsFor', () => {
+  it('returns string operators for string dataType', () => {
+    expect(operatorsFor('string')).toEqual(['eq', 'neq', 'contains', 'startswith', 'endswith']);
+  });
+  it('returns numeric operators for numeric dataType', () => {
+    expect(operatorsFor('numeric')).toEqual(['eq', 'neq', 'gt', 'gte', 'lt', 'lte']);
+  });
+  it('returns numeric operators for date dataType', () => {
+    expect(operatorsFor('date')).toEqual(['eq', 'neq', 'gt', 'gte', 'lt', 'lte']);
+  });
+  it('returns boolean operators for boolean dataType', () => {
+    expect(operatorsFor('boolean')).toEqual(['eq', 'neq']);
+  });
+});
+
+describe('coerceConditionValue', () => {
+  it('coerces a valid numeric string to number', () => {
+    expect(coerceConditionValue('42', 'numeric')).toBe(42);
+  });
+  it('returns empty string for empty numeric input', () => {
+    expect(coerceConditionValue('', 'numeric')).toBe('');
+  });
+  it('returns empty string for NaN-producing numeric input (does not store NaN)', () => {
+    expect(coerceConditionValue('abc', 'numeric')).toBe('');
+  });
+  it('coerces "true" string to boolean true', () => {
+    expect(coerceConditionValue('true', 'boolean')).toBe(true);
+  });
+  it('coerces anything else to boolean false for boolean dataType', () => {
+    expect(coerceConditionValue('false', 'boolean')).toBe(false);
+    expect(coerceConditionValue('yes', 'boolean')).toBe(false);
+  });
+  it('returns raw string for string dataType', () => {
+    expect(coerceConditionValue('hello', 'string')).toBe('hello');
+  });
+  it('returns raw string for date dataType', () => {
+    expect(coerceConditionValue('2024-01-01', 'date')).toBe('2024-01-01');
+  });
+});
+
+describe('defaultCondition', () => {
+  it('creates a condition with operator eq and empty value', () => {
+    expect(defaultCondition(strSibling)).toEqual({ field: 'name', dataType: 'string', operator: 'eq', value: '' });
+  });
+});
+
+describe('addCondition', () => {
+  it('creates a new group when called with undefined', () => {
+    const result = addCondition(undefined, strSibling);
+    expect(result.logic).toBe('and');
+    expect(result.filters).toHaveLength(1);
+  });
+  it('appends a condition to an existing group', () => {
+    const group: ConditionalRule = { logic: 'and', filters: [defaultCondition(strSibling) as never] };
+    const result = addCondition(group, numSibling);
+    expect(result.filters).toHaveLength(2);
+  });
+  it('preserves the logic of an existing group', () => {
+    const group: ConditionalRule = { logic: 'or', filters: [] };
+    expect(addCondition(group, strSibling).logic).toBe('or');
+  });
+});
+
+describe('removeCondition', () => {
+  it('removes a condition row at the given index', () => {
+    const group: ConditionalRule = {
+      logic: 'and',
+      filters: [defaultCondition(strSibling) as never, defaultCondition(numSibling) as never],
+    };
+    const result = removeCondition(group, 0);
+    expect(result.filters).toHaveLength(1);
+    expect((result.filters[0] as { field: string }).field).toBe('age');
+  });
+});
+
+describe('setConditionField', () => {
+  it('sets the field+dataType and resets operator to eq and clears value', () => {
+    const group: ConditionalRule = {
+      logic: 'and',
+      filters: [{ field: 'name', dataType: 'string', operator: 'contains', value: 'foo' } as never],
+    };
+    const result = setConditionField(group, 0, numSibling);
+    const row = result.filters[0] as { field: string; dataType: string; operator: string; value: string };
+    expect(row.field).toBe('age');
+    expect(row.dataType).toBe('numeric');
+    expect(row.operator).toBe('eq');
+    expect(row.value).toBe('');
+  });
+});
+
+describe('setConditionOperator', () => {
+  it('changes only the operator of the given row', () => {
+    const group: ConditionalRule = {
+      logic: 'and',
+      filters: [{ field: 'name', dataType: 'string', operator: 'eq', value: '' } as never],
+    };
+    const result = setConditionOperator(group, 0, 'contains');
+    expect((result.filters[0] as { operator: string }).operator).toBe('contains');
+  });
+});
+
+describe('setConditionValue', () => {
+  it('stores a numeric value as a number', () => {
+    const group: ConditionalRule = {
+      logic: 'and',
+      filters: [{ field: 'age', dataType: 'numeric', operator: 'gt', value: 0 } as never],
+    };
+    const result = setConditionValue(group, 0, '30', 'numeric');
+    expect((result.filters[0] as { value: number }).value).toBe(30);
+  });
+  it('stores empty string (not NaN) for a non-numeric raw value on numeric field', () => {
+    const group: ConditionalRule = {
+      logic: 'and',
+      filters: [{ field: 'age', dataType: 'numeric', operator: 'gt', value: 0 } as never],
+    };
+    const result = setConditionValue(group, 0, 'abc', 'numeric');
+    expect((result.filters[0] as { value: unknown }).value).toBe('');
+  });
+  it('stores a boolean value for boolean dataType', () => {
+    const group: ConditionalRule = {
+      logic: 'and',
+      filters: [{ field: 'active', dataType: 'boolean', operator: 'eq', value: false } as never],
+    };
+    const result = setConditionValue(group, 0, 'true', 'boolean');
+    expect((result.filters[0] as { value: boolean }).value).toBe(true);
+  });
+  it('stores raw string for string dataType', () => {
+    const group: ConditionalRule = {
+      logic: 'and',
+      filters: [{ field: 'name', dataType: 'string', operator: 'eq', value: '' } as never],
+    };
+    const result = setConditionValue(group, 0, 'Alice', 'string');
+    expect((result.filters[0] as { value: string }).value).toBe('Alice');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ConditionalEditor — component tests (driveable parts)
+// ---------------------------------------------------------------------------
+
+function renderRowWithSiblings(
+  field: FieldConfig,
+  siblingFields: SiblingField[],
+  onUpdate = vi.fn(),
+  onRemove = vi.fn(),
+) {
+  render(
+    <DndContext>
+      <SortableContext items={[field.key]}>
+        <FieldRow field={field} onUpdate={onUpdate} onRemove={onRemove} siblingFields={siblingFields} />
+      </SortableContext>
+    </DndContext>,
+  );
+  return { onUpdate, onRemove };
+}
+
+const siblings: SiblingField[] = [
+  { key: 'country', label: 'Country', dataType: 'string' },
+  { key: 'score', label: 'Score', dataType: 'numeric' },
+];
+
+describe('ConditionalEditor — Checkbox toggle', () => {
+  it('checking the checkbox calls onUpdate with an empty conditional group', () => {
+    const field: FieldConfig = { key: 'city', label: 'City', component: 'Input', dataType: 'string' };
+    const { onUpdate } = renderRowWithSiblings(field, siblings);
+    // "required" checkbox is first; "enable conditional display" is second
+    const conditionalCheckbox = screen.getByLabelText('enable conditional display');
+    fireEvent.click(conditionalCheckbox);
+    expect(onUpdate).toHaveBeenCalledWith({ conditional: { logic: 'and', filters: [] } });
+  });
+
+  it('unchecking the checkbox calls onUpdate with conditional: undefined', () => {
+    const field: FieldConfig = {
+      key: 'city', label: 'City', component: 'Input', dataType: 'string',
+      conditional: { logic: 'and', filters: [] },
+    };
+    const { onUpdate } = renderRowWithSiblings(field, siblings);
+    const conditionalCheckbox = screen.getByLabelText('enable conditional display');
+    fireEvent.click(conditionalCheckbox);
+    expect(onUpdate).toHaveBeenCalledWith({ conditional: undefined });
+  });
+});
+
+describe('ConditionalEditor — condition rows', () => {
+  const fieldWithCond: FieldConfig = {
+    key: 'city',
+    label: 'City',
+    component: 'Input',
+    dataType: 'string',
+    conditional: {
+      logic: 'and',
+      filters: [{ field: 'country', dataType: 'string', operator: 'eq', value: 'US' } as never],
+    },
+  };
+
+  it('renders the field select trigger with the current field value', () => {
+    renderRowWithSiblings(fieldWithCond, siblings);
+    const trigger = screen.getByLabelText('condition 0 field');
+    expect(trigger.textContent).toContain('Country');
+  });
+
+  it('renders the operator select trigger with the current operator', () => {
+    renderRowWithSiblings(fieldWithCond, siblings);
+    const trigger = screen.getByLabelText('condition 0 operator');
+    expect(trigger.textContent).toContain('eq');
+  });
+
+  it('editing the value input calls onUpdate with the updated group', () => {
+    const { onUpdate } = renderRowWithSiblings(fieldWithCond, siblings);
+    fireEvent.change(screen.getByLabelText('condition 0 value'), { target: { value: 'CA' } });
+    expect(onUpdate).toHaveBeenCalledWith({
+      conditional: {
+        logic: 'and',
+        filters: [{ field: 'country', dataType: 'string', operator: 'eq', value: 'CA' }],
+      },
+    });
+  });
+
+  it('clicking remove condition calls onUpdate with the condition removed', () => {
+    const { onUpdate } = renderRowWithSiblings(fieldWithCond, siblings);
+    fireEvent.click(screen.getByLabelText('remove condition 0'));
+    expect(onUpdate).toHaveBeenCalledWith({ conditional: { logic: 'and', filters: [] } });
+  });
+
+  it('clicking "+ Add condition" calls onUpdate appending a new condition', () => {
+    const field: FieldConfig = {
+      key: 'city', label: 'City', component: 'Input', dataType: 'string',
+      conditional: { logic: 'and', filters: [] },
+    };
+    const { onUpdate } = renderRowWithSiblings(field, siblings);
+    fireEvent.click(screen.getByRole('button', { name: /add condition/i }));
+    expect(onUpdate).toHaveBeenCalledWith({
+      conditional: {
+        logic: 'and',
+        filters: [{ field: 'country', dataType: 'string', operator: 'eq', value: '' }],
+      },
+    });
   });
 });

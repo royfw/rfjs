@@ -149,6 +149,120 @@ describe('field validation messages', () => {
   });
 });
 
+describe('conditional show/hide', () => {
+  // Controlling field is a plain text Input so fireEvent.change works in jsdom
+  const conditionalConfig: FormConfig = {
+    version: 1,
+    fields: [
+      { key: 'role', label: 'Role', component: 'Input', dataType: 'string' },
+      {
+        key: 'adminCode',
+        label: 'Admin Code',
+        component: 'Input',
+        dataType: 'string',
+        conditional: {
+          logic: 'and',
+          filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'admin' }],
+        },
+      },
+    ],
+  };
+
+  it('hides a conditional field when the controlling field does not satisfy the rule', () => {
+    render(<ConfigForm config={conditionalConfig} onSubmit={() => {}} />);
+    // role is empty → adminCode should not be in the DOM
+    expect(screen.queryByLabelText('Admin Code')).toBeNull();
+  });
+
+  it('shows the conditional field when the controlling field satisfies the rule', async () => {
+    render(<ConfigForm config={conditionalConfig} onSubmit={() => {}} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Role' }), { target: { value: 'admin' } });
+    await waitFor(() => expect(screen.getByLabelText('Admin Code')).toBeTruthy());
+  });
+
+  it('hides the conditional field again when the controlling field changes away from the trigger value', async () => {
+    render(<ConfigForm config={conditionalConfig} onSubmit={() => {}} />);
+    const roleInput = screen.getByRole('textbox', { name: 'Role' });
+    fireEvent.change(roleInput, { target: { value: 'admin' } });
+    await waitFor(() => expect(screen.getByLabelText('Admin Code')).toBeTruthy());
+    fireEvent.change(roleInput, { target: { value: 'user' } });
+    await waitFor(() => expect(screen.queryByLabelText('Admin Code')).toBeNull());
+  });
+
+  it('does not block submit when a hidden required field is empty', async () => {
+    const requiredConditionalConfig: FormConfig = {
+      version: 1,
+      fields: [
+        { key: 'role', label: 'Role', component: 'Input', dataType: 'string' },
+        {
+          key: 'adminCode',
+          label: 'Admin Code',
+          component: 'Input',
+          dataType: 'string',
+          required: true,
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'admin' }],
+          },
+        },
+      ],
+    };
+    const onSubmit = vi.fn();
+    render(<ConfigForm config={requiredConditionalConfig} onSubmit={onSubmit} />);
+    // role !== 'admin' → adminCode hidden; even though it's required, submit should succeed
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+  });
+
+  it('blocks submit when a visible required conditional field is empty', async () => {
+    const requiredConditionalConfig: FormConfig = {
+      version: 1,
+      fields: [
+        { key: 'role', label: 'Role', component: 'Input', dataType: 'string' },
+        {
+          key: 'adminCode',
+          label: 'Admin Code',
+          component: 'Input',
+          dataType: 'string',
+          required: true,
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'admin' }],
+          },
+        },
+      ],
+    };
+    const onSubmit = vi.fn();
+    render(<ConfigForm config={requiredConditionalConfig} onSubmit={onSubmit} />);
+    // Make adminCode visible by setting role = 'admin'
+    fireEvent.change(screen.getByRole('textbox', { name: 'Role' }), { target: { value: 'admin' } });
+    await waitFor(() => expect(screen.getByLabelText('Admin Code')).toBeTruthy());
+    // Submit without filling adminCode → should be blocked
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() => expect(onSubmit).not.toHaveBeenCalled());
+  });
+
+  it('strips hidden field values from the submit payload', async () => {
+    const onSubmit = vi.fn();
+    render(<ConfigForm config={conditionalConfig} onSubmit={onSubmit} />);
+    const roleInput = screen.getByRole('textbox', { name: 'Role' });
+    // Make adminCode visible and fill it
+    fireEvent.change(roleInput, { target: { value: 'admin' } });
+    await waitFor(() => expect(screen.getByLabelText('Admin Code')).toBeTruthy());
+    fireEvent.change(screen.getByRole('textbox', { name: 'Admin Code' }), { target: { value: 'secret' } });
+    // Now hide it by changing role
+    fireEvent.change(roleInput, { target: { value: 'user' } });
+    await waitFor(() => expect(screen.queryByLabelText('Admin Code')).toBeNull());
+    // Submit → payload should NOT contain adminCode
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.not.objectContaining({ adminCode: expect.anything() }),
+      ),
+    );
+  });
+});
+
 describe('grid layout', () => {
   const gridConfig: FormConfig = {
     version: 1,
