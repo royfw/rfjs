@@ -1,3 +1,5 @@
+import type { ConditionalRule } from './conditional';
+
 // Data-type vocabulary — identical to @rfjs/filter-builder's FieldType.
 export type ScalarType = 'string' | 'numeric' | 'date' | 'boolean';
 export type FieldType = ScalarType | 'object' | 'array';
@@ -37,6 +39,7 @@ export interface FieldConfig {
   options?: FieldOption[];
   width?: FieldWidth;
   validation?: FieldValidation;
+  conditional?: ConditionalRule;
 }
 
 export interface FormConfig {

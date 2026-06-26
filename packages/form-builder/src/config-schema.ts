@@ -1,7 +1,25 @@
 import { z } from 'zod';
-import type { ZodType } from 'zod';
+import type { ZodType, ZodTypeAny } from 'zod';
 
 import type { FormConfig } from './types';
+
+// Permissive structural schema for ConditionalRule (FilterMatchQuery).
+// We validate shape (logic + filters array) without deep-validating every operator.
+const conditionSchema: ZodTypeAny = z.object({
+  field: z.string(),
+  dataType: z.string(),
+  operator: z.string(),
+  value: z.unknown().optional(),
+});
+
+// Recursive group schema: z.lazy defers the self-reference so the outer `conditionalSchema`
+// binding is resolved at evaluation time, not at declaration time.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const conditionalSchema: ZodTypeAny = z.object({
+  logic: z.enum(['and', 'or', 'nor', 'not']),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  filters: z.array(z.union([conditionSchema, z.lazy(() => conditionalSchema as any)])),
+});
 
 const fieldOptionSchema = z.object({
   label: z.string(),
@@ -41,6 +59,7 @@ const fieldConfigSchema = z.object({
   options: z.array(fieldOptionSchema).optional(),
   width: z.enum(['full', 'half']).optional(),
   validation: fieldValidationSchema.optional(),
+  conditional: conditionalSchema.optional(),
 });
 
 export const FormConfigSchema: ZodType<FormConfig> = z.object({
