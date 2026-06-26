@@ -1,16 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
-  Trash2,
-  ChevronRight,
-  ChevronDown,
-  Type,
-  AlignLeft,
-  Minus,
-  MoveVertical,
-  Sparkles,
-} from 'lucide-react';
+import { Trash2, ChevronRight, Type, AlignLeft, Minus, MoveVertical, Sparkles } from 'lucide-react';
 import type { FieldItem, ContentItem, DividerItem, SpacerItem, AiNoteItem, FormItem, ItemKind, SpacerSize } from '@rfjs/form-builder';
 import { Input } from '@rfjs/web-ui/components/input';
 import { Textarea } from '@rfjs/web-ui/components/textarea';
@@ -187,7 +178,7 @@ export function ItemEditor({ item, siblingFields = [], locales = ['en'], onUpdat
     <div
       // Collapsed → a clean borderless row (the section card is the only box).
       // Expanded → a focused panel with a subtle surface + border.
-      className={`group/item rounded-md ${open ? 'border border-input bg-background/40' : ''}`}
+      className={`group/item rounded-md transition-shadow ${open ? 'border border-input bg-background/40 shadow-sm ring-1 ring-inset ring-white/[0.03]' : ''}`}
       data-kind={item.kind}
     >
       <div
@@ -206,11 +197,9 @@ export function ItemEditor({ item, siblingFields = [], locales = ['en'], onUpdat
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
         >
-          {open ? (
-            <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
-          )}
+          <ChevronRight
+            className={`size-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+          />
           <Icon className="size-4 shrink-0" style={{ color: meta.color }} aria-hidden />
           <span className="truncate text-sm font-medium text-foreground">{title}</span>
           {sub ? <span className="truncate font-mono text-[11px] text-muted-foreground/70">{sub}</span> : null}
@@ -232,7 +221,7 @@ export function ItemEditor({ item, siblingFields = [], locales = ['en'], onUpdat
         </div>
       </div>
       {open ? (
-        <div>
+        <div className="animate-in fade-in-0 slide-in-from-top-1 duration-150">
           {item.kind === 'field' ? (
             <FieldItemEditor field={item as FieldItem} onUpdate={onUpdate as (patch: Partial<FieldItem>) => void} locales={locales} siblingFields={siblingFields} />
           ) : item.kind === 'content' ? (
