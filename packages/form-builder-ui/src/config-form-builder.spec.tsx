@@ -52,9 +52,65 @@ describe('ConfigFormBuilder empty state', () => {
 describe('ConfigFormBuilder', () => {
   it('adds a field from the palette', () => {
     render(<ConfigFormBuilder initialConfig={initial} />);
-    fireEvent.click(screen.getByRole('button', { name: /add input/i }));
-    // two label inputs now exist in the editor (Name + the new Input)
+    fireEvent.click(screen.getByRole('button', { name: /\+ field/i }));
+    // two label inputs now exist in the editor (Name + the new Field)
     expect(screen.getAllByLabelText(/^label for /).length).toBe(2);
+  });
+
+  it('adds a Content item from the palette and onChange receives a sections config', () => {
+    const onChange = vi.fn();
+    render(<ConfigFormBuilder initialConfig={empty} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: /\+ content/i }));
+    expect(onChange).toHaveBeenCalled();
+    const called = onChange.mock.calls[onChange.mock.calls.length - 1]![0] as FormConfig;
+    // Should be a sections config
+    expect(called.sections).toBeDefined();
+  });
+
+  it('adds a Divider item from the palette and onChange receives a sections config', () => {
+    const onChange = vi.fn();
+    render(<ConfigFormBuilder initialConfig={empty} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: /\+ divider/i }));
+    expect(onChange).toHaveBeenCalled();
+    const called = onChange.mock.calls[onChange.mock.calls.length - 1]![0] as FormConfig;
+    expect(called.sections).toBeDefined();
+  });
+
+  it('adds a Spacer item from the palette', () => {
+    const onChange = vi.fn();
+    render(<ConfigFormBuilder initialConfig={empty} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: /\+ spacer/i }));
+    expect(onChange).toHaveBeenCalled();
+    const called = onChange.mock.calls[onChange.mock.calls.length - 1]![0] as FormConfig;
+    expect(called.sections).toBeDefined();
+  });
+
+  it('adds a Field item from the palette (kind-based)', () => {
+    const onChange = vi.fn();
+    render(<ConfigFormBuilder initialConfig={empty} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: /\+ field/i }));
+    expect(onChange).toHaveBeenCalled();
+    const called = onChange.mock.calls[onChange.mock.calls.length - 1]![0] as FormConfig;
+    expect(called.sections).toBeDefined();
+  });
+
+  it('cold-start adds twice produce distinct row ids (no id collision)', () => {
+    // First cold-start add → builds a fresh row.
+    const onChange = vi.fn();
+    render(<ConfigFormBuilder initialConfig={empty} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: /\+ divider/i }));
+    const first = onChange.mock.calls[onChange.mock.calls.length - 1]![0] as FormConfig;
+    const firstRowId = first.sections![0]!.rows[0]!.id;
+
+    // Remove the only item — removeItem drops the now-empty row, returning to a no-rows state.
+    fireEvent.click(screen.getByRole('button', { name: /remove item/i }));
+
+    // Second cold-start add → must build a row with a DIFFERENT id.
+    fireEvent.click(screen.getByRole('button', { name: /\+ divider/i }));
+    const second = onChange.mock.calls[onChange.mock.calls.length - 1]![0] as FormConfig;
+    const secondRowId = second.sections![0]!.rows[0]!.id;
+
+    expect(secondRowId).not.toBe(firstRowId);
   });
 
   it('renders a live preview of the current config', () => {
@@ -66,7 +122,7 @@ describe('ConfigFormBuilder', () => {
 
   it('removes a field', () => {
     render(<ConfigFormBuilder initialConfig={initial} />);
-    fireEvent.click(screen.getByRole('button', { name: /remove field/i }));
+    fireEvent.click(screen.getByRole('button', { name: /remove item/i }));
     expect(screen.queryByLabelText('label for name')).toBeNull();
   });
 
