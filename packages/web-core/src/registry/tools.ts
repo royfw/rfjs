@@ -106,6 +106,14 @@ export const toolRegistry: ToolDefinition[] = [
     tags: ['builder', 'playground'],
   },
   {
+    id: 'form-builder',
+    category: 'generator',
+    surface: 'web',
+    status: 'preview',
+    relatedPackages: ['@rfjs/form-builder', '@rfjs/form-builder-ui'],
+    tags: ['form', 'builder', 'config'],
+  },
+  {
     id: 'object-transformer',
     category: 'transform',
     surface: 'workbench',

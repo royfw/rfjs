@@ -208,6 +208,12 @@ importers:
       '@rfjs/filter-builder-ui':
         specifier: workspace:*
         version: link:../../packages/filter-builder-ui
+      '@rfjs/form-builder':
+        specifier: workspace:*
+        version: link:../../packages/form-builder
+      '@rfjs/form-builder-ui':
+        specifier: workspace:*
+        version: link:../../packages/form-builder-ui
       '@rfjs/jsonb-query':
         specifier: workspace:*
         version: link:../../packages/jsonb-query
