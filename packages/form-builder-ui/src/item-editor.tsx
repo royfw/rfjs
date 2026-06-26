@@ -27,30 +27,32 @@ import type { SiblingField } from './field-row';
 
 interface KindMeta {
   label: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties } & React.AriaAttributes>;
   color: string; // kind accent color (inline — not dependent on the web-ui palette)
 }
 
+// A cohesive, cool, slightly-muted palette — field stays understated (it's the
+// common case); content/ai-note get gentle blue/violet; layout kinds are neutral.
 const KIND_META: Record<ItemKind, KindMeta> = {
-  field: { label: 'Field', Icon: Type, color: '#0ea5e9' }, // sky
-  content: { label: 'Content', Icon: AlignLeft, color: '#8b5cf6' }, // violet
-  'ai-note': { label: 'AI Note', Icon: Sparkles, color: '#d946ef' }, // fuchsia
-  divider: { label: 'Divider', Icon: Minus, color: '#71717a' }, // zinc
-  spacer: { label: 'Spacer', Icon: MoveVertical, color: '#71717a' },
+  field: { label: 'Field', Icon: Type, color: '#7c93b8' },
+  content: { label: 'Content', Icon: AlignLeft, color: '#7b9bf2' },
+  'ai-note': { label: 'AI Note', Icon: Sparkles, color: '#a78bfa' },
+  divider: { label: 'Divider', Icon: Minus, color: '#5a6678' },
+  spacer: { label: 'Spacer', Icon: MoveVertical, color: '#5a6678' },
 };
 
 const PILL_COLORS: Record<string, string> = {
-  danger: '#ef4444',
-  warn: '#f59e0b',
-  accent: '#8b5cf6',
+  danger: '#e0857f',
+  warn: '#d3a35c',
+  accent: '#a78bfa',
 };
 
 function Pill({ tone = 'accent', children }: { tone?: 'danger' | 'warn' | 'accent'; children: React.ReactNode }) {
   const c = PILL_COLORS[tone];
   return (
     <span
-      className="rounded px-1.5 py-0.5 text-[10px] font-medium leading-none"
-      style={{ backgroundColor: `${c}22`, color: c }}
+      className="rounded px-1.5 py-px text-[10px] font-medium uppercase tracking-wide leading-none"
+      style={{ color: c, backgroundColor: `${c}1a` }}
     >
       {children}
     </span>
@@ -183,37 +185,49 @@ export function ItemEditor({ item, siblingFields = [], locales = ['en'], onUpdat
 
   return (
     <div
-      className="overflow-hidden rounded-md border border-input bg-card"
-      style={{ borderLeftWidth: 3, borderLeftColor: meta.color }}
+      // Collapsed → a clean borderless row (the section card is the only box).
+      // Expanded → a focused panel with a subtle surface + border.
+      className={`group/item rounded-md ${open ? 'border border-input bg-background/40' : ''}`}
       data-kind={item.kind}
     >
-      <div className="flex items-center gap-2 p-2">
-        {dragHandle}
+      <div
+        // Thin inset left accent (no layout shift, lighter than a full colored border).
+        className={`flex items-center gap-1.5 rounded-md py-1 pl-2.5 pr-1.5 ${open ? '' : 'transition-colors hover:bg-muted/40'}`}
+        style={{ boxShadow: `inset 2px 0 0 ${meta.color}` }}
+      >
+        <span className="shrink-0 opacity-40 transition-opacity group-hover/item:opacity-100">
+          {dragHandle}
+        </span>
         {/* Single disclosure control: chevron + kind icon + summary all toggle the card. */}
         <button
           type="button"
-          className="flex min-w-0 flex-1 items-center gap-2 text-left text-muted-foreground hover:text-foreground focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-w-0 flex-1 items-center gap-2 py-1 text-left focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={open ? 'collapse item' : 'expand item'}
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
         >
-          {open ? <ChevronDown className="size-4 shrink-0" /> : <ChevronRight className="size-4 shrink-0" />}
-          <span
-            className="flex size-6 shrink-0 items-center justify-center rounded"
-            style={{ backgroundColor: `${meta.color}22`, color: meta.color }}
-            aria-hidden
-          >
-            <Icon className="size-3.5" />
-          </span>
+          {open ? (
+            <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+          )}
+          <Icon className="size-4 shrink-0" style={{ color: meta.color }} aria-hidden />
           <span className="truncate text-sm font-medium text-foreground">{title}</span>
-          {sub ? <span className="truncate font-mono text-[11px] text-muted-foreground">{sub}</span> : null}
+          {sub ? <span className="truncate font-mono text-[11px] text-muted-foreground/70">{sub}</span> : null}
         </button>
         <div className="flex shrink-0 items-center gap-1">
           {required ? <Pill tone="danger">required</Pill> : null}
-          {hasConditional ? <Pill tone="warn">when…</Pill> : null}
+          {hasConditional ? <Pill tone="warn">when</Pill> : null}
           {locked ? <Pill tone="accent">locked</Pill> : null}
-          <Button type="button" variant="ghost" size="icon" className="size-7" aria-label="remove item" onClick={onRemove}>
-            <Trash2 className="size-4" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-6 text-muted-foreground opacity-40 transition-opacity hover:text-destructive group-hover/item:opacity-100"
+            aria-label="remove item"
+            onClick={onRemove}
+          >
+            <Trash2 className="size-3.5" />
           </Button>
         </div>
       </div>

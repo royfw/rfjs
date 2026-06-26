@@ -134,36 +134,34 @@ function SectionView({ section, config, builder, locales }: SectionViewProps) {
   const itemCount = section.rows.reduce((n, r) => n + r.items.length, 0);
   const title = section.title ? labelOf(section.title) : 'Section';
   return (
-    <section className="rounded-lg border bg-card/40">
-      <header className="flex items-center gap-2 border-b border-input px-3 py-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</span>
-        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+    <section className="overflow-hidden rounded-lg border border-input/70 bg-card/30">
+      <header className="flex items-center gap-2 bg-muted/30 px-3 py-1.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
+        <span className="text-[10px] text-muted-foreground/60">
           {itemCount} item{itemCount === 1 ? '' : 's'}
         </span>
       </header>
-      <div className="flex flex-col gap-0 p-2">
+      <div className="flex flex-col p-1.5">
         <NewRowDropZone id={`newrow:${section.id}:0`} />
         {section.rows.map((row, rowIndex) => {
           const itemIds = row.items.map((i) => i.id);
           return (
             <React.Fragment key={row.id}>
-              <div className="rounded-md p-1">
-                <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                  <div className="flex flex-col gap-2">
-                    {row.items.map((item) => (
-                      <SortableItemCard
-                        key={item.id}
-                        item={item}
-                        config={config}
-                        builder={builder}
-                        locales={locales}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-                {/* Append-to-row drop zone (`row:<rowId>`). */}
-                <RowDropZone rowId={row.id} />
-              </div>
+              <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-0.5">
+                  {row.items.map((item) => (
+                    <SortableItemCard
+                      key={item.id}
+                      item={item}
+                      config={config}
+                      builder={builder}
+                      locales={locales}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+              {/* Append-to-row drop zone (`row:<rowId>`). */}
+              <RowDropZone rowId={row.id} />
               <NewRowDropZone id={`newrow:${section.id}:${rowIndex + 1}`} />
             </React.Fragment>
           );
@@ -202,7 +200,7 @@ export function SectionArranger({ config, builder, locales = ['en'] }: SectionAr
     <DndContext id="form-builder-arranger" sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       {/* Flat SortableContext for all items — dnd-kit needs a single context covering all draggables */}
       <SortableContext items={allItemIds} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3">
           {sections.map((section) => (
             <SectionView
               key={section.id}
