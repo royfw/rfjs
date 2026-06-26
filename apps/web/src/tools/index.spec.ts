@@ -21,6 +21,7 @@ const EXPECTED_WEB_TOOL_IDS = [
   "es-query-builder",
   "es-client-demo",
   "pg-filter-builder",
+  "form-builder",
 ].sort();
 
 describe("implementation registry", () => {

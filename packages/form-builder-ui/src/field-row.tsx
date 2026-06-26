@@ -83,15 +83,29 @@ function OptionsEditor({ field, onUpdate }: { field: FieldConfig; onUpdate: (pat
   );
 }
 
+function localeText(label: FieldConfig['label'], loc: string, fallback: string): string {
+  if (typeof label === 'string') return loc === fallback ? label : '';
+  return label[loc] ?? '';
+}
+
+function setLocaleLabel(label: FieldConfig['label'], loc: string, value: string, locales: string[]): FieldConfig['label'] {
+  const base: Record<string, string> = typeof label === 'string' ? { [locales[0] ?? 'en']: label } : { ...label };
+  base[loc] = value;
+  return base;
+}
+
 export interface FieldRowProps {
   field: FieldConfig;
   onUpdate: (patch: Partial<FieldConfig>) => void;
   onRemove: () => void;
+  locales?: string[];
 }
 
-export function FieldRow({ field, onUpdate, onRemove }: FieldRowProps) {
+export function FieldRow({ field, onUpdate, onRemove, locales = ['en'] }: FieldRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: field.key });
   const [open, setOpen] = React.useState(true);
+  const [keyDraft, setKeyDraft] = React.useState(field.key);
+  React.useEffect(() => setKeyDraft(field.key), [field.key]);
   const style: React.CSSProperties = { transform: CSS.Transform.toString(transform), transition };
 
   function changeComponent(component: FieldComponent) {
@@ -147,14 +161,38 @@ export function FieldRow({ field, onUpdate, onRemove }: FieldRowProps) {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Label
+            Key
             <Input
-              className="h-8"
-              aria-label={`label for ${field.key}`}
-              value={labelOf(field.label)}
-              onChange={(e) => onUpdate({ label: e.target.value })}
+              className="h-8 font-mono"
+              aria-label={`key for ${field.key}`}
+              value={keyDraft}
+              onChange={(e) => setKeyDraft(e.target.value)}
+              onBlur={() => { if (keyDraft && keyDraft !== field.key) onUpdate({ key: keyDraft }); }}
             />
           </label>
+          {locales.length <= 1 ? (
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              Label
+              <Input
+                className="h-8"
+                aria-label={`label for ${field.key}`}
+                value={labelOf(field.label)}
+                onChange={(e) => onUpdate({ label: e.target.value })}
+              />
+            </label>
+          ) : (
+            locales.map((loc) => (
+              <label key={loc} className="flex flex-col gap-1 text-xs text-muted-foreground">
+                Label ({loc})
+                <Input
+                  className="h-8"
+                  aria-label={`label (${loc}) for ${field.key}`}
+                  value={localeText(field.label, loc, locales[0] ?? 'en')}
+                  onChange={(e) => onUpdate({ label: setLocaleLabel(field.label, loc, e.target.value, locales) })}
+                />
+              </label>
+            ))
+          )}
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Width
             <select

@@ -111,6 +111,14 @@ export const packageRegistry: PackageDefinition[] = [
     relatedTools: ['object-flatten', 'object-transformer'],
   },
   {
+    name: '@rfjs/form-builder',
+    status: 'preview',
+    href: '/packages/form-builder',
+    github: GITHUB,
+    tags: ['form', 'builder', 'config'],
+    relatedTools: ['form-builder'],
+  },
+  {
     name: '@rfjs/pg-toolkit',
     status: 'ready',
     href: '/packages/pg-toolkit',

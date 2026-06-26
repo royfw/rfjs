@@ -49,6 +49,14 @@ describe('FieldRow', () => {
     fireEvent.click(screen.getByRole('button', { name: /remove field/i }));
     expect(onRemove).toHaveBeenCalled();
   });
+  it('commits a key change on blur', () => {
+    const { onUpdate } = renderRow(base);
+    const keyInput = screen.getByLabelText('key for name');
+    fireEvent.change(keyInput, { target: { value: 'full_name' } });
+    expect(onUpdate).not.toHaveBeenCalled(); // not on each keystroke
+    fireEvent.blur(keyInput);
+    expect(onUpdate).toHaveBeenCalledWith({ key: 'full_name' });
+  });
 });
 
 const selectField: FieldConfig = { key: 'role', label: 'Role', component: 'Select', dataType: 'string', options: [{ label: 'Admin', value: 'admin' }] };
@@ -72,6 +80,26 @@ describe('OptionsEditor', () => {
   it('shows no options editor for a non-Select field', () => {
     renderRow({ key: 'name', label: 'Name', component: 'Input', dataType: 'string' });
     expect(screen.queryByRole('button', { name: /add option/i })).toBeNull();
+  });
+});
+
+describe('multi-locale label editing', () => {
+  it('edits a per-locale label when multiple locales', () => {
+    const onUpdate = vi.fn();
+    render(
+      <DndContext>
+        <SortableContext items={['name']}>
+          <FieldRow
+            field={{ key: 'name', label: 'Name', component: 'Input', dataType: 'string' }}
+            locales={['en', 'zh-TW']}
+            onUpdate={onUpdate}
+            onRemove={() => {}}
+          />
+        </SortableContext>
+      </DndContext>,
+    );
+    fireEvent.change(screen.getByLabelText('label (zh-TW) for name'), { target: { value: '姓名' } });
+    expect(onUpdate).toHaveBeenCalledWith({ label: { en: 'Name', 'zh-TW': '姓名' } });
   });
 });
 

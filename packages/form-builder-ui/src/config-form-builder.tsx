@@ -11,6 +11,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { FieldComponent, FormConfig } from '@rfjs/form-builder';
+import { parseFormConfig } from '@rfjs/form-builder';
 import { Button } from '@rfjs/web-ui/components/button';
 
 import { useConfigBuilder } from './use-config-builder';
@@ -24,12 +25,15 @@ export interface ConfigFormBuilderProps {
   initialConfig?: FormConfig;
   onChange?: (config: FormConfig) => void;
   locale?: string;
+  locales?: string[];
 }
 
-export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'en' }: ConfigFormBuilderProps) {
+export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'en', locales = ['en'] }: ConfigFormBuilderProps) {
   const builder = useConfigBuilder(initialConfig, onChange);
   const sensors = useSensors(useSensor(PointerSensor));
   const ids = builder.config.fields.map((f) => f.key);
+  const [tab, setTab] = React.useState<'builder' | 'json'>('builder');
+  const [jsonError, setJsonError] = React.useState<string | null>(null);
 
   function onDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -39,46 +43,103 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
     if (from !== -1 && to !== -1) builder.move(from, to);
   }
 
+  function onJsonChange(text: string) {
+    try {
+      const parsed = parseFormConfig(JSON.parse(text));
+      setJsonError(null);
+      builder.replace(parsed);
+    } catch (err) {
+      setJsonError(err instanceof Error ? err.message : 'Invalid config');
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap gap-2">
-        {PALETTE.map((c) => (
-          <Button
-            key={c}
-            type="button"
-            variant="outline"
-            size="sm"
-            aria-label={`Add ${c}`}
-            onClick={() => builder.add(makeField(c))}
-          >
-            + {c}
-          </Button>
-        ))}
+      <div className="flex gap-2 border-b border-input">
+        <button
+          role="tab"
+          type="button"
+          aria-selected={tab === 'builder'}
+          className="px-3 py-1.5 text-sm font-medium"
+          onClick={() => setTab('builder')}
+        >
+          Builder
+        </button>
+        <button
+          role="tab"
+          type="button"
+          aria-selected={tab === 'json'}
+          className="px-3 py-1.5 text-sm font-medium"
+          onClick={() => setTab('json')}
+        >
+          JSON
+        </button>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col gap-2">
-            {builder.config.fields.map((field) => (
-              <FieldRow
-                key={field.key}
-                field={field}
-                onUpdate={(patch) => builder.update(field.key, patch)}
-                onRemove={() => builder.remove(field.key)}
-              />
+      {tab === 'builder' ? (
+        <>
+          <div className="flex flex-wrap gap-2">
+            {PALETTE.map((c) => (
+              <Button
+                key={c}
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-label={`Add ${c}`}
+                onClick={() => builder.add(makeField(c))}
+              >
+                + {c}
+              </Button>
             ))}
+            <label className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+              Columns
+              <select
+                className="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+                aria-label="columns"
+                value={builder.config.columns ?? 1}
+                onChange={(e) => builder.setColumns(Number(e.target.value) as FormConfig['columns'])}
+              >
+                {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
           </div>
-        </SortableContext>
-      </DndContext>
 
-      <div data-testid="config-form-preview" className="rounded-md border border-input p-4">
-        <ConfigForm
-          key={JSON.stringify(builder.config)}
-          config={builder.config}
-          locale={locale}
-          onSubmit={() => {}}
-        />
-      </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-2">
+                {builder.config.fields.map((field) => (
+                  <FieldRow
+                    key={field.key}
+                    field={field}
+                    locales={locales}
+                    onUpdate={(patch) => builder.update(field.key, patch)}
+                    onRemove={() => builder.remove(field.key)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+
+          <div data-testid="config-form-preview" className="rounded-md border border-input p-4">
+            <ConfigForm
+              key={JSON.stringify(builder.config)}
+              config={builder.config}
+              locale={locale}
+              onSubmit={() => {}}
+            />
+          </div>
+        </>
+      ) : (
+        <div>
+          <textarea
+            aria-label="config json"
+            className="h-64 w-full rounded-md border border-input bg-background p-3 font-mono text-xs"
+            defaultValue={JSON.stringify(builder.config, null, 2)}
+            onChange={(e) => onJsonChange(e.target.value)}
+          />
+          {jsonError ? <p className="mt-1 text-xs text-destructive">Invalid config: {jsonError}</p> : null}
+        </div>
+      )}
     </div>
   );
 }
