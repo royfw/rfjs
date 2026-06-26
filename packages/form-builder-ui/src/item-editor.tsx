@@ -24,18 +24,20 @@ interface KindMeta {
 
 // A cohesive, cool, slightly-muted palette — field stays understated (it's the
 // common case); content/ai-note get gentle blue/violet; layout kinds are neutral.
+// Mid-tone, mid-saturation hues chosen to read on BOTH the dark and light surfaces
+// (the builder must look good in either theme).
 const KIND_META: Record<ItemKind, KindMeta> = {
-  field: { label: 'Field', Icon: Type, color: '#7c93b8' },
-  content: { label: 'Content', Icon: AlignLeft, color: '#7b9bf2' },
-  'ai-note': { label: 'AI Note', Icon: Sparkles, color: '#a78bfa' },
-  divider: { label: 'Divider', Icon: Minus, color: '#5a6678' },
-  spacer: { label: 'Spacer', Icon: MoveVertical, color: '#5a6678' },
+  field: { label: 'Field', Icon: Type, color: '#5b82c4' },
+  content: { label: 'Content', Icon: AlignLeft, color: '#6d7bf0' },
+  'ai-note': { label: 'AI Note', Icon: Sparkles, color: '#9168e8' },
+  divider: { label: 'Divider', Icon: Minus, color: '#7a8394' },
+  spacer: { label: 'Spacer', Icon: MoveVertical, color: '#7a8394' },
 };
 
 const PILL_COLORS: Record<string, string> = {
-  danger: '#e0857f',
-  warn: '#d3a35c',
-  accent: '#a78bfa',
+  danger: '#d65a55',
+  warn: '#bd842f',
+  accent: '#8b63dd',
 };
 
 function Pill({ tone = 'accent', children }: { tone?: 'danger' | 'warn' | 'accent'; children: React.ReactNode }) {
@@ -43,7 +45,7 @@ function Pill({ tone = 'accent', children }: { tone?: 'danger' | 'warn' | 'accen
   return (
     <span
       className="rounded px-1.5 py-px text-[10px] font-medium uppercase tracking-wide leading-none"
-      style={{ color: c, backgroundColor: `${c}1a` }}
+      style={{ color: c, backgroundColor: `${c}24` }}
     >
       {children}
     </span>
@@ -178,7 +180,7 @@ export function ItemEditor({ item, siblingFields = [], locales = ['en'], onUpdat
     <div
       // Collapsed → a clean borderless row (the section card is the only box).
       // Expanded → a focused panel with a subtle surface + border.
-      className={`group/item rounded-md transition-shadow ${open ? 'border border-input bg-background/40 shadow-sm ring-1 ring-inset ring-white/[0.03]' : ''}`}
+      className={`group/item rounded-md transition-shadow ${open ? 'border border-input bg-background/40 shadow-sm ring-1 ring-inset ring-foreground/[0.04]' : ''}`}
       data-kind={item.kind}
     >
       <div
