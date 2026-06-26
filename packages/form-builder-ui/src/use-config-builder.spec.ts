@@ -12,16 +12,16 @@ describe('useConfigBuilder', () => {
     const { result } = renderHook(() => useConfigBuilder(initial, onChange));
 
     act(() => result.current.add(f('c')));
-    expect(result.current.config.fields.map((x) => x.key)).toEqual(['a', 'b', 'c']);
+    expect((result.current.config.fields ?? []).map((x) => x.key)).toEqual(['a', 'b', 'c']);
 
     act(() => result.current.update('b', { label: 'Bee' }));
-    expect(result.current.config.fields[1]!.label).toBe('Bee');
+    expect(result.current.config.fields![1]!.label).toBe('Bee');
 
     act(() => result.current.move(0, 2));
-    expect(result.current.config.fields.map((x) => x.key)).toEqual(['b', 'c', 'a']);
+    expect((result.current.config.fields ?? []).map((x) => x.key)).toEqual(['b', 'c', 'a']);
 
     act(() => result.current.remove('c'));
-    expect(result.current.config.fields.map((x) => x.key)).toEqual(['b', 'a']);
+    expect((result.current.config.fields ?? []).map((x) => x.key)).toEqual(['b', 'a']);
 
     act(() => result.current.setColumns(2));
     expect(result.current.config.columns).toBe(2);
@@ -36,6 +36,6 @@ describe('useConfigBuilder', () => {
       result.current.add(f('a'));
       result.current.add(f('b'));
     });
-    expect(result.current.config.fields.map((x) => x.key)).toEqual(['a', 'b']);
+    expect((result.current.config.fields ?? []).map((x) => x.key)).toEqual(['a', 'b']);
   });
 });
