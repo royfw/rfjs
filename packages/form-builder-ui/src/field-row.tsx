@@ -8,6 +8,7 @@ import type { FieldComponent, FieldConfig, FieldOption, FieldWidth } from '@rfjs
 import { Input } from '@rfjs/web-ui/components/input';
 import { Checkbox } from '@rfjs/web-ui/components/checkbox';
 import { Button } from '@rfjs/web-ui/components/button';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@rfjs/web-ui/components/select';
 
 const DATATYPE_BY_COMPONENT: Record<FieldComponent, FieldConfig['dataType']> = {
   Input: 'string',
@@ -18,7 +19,6 @@ const DATATYPE_BY_COMPONENT: Record<FieldComponent, FieldConfig['dataType']> = {
 };
 
 const COMPONENTS: FieldComponent[] = ['Input', 'Textarea', 'Select', 'Checkbox', 'Date'];
-const SELECT_CLASS = 'h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground';
 
 function labelOf(label: FieldConfig['label']): string {
   return typeof label === 'string' ? label : (Object.values(label)[0] ?? '');
@@ -147,18 +147,16 @@ export function FieldRow({ field, onUpdate, onRemove, locales = ['en'] }: FieldR
         <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 border-t border-input p-3">
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Type
-            <select
-              className={SELECT_CLASS}
-              aria-label={`type for ${field.key}`}
-              value={field.component}
-              onChange={(e) => changeComponent(e.target.value as FieldComponent)}
-            >
-              {COMPONENTS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+            <Select value={field.component} onValueChange={(v) => changeComponent(v as FieldComponent)}>
+              <SelectTrigger className="h-8" aria-label={`type for ${field.key}`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COMPONENTS.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Key
@@ -195,15 +193,15 @@ export function FieldRow({ field, onUpdate, onRemove, locales = ['en'] }: FieldR
           )}
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Width
-            <select
-              className={SELECT_CLASS}
-              aria-label={`width for ${field.key}`}
-              value={field.width ?? 'full'}
-              onChange={(e) => onUpdate({ width: e.target.value as FieldWidth })}
-            >
-              <option value="full">Full</option>
-              <option value="half">Half</option>
-            </select>
+            <Select value={field.width ?? 'full'} onValueChange={(v) => onUpdate({ width: v as FieldWidth })}>
+              <SelectTrigger className="h-8" aria-label={`width for ${field.key}`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="full">Full</SelectItem>
+                <SelectItem value="half">Half</SelectItem>
+              </SelectContent>
+            </Select>
           </label>
           <label className="flex items-center gap-1.5 self-end text-xs text-muted-foreground">
             <Checkbox
