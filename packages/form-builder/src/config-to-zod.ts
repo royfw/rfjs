@@ -45,7 +45,13 @@ function applyValidation(base: z.ZodTypeAny, field: FieldConfig): z.ZodTypeAny {
     let strBase = base as z.ZodString;
     if (v.minLength !== undefined) strBase = strBase.min(v.minLength, v.message);
     if (v.maxLength !== undefined) strBase = strBase.max(v.maxLength, v.message);
-    if (v.pattern !== undefined) strBase = strBase.regex(new RegExp(v.pattern), v.message);
+    if (v.pattern !== undefined) {
+      try {
+        strBase = strBase.regex(new RegExp(v.pattern), v.message);
+      } catch {
+        // invalid regex source — skip it silently rather than throwing
+      }
+    }
     return strBase;
   }
 

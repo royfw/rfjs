@@ -13,7 +13,20 @@ const fieldValidationSchema = z.object({
   max: z.number().optional(),
   minLength: z.number().optional(),
   maxLength: z.number().optional(),
-  pattern: z.string().optional(),
+  pattern: z
+    .string()
+    .refine(
+      (s) => {
+        try {
+          new RegExp(s);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      'Invalid regex pattern'
+    )
+    .optional(),
   message: z.string().optional(),
 });
 

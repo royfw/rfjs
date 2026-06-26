@@ -141,4 +141,36 @@ describe('FieldValidation schema', () => {
     const cfg = { version: 1, fields: [{ ...baseField }] };
     expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
   });
+
+  it('rejects a field with an invalid regex pattern', () => {
+    const cfg = {
+      version: 1,
+      fields: [
+        {
+          key: 'test',
+          label: 'Test',
+          component: 'Input',
+          dataType: 'string',
+          validation: { pattern: '[unclosed' },
+        },
+      ],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+
+  it('accepts a field with a valid regex pattern', () => {
+    const cfg = {
+      version: 1,
+      fields: [
+        {
+          key: 'test',
+          label: 'Test',
+          component: 'Input',
+          dataType: 'string',
+          validation: { pattern: '^[a-z]+$' },
+        },
+      ],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
 });

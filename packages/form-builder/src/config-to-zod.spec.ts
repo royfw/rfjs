@@ -242,4 +242,26 @@ describe('configToZod — validation rules', () => {
     expect(schema.safeParse({ age: -5 }).success).toBe(false);
     expect(schema.safeParse({ age: 25 }).success).toBe(true);
   });
+
+  it('does not throw when given a field with an invalid regex pattern (defensive try/catch)', () => {
+    // Construct config directly, bypassing schema validation
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'test',
+          label: 'Test',
+          component: 'Input',
+          dataType: 'string',
+          required: true,
+          validation: { pattern: '[unclosed' }, // malformed regex
+        },
+      ],
+    };
+    // Should not throw; invalid pattern is skipped silently
+    expect(() => configToZod(cfg)).not.toThrow();
+    // Schema is still usable (just without the regex constraint)
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ test: 'anything' }).success).toBe(true);
+  });
 });
