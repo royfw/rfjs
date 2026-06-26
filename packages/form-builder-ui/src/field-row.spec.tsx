@@ -83,6 +83,26 @@ describe('OptionsEditor', () => {
   });
 });
 
+describe('multi-locale label editing', () => {
+  it('edits a per-locale label when multiple locales', () => {
+    const onUpdate = vi.fn();
+    render(
+      <DndContext>
+        <SortableContext items={['name']}>
+          <FieldRow
+            field={{ key: 'name', label: 'Name', component: 'Input', dataType: 'string' }}
+            locales={['en', 'zh-TW']}
+            onUpdate={onUpdate}
+            onRemove={() => {}}
+          />
+        </SortableContext>
+      </DndContext>,
+    );
+    fireEvent.change(screen.getByLabelText('label (zh-TW) for name'), { target: { value: '姓名' } });
+    expect(onUpdate).toHaveBeenCalledWith({ label: { en: 'Name', 'zh-TW': '姓名' } });
+  });
+});
+
 describe('makeField', () => {
   it('creates a defaulted field for a component with a unique-ish key', () => {
     const f = makeField('Select');

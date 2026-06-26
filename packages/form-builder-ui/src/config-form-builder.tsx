@@ -25,9 +25,10 @@ export interface ConfigFormBuilderProps {
   initialConfig?: FormConfig;
   onChange?: (config: FormConfig) => void;
   locale?: string;
+  locales?: string[];
 }
 
-export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'en' }: ConfigFormBuilderProps) {
+export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'en', locales = ['en'] }: ConfigFormBuilderProps) {
   const builder = useConfigBuilder(initialConfig, onChange);
   const sensors = useSensors(useSensor(PointerSensor));
   const ids = builder.config.fields.map((f) => f.key);
@@ -110,6 +111,7 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
                   <FieldRow
                     key={field.key}
                     field={field}
+                    locales={locales}
                     onUpdate={(patch) => builder.update(field.key, patch)}
                     onRemove={() => builder.remove(field.key)}
                   />
