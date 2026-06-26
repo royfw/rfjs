@@ -77,7 +77,7 @@ function fieldSchema(field: FieldConfig): z.ZodTypeAny {
 
 export function configToZod(config: FormConfig): z.ZodObject<Record<string, z.ZodTypeAny>> {
   const shape: Record<string, z.ZodTypeAny> = {};
-  for (const field of config.fields) {
+  for (const field of config.fields ?? []) {
     shape[field.key] = fieldSchema(field);
   }
   return z.object(shape);

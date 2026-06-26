@@ -42,8 +42,32 @@ export interface FieldConfig {
   conditional?: ConditionalRule;
 }
 
+export type ItemKind = 'field' | 'content' | 'divider' | 'spacer' | 'ai-note';
+export type SpacerSize = 'sm' | 'md' | 'lg';
+
+export interface FieldItem extends FieldConfig {
+  id: string;            // layout identity (dnd / tree-ops)
+  kind: 'field';
+  aiNote?: string;       // per-field AI note (not rendered to fillers)
+}
+export interface ContentItem {
+  id: string;
+  kind: 'content';
+  text: LocalizedLabel;  // markdown-ish display text
+  locked?: boolean;      // preset, not editable in builder
+  conditional?: ConditionalRule;
+}
+export interface DividerItem { id: string; kind: 'divider'; conditional?: ConditionalRule; }
+export interface SpacerItem { id: string; kind: 'spacer'; size?: SpacerSize; conditional?: ConditionalRule; }
+export interface AiNoteItem { id: string; kind: 'ai-note'; text: string; }
+export type FormItem = FieldItem | ContentItem | DividerItem | SpacerItem | AiNoteItem;
+
+export interface FormRow { id: string; items: FormItem[]; }
+export interface FormSection { id: string; title?: LocalizedLabel; rows: FormRow[]; columns?: 1 | 2 | 3 | 4; }
+
 export interface FormConfig {
   version: number;
-  fields: FieldConfig[];
-  columns?: 1 | 2 | 3 | 4;
+  fields?: FieldConfig[];          // v1 (back-compat)
+  sections?: FormSection[];        // v2
+  columns?: 1 | 2 | 3 | 4;        // v1 grid (back-compat)
 }
