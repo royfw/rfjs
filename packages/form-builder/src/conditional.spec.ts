@@ -59,5 +59,13 @@ describe('evaluateConditional', () => {
     it('returns false when age < 18', () => {
       expect(evaluateConditional(rule, { age: 17 })).toBe(false);
     });
+
+    // Regression guard: at runtime RHF numeric inputs yield STRING values (e.g. "30").
+    // Conditional show/hide relies on data-filter's NumericMatch coercing both sides —
+    // lock that in so a future refactor can't silently break numeric conditions.
+    it('matches a numeric condition when the form value is a string (real RHF output)', () => {
+      expect(evaluateConditional(rule, { age: '30' } as never)).toBe(true);
+      expect(evaluateConditional(rule, { age: '10' } as never)).toBe(false);
+    });
   });
 });

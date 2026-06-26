@@ -519,6 +519,7 @@ export function FieldRow({ field, onUpdate, onRemove, locales = ['en'], siblingF
           </span>
           <label className="flex items-center gap-1.5 self-end text-xs text-muted-foreground">
             <Checkbox
+              aria-label="required"
               checked={Boolean(field.required)}
               onCheckedChange={(c) => onUpdate({ required: c === true })}
             />
