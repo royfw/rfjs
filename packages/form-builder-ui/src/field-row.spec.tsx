@@ -142,3 +142,76 @@ describe('makeField', () => {
     expect(typeof f.label).toBe('string');
   });
 });
+
+const numericField: FieldConfig = { key: 'age', label: 'Age', component: 'Input', dataType: 'numeric' };
+const stringField: FieldConfig = { key: 'bio', label: 'Bio', component: 'Textarea', dataType: 'string' };
+
+describe('ValidationEditor', () => {
+  it('shows min and max inputs for a numeric field', () => {
+    renderRow(numericField);
+    expect(screen.getByLabelText('validation min')).toBeTruthy();
+    expect(screen.getByLabelText('validation max')).toBeTruthy();
+    expect(screen.queryByLabelText('validation minLength')).toBeNull();
+    expect(screen.queryByLabelText('validation pattern')).toBeNull();
+  });
+
+  it('shows minLength, maxLength, pattern inputs for a string field', () => {
+    renderRow(stringField);
+    expect(screen.getByLabelText('validation minLength')).toBeTruthy();
+    expect(screen.getByLabelText('validation maxLength')).toBeTruthy();
+    expect(screen.getByLabelText('validation pattern')).toBeTruthy();
+    expect(screen.queryByLabelText('validation min')).toBeNull();
+    expect(screen.queryByLabelText('validation max')).toBeNull();
+  });
+
+  it('shows message input for all field types', () => {
+    renderRow(numericField);
+    expect(screen.getByLabelText('validation message')).toBeTruthy();
+  });
+
+  it('updates min on numeric field merging existing validation', () => {
+    const field: FieldConfig = { ...numericField, validation: { max: 100 } };
+    const { onUpdate } = renderRow(field);
+    fireEvent.change(screen.getByLabelText('validation min'), { target: { value: '5' } });
+    expect(onUpdate).toHaveBeenCalledWith({ validation: { max: 100, min: 5 } });
+  });
+
+  it('updates max on numeric field', () => {
+    const { onUpdate } = renderRow(numericField);
+    fireEvent.change(screen.getByLabelText('validation max'), { target: { value: '99' } });
+    expect(onUpdate).toHaveBeenCalledWith({ validation: { max: 99 } });
+  });
+
+  it('updates minLength on string field', () => {
+    const { onUpdate } = renderRow(stringField);
+    fireEvent.change(screen.getByLabelText('validation minLength'), { target: { value: '3' } });
+    expect(onUpdate).toHaveBeenCalledWith({ validation: { minLength: 3 } });
+  });
+
+  it('updates pattern on string field', () => {
+    const { onUpdate } = renderRow(stringField);
+    fireEvent.change(screen.getByLabelText('validation pattern'), { target: { value: '^[a-z]+$' } });
+    expect(onUpdate).toHaveBeenCalledWith({ validation: { pattern: '^[a-z]+$' } });
+  });
+
+  it('updates message on any field', () => {
+    const { onUpdate } = renderRow(numericField);
+    fireEvent.change(screen.getByLabelText('validation message'), { target: { value: 'Invalid value' } });
+    expect(onUpdate).toHaveBeenCalledWith({ validation: { message: 'Invalid value' } });
+  });
+
+  it('clears a numeric key when input is emptied', () => {
+    const field: FieldConfig = { ...numericField, validation: { min: 5, max: 100 } };
+    const { onUpdate } = renderRow(field);
+    fireEvent.change(screen.getByLabelText('validation min'), { target: { value: '' } });
+    expect(onUpdate).toHaveBeenCalledWith({ validation: { max: 100 } });
+  });
+
+  it('shows only message for a boolean field', () => {
+    const boolField: FieldConfig = { key: 'active', label: 'Active', component: 'Checkbox', dataType: 'boolean' };
+    renderRow(boolField);
+    expect(screen.getByLabelText('validation message')).toBeTruthy();
+    expect(screen.queryByLabelText('validation min')).toBeNull();
+    expect(screen.queryByLabelText('validation minLength')).toBeNull();
+  });
+});
