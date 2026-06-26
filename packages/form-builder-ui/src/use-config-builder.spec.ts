@@ -29,4 +29,13 @@ describe('useConfigBuilder', () => {
     expect(onChange).toHaveBeenCalled();
     expect(onChange).toHaveBeenLastCalledWith(result.current.config);
   });
+
+  it('applies back-to-back ops against the latest config (no stale closure)', () => {
+    const { result } = renderHook(() => useConfigBuilder({ version: 1, fields: [] }));
+    act(() => {
+      result.current.add(f('a'));
+      result.current.add(f('b'));
+    });
+    expect(result.current.config.fields.map((x) => x.key)).toEqual(['a', 'b']);
+  });
 });
