@@ -122,7 +122,6 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
 
           <div data-testid="config-form-preview" className="rounded-md border border-input p-4">
             <ConfigForm
-              key={JSON.stringify(builder.config)}
               config={builder.config}
               locale={locale}
               onSubmit={() => {}}

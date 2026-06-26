@@ -11,8 +11,9 @@ import { FieldControl } from './field-control';
 
 export interface ConfigFormProps {
   /**
-   * `config` is read once at mount (react-hook-form does not re-initialise from a changed resolver);
-   * remount with a React `key` to swap configs at runtime.
+   * `config` drives the form reactively: changing it re-renders the field list and resets
+   * the form state (clears stale values for removed/changed fields) without unmounting.
+   * The zod resolver is recomputed per `config` so validation tracks the latest schema.
    */
   config: FormConfig;
   defaultValues?: Record<string, unknown>;
@@ -24,7 +25,14 @@ export interface ConfigFormProps {
 
 export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en' }: ConfigFormProps) {
   const resolver = React.useMemo(() => zodResolver(configToZod(config)), [config]);
-  const { control, handleSubmit } = useForm({ resolver, defaultValues });
+  const { control, handleSubmit, reset } = useForm({ resolver, defaultValues });
+
+  // Re-initialise form state when `config` changes so stale field values are cleared.
+  // RHF v7 already picks up the new resolver reference on each validation call via _options,
+  // so only a reset of values is needed (not a full remount).
+  React.useEffect(() => {
+    reset(defaultValues ?? {});
+  }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const columns = config.columns ?? 1;
 

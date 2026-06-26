@@ -3,6 +3,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ConfigForm } from './config-form';
 import type { FormConfig } from '@rfjs/form-builder';
 
+const baseConfig: FormConfig = {
+  version: 1,
+  fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string' }],
+};
+
 const config: FormConfig = {
   version: 1,
   fields: [
@@ -46,6 +51,63 @@ describe('localized labels', () => {
   it('defaults to the en label', () => {
     render(<ConfigForm config={cfg} onSubmit={() => {}} />);
     expect(screen.getByText('Name')).toBeTruthy();
+  });
+});
+
+describe('config reactivity', () => {
+  it('renders the new field set after config changes without remounting existing inputs', () => {
+    const extendedConfig: FormConfig = {
+      version: 1,
+      fields: [
+        { key: 'name', label: 'Name', component: 'Input', dataType: 'string' },
+        { key: 'email', label: 'Email', component: 'Input', dataType: 'string' },
+      ],
+    };
+
+    const { rerender } = render(<ConfigForm config={baseConfig} onSubmit={() => {}} />);
+
+    // Record the input node for the existing 'name' field before rerender
+    const nameInputBefore = screen.getByRole('textbox', { name: 'Name' });
+
+    // Only 'Name' field should be present initially
+    expect(screen.queryByText('Email')).toBeNull();
+
+    // Rerender with an extended config that adds 'email' field
+    rerender(<ConfigForm config={extendedConfig} onSubmit={() => {}} />);
+
+    // The new 'Email' field should appear
+    expect(screen.getByText('Email')).toBeTruthy();
+
+    // The existing 'name' input node must be the SAME DOM element — no remount
+    const nameInputAfter = screen.getByRole('textbox', { name: 'Name' });
+    expect(nameInputAfter).toBe(nameInputBefore);
+  });
+
+  it('accepts a config change that removes the required constraint on a field', async () => {
+    // Start with a required 'name' field
+    const requiredConfig: FormConfig = {
+      version: 1,
+      fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string', required: true }],
+    };
+    // Change to the same field but optional
+    const optionalConfig: FormConfig = {
+      version: 1,
+      fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string', required: false }],
+    };
+
+    const onSubmit = vi.fn();
+    const { rerender } = render(<ConfigForm config={requiredConfig} onSubmit={onSubmit} />);
+
+    // Submitting with empty 'name' should be blocked (required)
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() => expect(onSubmit).not.toHaveBeenCalled());
+
+    // Now change config to remove the required constraint
+    rerender(<ConfigForm config={optionalConfig} onSubmit={onSubmit} />);
+
+    // Submitting with empty 'name' should now succeed (field is optional)
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
   });
 });
 
