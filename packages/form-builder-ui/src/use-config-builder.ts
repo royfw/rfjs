@@ -23,25 +23,28 @@ export function useConfigBuilder(
   onChange?: (config: FormConfig) => void,
 ): ConfigBuilderApi {
   const [config, setConfig] = React.useState<FormConfig>(initial);
+  const configRef = React.useRef(config);
+  configRef.current = config;
+  const onChangeRef = React.useRef(onChange);
+  onChangeRef.current = onChange;
 
-  const apply = React.useCallback(
-    (next: FormConfig) => {
-      setConfig(next);
-      onChange?.(next);
-    },
-    [onChange],
-  );
+  const apply = React.useCallback((next: FormConfig) => {
+    configRef.current = next; // so back-to-back ops in one tick see the latest
+    setConfig(next);
+    onChangeRef.current?.(next);
+  }, []);
 
-  return React.useMemo<ConfigBuilderApi>(
+  const ops = React.useMemo(
     () => ({
-      config,
-      add: (field, index) => apply(addField(config, field, index)),
-      remove: (key) => apply(removeField(config, key)),
-      update: (key, patch) => apply(updateField(config, key, patch)),
-      move: (from, to) => apply(moveField(config, from, to)),
-      setColumns: (columns) => apply({ ...config, columns }),
-      replace: (next) => apply(next),
+      add: (field: FieldConfig, index?: number) => apply(addField(configRef.current, field, index)),
+      remove: (key: string) => apply(removeField(configRef.current, key)),
+      update: (key: string, patch: Partial<FieldConfig>) => apply(updateField(configRef.current, key, patch)),
+      move: (from: number, to: number) => apply(moveField(configRef.current, from, to)),
+      setColumns: (columns: FormConfig['columns']) => apply({ ...configRef.current, columns }),
+      replace: (next: FormConfig) => apply(next),
     }),
-    [config, apply],
+    [apply],
   );
+
+  return { config, ...ops };
 }
