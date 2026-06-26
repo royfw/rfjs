@@ -108,28 +108,43 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
             </span>
           </div>
 
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-2">
-                {builder.config.fields.map((field) => (
-                  <FieldRow
-                    key={field.key}
-                    field={field}
-                    locales={locales}
-                    onUpdate={(patch) => builder.update(field.key, patch)}
-                    onRemove={() => builder.remove(field.key)}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+          <div className="rounded-lg border bg-card p-4">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+              <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-2">
+                  {builder.config.fields.length === 0 ? (
+                    <p
+                      data-testid="empty-state-hint"
+                      className="py-8 text-center text-sm text-muted-foreground"
+                    >
+                      No fields yet — add one from the palette above
+                    </p>
+                  ) : (
+                    builder.config.fields.map((field) => (
+                      <FieldRow
+                        key={field.key}
+                        field={field}
+                        locales={locales}
+                        onUpdate={(patch) => builder.update(field.key, patch)}
+                        onRemove={() => builder.remove(field.key)}
+                      />
+                    ))
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
 
-          <div data-testid="config-form-preview" className="rounded-md border border-input p-4">
-            <ConfigForm
-              config={builder.config}
-              locale={locale}
-              onSubmit={() => {}}
-            />
+          <div data-testid="config-form-preview" className="rounded-lg border bg-card p-4">
+            {builder.config.fields.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">Preview will appear here once you add fields</p>
+            ) : (
+              <ConfigForm
+                config={builder.config}
+                locale={locale}
+                onSubmit={() => {}}
+              />
+            )}
           </div>
         </>
       ) : (

@@ -26,7 +26,28 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ConfigFormBuilder } from './config-form-builder';
 import type { FormConfig } from '@rfjs/form-builder';
 
+const empty: FormConfig = { version: 1, fields: [] };
 const initial: FormConfig = { version: 1, fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string' }] };
+
+describe('ConfigFormBuilder empty state', () => {
+  it('shows the empty-state hint when there are no fields', () => {
+    render(<ConfigFormBuilder initialConfig={empty} />);
+    expect(screen.getByTestId('empty-state-hint')).toBeTruthy();
+    expect(screen.getByText(/no fields yet/i)).toBeTruthy();
+  });
+
+  it('does not show the empty-state hint when fields are present', () => {
+    render(<ConfigFormBuilder initialConfig={initial} />);
+    expect(screen.queryByTestId('empty-state-hint')).toBeNull();
+  });
+
+  it('preview panel has a placeholder and no Submit when fields are empty', () => {
+    render(<ConfigFormBuilder initialConfig={empty} />);
+    const preview = screen.getByTestId('config-form-preview');
+    expect(preview.textContent).toMatch(/preview will appear/i);
+    expect(within(preview).queryByRole('button', { name: /submit/i })).toBeNull();
+  });
+});
 
 describe('ConfigFormBuilder', () => {
   it('adds a field from the palette', () => {
