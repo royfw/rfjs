@@ -53,8 +53,9 @@ describe('ConfigFormBuilder', () => {
   it('adds a field from the palette', () => {
     render(<ConfigFormBuilder initialConfig={initial} />);
     fireEvent.click(screen.getByRole('button', { name: /\+ field/i }));
-    // two label inputs now exist in the editor (Name + the new Field)
-    expect(screen.getAllByLabelText(/^label for /).length).toBe(2);
+    // Items render as collapsed cards; two cards now exist (Name + the new Field).
+    // Each card exposes a remove button, so count those.
+    expect(screen.getAllByRole('button', { name: /remove item/i }).length).toBe(2);
   });
 
   it('adds a Content item from the palette and onChange receives a sections config', () => {
