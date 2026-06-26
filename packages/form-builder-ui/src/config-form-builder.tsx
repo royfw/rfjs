@@ -54,6 +54,17 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
             + {c}
           </Button>
         ))}
+        <label className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+          Columns
+          <select
+            className="h-8 rounded-md border border-input bg-background px-2 text-sm text-foreground"
+            aria-label="columns"
+            value={builder.config.columns ?? 1}
+            onChange={(e) => builder.setColumns(Number(e.target.value) as FormConfig['columns'])}
+          >
+            {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </label>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>

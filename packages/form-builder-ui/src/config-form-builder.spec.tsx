@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ConfigFormBuilder } from './config-form-builder';
 import type { FormConfig } from '@rfjs/form-builder';
@@ -24,5 +24,12 @@ describe('ConfigFormBuilder', () => {
     render(<ConfigFormBuilder initialConfig={initial} />);
     fireEvent.click(screen.getByRole('button', { name: /remove field/i }));
     expect(screen.queryByLabelText('label for name')).toBeNull();
+  });
+
+  it('sets form columns from the columns control', () => {
+    const onChange = vi.fn();
+    render(<ConfigFormBuilder initialConfig={initial} onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText(/columns/i), { target: { value: '2' } });
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ columns: 2 }));
   });
 });
