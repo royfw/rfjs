@@ -101,6 +101,17 @@ describe('FieldRow', () => {
     fireEvent.blur(keyInput);
     expect(onUpdate).toHaveBeenCalledWith({ key: 'full_name' });
   });
+  it('renders an aiNote input for the field', () => {
+    renderRow(base);
+    expect(screen.getByLabelText('AI note for field')).toBeTruthy();
+  });
+  it('editing the aiNote input calls onUpdate({ aiNote })', () => {
+    const { onUpdate } = renderRow(base);
+    fireEvent.change(screen.getByLabelText('AI note for field'), {
+      target: { value: 'Helpful hint for AI' },
+    });
+    expect(onUpdate).toHaveBeenCalledWith({ aiNote: 'Helpful hint for AI' });
+  });
 });
 
 const selectField: FieldConfig = { key: 'role', label: 'Role', component: 'Select', dataType: 'string', options: [{ label: 'Admin', value: 'admin' }] };
