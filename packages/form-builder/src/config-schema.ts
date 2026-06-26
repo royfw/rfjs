@@ -8,6 +8,15 @@ const fieldOptionSchema = z.object({
   value: z.union([z.string(), z.number()]),
 });
 
+const fieldValidationSchema = z.object({
+  min: z.number().optional(),
+  max: z.number().optional(),
+  minLength: z.number().optional(),
+  maxLength: z.number().optional(),
+  pattern: z.string().optional(),
+  message: z.string().optional(),
+});
+
 const fieldConfigSchema = z.object({
   key: z.string().min(1),
   label: z.union([z.string(), z.record(z.string(), z.string())]),
@@ -18,6 +27,7 @@ const fieldConfigSchema = z.object({
   defaultValue: z.unknown().optional(),
   options: z.array(fieldOptionSchema).optional(),
   width: z.enum(['full', 'half']).optional(),
+  validation: fieldValidationSchema.optional(),
 });
 
 export const FormConfigSchema: ZodType<FormConfig> = z.object({

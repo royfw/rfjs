@@ -27,8 +27,34 @@ function baseForField(field: FieldConfig): z.ZodTypeAny {
   }
 }
 
+/** Apply FieldValidation constraints to the base schema before required/optional wrap. */
+function applyValidation(base: z.ZodTypeAny, field: FieldConfig): z.ZodTypeAny {
+  const v = field.validation;
+  if (!v) return base;
+
+  // Numeric bounds — only for numeric fields with a numeric base (not options/enum)
+  if (field.dataType === 'numeric' && !field.options?.length) {
+    let numBase = base as z.ZodNumber;
+    if (v.min !== undefined) numBase = numBase.min(v.min, v.message);
+    if (v.max !== undefined) numBase = numBase.max(v.max, v.message);
+    return numBase;
+  }
+
+  // String length + pattern — only for string/date fields without options
+  if ((field.dataType === 'string' || field.dataType === 'date') && !field.options?.length) {
+    let strBase = base as z.ZodString;
+    if (v.minLength !== undefined) strBase = strBase.min(v.minLength, v.message);
+    if (v.maxLength !== undefined) strBase = strBase.max(v.maxLength, v.message);
+    if (v.pattern !== undefined) strBase = strBase.regex(new RegExp(v.pattern), v.message);
+    return strBase;
+  }
+
+  return base;
+}
+
 function fieldSchema(field: FieldConfig): z.ZodTypeAny {
-  const base = baseForField(field);
+  const rawBase = baseForField(field);
+  const base = applyValidation(rawBase, field);
   if (field.required) {
     // enum already rejects invalid values including ''
     if (field.options?.length) return base;

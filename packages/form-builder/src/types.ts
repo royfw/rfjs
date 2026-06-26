@@ -15,6 +15,17 @@ export interface FieldOption {
   value: string | number;
 }
 
+export interface FieldValidation {
+  min?: number;
+  max?: number;
+  minLength?: number;
+  maxLength?: number;
+  /** Regex source string — applied to string fields via `new RegExp(pattern)`. */
+  pattern?: string;
+  /** Custom error message passed to zod on validation failure. */
+  message?: string;
+}
+
 export interface FieldConfig {
   key: string;
   label: LocalizedLabel;
@@ -25,6 +36,7 @@ export interface FieldConfig {
   defaultValue?: unknown;
   options?: FieldOption[];
   width?: FieldWidth;
+  validation?: FieldValidation;
 }
 
 export interface FormConfig {
