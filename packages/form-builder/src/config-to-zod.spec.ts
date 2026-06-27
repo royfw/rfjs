@@ -266,6 +266,123 @@ describe('configToZod — validation rules', () => {
   });
 });
 
+describe('configToZod — new component types', () => {
+  it('Email: rejects a non-email string, accepts a valid email', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [{ key: 'email', label: 'Email', component: 'Email', dataType: 'string', required: true }],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ email: 'not-an-email' }).success).toBe(false);
+    expect(schema.safeParse({ email: 'a@b.com' }).success).toBe(true);
+    expect(schema.safeParse({ email: '' }).success).toBe(false); // required empty fails
+  });
+
+  it('Email: optional — empty string omits without error', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [{ key: 'email', label: 'Email', component: 'Email', dataType: 'string' }],
+    };
+    const schema = configToZod(cfg);
+    const result = schema.safeParse({ email: '' });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.email).toBeUndefined();
+  });
+
+  it('Email: minLength and email format both apply', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'email',
+          label: 'Email',
+          component: 'Email',
+          dataType: 'string',
+          required: true,
+          validation: { minLength: 10 },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    // Valid email format but only 7 chars — fails minLength
+    expect(schema.safeParse({ email: 'a@b.com' }).success).toBe(false);
+    // Invalid email format — fails email check regardless
+    expect(schema.safeParse({ email: 'notanemail' }).success).toBe(false);
+    // Valid email and long enough
+    expect(schema.safeParse({ email: 'user@example.com' }).success).toBe(true);
+  });
+
+  it('Email: pattern and email format both apply', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'email',
+          label: 'Email',
+          component: 'Email',
+          dataType: 'string',
+          required: true,
+          validation: { pattern: '@company\\.com$' },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ email: 'user@gmail.com' }).success).toBe(false); // valid email, wrong domain
+    expect(schema.safeParse({ email: 'notanemail' }).success).toBe(false);
+    expect(schema.safeParse({ email: 'user@company.com' }).success).toBe(true);
+  });
+
+  it('Number: validates numeric values and respects min/max', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'qty',
+          label: 'Qty',
+          component: 'Number',
+          dataType: 'numeric',
+          required: true,
+          validation: { min: 1, max: 10 },
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ qty: 0 }).success).toBe(false);   // below min
+    expect(schema.safeParse({ qty: 11 }).success).toBe(false);  // above max
+    expect(schema.safeParse({ qty: 5 }).success).toBe(true);
+    expect(schema.safeParse({ qty: '5' }).success).toBe(true);  // coerced
+  });
+
+  it('Switch: validates boolean values', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [{ key: 'active', label: 'Active', component: 'Switch', dataType: 'boolean' }],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ active: true }).success).toBe(true);
+    expect(schema.safeParse({ active: false }).success).toBe(true);
+    expect(schema.safeParse({ active: 'yes' }).success).toBe(false);
+  });
+
+  it('Radio: rejects a value not in options (behaves like enum)', () => {
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        {
+          key: 'size',
+          label: 'Size',
+          component: 'Radio',
+          dataType: 'string',
+          options: [{ label: 'S', value: 'small' }, { label: 'L', value: 'large' }],
+        },
+      ],
+    };
+    const schema = configToZod(cfg);
+    expect(schema.safeParse({ size: 'medium' }).success).toBe(false);
+    expect(schema.safeParse({ size: 'small' }).success).toBe(true);
+  });
+});
+
 describe('configToZod — v1/v2 shape compatibility', () => {
   it('builds the schema from a v2 sections config (field items only)', () => {
     const cfg = { version: 1, sections: [{ id: 's1', rows: [

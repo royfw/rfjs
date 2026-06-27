@@ -205,6 +205,21 @@ describe('v1/v2 parse', () => {
   });
 });
 
+describe('new FieldComponent values', () => {
+  it.each(['Number', 'Email', 'Switch', 'Radio', 'DatePicker'] as const)(
+    'accepts component: %s',
+    (component) => {
+      const cfg = { version: 1, fields: [{ key: 'x', label: 'X', component, dataType: 'string' }] };
+      expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+    }
+  );
+
+  it('still rejects an unknown component', () => {
+    const cfg = { version: 1, fields: [{ key: 'x', label: 'X', component: 'Widget', dataType: 'string' }] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+});
+
 describe('conditional field visibility schema', () => {
   const baseField = { key: 'x', label: 'X', component: 'Input', dataType: 'string' };
 
