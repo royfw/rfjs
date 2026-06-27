@@ -3,9 +3,9 @@
 import type { FormConfig } from "@rfjs/form-builder";
 import { ConfigFormBuilder } from "@rfjs/form-builder-ui";
 
-// A v2 sections config that showcases the item-kind model: named sections,
-// content / field / ai-note / divider kinds, plus validation, a conditional,
-// and a per-field AI note.
+// A v2 sections config showcasing the item-kind model (content / field / ai-note /
+// divider), validation, a conditional, a per-field AI note — and the v2-E field
+// types: Email, Number, DatePicker, Radio, Switch.
 const SAMPLE_CONFIG: FormConfig = {
   version: 1,
   sections: [
@@ -33,16 +33,7 @@ const SAMPLE_CONFIG: FormConfig = {
         {
           id: "r_email",
           items: [
-            {
-              id: "i_email",
-              kind: "field",
-              key: "email",
-              label: { en: "Email", "zh-TW": "電子郵件" },
-              component: "Input",
-              dataType: "string",
-              required: true,
-              validation: { pattern: "^[^@\\s]+@[^@\\s]+$", message: "Enter a valid email" },
-            },
+            { id: "i_email", kind: "field", key: "email", label: { en: "Email", "zh-TW": "電子郵件" }, component: "Email", dataType: "string", required: true },
           ],
         },
         {
@@ -93,6 +84,41 @@ const SAMPLE_CONFIG: FormConfig = {
           id: "r_bio",
           items: [
             { id: "i_bio", kind: "field", key: "bio", label: { en: "Bio", "zh-TW": "簡介" }, component: "Textarea", dataType: "string" },
+          ],
+        },
+        {
+          id: "r_age",
+          items: [
+            { id: "i_age", kind: "field", key: "age", label: { en: "Age", "zh-TW": "年齡" }, component: "Number", dataType: "numeric", validation: { min: 0, max: 120 } },
+          ],
+        },
+        {
+          id: "r_birthday",
+          items: [
+            { id: "i_birthday", kind: "field", key: "birthday", label: { en: "Birthday", "zh-TW": "生日" }, component: "DatePicker", dataType: "date", placeholder: "Pick a date" },
+          ],
+        },
+        {
+          id: "r_plan",
+          items: [
+            {
+              id: "i_plan",
+              kind: "field",
+              key: "plan",
+              label: { en: "Plan", "zh-TW": "方案" },
+              component: "Radio",
+              dataType: "string",
+              options: [
+                { label: "Free", value: "free" },
+                { label: "Pro", value: "pro" },
+              ],
+            },
+          ],
+        },
+        {
+          id: "r_newsletter",
+          items: [
+            { id: "i_newsletter", kind: "field", key: "newsletter", label: { en: "Subscribe to newsletter", "zh-TW": "訂閱電子報" }, component: "Switch", dataType: "boolean" },
           ],
         },
         { id: "r_div", items: [{ id: "i_div", kind: "divider" }] },
