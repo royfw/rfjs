@@ -17,9 +17,25 @@ const DATATYPE_BY_COMPONENT: Record<FieldComponent, FieldConfig['dataType']> = {
   Select: 'string',
   Checkbox: 'boolean',
   Date: 'date',
+  Number: 'numeric',
+  Email: 'string',
+  Switch: 'boolean',
+  Radio: 'string',
+  DatePicker: 'date',
 };
 
-const COMPONENTS: FieldComponent[] = ['Input', 'Textarea', 'Select', 'Checkbox', 'Date'];
+const COMPONENTS: FieldComponent[] = [
+  'Input',
+  'Textarea',
+  'Select',
+  'Checkbox',
+  'Date',
+  'Number',
+  'Email',
+  'Switch',
+  'Radio',
+  'DatePicker',
+];
 
 export function labelOf(label: FieldConfig['label']): string {
   return typeof label === 'string' ? label : (Object.values(label)[0] ?? '');
@@ -35,7 +51,7 @@ export function makeField(component: FieldComponent): FieldConfig {
     component,
     dataType: DATATYPE_BY_COMPONENT[component],
   };
-  return component === 'Select' ? { ...base, options: [] } : base;
+  return component === 'Select' || component === 'Radio' ? { ...base, options: [] } : base;
 }
 
 function OptionsEditor({ field, onUpdate }: { field: FieldConfig; onUpdate: (patch: Partial<FieldConfig>) => void }) {
@@ -427,7 +443,7 @@ export function FieldItemEditor({ field, onUpdate, locales = ['en'], siblingFiel
     onUpdate({
       component,
       dataType: DATATYPE_BY_COMPONENT[component],
-      options: component === 'Select' ? (field.options ?? []) : undefined,
+      options: component === 'Select' || component === 'Radio' ? (field.options ?? []) : undefined,
     });
   }
 
@@ -502,7 +518,9 @@ export function FieldItemEditor({ field, onUpdate, locales = ['en'], siblingFiel
         />
         required
       </label>
-      {field.component === 'Select' ? <OptionsEditor field={field} onUpdate={onUpdate} /> : null}
+      {field.component === 'Select' || field.component === 'Radio' ? (
+        <OptionsEditor field={field} onUpdate={onUpdate} />
+      ) : null}
       <ValidationEditor field={field} onUpdate={onUpdate} />
       <ConditionalEditor field={field} siblingFields={siblingFields} onUpdate={onUpdate} />
       <label className="col-span-full flex flex-col gap-1 text-xs text-muted-foreground">

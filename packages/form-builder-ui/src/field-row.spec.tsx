@@ -136,6 +136,36 @@ describe('OptionsEditor', () => {
     renderRow({ key: 'name', label: 'Name', component: 'Input', dataType: 'string' });
     expect(screen.queryByRole('button', { name: /add option/i })).toBeNull();
   });
+
+  it('shows the options editor for a Radio field', () => {
+    const radioField: FieldConfig = {
+      key: 'color', label: 'Color', component: 'Radio', dataType: 'string',
+      options: [{ label: 'Red', value: 'red' }],
+    };
+    renderRow(radioField);
+    expect(screen.getByLabelText('option 0 label')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /add option/i })).toBeTruthy();
+  });
+});
+
+describe('Radio options wiring', () => {
+  it('makeField seeds/initialises an empty options array for Radio (like Select)', () => {
+    const f = makeField('Radio');
+    expect(f.component).toBe('Radio');
+    expect(f.options).toEqual([]);
+  });
+
+  it('a Radio field with options drives the OptionsEditor (add option patches options)', () => {
+    const radioField: FieldConfig = {
+      key: 'color', label: 'Color', component: 'Radio', dataType: 'string',
+      options: [{ label: 'Red', value: 'red' }],
+    };
+    const { onUpdate } = renderRow(radioField);
+    fireEvent.click(screen.getByRole('button', { name: /add option/i }));
+    expect(onUpdate).toHaveBeenCalledWith({
+      options: [{ label: 'Red', value: 'red' }, { label: '', value: '' }],
+    });
+  });
 });
 
 describe('multi-locale label editing', () => {
