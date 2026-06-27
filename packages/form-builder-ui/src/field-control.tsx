@@ -114,7 +114,7 @@ export function FieldControl({ field, value, onChange }: FieldControlProps) {
       );
     case 'Radio':
       return (
-        <RadioGroup value={String(value ?? '')} onValueChange={onChange}>
+        <RadioGroup id={field.key} value={String(value ?? '')} onValueChange={onChange}>
           {(field.options ?? []).map((opt) => (
             <div key={String(opt.value)} className="flex items-center gap-2">
               <RadioGroupItem
