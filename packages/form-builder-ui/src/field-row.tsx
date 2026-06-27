@@ -432,7 +432,10 @@ export function FieldItemEditor({ field, onUpdate, locales = ['en'], siblingFiel
   }
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 border-t border-input p-3">
+    <div
+      className="grid gap-3 border-t border-input p-3"
+      style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}
+    >
       <span className="flex flex-col gap-1 text-xs text-muted-foreground">
         Type
         <Select value={field.component} onValueChange={(v) => changeComponent(v as FieldComponent)}>

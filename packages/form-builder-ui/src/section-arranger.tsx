@@ -49,32 +49,35 @@ interface SortableItemCardProps {
 }
 
 function SortableItemCard({ item, config, builder, locales }: SortableItemCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : undefined,
   };
 
+  const handle = (
+    <button
+      type="button"
+      className="cursor-grab text-muted-foreground/70 hover:text-foreground"
+      aria-label="drag item"
+      {...attributes}
+      {...listeners}
+    >
+      <GripVertical className="size-4" />
+    </button>
+  );
+
   return (
-    <div ref={setNodeRef} style={style} className="flex items-start gap-1">
-      <button
-        type="button"
-        className="mt-2 cursor-grab text-muted-foreground"
-        aria-label="drag item"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="size-4" />
-      </button>
-      <div className="flex-1">
-        <ItemEditor
-          item={item}
-          siblingFields={siblingFieldsFor(config, item.id)}
-          locales={locales}
-          onUpdate={(patch) => builder.updateItem(item.id, patch as Partial<FormItem>)}
-          onRemove={() => builder.removeItem(item.id)}
-        />
-      </div>
+    <div ref={setNodeRef} style={style}>
+      <ItemEditor
+        item={item}
+        siblingFields={siblingFieldsFor(config, item.id)}
+        locales={locales}
+        dragHandle={handle}
+        onUpdate={(patch) => builder.updateItem(item.id, patch as Partial<FormItem>)}
+        onRemove={() => builder.removeItem(item.id)}
+      />
     </div>
   );
 }
@@ -128,16 +131,24 @@ interface SectionViewProps {
 }
 
 function SectionView({ section, config, builder, locales }: SectionViewProps) {
+  const itemCount = section.rows.reduce((n, r) => n + r.items.length, 0);
+  const title = section.title ? labelOf(section.title) : 'Section';
   return (
-    <div className="flex flex-col gap-0">
-      <NewRowDropZone id={`newrow:${section.id}:0`} />
-      {section.rows.map((row, rowIndex) => {
-        const itemIds = row.items.map((i) => i.id);
-        return (
-          <React.Fragment key={row.id}>
-            <div className="rounded-md border border-dashed border-input/60 p-2">
+    <section className="overflow-hidden rounded-lg border border-input/70 bg-card/30">
+      <header className="flex items-center gap-2 bg-muted/30 px-3 py-1.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
+        <span className="text-[10px] text-muted-foreground/60">
+          {itemCount} item{itemCount === 1 ? '' : 's'}
+        </span>
+      </header>
+      <div className="flex flex-col p-1.5">
+        <NewRowDropZone id={`newrow:${section.id}:0`} />
+        {section.rows.map((row, rowIndex) => {
+          const itemIds = row.items.map((i) => i.id);
+          return (
+            <React.Fragment key={row.id}>
               <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-0.5">
                   {row.items.map((item) => (
                     <SortableItemCard
                       key={item.id}
@@ -151,12 +162,12 @@ function SectionView({ section, config, builder, locales }: SectionViewProps) {
               </SortableContext>
               {/* Append-to-row drop zone (`row:<rowId>`). */}
               <RowDropZone rowId={row.id} />
-            </div>
-            <NewRowDropZone id={`newrow:${section.id}:${rowIndex + 1}`} />
-          </React.Fragment>
-        );
-      })}
-    </div>
+              <NewRowDropZone id={`newrow:${section.id}:${rowIndex + 1}`} />
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -186,10 +197,10 @@ export function SectionArranger({ config, builder, locales = ['en'] }: SectionAr
   const allItemIds = sections.flatMap((s) => s.rows).flatMap((r) => r.items.map((i) => i.id));
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+    <DndContext id="form-builder-arranger" sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       {/* Flat SortableContext for all items — dnd-kit needs a single context covering all draggables */}
       <SortableContext items={allItemIds} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3">
           {sections.map((section) => (
             <SectionView
               key={section.id}

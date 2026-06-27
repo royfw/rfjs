@@ -41,7 +41,7 @@ export function FieldControl({ field, value, onChange }: FieldControlProps) {
     case 'Select':
       return (
         <Select value={(value as string) ?? ''} onValueChange={onChange}>
-          <SelectTrigger id={field.key}>
+          <SelectTrigger id={field.key} className="w-full">
             <SelectValue placeholder={field.placeholder} />
           </SelectTrigger>
           <SelectContent>

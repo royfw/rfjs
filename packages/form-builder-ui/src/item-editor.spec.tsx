@@ -37,6 +37,7 @@ function renderEditor(
   onUpdate = vi.fn(),
   onRemove = vi.fn(),
   locales = ['en'],
+  defaultOpen = true, // body-interaction tests need the card expanded
 ) {
   render(
     <DndContext>
@@ -47,6 +48,7 @@ function renderEditor(
           locales={locales}
           onUpdate={onUpdate}
           onRemove={onRemove}
+          defaultOpen={defaultOpen}
         />
       </SortableContext>
     </DndContext>,
@@ -208,6 +210,36 @@ const fieldItem: FieldItem = {
   component: 'Input',
   dataType: 'string',
 };
+
+describe('ItemEditor — collapse behavior', () => {
+  it('is collapsed by default — the body is not mounted until expanded', () => {
+    render(
+      <DndContext>
+        <SortableContext items={[fieldItem.id]}>
+          <ItemEditor item={fieldItem} siblingFields={[]} onUpdate={vi.fn()} onRemove={vi.fn()} />
+        </SortableContext>
+      </DndContext>,
+    );
+    // header summary is visible...
+    expect(screen.getByText('Name')).toBeTruthy();
+    // ...but the body (e.g. the AI-note field) is not, until expanded
+    expect(screen.queryByLabelText('AI note for field')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /expand item/i }));
+    expect(screen.getByLabelText('AI note for field')).toBeTruthy();
+  });
+
+  it('shows the required pill in the collapsed header for a required field', () => {
+    const required: FieldItem = { ...fieldItem, required: true };
+    render(
+      <DndContext>
+        <SortableContext items={[required.id]}>
+          <ItemEditor item={required} siblingFields={[]} onUpdate={vi.fn()} onRemove={vi.fn()} />
+        </SortableContext>
+      </DndContext>,
+    );
+    expect(screen.getByText(/required/i)).toBeTruthy();
+  });
+});
 
 describe('ItemEditor — field kind (aiNote sub-block)', () => {
   it('renders the aiNote input for a field item', () => {
