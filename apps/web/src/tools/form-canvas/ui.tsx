@@ -15,6 +15,8 @@ import {
   Check,
 } from "lucide-react";
 
+import type { Card, Group, Kind, Component } from "./model";
+
 // ---------------------------------------------------------------------------
 // Direction C (hybrid) — "A structure + C drag freedom", now with a builder
 // shell: Canvas | Preview | JSON tabs, a right-hand inspector for per-field
@@ -27,29 +29,7 @@ const ROW_H = 84;
 const GAP = 8;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-type Kind = "field" | "content" | "divider" | "spacer" | "ai-note";
-type Component = "Input" | "Textarea" | "Select" | "Number" | "Switch" | "DatePicker";
 const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
-
-interface Card {
-  id: string;
-  groupId: string;
-  kind: Kind;
-  label: string;
-  key?: string;
-  component?: Component;
-  required?: boolean;
-  placeholder?: string;
-  col: number;
-  span: number;
-  row: number;
-}
-
-interface Group {
-  id: string;
-  title: string;
-  collapsed: boolean;
-}
 
 const KIND_META: Record<
   Kind,
