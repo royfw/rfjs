@@ -11,6 +11,10 @@ function baseForField(field: FieldConfig): z.ZodTypeAny {
     const values = field.options.map((o) => String(o.value));
     return z.enum(values as [string, ...string[]]);
   }
+  // Component-level override: Number and Switch determine the base type regardless of dataType,
+  // so callers who set only the component (without dataType) still get the correct schema.
+  if (field.component === 'Number') return z.coerce.number();
+  if (field.component === 'Switch') return z.boolean();
   switch (field.dataType) {
     case 'numeric':
       return z.coerce.number();
@@ -33,16 +37,22 @@ function applyValidation(base: z.ZodTypeAny, field: FieldConfig): z.ZodTypeAny {
   const v = field.validation;
   if (!v) return base;
 
+  const isNumeric =
+    (field.dataType === 'numeric' || field.component === 'Number') && !field.options?.length;
+  const isString =
+    (field.dataType === 'string' || field.dataType === 'date' || field.component === 'Email') &&
+    !field.options?.length;
+
   // Numeric bounds — only for numeric fields with a numeric base (not options/enum)
-  if (field.dataType === 'numeric' && !field.options?.length) {
+  if (isNumeric) {
     let numBase = base as z.ZodNumber;
     if (v.min !== undefined) numBase = numBase.min(v.min, v.message);
     if (v.max !== undefined) numBase = numBase.max(v.max, v.message);
     return numBase;
   }
 
-  // String length + pattern — only for string/date fields without options
-  if ((field.dataType === 'string' || field.dataType === 'date') && !field.options?.length) {
+  // String length + pattern — only for string/date/email fields without options
+  if (isString) {
     let strBase = base as z.ZodString;
     if (v.minLength !== undefined) strBase = strBase.min(v.minLength, v.message);
     if (v.maxLength !== undefined) strBase = strBase.max(v.maxLength, v.message);
@@ -61,14 +71,23 @@ function applyValidation(base: z.ZodTypeAny, field: FieldConfig): z.ZodTypeAny {
 
 function fieldSchema(field: FieldConfig): z.ZodTypeAny {
   const rawBase = baseForField(field);
-  const base = applyValidation(rawBase, field);
+  let base = applyValidation(rawBase, field);
+
+  // Email: apply format check after other string validations (minLength/maxLength/pattern)
+  if (field.component === 'Email' && !field.options?.length) {
+    base = (base as z.ZodString).email(field.validation?.message);
+  }
+
+  const isStringLike =
+    field.dataType === 'string' || field.dataType === 'date' || field.component === 'Email';
+  const isNumericLike = field.dataType === 'numeric' || field.component === 'Number';
+
   if (field.required) {
     // enum already rejects invalid values including ''
     if (field.options?.length) return base;
-    if (field.dataType === 'string' || field.dataType === 'date')
-      return (base as z.ZodString).min(1, field.validation?.message);
+    if (isStringLike) return (base as z.ZodString).min(1, field.validation?.message);
     // '' -> undefined -> number rejects (required empty fails)
-    if (field.dataType === 'numeric') return z.preprocess(emptyToUndefined, base);
+    if (isNumericLike) return z.preprocess(emptyToUndefined, base);
     // boolean / object / array
     return base;
   }

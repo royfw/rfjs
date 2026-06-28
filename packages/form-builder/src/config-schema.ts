@@ -51,7 +51,7 @@ const fieldValidationSchema = z.object({
 const fieldConfigSchema = z.object({
   key: z.string().min(1),
   label: z.union([z.string(), z.record(z.string(), z.string())]),
-  component: z.enum(['Input', 'Textarea', 'Select', 'Checkbox', 'Date']),
+  component: z.enum(['Input', 'Textarea', 'Select', 'Checkbox', 'Date', 'Number', 'Email', 'Switch', 'Radio', 'DatePicker']),
   dataType: z.enum(['string', 'numeric', 'date', 'boolean', 'object', 'array']),
   required: z.boolean().optional(),
   placeholder: z.string().optional(),

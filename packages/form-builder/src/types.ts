@@ -7,8 +7,17 @@ export type FieldType = ScalarType | 'object' | 'array';
 /** A field label that is either a plain string or a locale-keyed record. */
 export type LocalizedLabel = string | Record<string, string>;
 
-// P1 renderable components (Switch deferred — no web-ui Switch yet).
-export type FieldComponent = 'Input' | 'Textarea' | 'Select' | 'Checkbox' | 'Date';
+export type FieldComponent =
+  | 'Input'
+  | 'Textarea'
+  | 'Select'
+  | 'Checkbox'
+  | 'Date'
+  | 'Number'
+  | 'Email'
+  | 'Switch'
+  | 'Radio'
+  | 'DatePicker';
 
 export type FieldWidth = 'full' | 'half';
 
