@@ -34,6 +34,9 @@ const DATATYPE: Record<Component, ScalarType> = {
   DatePicker: "date",
 };
 
+// Canvas-supported components — anything outside this set is normalized to "Input" on import.
+const CANVAS_COMPONENT_SET = new Set<string>(Object.keys(DATATYPE));
+
 function cardToItem(c: Card): FormItem {
   switch (c.kind) {
     case "field":
@@ -43,7 +46,7 @@ function cardToItem(c: Card): FormItem {
         key: c.key ?? c.id,
         label: c.label,
         component: c.component ?? "Input",
-        dataType: DATATYPE[c.component ?? "Input"],
+        dataType: DATATYPE[c.component ?? "Input"] ?? "string",
         ...(c.required ? { required: true } : {}),
         ...(c.placeholder ? { placeholder: c.placeholder } : {}),
       };
@@ -88,11 +91,13 @@ export function formConfigToCards(config: FormConfig): { groups: Group[]; cards:
   for (const section of config.sections ?? []) {
     groups.push({ id: section.id, title: labelToString(section.title) || "Section", collapsed: false });
     const byId = new Map((section.layout?.placements ?? []).map((p) => [p.itemId, p]));
-    for (const item of section.rows.flatMap((r) => r.items)) {
+    for (const [i, item] of section.rows.flatMap((r) => r.items).entries()) {
       const p = byId.get(item.id);
-      const base = { id: item.id, groupId: section.id, col: p?.colStart ?? 1, span: p?.colSpan ?? 6, row: p?.row ?? 1 };
+      const base = { id: item.id, groupId: section.id, col: p?.colStart ?? 1, span: p?.colSpan ?? 6, row: p?.row ?? (i + 1) };
       if (item.kind === "field") {
-        cards.push({ ...base, kind: "field", label: labelToString(item.label), key: item.key, component: item.component as Component, required: item.required, placeholder: item.placeholder });
+        const rawComponent = item.component;
+        const component = (rawComponent && CANVAS_COMPONENT_SET.has(rawComponent) ? rawComponent : "Input") as Component;
+        cards.push({ ...base, kind: "field", label: labelToString(item.label), key: item.key, component, required: item.required, placeholder: item.placeholder });
       } else if (item.kind === "content" || item.kind === "ai-note") {
         cards.push({ ...base, kind: item.kind, label: labelToString(item.text) });
       } else {

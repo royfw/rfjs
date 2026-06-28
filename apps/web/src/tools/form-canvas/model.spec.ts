@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { cardsToFormConfig, formConfigToCards, type Card, type Group } from "./model";
+import type { FormConfig } from "@rfjs/form-builder";
 
 const groups: Group[] = [{ id: "g1", title: "Account", collapsed: false }];
 const cards: Card[] = [
@@ -24,5 +25,60 @@ describe("canvas <-> FormConfig", () => {
     const back = formConfigToCards(cardsToFormConfig(groups, cards));
     expect(back.cards).toHaveLength(2);
     expect(back.cards[1]).toMatchObject({ id: "c2", col: 8, span: 5, row: 1, component: "Number" });
+  });
+});
+
+describe("formConfigToCards — import guards", () => {
+  it("normalizes an unsupported component (Checkbox) to Input and round-trips with a defined dataType", () => {
+    const config: FormConfig = {
+      version: 1,
+      sections: [
+        {
+          id: "s1",
+          title: "Section",
+          rows: [
+            {
+              id: "r1",
+              items: [
+                // "Checkbox" is valid in form-builder but not in the canvas Component union
+                { id: "f1", kind: "field", key: "agree", label: "Agree", component: "Checkbox" as never, dataType: "boolean" },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const { cards } = formConfigToCards(config);
+    expect(cards[0]?.component).toBe("Input"); // normalized
+    const cfg = cardsToFormConfig([{ id: "s1", title: "Section", collapsed: false }], cards);
+    const item = cfg.sections![0]!.rows[0]!.items[0]!;
+    expect("dataType" in item && (item as { dataType?: unknown }).dataType).toBeDefined();
+    expect((item as { dataType?: unknown }).dataType).toBe("string");
+  });
+
+  it("assigns distinct rows (index-based) when no layout.placements present", () => {
+    const config: FormConfig = {
+      version: 1,
+      sections: [
+        {
+          id: "s1",
+          title: "Section",
+          rows: [
+            {
+              id: "r1",
+              items: [
+                { id: "f1", kind: "field", key: "a", label: "A", component: "Input", dataType: "string" },
+                { id: "f2", kind: "field", key: "b", label: "B", component: "Input", dataType: "string" },
+              ],
+            },
+          ],
+          // no layout — simulates a plain flow config pasted in
+        },
+      ],
+    };
+    const { cards } = formConfigToCards(config);
+    expect(cards[0]?.row).toBe(1);
+    expect(cards[1]?.row).toBe(2);
+    expect(cards[0]?.row).not.toBe(cards[1]?.row);
   });
 });
