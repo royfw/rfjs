@@ -3,7 +3,6 @@
 import * as React from 'react';
 import type { FormConfig, FormItem, ItemKind, DataSourceFetcher } from '@rfjs/form-builder';
 import { parseFormConfig, normalizeToSections, makeItem } from '@rfjs/form-builder';
-import { Button } from '@rfjs/web-ui/components/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@rfjs/web-ui/components/select';
 
 import { useConfigBuilder } from './use-config-builder';
@@ -89,43 +88,40 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex gap-2 border-b border-input">
-        <button
-          role="tab"
-          type="button"
-          aria-selected={tab === 'builder'}
-          className="px-3 py-1.5 text-sm font-medium"
-          onClick={() => setTab('builder')}
-        >
-          Builder
-        </button>
-        <button
-          role="tab"
-          type="button"
-          aria-selected={tab === 'json'}
-          className="px-3 py-1.5 text-sm font-medium"
-          onClick={() => setTab('json')}
-        >
-          JSON
-        </button>
+      {/* Segmented tabs (A · technical) */}
+      <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
+        {(['builder', 'json'] as const).map((t) => (
+          <button
+            key={t}
+            role="tab"
+            type="button"
+            aria-selected={tab === t}
+            onClick={() => setTab(t)}
+            className={`rounded-md px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+              tab === t ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t === 'builder' ? 'Builder' : 'JSON'}
+          </button>
+        ))}
       </div>
 
       {tab === 'builder' ? (
         <>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {KIND_PALETTE.map(({ kind, label }) => (
-              <Button
+              <button
                 key={kind}
                 type="button"
-                variant="outline"
-                size="sm"
                 aria-label={label}
                 onClick={() => addKindItem(kind)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-[12px] text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
               >
-                {label}
-              </Button>
+                <span className="font-semibold" style={{ color: '#5b8cff' }}>+</span>
+                {label.replace('+ ', '')}
+              </button>
             ))}
-            <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="ml-auto flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
               Columns
               <Select
                 value={String(
@@ -153,24 +149,21 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
             </span>
           </div>
 
-          <div className="rounded-lg border bg-card p-4">
-            {!hasItems ? (
-              <p
-                data-testid="empty-state-hint"
-                className="py-8 text-center text-sm text-muted-foreground"
-              >
-                No fields yet — add one from the palette above
+          {!hasItems ? (
+            <div className="rounded-xl border border-dashed border-input bg-card/20 py-12 text-center">
+              <p data-testid="empty-state-hint" className="text-sm text-muted-foreground">
+                No items yet — add one from the palette above
               </p>
-            ) : (
-              <SectionArranger
-                config={builder.config}
-                builder={builder}
-                locales={locales}
-              />
-            )}
-          </div>
+            </div>
+          ) : (
+            <SectionArranger config={builder.config} builder={builder} locales={locales} />
+          )}
 
-          <div data-testid="config-form-preview" className="rounded-lg border bg-card p-4">
+          <div data-testid="config-form-preview" className="rounded-xl border border-input bg-card/40 p-5">
+            <div className="mb-4 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground/60">
+              <span className="size-1.5 rounded-full" style={{ backgroundColor: '#5b8cff' }} />
+              Live preview
+            </div>
             {!hasItems ? (
               <p className="py-4 text-center text-sm text-muted-foreground">Preview will appear here once you add fields</p>
             ) : (

@@ -33,7 +33,7 @@ describe('ConfigFormBuilder empty state', () => {
   it('shows the empty-state hint when there are no fields', () => {
     render(<ConfigFormBuilder initialConfig={empty} />);
     expect(screen.getByTestId('empty-state-hint')).toBeTruthy();
-    expect(screen.getByText(/no fields yet/i)).toBeTruthy();
+    expect(screen.getByText(/no items yet/i)).toBeTruthy();
   });
 
   it('does not show the empty-state hint when fields are present', () => {

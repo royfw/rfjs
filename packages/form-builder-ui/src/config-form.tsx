@@ -202,7 +202,11 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
         </React.Fragment>
       ))}
       <div style={{ gridColumn: '1 / -1' }}>
-        <Button type="submit" className="self-start">
+        <Button
+          type="submit"
+          className="self-start border-0 text-white"
+          style={{ background: 'linear-gradient(180deg,#5b8cff,#4a78ee)', boxShadow: '0 6px 16px rgba(74,120,238,.3)' }}
+        >
           {submitLabel}
         </Button>
       </div>

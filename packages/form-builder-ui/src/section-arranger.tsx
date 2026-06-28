@@ -134,10 +134,11 @@ function SectionView({ section, config, builder, locales }: SectionViewProps) {
   const itemCount = section.rows.reduce((n, r) => n + r.items.length, 0);
   const title = section.title ? labelOf(section.title) : 'Section';
   return (
-    <section className="overflow-hidden rounded-lg border border-input/70 bg-card/30">
-      <header className="flex items-center gap-2 bg-muted/30 px-3 py-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
-        <span className="text-[10px] text-muted-foreground/60">
+    <section className="overflow-hidden rounded-xl border border-input/70 bg-gradient-to-b from-card/60 to-card/20 shadow-sm">
+      <header className="flex items-center gap-2.5 border-b border-input/60 bg-muted/30 px-3.5 py-2">
+        <span className="text-[13px] font-semibold text-foreground">{title}</span>
+        <span className="font-mono text-[11px] text-muted-foreground/55">{section.id}</span>
+        <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground/55">
           {itemCount} item{itemCount === 1 ? '' : 's'}
         </span>
       </header>
