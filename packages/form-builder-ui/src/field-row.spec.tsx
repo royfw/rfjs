@@ -37,9 +37,10 @@ import {
   setConditionField,
   setConditionOperator,
   setConditionValue,
+  setDataSourceField,
   type SiblingField,
 } from './field-row';
-import type { FieldConfig, ConditionalRule } from '@rfjs/form-builder';
+import type { FieldConfig, ConditionalRule, DataSource } from '@rfjs/form-builder';
 
 function renderRow(field: FieldConfig, onUpdate = vi.fn(), onRemove = vi.fn()) {
   render(
@@ -541,6 +542,175 @@ describe('ConditionalEditor — condition rows', () => {
       conditional: {
         logic: 'and',
         filters: [{ field: 'country', dataType: 'string', operator: 'eq', value: '' }],
+      },
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// setDataSourceField — pure helper unit tests
+// ---------------------------------------------------------------------------
+
+describe('setDataSourceField', () => {
+  it('setting url on undefined builds a new dataSource with default extract', () => {
+    const result = setDataSourceField(undefined, 'url', 'https://api.test/items');
+    expect(result).toEqual({
+      request: { url: 'https://api.test/items' },
+      extract: { dialect: 'path', expr: '' },
+    });
+  });
+
+  it('setting url updates request.url on existing dataSource', () => {
+    const current: DataSource = {
+      request: { url: 'https://old.test' },
+      extract: { dialect: 'path', expr: 'data' },
+    };
+    const result = setDataSourceField(current, 'url', 'https://new.test');
+    expect(result?.request.url).toBe('https://new.test');
+  });
+
+  it('clearing url returns undefined (empty url clears the whole dataSource)', () => {
+    const current: DataSource = {
+      request: { url: 'https://api.test/items' },
+      extract: { dialect: 'path', expr: '' },
+    };
+    expect(setDataSourceField(current, 'url', '')).toBeUndefined();
+  });
+
+  it('setting dialect updates extract.dialect', () => {
+    const current: DataSource = {
+      request: { url: 'https://api.test/items' },
+      extract: { dialect: 'path', expr: 'data' },
+    };
+    const result = setDataSourceField(current, 'dialect', 'jsonata');
+    expect(result?.extract.dialect).toBe('jsonata');
+    expect(result?.extract.expr).toBe('data'); // preserved
+  });
+
+  it('setting expr updates extract.expr', () => {
+    const current: DataSource = {
+      request: { url: 'https://api.test/items' },
+      extract: { dialect: 'path', expr: '' },
+    };
+    const result = setDataSourceField(current, 'expr', 'items[*].name');
+    expect(result?.extract.expr).toBe('items[*].name');
+  });
+
+  it('setting optionLabel updates optionLabel', () => {
+    const current: DataSource = {
+      request: { url: 'https://api.test/items' },
+      extract: { dialect: 'path', expr: '' },
+    };
+    const result = setDataSourceField(current, 'optionLabel', 'name');
+    expect(result?.optionLabel).toBe('name');
+  });
+
+  it('setting optionValue updates optionValue', () => {
+    const current: DataSource = {
+      request: { url: 'https://api.test/items' },
+      extract: { dialect: 'path', expr: '' },
+    };
+    const result = setDataSourceField(current, 'optionValue', 'id');
+    expect(result?.optionValue).toBe('id');
+  });
+
+  it('clearing optionLabel removes the key', () => {
+    const current: DataSource = {
+      request: { url: 'https://api.test/items' },
+      extract: { dialect: 'path', expr: '' },
+      optionLabel: 'name',
+    };
+    const result = setDataSourceField(current, 'optionLabel', '');
+    expect(result?.optionLabel).toBeUndefined();
+  });
+
+  it('setting fallback updates fallback', () => {
+    const current: DataSource = {
+      request: { url: 'https://api.test/items' },
+      extract: { dialect: 'path', expr: '' },
+    };
+    const result = setDataSourceField(current, 'fallback', 'N/A');
+    expect(result?.fallback).toBe('N/A');
+  });
+
+  it('clearing fallback removes the key', () => {
+    const current: DataSource = {
+      request: { url: 'https://api.test/items' },
+      extract: { dialect: 'path', expr: '' },
+      fallback: 'N/A',
+    };
+    const result = setDataSourceField(current, 'fallback', '');
+    expect(result?.fallback).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DataSourceEditor — component tests (driveable parts)
+// ---------------------------------------------------------------------------
+
+describe('DataSourceEditor', () => {
+  it('editing the url input calls onUpdate with dataSource built from the new url', () => {
+    const { onUpdate } = renderRow(base);
+    fireEvent.change(screen.getByLabelText('dataSource url'), {
+      target: { value: 'https://api.test/items' },
+    });
+    expect(onUpdate).toHaveBeenCalledWith({
+      dataSource: {
+        request: { url: 'https://api.test/items' },
+        extract: { dialect: 'path', expr: '' },
+      },
+    });
+  });
+
+  it('clearing the url input calls onUpdate with dataSource: undefined', () => {
+    const field: FieldConfig = {
+      ...base,
+      dataSource: {
+        request: { url: 'https://api.test/items' },
+        extract: { dialect: 'path', expr: '' },
+      },
+    };
+    const { onUpdate } = renderRow(field);
+    fireEvent.change(screen.getByLabelText('dataSource url'), { target: { value: '' } });
+    expect(onUpdate).toHaveBeenCalledWith({ dataSource: undefined });
+  });
+
+  it('shows optionLabel and optionValue inputs for Select fields', () => {
+    renderRow(selectField);
+    expect(screen.getByLabelText('dataSource optionLabel')).toBeTruthy();
+    expect(screen.getByLabelText('dataSource optionValue')).toBeTruthy();
+  });
+
+  it('shows optionLabel and optionValue inputs for Radio fields', () => {
+    const radioField: FieldConfig = {
+      key: 'color', label: 'Color', component: 'Radio', dataType: 'string',
+      options: [{ label: 'Red', value: 'red' }],
+    };
+    renderRow(radioField);
+    expect(screen.getByLabelText('dataSource optionLabel')).toBeTruthy();
+    expect(screen.getByLabelText('dataSource optionValue')).toBeTruthy();
+  });
+
+  it('does not show optionLabel/optionValue for non-Select/Radio fields', () => {
+    renderRow(base); // base = Input
+    expect(screen.queryByLabelText('dataSource optionLabel')).toBeNull();
+    expect(screen.queryByLabelText('dataSource optionValue')).toBeNull();
+  });
+
+  it('editing the expr input calls onUpdate with updated extract.expr', () => {
+    const field: FieldConfig = {
+      ...base,
+      dataSource: {
+        request: { url: 'https://api.test/items' },
+        extract: { dialect: 'path', expr: '' },
+      },
+    };
+    const { onUpdate } = renderRow(field);
+    fireEvent.change(screen.getByLabelText('dataSource expr'), { target: { value: 'data.items' } });
+    expect(onUpdate).toHaveBeenCalledWith({
+      dataSource: {
+        request: { url: 'https://api.test/items' },
+        extract: { dialect: 'path', expr: 'data.items' },
       },
     });
   });
