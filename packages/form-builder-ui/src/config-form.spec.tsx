@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ConfigForm } from './config-form';
-import type { FormConfig } from '@rfjs/form-builder';
+import type { FormConfig, DataSource } from '@rfjs/form-builder';
 
 const baseConfig: FormConfig = {
   version: 1,
@@ -294,6 +294,55 @@ describe('grid layout', () => {
     expect(container.querySelector('form')!.getAttribute('data-columns')).toBe('1');
     // a field with no explicit width defaults to full → spans the single column
     expect((container.querySelector('[data-width="full"]') as HTMLElement).style.gridColumn).toBe('1 / -1');
+  });
+});
+
+describe('content item dataSource', () => {
+  const ds: DataSource = {
+    request: { url: 'https://example.com/api/value' },
+    extract: { dialect: 'path', expr: 'result' },
+    fallback: '—',
+  };
+
+  function makeCfg(dataSource?: DataSource): FormConfig {
+    return {
+      version: 1,
+      sections: [
+        {
+          id: 's1',
+          rows: [
+            {
+              id: 'r1',
+              items: [{ id: 'c1', kind: 'content', text: 'Static text', ...(dataSource ? { dataSource } : {}) }],
+            },
+          ],
+        },
+      ],
+    } as unknown as FormConfig;
+  }
+
+  it('shows the fetched value when dataSource resolves', async () => {
+    const fetcher = vi.fn().mockResolvedValue({ result: 'Fetched Value' });
+    render(<ConfigForm config={makeCfg(ds)} fetcher={fetcher} onSubmit={() => {}} />);
+    await waitFor(() => expect(screen.getByText('Fetched Value')).toBeTruthy());
+  });
+
+  it('shows the fallback when the fetcher rejects', async () => {
+    const fetcher = vi.fn().mockRejectedValue(new Error('Network error'));
+    render(<ConfigForm config={makeCfg(ds)} fetcher={fetcher} onSubmit={() => {}} />);
+    await waitFor(() => expect(screen.getByText('—')).toBeTruthy());
+  });
+
+  it('shows the default fallback (無) when ds has no fallback and fetcher rejects', async () => {
+    const dsNoFallback: DataSource = { request: { url: '/api' }, extract: { dialect: 'path', expr: 'v' } };
+    const fetcher = vi.fn().mockRejectedValue(new Error('fail'));
+    render(<ConfigForm config={makeCfg(dsNoFallback)} fetcher={fetcher} onSubmit={() => {}} />);
+    await waitFor(() => expect(screen.getByText('無')).toBeTruthy());
+  });
+
+  it('shows the static text when no dataSource is present', () => {
+    render(<ConfigForm config={makeCfg()} onSubmit={() => {}} />);
+    expect(screen.getByText('Static text')).toBeTruthy();
   });
 });
 

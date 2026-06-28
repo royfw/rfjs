@@ -12,12 +12,35 @@ import {
   isFieldItem,
   type FormConfig,
   type FormItem,
+  type DataSource,
   type DataSourceFetcher,
 } from '@rfjs/form-builder';
+import { useDataSource } from './use-data-source';
 import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
 
 import { FieldControl } from './field-control';
+
+interface DataSourceContentProps {
+  ds: DataSource;
+  fetcher?: DataSourceFetcher;
+}
+
+function DataSourceContent({ ds, fetcher }: DataSourceContentProps) {
+  const dsState = useDataSource(ds, fetcher);
+
+  if (dsState.status === 'loading') {
+    return <span className="text-muted-foreground">Loading…</span>;
+  }
+
+  if (dsState.status === 'ready') {
+    const display = dsState.value != null && dsState.value !== '' ? String(dsState.value) : (ds.fallback ?? '無');
+    return <span>{display}</span>;
+  }
+
+  // idle or error → fallback
+  return <span>{ds.fallback ?? '無'}</span>;
+}
 
 export interface ConfigFormProps {
   /**
@@ -97,7 +120,11 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       if (!evaluateConditional(item.conditional, vals)) return null;
       return (
         <div key={item.id} className="text-sm" style={fullSpan(flow)}>
-          {resolveLabel(item.text, locale)}
+          {item.dataSource ? (
+            <DataSourceContent ds={item.dataSource} fetcher={fetcher} />
+          ) : (
+            resolveLabel(item.text, locale)
+          )}
         </div>
       );
     }
