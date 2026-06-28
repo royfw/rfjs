@@ -12,9 +12,10 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, ChevronDown } from 'lucide-react';
 import type { FormConfig, FormSection, FormItem } from '@rfjs/form-builder';
 import { normalizeToSections, collectFieldItems } from '@rfjs/form-builder';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@rfjs/web-ui/components/select';
 
 import { ItemEditor } from './item-editor';
 import type { ConfigBuilderApi } from './use-config-builder';
@@ -131,18 +132,45 @@ interface SectionViewProps {
 }
 
 function SectionView({ section, config, builder, locales }: SectionViewProps) {
+  const [collapsed, setCollapsed] = React.useState(false);
   const itemCount = section.rows.reduce((n, r) => n + r.items.length, 0);
   const title = section.title ? labelOf(section.title) : 'Section';
+  const columns = section.columns ?? 1;
   return (
     <section className="overflow-hidden rounded-xl border border-input/70 bg-gradient-to-b from-card/60 to-card/20 shadow-sm">
-      <header className="flex items-center gap-2.5 border-b border-input/60 bg-muted/30 px-4 py-2.5">
-        <span className="text-[13px] font-semibold text-foreground">{title}</span>
-        <span className="font-mono text-[11px] text-muted-foreground/55">{section.id}</span>
-        <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground/55">
+      <header className="flex items-center gap-2.5 border-b border-input/60 bg-muted/40 px-2.5 py-2.5">
+        <button
+          type="button"
+          aria-label={collapsed ? 'expand section' : 'collapse section'}
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((v) => !v)}
+          className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+        >
+          <ChevronDown className={`size-4 transition-transform duration-200 ${collapsed ? '-rotate-90' : ''}`} />
+        </button>
+        <span className="text-[15px] font-semibold leading-none text-foreground">{title}</span>
+        <span className="font-mono text-[11px] text-muted-foreground/50">{section.id}</span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/45">
           {itemCount} item{itemCount === 1 ? '' : 's'}
         </span>
+        {/* Per-section column count — drives the preview grid + field widths for THIS section. */}
+        <label className="ml-auto flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground/70">
+          Cols
+          <Select
+            value={String(columns)}
+            onValueChange={(v) => builder.setSectionColumns(section.id, Number(v) as 1 | 2 | 3 | 4)}
+          >
+            <SelectTrigger className="h-7 w-16 px-2.5" aria-label={`columns for ${title}`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[1, 2, 3, 4].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </label>
       </header>
-      <div className="flex flex-col gap-1 px-2.5 py-2.5">
+      {collapsed ? null : (
+      <div className="flex flex-col gap-1 px-3 py-3">
         <NewRowDropZone id={`newrow:${section.id}:0`} />
         {section.rows.map((row, rowIndex) => {
           const itemIds = row.items.map((i) => i.id);
@@ -168,6 +196,7 @@ function SectionView({ section, config, builder, locales }: SectionViewProps) {
           );
         })}
       </div>
+      )}
     </section>
   );
 }

@@ -138,6 +138,19 @@ describe('ConfigFormBuilder', () => {
     expect(trigger.textContent).toContain('1');
   });
 
+  it('switches to the Preview tab and renders the live form there', () => {
+    render(<ConfigFormBuilder initialConfig={initial} />);
+    fireEvent.click(screen.getByRole('tab', { name: /^preview$/i }));
+    const preview = screen.getByTestId('config-form-preview');
+    expect(within(preview).getByText('Name')).toBeTruthy();
+  });
+
+  it('JSON tab exposes a copy button', () => {
+    render(<ConfigFormBuilder initialConfig={initial} />);
+    fireEvent.click(screen.getByRole('tab', { name: /^json$/i }));
+    expect(screen.getByRole('button', { name: /copy json/i })).toBeTruthy();
+  });
+
   it('shows the config as JSON and applies edits back (round-trip)', () => {
     const onChange = vi.fn();
     render(<ConfigFormBuilder initialConfig={initial} onChange={onChange} />);
