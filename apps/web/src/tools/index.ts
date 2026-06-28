@@ -5,6 +5,7 @@ import type { ToolModule } from "./types";
 import { tool as dataFilterBuilder } from "./data-filter-builder";
 import { tool as dataFilterTester } from "./data-filter-tester";
 import { tool as formBuilder } from "./form-builder";
+import { tool as formCanvas } from "./form-canvas";
 import { tool as esClientDemo } from "./es-client-demo";
 import { tool as esQueryBuilder } from "./es-query-builder";
 import { tool as jsonbQueryBuilder } from "./jsonb-query-builder";
@@ -33,6 +34,7 @@ export const toolModules: ToolModule[] = [
   esClientDemo,
   pgFilterBuilder,
   formBuilder,
+  formCanvas,
 ];
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = Object.fromEntries(

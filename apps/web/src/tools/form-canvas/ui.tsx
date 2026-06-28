@@ -152,7 +152,7 @@ function useMediaQuery(query: string) {
   return m;
 }
 
-export function CanvasPrototype() {
+export function FormCanvasTool() {
   const [groups, setGroups] = React.useState<Group[]>(SEED_GROUPS);
   const [cards, setCards] = React.useState<Card[]>(SEED_CARDS);
   const [selected, setSelected] = React.useState<string | null>(null);
@@ -297,34 +297,26 @@ export function CanvasPrototype() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6">
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-xl font-semibold">Form Canvas</h1>
-          <span className="hidden font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground sm:inline">
-            Direction C · hybrid
-          </span>
-        </div>
-        <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1 sm:ml-2">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              aria-selected={tab === t.id}
-              className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </header>
+    <div className="flex flex-col gap-4">
+      <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            aria-selected={tab === t.id}
+            className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
+              tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
 
       {tab === "canvas" ? (
         <>
-          <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3 sm:px-6">
+          <div className="flex flex-wrap items-center gap-2">
             {PALETTE.map((kind) => {
               const meta = KIND_META[kind];
               const Icon = meta.icon;
@@ -353,7 +345,7 @@ export function CanvasPrototype() {
           </div>
 
           {/* Canvas + inspector (RWD: stacks below lg) */}
-          <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-start sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
             <div className="min-w-0 flex-1" onPointerDown={() => setSelected(null)}>
               <div className="flex flex-col gap-4">
                 {groups.map((group) => (
@@ -391,11 +383,9 @@ export function CanvasPrototype() {
           </div>
         </>
       ) : tab === "preview" ? (
-        <div className="p-4 sm:p-6">
-          <PreviewForm groups={groups} cards={cards} wide={isWidePreview} />
-        </div>
+        <PreviewForm groups={groups} cards={cards} wide={isWidePreview} />
       ) : (
-        <div className="flex flex-col gap-2 p-4 sm:p-6">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground/60">
               Config JSON — edits rebuild the canvas
