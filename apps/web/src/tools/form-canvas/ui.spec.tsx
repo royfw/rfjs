@@ -24,6 +24,7 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { FormCanvasTool } from "./ui";
+import { resolveCards, collides, type PlacedCard } from "./layout-grid";
 
 describe("FormCanvasTool preview", () => {
   it("Preview tab renders the real ConfigForm with a labelled control", () => {
@@ -42,5 +43,19 @@ describe("FormCanvasTool preview", () => {
     expect(parsed.version).toBe(1);
     expect(Array.isArray(parsed.sections)).toBe(true);
     expect(parsed.sections[0].layout.columns).toBe(12);
+  });
+});
+
+describe("canvas no-overlap invariant", () => {
+  it("resolveCards leaves no two cards in a group sharing a cell after a colliding move", () => {
+    const cards: PlacedCard[] = [
+      { id: "a", groupId: "g1", col: 1, span: 6, row: 1 },
+      { id: "b", groupId: "g1", col: 1, span: 6, row: 1 }, // a and b dropped on the same cell
+      { id: "c", groupId: "g1", col: 7, span: 6, row: 1 },
+    ];
+    const out = resolveCards(cards, "a", 12);
+    for (let i = 0; i < out.length; i++)
+      for (let j = i + 1; j < out.length; j++)
+        if (out[i]!.groupId === out[j]!.groupId) expect(collides(out[i]!, out[j]!)).toBe(false);
   });
 });

@@ -18,6 +18,7 @@ import {
 import { ConfigForm } from "@rfjs/form-builder-ui";
 import type { Card, Group, Kind, Component } from "./model";
 import { cardsToFormConfig, jsonToCards } from "./model";
+import { resolveCards } from "./layout-grid";
 
 // ---------------------------------------------------------------------------
 // Direction C (hybrid) — "A structure + C drag freedom", now with a builder
@@ -81,7 +82,12 @@ export function FormCanvasTool() {
   const selectedCard = cards.find((c) => c.id === selected) ?? null;
   const formConfig = cardsToFormConfig(groups, cards);
 
-  const patch = (id: string, p: Partial<Card>) => setCards((cs) => cs.map((c) => (c.id === id ? { ...c, ...p } : c)));
+  // Apply a drag/resize patch to the dragged card, then resolve overlaps (push + compact up).
+  const placeDragged = (id: string, p: Partial<Card>) =>
+    setCards((cs) => {
+      const patched = cs.map((c) => (c.id === id ? { ...c, ...p } : c));
+      return resolveCards(patched, id, COLS) as Card[];
+    });
 
   function updateCard(id: string, p: Partial<Card>) {
     setCards((cs) =>
@@ -127,14 +133,14 @@ export function FormCanvasTool() {
       if (d.mode === "move") {
         const { groupId, col, row } = cellAt(ev.clientX, ev.clientY, card.groupId);
         setDropGroup(groupId);
-        patch(d.id, { groupId, col: clamp(col, 1, COLS - card.span + 1), row });
+        placeDragged(d.id, { groupId, col: clamp(col, 1, COLS - card.span + 1), row });
       } else {
         const body = bodyRefs.current[card.groupId];
         if (!body) return;
         const rect = body.getBoundingClientRect();
         const colW = (rect.width + GAP) / COLS;
         const rightCol = Math.round((ev.clientX - rect.left) / colW);
-        patch(d.id, { span: clamp(rightCol - (d.col - 1), 1, COLS - d.col + 1) });
+        placeDragged(d.id, { span: clamp(rightCol - (d.col - 1), 1, COLS - d.col + 1) });
       }
     };
     const onUp = () => {
@@ -196,7 +202,10 @@ export function FormCanvasTool() {
       if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT")) return;
       if ((e.key === "Delete" || e.key === "Backspace") && selected) {
         e.preventDefault();
-        setCards((cs) => cs.filter((c) => c.id !== selected));
+        setCards((cs) => {
+          const remaining = cs.filter((c) => c.id !== selected) as Card[];
+          return resolveCards(remaining, "", COLS) as Card[]; // "" matches no id → every group compacts
+        });
         setSelected(null);
       }
     };
@@ -290,7 +299,10 @@ export function FormCanvasTool() {
                 onChange={(p) => selectedCard && updateCard(selectedCard.id, p)}
                 onRemove={() => {
                   if (!selectedCard) return;
-                  setCards((cs) => cs.filter((c) => c.id !== selectedCard.id));
+                  setCards((cs) => {
+                    const remaining = cs.filter((c) => c.id !== selectedCard.id) as Card[];
+                    return resolveCards(remaining, "", COLS) as Card[]; // "" matches no id → every group compacts
+                  });
                   setSelected(null);
                 }}
               />
