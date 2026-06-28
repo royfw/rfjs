@@ -135,21 +135,21 @@ function SectionView({ section, config, builder, locales }: SectionViewProps) {
   const title = section.title ? labelOf(section.title) : 'Section';
   return (
     <section className="overflow-hidden rounded-xl border border-input/70 bg-gradient-to-b from-card/60 to-card/20 shadow-sm">
-      <header className="flex items-center gap-2.5 border-b border-input/60 bg-muted/30 px-3.5 py-2">
+      <header className="flex items-center gap-2.5 border-b border-input/60 bg-muted/30 px-4 py-2.5">
         <span className="text-[13px] font-semibold text-foreground">{title}</span>
         <span className="font-mono text-[11px] text-muted-foreground/55">{section.id}</span>
         <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground/55">
           {itemCount} item{itemCount === 1 ? '' : 's'}
         </span>
       </header>
-      <div className="flex flex-col p-1.5">
+      <div className="flex flex-col gap-1 px-2.5 py-2.5">
         <NewRowDropZone id={`newrow:${section.id}:0`} />
         {section.rows.map((row, rowIndex) => {
           const itemIds = row.items.map((i) => i.id);
           return (
             <React.Fragment key={row.id}>
               <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-1">
                   {row.items.map((item) => (
                     <SortableItemCard
                       key={item.id}

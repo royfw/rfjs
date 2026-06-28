@@ -190,10 +190,10 @@ export function ItemEditor({ item, siblingFields = [], locales = ['en'], onUpdat
     >
       <div
         // Thin inset left accent (no layout shift, lighter than a full colored border).
-        className={`flex items-center gap-1.5 rounded-md py-1 pl-2.5 pr-1.5 ${open ? '' : 'transition-colors hover:bg-muted/40'}`}
+        className={`flex items-center gap-2 rounded-md py-2 pl-3 pr-2 ${open ? '' : 'transition-colors hover:bg-muted/40'}`}
         style={{ boxShadow: `inset 2px 0 0 ${meta.color}` }}
       >
-        <span className="shrink-0 opacity-40 transition-opacity group-hover/item:opacity-100">
+        <span className="-ml-0.5 shrink-0 text-muted-foreground/40 transition-opacity group-hover/item:text-muted-foreground">
           {dragHandle}
         </span>
         {/* Single disclosure control: chevron + kind icon + summary all toggle the card. */}
@@ -217,7 +217,7 @@ export function ItemEditor({ item, siblingFields = [], locales = ['en'], onUpdat
           <span className="truncate text-sm font-medium text-foreground">{title}</span>
           {sub ? <span className="truncate font-mono text-[11px] text-muted-foreground/70">{sub}</span> : null}
         </button>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1.5 pl-2">
           {required ? <Pill tone="danger">required</Pill> : null}
           {hasConditional ? <Pill tone="warn">when</Pill> : null}
           {hasDataSource ? <Pill tone="src">datasource</Pill> : null}
