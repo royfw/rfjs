@@ -354,3 +354,36 @@ describe('conditional field visibility schema', () => {
     expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
   });
 });
+
+describe('FormConfig grid layout', () => {
+  const gridConfig = {
+    version: 1,
+    sections: [
+      {
+        id: 's1',
+        title: 'Account',
+        rows: [{ id: 's1_row', items: [
+          { id: 'i_name', kind: 'field', key: 'name', label: 'Name', component: 'Input', dataType: 'string' },
+        ] }],
+        layout: {
+          columns: 12,
+          placements: [{ itemId: 'i_name', colStart: 1, colSpan: 6, row: 1 }],
+        },
+      },
+    ],
+  };
+
+  it('round-trips a section.layout (col/span/row survive strip-mode)', () => {
+    const parsed = parseFormConfig(gridConfig);
+    expect(parsed.sections![0]!.layout).toEqual({
+      columns: 12,
+      placements: [{ itemId: 'i_name', colStart: 1, colSpan: 6, row: 1 }],
+    });
+  });
+
+  it('rejects a placement with colSpan < 1', () => {
+    const bad = structuredClone(gridConfig);
+    bad.sections[0]!.layout!.placements[0]!.colSpan = 0;
+    expect(() => parseFormConfig(bad)).toThrow();
+  });
+});

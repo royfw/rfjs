@@ -91,8 +91,25 @@ export interface SpacerItem { id: string; kind: 'spacer'; size?: SpacerSize; con
 export interface AiNoteItem { id: string; kind: 'ai-note'; text: string; }
 export type FormItem = FieldItem | ContentItem | DividerItem | SpacerItem | AiNoteItem;
 
+/** Explicit 12-column-grid placement of a single item (positioned by its `id`). */
+export interface GridPlacement {
+  itemId: string;   // FormItem.id this placement positions
+  colStart: number; // 1-based grid column start
+  colSpan: number;  // column span (>= 1)
+  row: number;      // 1-based grid row
+  rowSpan?: number; // optional row span (default 1)
+}
+
+/** Opt-in grid layout for a section. When present, the section renders as a
+ *  single CSS grid of `columns` columns and items are positioned by placement.
+ *  When absent, the section keeps the existing flow (rows + width) behaviour. */
+export interface SectionLayout {
+  columns: number;
+  placements: GridPlacement[];
+}
+
 export interface FormRow { id: string; items: FormItem[]; }
-export interface FormSection { id: string; title?: LocalizedLabel; rows: FormRow[]; columns?: 1 | 2 | 3 | 4; }
+export interface FormSection { id: string; title?: LocalizedLabel; rows: FormRow[]; columns?: 1 | 2 | 3 | 4; layout?: SectionLayout; }
 
 export interface FormConfig {
   version: number;

@@ -118,12 +118,24 @@ const formItemSchema = z.discriminatedUnion('kind', [
   spacerItemSchema,
   aiNoteItemSchema,
 ]);
+const gridPlacementSchema = z.object({
+  itemId: z.string().min(1),
+  colStart: z.number().int().min(1).max(48),
+  colSpan: z.number().int().min(1).max(48),
+  row: z.number().int().min(1),
+  rowSpan: z.number().int().min(1).optional(),
+});
+const sectionLayoutSchema = z.object({
+  columns: z.number().int().min(1).max(48),
+  placements: z.array(gridPlacementSchema),
+});
 const formRowSchema = z.object({ id: z.string().min(1), items: z.array(formItemSchema) });
 const formSectionSchema = z.object({
   id: z.string().min(1),
   title: localizedLabelSchema.optional(),
   rows: z.array(formRowSchema),
   columns: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+  layout: sectionLayoutSchema.optional(),
 });
 
 export const FormConfigSchema: ZodType<FormConfig> = z
