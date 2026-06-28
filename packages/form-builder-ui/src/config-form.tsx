@@ -12,6 +12,7 @@ import {
   isFieldItem,
   type FormConfig,
   type FormItem,
+  type FieldWidth,
   type DataSource,
   type DataSourceFetcher,
 } from '@rfjs/form-builder';
@@ -91,14 +92,25 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
 
   const spacerHeights: Record<string, number> = { sm: 8, md: 16, lg: 32 };
 
-  // Width is applied via INLINE styles, not Tailwind `basis-*` / `col-span-full`
-  // utilities — those aren't reliably emitted for this package, which left preview
-  // fields collapsed to their intrinsic width ("not full-width"). Inline is guaranteed.
-  // v2 flex row → flex-basis; v1 grid → grid-column span.
-  const fullSpan = (flow: 'grid' | 'flex'): React.CSSProperties =>
-    flow === 'flex' ? { flexBasis: '100%', minWidth: 0 } : { gridColumn: '1 / -1' };
+  // Span styles are applied INLINE, not via Tailwind `col-span-*` utilities —
+  // those aren't reliably emitted for this package. Inline is guaranteed.
+  // Items always span the full row width.
+  const FULL_SPAN: React.CSSProperties = { gridColumn: '1 / -1' };
 
-  function renderItem(item: FormItem, flow: 'grid' | 'flex') {
+  // Field grid-span derived from the field's width AND the section's column count.
+  // #3: columns DRIVE width — an unset width is a single cell, so a section with
+  // `columns: 2` lays its fields two-per-row automatically (no per-field width
+  // needed). 'half' ≈ half the row; 'full' spans the whole row. `flow: 'v1'`
+  // keeps the legacy behaviour (unset = full) for back-compat with `fields[]`.
+  function fieldSpanStyle(width: FieldWidth | undefined, flow: 'v1' | 'section', cols: number): React.CSSProperties {
+    if (flow === 'v1') return { gridColumn: (width ?? 'full') === 'full' ? '1 / -1' : undefined };
+    if (width === 'full') return FULL_SPAN;
+    const cells = width === 'half' ? Math.max(1, Math.ceil(cols / 2)) : 1;
+    const span = Math.min(cells, cols);
+    return { gridColumn: `span ${span} / span ${span}`, minWidth: 0 };
+  }
+
+  function renderItem(item: FormItem, flow: 'v1' | 'section', cols: number) {
     const vals = values as Record<string, unknown>;
 
     if (item.kind === 'ai-note') {
@@ -107,19 +119,19 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
 
     if (item.kind === 'divider') {
       if (!evaluateConditional(item.conditional, vals)) return null;
-      return <hr key={item.id} className="w-full border-input" style={fullSpan(flow)} />;
+      return <hr key={item.id} className="w-full border-input" style={FULL_SPAN} />;
     }
 
     if (item.kind === 'spacer') {
       if (!evaluateConditional(item.conditional, vals)) return null;
       const height = spacerHeights[item.size ?? 'md'];
-      return <div key={item.id} style={{ ...fullSpan(flow), height }} />;
+      return <div key={item.id} style={{ ...FULL_SPAN, height }} />;
     }
 
     if (item.kind === 'content') {
       if (!evaluateConditional(item.conditional, vals)) return null;
       return (
-        <div key={item.id} className="text-sm" style={fullSpan(flow)}>
+        <div key={item.id} className="text-sm" style={FULL_SPAN}>
           {item.dataSource ? (
             <DataSourceContent ds={item.dataSource} fetcher={fetcher} />
           ) : (
@@ -131,13 +143,16 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
 
     // kind === 'field'
     if (!evaluateConditional(item.conditional, vals)) return null;
-    const width = item.width ?? 'full';
-    const fieldStyle: React.CSSProperties =
-      flow === 'flex'
-        ? { flexBasis: width === 'full' ? '100%' : 'calc(50% - 0.5rem)', minWidth: 0 }
-        : { gridColumn: width === 'full' ? '1 / -1' : undefined };
+    // data-width reflects the raw setting: 'auto' (cols-driven) in sections, but
+    // the legacy 'full' default in v1 so existing fields[] behaviour is unchanged.
+    const dataWidth = item.width ?? (flow === 'v1' ? 'full' : 'auto');
     return (
-      <div key={item.key} className="flex min-w-0 flex-col gap-1.5" data-width={width} style={fieldStyle}>
+      <div
+        key={item.key}
+        className="flex min-w-0 flex-col gap-1.5"
+        data-width={dataWidth}
+        style={fieldSpanStyle(item.width, flow, cols)}
+      >
         <Label htmlFor={item.key}>{resolveLabel(item.label, locale)}</Label>
         <Controller
           control={control}
@@ -175,32 +190,36 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       style={{ '--form-cols': String(columns) } as React.CSSProperties}
       data-columns={columns}
     >
-      {sections.map((section) => (
-        <React.Fragment key={section.id}>
-          {section.title && (
-            <h3 className="font-semibold text-sm" style={{ gridColumn: '1 / -1' }}>
-              {resolveLabel(section.title, locale)}
-            </h3>
-          )}
-          {section.rows.map((row) =>
-            isV2 ? (
-              <div
-                key={row.id}
-                data-testid="form-row"
-                className="flex flex-wrap gap-4"
-                style={{ gridColumn: '1 / -1' }}
-              >
-                {row.items.map((item) => renderItem(item, 'flex'))}
-              </div>
-            ) : (
-              // v1 implicit section: render items FLAT into the section grid (unchanged v1 behavior).
-              <React.Fragment key={row.id}>
-                {row.items.map((item) => renderItem(item, 'grid'))}
-              </React.Fragment>
-            ),
-          )}
-        </React.Fragment>
-      ))}
+      {sections.map((section) => {
+        // Per-section column count drives the row grid (and thus field widths).
+        const sectionCols = section.columns ?? 1;
+        return (
+          <React.Fragment key={section.id}>
+            {section.title && (
+              <h3 className="font-semibold text-sm" style={{ gridColumn: '1 / -1' }}>
+                {resolveLabel(section.title, locale)}
+              </h3>
+            )}
+            {section.rows.map((row) =>
+              isV2 ? (
+                <div
+                  key={row.id}
+                  data-testid="form-row"
+                  className="grid gap-4"
+                  style={{ gridColumn: '1 / -1', gridTemplateColumns: `repeat(${sectionCols}, minmax(0, 1fr))` }}
+                >
+                  {row.items.map((item) => renderItem(item, 'section', sectionCols))}
+                </div>
+              ) : (
+                // v1 implicit section: render items FLAT into the outer grid (unchanged v1 behavior).
+                <React.Fragment key={row.id}>
+                  {row.items.map((item) => renderItem(item, 'v1', sectionCols))}
+                </React.Fragment>
+              ),
+            )}
+          </React.Fragment>
+        );
+      })}
       <div style={{ gridColumn: '1 / -1' }}>
         <Button
           type="submit"

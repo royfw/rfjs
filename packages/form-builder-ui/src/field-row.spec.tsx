@@ -73,10 +73,11 @@ describe('FieldRow', () => {
     expect(trigger.textContent).toContain('Input');
   });
   it('width trigger renders the current width value', () => {
-    // Radix Select cannot be driven by fireEvent.change; assert the trigger shows current value
+    // Radix Select cannot be driven by fireEvent.change; assert the trigger shows current value.
+    // An unset width defaults to "Auto" (column-driven) — #3.
     renderRow(base);
     const trigger = screen.getByLabelText('width for name');
-    expect(trigger.textContent).toContain('Full');
+    expect(trigger.textContent).toContain('Auto');
   });
   it('width trigger shows Half when field.width is half', () => {
     renderRow({ ...base, width: 'half' });

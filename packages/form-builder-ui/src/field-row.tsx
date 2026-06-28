@@ -671,13 +671,17 @@ export function FieldItemEditor({ field, onUpdate, locales = ['en'], siblingFiel
       )}
       <span className="flex flex-col gap-1 text-xs text-muted-foreground">
         Width
-        <Select value={field.width ?? 'full'} onValueChange={(v) => onUpdate({ width: v as FieldWidth })}>
+        <Select
+          value={field.width ?? 'auto'}
+          onValueChange={(v) => onUpdate({ width: v === 'auto' ? undefined : (v as FieldWidth) })}
+        >
           <SelectTrigger className="h-8" aria-label={`width for ${field.key}`}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="full">Full</SelectItem>
+            <SelectItem value="auto">Auto (by columns)</SelectItem>
             <SelectItem value="half">Half</SelectItem>
+            <SelectItem value="full">Full</SelectItem>
           </SelectContent>
         </Select>
       </span>
