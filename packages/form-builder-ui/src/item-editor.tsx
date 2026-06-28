@@ -190,10 +190,11 @@ export function ItemEditor({ item, siblingFields = [], locales = ['en'], onUpdat
     >
       <div
         // Thin inset left accent (no layout shift, lighter than a full colored border).
-        className={`flex items-center gap-2 rounded-md py-2 pl-3 pr-2 ${open ? '' : 'transition-colors hover:bg-muted/40'}`}
+        // pl-4 keeps the grip clear of the accent bar instead of jammed against it.
+        className={`flex items-center gap-2.5 rounded-md py-2 pl-4 pr-2 ${open ? '' : 'transition-colors hover:bg-muted/40'}`}
         style={{ boxShadow: `inset 2px 0 0 ${meta.color}` }}
       >
-        <span className="-ml-0.5 shrink-0 text-muted-foreground/40 transition-opacity group-hover/item:text-muted-foreground">
+        <span className="shrink-0 text-muted-foreground/40 transition-opacity group-hover/item:text-muted-foreground">
           {dragHandle}
         </span>
         {/* Single disclosure control: chevron + kind icon + summary all toggle the card. */}
