@@ -376,7 +376,7 @@ describe('v2 sections rendering', () => {
     expect(screen.getByLabelText('Name')).toBeTruthy();
   });
 
-  it('puts two items of one v2 row in a single flex container, and a second row in its own', () => {
+  it('puts two items of one v2 row in a single grid container, and a second row in its own', () => {
     const cfg = { version: 1, sections: [{ id: 's1', rows: [
       { id: 'r1', items: [
         { id: 'first', kind: 'field', key: 'first', label: 'First', component: 'Input', dataType: 'string', width: 'half' },
@@ -393,8 +393,31 @@ describe('v2 sections rendering', () => {
     expect(rows[0]!.querySelectorAll('[data-width="half"]')).toHaveLength(2);
     expect(screen.getByLabelText('First')).toBeTruthy();
     expect(screen.getByLabelText('Last')).toBeTruthy();
-    // the second row's item is in a distinct container
-    expect(rows[1]!.querySelector('[data-width="full"]')).toBeTruthy();
+    // the second row's item is in a distinct container; an unset width is now "auto" (#3)
+    expect(rows[1]!.querySelector('[data-width="auto"]')).toBeTruthy();
     expect(screen.getByLabelText('Email')).toBeTruthy();
+  });
+
+  it('derives field span from the section column count (#3: columns drive width)', () => {
+    // A 2-column section with two unset-width fields → each occupies one cell
+    // (span 1) and the row is a 2-col grid. No per-field width needed.
+    const cfg = { version: 1, sections: [{ id: 's1', columns: 2, rows: [
+      { id: 'r1', items: [
+        { id: 'a', kind: 'field', key: 'a', label: 'A', component: 'Input', dataType: 'string' },
+        { id: 'b', kind: 'field', key: 'b', label: 'B', component: 'Input', dataType: 'string' },
+      ] },
+      { id: 'r2', items: [
+        { id: 'c', kind: 'field', key: 'c', label: 'C', component: 'Input', dataType: 'string', width: 'full' },
+      ] },
+    ] }] };
+    const { container } = render(<ConfigForm config={cfg as any} onSubmit={() => {}} />);
+    const rows = container.querySelectorAll('[data-testid="form-row"]');
+    // Row grid is driven by the section's columns.
+    expect((rows[0] as HTMLElement).style.gridTemplateColumns).toBe('repeat(2, minmax(0, 1fr))');
+    // Unset-width fields span a single cell; a full field spans the whole row.
+    const a = container.querySelector('[data-width="auto"]') as HTMLElement;
+    expect(a.style.gridColumn).toBe('span 1 / span 1');
+    const c = container.querySelector('[data-width="full"]') as HTMLElement;
+    expect(c.style.gridColumn).toBe('1 / -1');
   });
 });

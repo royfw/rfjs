@@ -33,7 +33,7 @@ describe('ConfigFormBuilder empty state', () => {
   it('shows the empty-state hint when there are no fields', () => {
     render(<ConfigFormBuilder initialConfig={empty} />);
     expect(screen.getByTestId('empty-state-hint')).toBeTruthy();
-    expect(screen.getByText(/no fields yet/i)).toBeTruthy();
+    expect(screen.getByText(/no items yet/i)).toBeTruthy();
   });
 
   it('does not show the empty-state hint when fields are present', () => {
@@ -136,6 +136,19 @@ describe('ConfigFormBuilder', () => {
     render(<ConfigFormBuilder initialConfig={initial} />);
     const trigger = screen.getByLabelText(/columns/i);
     expect(trigger.textContent).toContain('1');
+  });
+
+  it('switches to the Preview tab and renders the live form there', () => {
+    render(<ConfigFormBuilder initialConfig={initial} />);
+    fireEvent.click(screen.getByRole('tab', { name: /^preview$/i }));
+    const preview = screen.getByTestId('config-form-preview');
+    expect(within(preview).getByText('Name')).toBeTruthy();
+  });
+
+  it('JSON tab exposes a copy button', () => {
+    render(<ConfigFormBuilder initialConfig={initial} />);
+    fireEvent.click(screen.getByRole('tab', { name: /^json$/i }));
+    expect(screen.getByRole('button', { name: /copy json/i })).toBeTruthy();
   });
 
   it('shows the config as JSON and applies edits back (round-trip)', () => {
