@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import type { FormConfig, FormItem, ItemKind } from '@rfjs/form-builder';
+import type { FormConfig, FormItem, ItemKind, DataSourceFetcher } from '@rfjs/form-builder';
 import { parseFormConfig, normalizeToSections, makeItem } from '@rfjs/form-builder';
 import { Button } from '@rfjs/web-ui/components/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@rfjs/web-ui/components/select';
@@ -35,9 +35,14 @@ export interface ConfigFormBuilderProps {
   onChange?: (config: FormConfig) => void;
   locale?: string;
   locales?: string[];
+  /**
+   * Pluggable fetcher for `dataSource` fields. Passed through to the live preview `<ConfigForm>`.
+   * Memoize with `useCallback` (or a module-level const) to avoid re-fetch loops.
+   */
+  fetcher?: DataSourceFetcher;
 }
 
-export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'en', locales = ['en'] }: ConfigFormBuilderProps) {
+export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'en', locales = ['en'], fetcher }: ConfigFormBuilderProps) {
   const builder = useConfigBuilder(initialConfig, onChange);
 
   // The form is "empty" only when no items exist at all (covers both v1 fields[] and v2 sections[]).
@@ -172,6 +177,7 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
               <ConfigForm
                 config={builder.config}
                 locale={locale}
+                fetcher={fetcher}
                 onSubmit={() => {}}
               />
             )}

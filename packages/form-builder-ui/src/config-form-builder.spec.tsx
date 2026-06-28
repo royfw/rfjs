@@ -22,9 +22,9 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
 }
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { ConfigFormBuilder } from './config-form-builder';
-import type { FormConfig } from '@rfjs/form-builder';
+import type { FormConfig, DataSourceFetcher } from '@rfjs/form-builder';
 
 const empty: FormConfig = { version: 1, fields: [] };
 const initial: FormConfig = { version: 1, fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string' }] };
@@ -155,5 +155,71 @@ describe('ConfigFormBuilder', () => {
     fireEvent.change(screen.getByLabelText(/config json/i), { target: { value: '{ not json' } });
     expect(screen.getByText(/invalid/i)).toBeTruthy();
     expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConfigFormBuilder fetcher threading', () => {
+  // A config with a dataSource Select field — the fetcher returns canned country options.
+  const withDataSource: FormConfig = {
+    version: 1,
+    sections: [
+      {
+        id: 'sec_1',
+        rows: [
+          {
+            id: 'row_1',
+            items: [
+              {
+                id: 'i_country',
+                kind: 'field',
+                key: 'country',
+                label: { en: 'Country' },
+                component: 'Select',
+                dataType: 'string',
+                dataSource: {
+                  request: { url: '/api/countries' },
+                  extract: { dialect: 'path', expr: 'data' },
+                  optionLabel: 'name',
+                  optionValue: 'code',
+                  fallback: '無',
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  it('renders without error when fetcher + dataSource Select field are provided', async () => {
+    const fetcher: DataSourceFetcher = vi.fn().mockResolvedValue({
+      data: [
+        { code: 'tw', name: 'Taiwan' },
+        { code: 'jp', name: 'Japan' },
+      ],
+    });
+
+    render(<ConfigFormBuilder initialConfig={withDataSource} fetcher={fetcher} />);
+
+    // The preview panel is rendered (not the empty-state placeholder).
+    const preview = screen.getByTestId('config-form-preview');
+    expect(preview.textContent).not.toMatch(/preview will appear/i);
+
+    // The Country label is visible in the preview (field was threaded through).
+    await waitFor(() => {
+      expect(within(preview).getByText('Country')).toBeTruthy();
+    });
+
+    // The fetcher was called with the dataSource request (Select options were loaded).
+    expect(fetcher).toHaveBeenCalledWith(expect.objectContaining({ url: '/api/countries' }));
+  });
+
+  it('renders without error when no fetcher is provided (inert, shows fallback)', () => {
+    // No fetcher → idle state → fallback text rendered in the trigger area or control.
+    render(<ConfigFormBuilder initialConfig={withDataSource} />);
+    const preview = screen.getByTestId('config-form-preview');
+    expect(preview.textContent).not.toMatch(/preview will appear/i);
+    // Country label is still visible — the field renders in idle/fallback state.
+    expect(within(preview).getByText('Country')).toBeTruthy();
   });
 });

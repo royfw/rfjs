@@ -1,7 +1,24 @@
 "use client";
 
-import type { FormConfig } from "@rfjs/form-builder";
+import type { FormConfig, DataSourceFetcher } from "@rfjs/form-builder";
 import { ConfigFormBuilder } from "@rfjs/form-builder-ui";
+
+// ---------------------------------------------------------------------------
+// Mock fetcher — no network. Returns canned data for known URLs.
+// Module-level const is a stable reference (no re-fetch loops).
+// ---------------------------------------------------------------------------
+const mockFetcher: DataSourceFetcher = async (req) => {
+  if (req.url === "/api/countries") {
+    return {
+      data: [
+        { code: "tw", name: "Taiwan" },
+        { code: "jp", name: "Japan" },
+        { code: "us", name: "United States" },
+      ],
+    };
+  }
+  return { data: [] };
+};
 
 // A v2 sections config showcasing the item-kind model (content / field / ai-note /
 // divider), validation, a conditional, a per-field AI note — and the v2-E field
@@ -116,6 +133,26 @@ const SAMPLE_CONFIG: FormConfig = {
           ],
         },
         {
+          id: "r_country",
+          items: [
+            {
+              id: "i_country",
+              kind: "field",
+              key: "country",
+              label: { en: "Country", "zh-TW": "國家" },
+              component: "Select",
+              dataType: "string",
+              dataSource: {
+                request: { url: "/api/countries" },
+                extract: { dialect: "path", expr: "data" },
+                optionLabel: "name",
+                optionValue: "code",
+                fallback: "無",
+              },
+            },
+          ],
+        },
+        {
           id: "r_newsletter",
           items: [
             { id: "i_newsletter", kind: "field", key: "newsletter", label: { en: "Subscribe to newsletter", "zh-TW": "訂閱電子報" }, component: "Switch", dataType: "boolean" },
@@ -130,7 +167,7 @@ const SAMPLE_CONFIG: FormConfig = {
 export function FormBuilderTool() {
   return (
     <div className="flex flex-col gap-5">
-      <ConfigFormBuilder initialConfig={SAMPLE_CONFIG} locales={["en", "zh-TW"]} />
+      <ConfigFormBuilder initialConfig={SAMPLE_CONFIG} locales={["en", "zh-TW"]} fetcher={mockFetcher} />
     </div>
   );
 }
