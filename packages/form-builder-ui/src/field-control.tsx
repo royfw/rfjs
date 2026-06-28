@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import type { FieldConfig } from '@rfjs/form-builder';
+import type { FieldConfig, DataSourceFetcher } from '@rfjs/form-builder';
 import { Input } from '@rfjs/web-ui/components/input';
 import { Textarea } from '@rfjs/web-ui/components/textarea';
 import { Checkbox } from '@rfjs/web-ui/components/checkbox';
@@ -18,11 +18,13 @@ import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@rfjs/web-ui/components/popover';
 import { Calendar } from '@rfjs/web-ui/components/calendar';
+import { useDataSource } from './use-data-source';
 
 export interface FieldControlProps {
   field: FieldConfig;
   value: unknown;
   onChange: (value: unknown) => void;
+  fetcher?: DataSourceFetcher;
 }
 
 /** Format a Date as a LOCAL `yyyy-mm-dd` ISO string (no UTC shift). */
@@ -41,7 +43,128 @@ export function isoToDate(s: string | undefined): Date | undefined {
   return new Date(y, m - 1, d);
 }
 
-export function FieldControl({ field, value, onChange }: FieldControlProps) {
+// --- Sub-components for controls that use hooks ---
+
+interface SelectControlProps {
+  field: FieldConfig;
+  value: unknown;
+  onChange: (value: unknown) => void;
+  fetcher?: DataSourceFetcher;
+}
+
+function SelectControl({ field, value, onChange, fetcher }: SelectControlProps) {
+  // Hook ALWAYS called unconditionally — returns idle when ds or fetcher is absent.
+  const dsState = useDataSource(field.dataSource, fetcher);
+
+  if (field.dataSource) {
+    if (dsState.status === 'loading') {
+      return (
+        <Select disabled>
+          <SelectTrigger id={field.key} className="w-full">
+            <SelectValue placeholder="Loading…" />
+          </SelectTrigger>
+          <SelectContent />
+        </Select>
+      );
+    }
+    if (dsState.status === 'ready' && dsState.options.length > 0) {
+      return (
+        <Select value={(value as string) ?? ''} onValueChange={onChange}>
+          <SelectTrigger id={field.key} className="w-full">
+            <SelectValue placeholder={field.placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {dsState.options.map((opt) => (
+              <SelectItem key={String(opt.value)} value={String(opt.value)}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+    // error, idle (no fetcher), or ready with empty options → fallback
+    return (
+      <span className="text-sm text-muted-foreground">
+        {field.dataSource.fallback ?? '無'}
+      </span>
+    );
+  }
+
+  // No dataSource → static options (unchanged behavior)
+  return (
+    <Select value={(value as string) ?? ''} onValueChange={onChange}>
+      <SelectTrigger id={field.key} className="w-full">
+        <SelectValue placeholder={field.placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {(field.options ?? []).map((opt) => (
+          <SelectItem key={String(opt.value)} value={String(opt.value)}>
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+interface RadioControlProps {
+  field: FieldConfig;
+  value: unknown;
+  onChange: (value: unknown) => void;
+  fetcher?: DataSourceFetcher;
+}
+
+function RadioControl({ field, value, onChange, fetcher }: RadioControlProps) {
+  // Hook ALWAYS called unconditionally — returns idle when ds or fetcher is absent.
+  const dsState = useDataSource(field.dataSource, fetcher);
+
+  if (field.dataSource) {
+    if (dsState.status === 'loading') {
+      return <p className="text-sm text-muted-foreground">Loading…</p>;
+    }
+    if (dsState.status === 'ready' && dsState.options.length > 0) {
+      return (
+        <RadioGroup id={field.key} value={String(value ?? '')} onValueChange={onChange}>
+          {dsState.options.map((opt) => (
+            <div key={String(opt.value)} className="flex items-center gap-2">
+              <RadioGroupItem
+                value={String(opt.value)}
+                id={`${field.key}-${opt.value}`}
+              />
+              <Label htmlFor={`${field.key}-${opt.value}`}>{opt.label}</Label>
+            </div>
+          ))}
+        </RadioGroup>
+      );
+    }
+    // error, idle, or ready with empty options → fallback
+    return (
+      <span className="text-sm text-muted-foreground">
+        {field.dataSource.fallback ?? '無'}
+      </span>
+    );
+  }
+
+  // No dataSource → static options (unchanged behavior)
+  return (
+    <RadioGroup id={field.key} value={String(value ?? '')} onValueChange={onChange}>
+      {(field.options ?? []).map((opt) => (
+        <div key={String(opt.value)} className="flex items-center gap-2">
+          <RadioGroupItem
+            value={String(opt.value)}
+            id={`${field.key}-${opt.value}`}
+          />
+          <Label htmlFor={`${field.key}-${opt.value}`}>{opt.label}</Label>
+        </div>
+      ))}
+    </RadioGroup>
+  );
+}
+
+// --- Main FieldControl ---
+
+export function FieldControl({ field, value, onChange, fetcher }: FieldControlProps) {
   switch (field.component) {
     case 'Textarea':
       return (
@@ -61,20 +184,7 @@ export function FieldControl({ field, value, onChange }: FieldControlProps) {
         />
       );
     case 'Select':
-      return (
-        <Select value={(value as string) ?? ''} onValueChange={onChange}>
-          <SelectTrigger id={field.key} className="w-full">
-            <SelectValue placeholder={field.placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {(field.options ?? []).map((opt) => (
-              <SelectItem key={String(opt.value)} value={String(opt.value)}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      );
+      return <SelectControl field={field} value={value} onChange={onChange} fetcher={fetcher} />;
     case 'Date':
       return (
         <Input
@@ -113,19 +223,7 @@ export function FieldControl({ field, value, onChange }: FieldControlProps) {
         />
       );
     case 'Radio':
-      return (
-        <RadioGroup id={field.key} value={String(value ?? '')} onValueChange={onChange}>
-          {(field.options ?? []).map((opt) => (
-            <div key={String(opt.value)} className="flex items-center gap-2">
-              <RadioGroupItem
-                value={String(opt.value)}
-                id={`${field.key}-${opt.value}`}
-              />
-              <Label htmlFor={`${field.key}-${opt.value}`}>{opt.label}</Label>
-            </div>
-          ))}
-        </RadioGroup>
-      );
+      return <RadioControl field={field} value={value} onChange={onChange} fetcher={fetcher} />;
     case 'DatePicker':
       return (
         <Popover>

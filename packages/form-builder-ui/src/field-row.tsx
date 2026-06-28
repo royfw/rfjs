@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight, GripVertical, Trash2 } from 'lucide-react';
-import type { FieldComponent, FieldConfig, FieldOption, FieldValidation, FieldWidth, ConditionalRule } from '@rfjs/form-builder';
+import type { FieldComponent, FieldConfig, FieldOption, FieldValidation, FieldWidth, ConditionalRule, DataSource, DataSourceDialect } from '@rfjs/form-builder';
 import { Input } from '@rfjs/web-ui/components/input';
 import { Textarea } from '@rfjs/web-ui/components/textarea';
 import { Checkbox } from '@rfjs/web-ui/components/checkbox';
@@ -413,6 +413,177 @@ function ConditionalEditor({
   );
 }
 
+// ---------------------------------------------------------------------------
+// DataSource editor — pure helpers (exported for direct unit-testing)
+// ---------------------------------------------------------------------------
+
+/** Keys addressable by the DataSource editor. */
+export type DataSourceField =
+  | 'url'
+  | 'method'
+  | 'dialect'
+  | 'expr'
+  | 'fallback'
+  | 'optionLabel'
+  | 'optionValue';
+
+/**
+ * Apply a single field edit to the current DataSource, returning a new
+ * DataSource (with sensible defaults) or `undefined` when the resulting url
+ * is empty (an url-less dataSource is meaningless).
+ */
+export function setDataSourceField(
+  current: DataSource | undefined,
+  key: DataSourceField,
+  value: string,
+): DataSource | undefined {
+  const base: DataSource = current ?? {
+    request: { url: '' },
+    extract: { dialect: 'path', expr: '' },
+  };
+
+  let next: DataSource;
+
+  switch (key) {
+    case 'url':
+      next = { ...base, request: { ...base.request, url: value } };
+      break;
+    case 'method': {
+      const { method: _m, ...restReq } = base.request;
+      next = {
+        ...base,
+        request: value
+          ? { ...restReq, method: value as 'GET' | 'POST' | 'PUT' | 'DELETE' }
+          : { ...restReq },
+      };
+      break;
+    }
+    case 'dialect':
+      next = { ...base, extract: { ...base.extract, dialect: value as DataSourceDialect } };
+      break;
+    case 'expr':
+      next = { ...base, extract: { ...base.extract, expr: value } };
+      break;
+    case 'fallback': {
+      const { fallback: _f, ...rest } = base;
+      next = value ? { ...rest, fallback: value } : { ...rest };
+      break;
+    }
+    case 'optionLabel': {
+      const { optionLabel: _ol, ...rest } = base;
+      next = value ? { ...rest, optionLabel: value } : { ...rest };
+      break;
+    }
+    case 'optionValue': {
+      const { optionValue: _ov, ...rest } = base;
+      next = value ? { ...rest, optionValue: value } : { ...rest };
+      break;
+    }
+    default:
+      next = base;
+  }
+
+  // Empty url → the whole dataSource is meaningless
+  return next.request.url.trim() === '' ? undefined : next;
+}
+
+function DataSourceEditor({
+  field,
+  onUpdate,
+}: {
+  field: FieldConfig;
+  onUpdate: (patch: Partial<FieldConfig>) => void;
+}) {
+  const ds = field.dataSource;
+  const isOptionsField = field.component === 'Select' || field.component === 'Radio';
+
+  function patch(key: DataSourceField, value: string) {
+    onUpdate({ dataSource: setDataSourceField(ds, key, value) });
+  }
+
+  return (
+    <div className="col-span-full flex flex-col gap-2">
+      <span className="text-xs font-medium text-muted-foreground">Data source</span>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2">
+        <label className="col-span-full flex flex-col gap-1 text-xs text-muted-foreground">
+          URL
+          <Input
+            className="h-8"
+            aria-label="dataSource url"
+            value={ds?.request.url ?? ''}
+            onChange={(e) => patch('url', e.target.value)}
+          />
+        </label>
+        <span className="flex flex-col gap-1 text-xs text-muted-foreground">
+          Method
+          <Select value={ds?.request.method ?? 'GET'} onValueChange={(v) => patch('method', v)}>
+            <SelectTrigger className="h-8" aria-label="dataSource method">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(['GET', 'POST', 'PUT', 'DELETE'] as const).map((m) => (
+                <SelectItem key={m} value={m}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </span>
+        <span className="flex flex-col gap-1 text-xs text-muted-foreground">
+          Dialect
+          <Select value={ds?.extract.dialect ?? 'path'} onValueChange={(v) => patch('dialect', v)}>
+            <SelectTrigger className="h-8" aria-label="dataSource dialect">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="path">path</SelectItem>
+              <SelectItem value="jsonata">jsonata</SelectItem>
+            </SelectContent>
+          </Select>
+        </span>
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          Expression
+          <Input
+            className="h-8"
+            aria-label="dataSource expr"
+            value={ds?.extract.expr ?? ''}
+            onChange={(e) => patch('expr', e.target.value)}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          Fallback
+          <Input
+            className="h-8"
+            aria-label="dataSource fallback"
+            value={ds?.fallback ?? ''}
+            onChange={(e) => patch('fallback', e.target.value)}
+          />
+        </label>
+        {isOptionsField ? (
+          <>
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              Option label path
+              <Input
+                className="h-8"
+                aria-label="dataSource optionLabel"
+                value={ds?.optionLabel ?? ''}
+                onChange={(e) => patch('optionLabel', e.target.value)}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              Option value path
+              <Input
+                className="h-8"
+                aria-label="dataSource optionValue"
+                value={ds?.optionValue ?? ''}
+                onChange={(e) => patch('optionValue', e.target.value)}
+              />
+            </label>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function localeText(label: FieldConfig['label'], loc: string, fallback: string): string {
   if (typeof label === 'string') return loc === fallback ? label : '';
   return label[loc] ?? '';
@@ -523,6 +694,7 @@ export function FieldItemEditor({ field, onUpdate, locales = ['en'], siblingFiel
       ) : null}
       <ValidationEditor field={field} onUpdate={onUpdate} />
       <ConditionalEditor field={field} siblingFields={siblingFields} onUpdate={onUpdate} />
+      <DataSourceEditor field={field} onUpdate={onUpdate} />
       <label className="col-span-full flex flex-col gap-1 text-xs text-muted-foreground">
         AI note
         <Textarea

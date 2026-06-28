@@ -205,6 +205,82 @@ describe('v1/v2 parse', () => {
   });
 });
 
+describe('dataSource schema', () => {
+  const baseFieldDs = {
+    key: 'country',
+    label: 'Country',
+    component: 'Select',
+    dataType: 'string',
+    dataSource: {
+      request: { url: 'https://api.example.com/countries', method: 'GET' },
+      extract: { dialect: 'path', expr: 'data' },
+      fallback: '無',
+      optionLabel: 'name',
+      optionValue: 'code',
+    },
+  };
+
+  it('accepts a fieldConfig with a valid dataSource (round-trip)', () => {
+    const cfg = { version: 1, fields: [baseFieldDs] };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('accepts a content item with a valid dataSource', () => {
+    const cfg = {
+      version: 1,
+      sections: [{
+        id: 's1',
+        rows: [{
+          id: 'r1',
+          items: [{
+            id: 'i1',
+            kind: 'content',
+            text: 'Status',
+            dataSource: {
+              request: { url: 'https://api.example.com/status' },
+              extract: { dialect: 'jsonata', expr: 'result.value' },
+            },
+          }],
+        }],
+      }],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('rejects a dataSource missing extract.expr', () => {
+    const bad = {
+      version: 1,
+      fields: [{
+        ...baseFieldDs,
+        dataSource: { request: { url: 'https://example.com' }, extract: { dialect: 'path' } },
+      }],
+    };
+    expect(FormConfigSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it('rejects a dataSource with an invalid dialect', () => {
+    const bad = {
+      version: 1,
+      fields: [{
+        ...baseFieldDs,
+        dataSource: { request: { url: 'https://example.com' }, extract: { dialect: 'bad', expr: 'data' } },
+      }],
+    };
+    expect(FormConfigSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it('rejects a dataSource missing request.url', () => {
+    const bad = {
+      version: 1,
+      fields: [{
+        ...baseFieldDs,
+        dataSource: { request: { method: 'GET' }, extract: { dialect: 'path', expr: 'data' } },
+      }],
+    };
+    expect(FormConfigSchema.safeParse(bad).success).toBe(false);
+  });
+});
+
 describe('new FieldComponent values', () => {
   it.each(['Number', 'Email', 'Switch', 'Radio', 'DatePicker'] as const)(
     'accepts component: %s',

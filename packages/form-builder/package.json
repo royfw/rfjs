@@ -28,7 +28,9 @@
   "repository": { "type": "git", "url": "git+https://github.com/royfw/rfjs.git", "directory": "packages/form-builder" },
   "files": ["dist", "README.md"],
   "dependencies": {
+    "@rfjs/data-expr": "workspace:*",
     "@rfjs/data-filter": "workspace:*",
+    "@rfjs/object-utils": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

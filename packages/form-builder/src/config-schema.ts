@@ -21,6 +21,22 @@ const conditionalSchema: ZodTypeAny = z.object({
   filters: z.array(z.union([conditionSchema, z.lazy(() => conditionalSchema as any)])),
 });
 
+const dataSourceSchema = z.object({
+  request: z.object({
+    url: z.string(),
+    method: z.enum(['GET', 'POST', 'PUT', 'DELETE']).optional(),
+    headers: z.record(z.string(), z.string()).optional(),
+    body: z.unknown().optional(),
+  }),
+  extract: z.object({
+    dialect: z.enum(['path', 'jsonata', 'jsonpath']),
+    expr: z.string(),
+  }),
+  fallback: z.string().optional(),
+  optionLabel: z.string().optional(),
+  optionValue: z.string().optional(),
+});
+
 const fieldOptionSchema = z.object({
   label: z.string(),
   value: z.union([z.string(), z.number()]),
@@ -60,6 +76,7 @@ const fieldConfigSchema = z.object({
   width: z.enum(['full', 'half']).optional(),
   validation: fieldValidationSchema.optional(),
   conditional: conditionalSchema.optional(),
+  dataSource: dataSourceSchema.optional(),
 });
 
 const localizedLabelSchema = z.union([z.string(), z.record(z.string(), z.string())]);
@@ -75,6 +92,7 @@ const contentItemSchema = z.object({
   text: localizedLabelSchema,
   locked: z.boolean().optional(),
   conditional: conditionalSchema.optional(),
+  dataSource: dataSourceSchema.optional(),
 });
 const dividerItemSchema = z.object({
   id: z.string().min(1),

@@ -12,11 +12,35 @@ import {
   isFieldItem,
   type FormConfig,
   type FormItem,
+  type DataSource,
+  type DataSourceFetcher,
 } from '@rfjs/form-builder';
+import { useDataSource } from './use-data-source';
 import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
 
 import { FieldControl } from './field-control';
+
+interface DataSourceContentProps {
+  ds: DataSource;
+  fetcher?: DataSourceFetcher;
+}
+
+function DataSourceContent({ ds, fetcher }: DataSourceContentProps) {
+  const dsState = useDataSource(ds, fetcher);
+
+  if (dsState.status === 'loading') {
+    return <span className="text-muted-foreground">Loading…</span>;
+  }
+
+  if (dsState.status === 'ready') {
+    const display = dsState.value != null && dsState.value !== '' ? String(dsState.value) : (ds.fallback ?? '無');
+    return <span>{display}</span>;
+  }
+
+  // idle or error → fallback
+  return <span>{ds.fallback ?? '無'}</span>;
+}
 
 export interface ConfigFormProps {
   /**
@@ -30,9 +54,14 @@ export interface ConfigFormProps {
   submitLabel?: string;
   /** BCP-47 locale used to resolve `LocalizedLabel` field labels. Defaults to `'en'`. */
   locale?: string;
+  /**
+   * Fetcher for `dataSource` fields (Select/Radio). Receives a `DataSourceRequest` and
+   * returns the raw response. Memoize with `useCallback` to avoid unnecessary refetches.
+   */
+  fetcher?: DataSourceFetcher;
 }
 
-export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en' }: ConfigFormProps) {
+export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher }: ConfigFormProps) {
   // Keep the latest config reachable inside the stable resolver without re-creating it.
   const configRef = React.useRef(config);
   configRef.current = config;
@@ -91,7 +120,11 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       if (!evaluateConditional(item.conditional, vals)) return null;
       return (
         <div key={item.id} className="text-sm" style={fullSpan(flow)}>
-          {resolveLabel(item.text, locale)}
+          {item.dataSource ? (
+            <DataSourceContent ds={item.dataSource} fetcher={fetcher} />
+          ) : (
+            resolveLabel(item.text, locale)
+          )}
         </div>
       );
     }
@@ -110,7 +143,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
           control={control}
           name={item.key}
           render={({ field: rhf }) => (
-            <FieldControl field={item} value={rhf.value} onChange={rhf.onChange} />
+            <FieldControl field={item} value={rhf.value} onChange={rhf.onChange} fetcher={fetcher} />
           )}
         />
         {errors[item.key]?.message && (
