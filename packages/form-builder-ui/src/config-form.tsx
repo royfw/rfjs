@@ -12,6 +12,7 @@ import {
   isFieldItem,
   type FormConfig,
   type FormItem,
+  type DataSourceFetcher,
 } from '@rfjs/form-builder';
 import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
@@ -30,9 +31,14 @@ export interface ConfigFormProps {
   submitLabel?: string;
   /** BCP-47 locale used to resolve `LocalizedLabel` field labels. Defaults to `'en'`. */
   locale?: string;
+  /**
+   * Fetcher for `dataSource` fields (Select/Radio). Receives a `DataSourceRequest` and
+   * returns the raw response. Memoize with `useCallback` to avoid unnecessary refetches.
+   */
+  fetcher?: DataSourceFetcher;
 }
 
-export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en' }: ConfigFormProps) {
+export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher }: ConfigFormProps) {
   // Keep the latest config reachable inside the stable resolver without re-creating it.
   const configRef = React.useRef(config);
   configRef.current = config;
@@ -110,7 +116,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
           control={control}
           name={item.key}
           render={({ field: rhf }) => (
-            <FieldControl field={item} value={rhf.value} onChange={rhf.onChange} />
+            <FieldControl field={item} value={rhf.value} onChange={rhf.onChange} fetcher={fetcher} />
           )}
         />
         {errors[item.key]?.message && (

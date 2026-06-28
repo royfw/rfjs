@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { FieldControl, dateToISO, isoToDate } from './field-control';
-import type { FieldConfig } from '@rfjs/form-builder';
+import type { FieldConfig, DataSource, DataSourceFetcher } from '@rfjs/form-builder';
 
 // jsdom shims for Radix UI components
 beforeAll(() => {
@@ -128,6 +128,72 @@ describe('FieldControl', () => {
     render(<FieldControl field={field} value="2024-03-15" onChange={() => {}} />);
     const btn = screen.getByRole('button');
     expect(btn.textContent).toContain('2024-03-15');
+  });
+});
+
+const ds: DataSource = {
+  request: { url: 'http://example.com/api' },
+  extract: { dialect: 'path', expr: 'items' },
+  optionLabel: 'name',
+  optionValue: 'id',
+};
+
+describe('FieldControl with dataSource', () => {
+  it('Radio + dataSource + resolving fetcher → renders fetched options as radios after load', async () => {
+    const fetcher: DataSourceFetcher = vi.fn().mockResolvedValue({
+      items: [{ id: 'a', name: 'Alpha' }, { id: 'b', name: 'Beta' }],
+    });
+    const field: FieldConfig = {
+      key: 'choice',
+      label: 'Choice',
+      component: 'Radio',
+      dataType: 'string',
+      dataSource: ds,
+    };
+    render(<FieldControl field={field} value="" onChange={() => {}} fetcher={fetcher} />);
+    await waitFor(() => expect(screen.getAllByRole('radio')).toHaveLength(2));
+    expect(screen.getByLabelText('Alpha')).toBeTruthy();
+    expect(screen.getByLabelText('Beta')).toBeTruthy();
+  });
+
+  it('Radio + dataSource + rejecting fetcher → shows fallback text', async () => {
+    const fetcher: DataSourceFetcher = vi.fn().mockRejectedValue(new Error('Network error'));
+    const field: FieldConfig = {
+      key: 'choice',
+      label: 'Choice',
+      component: 'Radio',
+      dataType: 'string',
+      dataSource: { ...ds, fallback: '無可選項' },
+    };
+    render(<FieldControl field={field} value="" onChange={() => {}} fetcher={fetcher} />);
+    await waitFor(() => expect(screen.getByText('無可選項')).toBeTruthy());
+  });
+
+  it('Radio + dataSource, ready but empty options → shows fallback', async () => {
+    const fetcher: DataSourceFetcher = vi.fn().mockResolvedValue({ items: [] });
+    const field: FieldConfig = {
+      key: 'choice',
+      label: 'Choice',
+      component: 'Radio',
+      dataType: 'string',
+      dataSource: { ...ds, fallback: 'N/A' },
+    };
+    render(<FieldControl field={field} value="" onChange={() => {}} fetcher={fetcher} />);
+    await waitFor(() => expect(screen.getByText('N/A')).toBeTruthy());
+  });
+
+  it('Radio without dataSource → static options unchanged', () => {
+    const field: FieldConfig = {
+      key: 'color',
+      label: 'Color',
+      component: 'Radio',
+      dataType: 'string',
+      options: [{ label: 'Red', value: 'red' }, { label: 'Blue', value: 'blue' }],
+    };
+    render(<FieldControl field={field} value="" onChange={() => {}} />);
+    expect(screen.getAllByRole('radio')).toHaveLength(2);
+    expect(screen.getByLabelText('Red')).toBeTruthy();
+    expect(screen.getByLabelText('Blue')).toBeTruthy();
   });
 });
 
