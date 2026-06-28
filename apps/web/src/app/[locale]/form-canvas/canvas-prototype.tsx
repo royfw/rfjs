@@ -39,6 +39,7 @@ interface Card {
   key?: string;
   component?: Component;
   required?: boolean;
+  placeholder?: string;
   col: number;
   span: number;
   row: number;
@@ -69,8 +70,8 @@ const SEED_GROUPS: Group[] = [
 ];
 
 const SEED_CARDS: Card[] = [
-  { id: "c1", groupId: "g_account", kind: "field", label: "Name", key: "name", component: "Input", required: true, col: 1, span: 6, row: 1 },
-  { id: "c2", groupId: "g_account", kind: "field", label: "Email", key: "email", component: "Input", required: true, col: 7, span: 6, row: 1 },
+  { id: "c1", groupId: "g_account", kind: "field", label: "Name", key: "name", component: "Input", required: true, placeholder: "e.g. Jane Doe", col: 1, span: 6, row: 1 },
+  { id: "c2", groupId: "g_account", kind: "field", label: "Email", key: "email", component: "Input", required: true, placeholder: "you@example.com", col: 7, span: 6, row: 1 },
   { id: "c3", groupId: "g_account", kind: "field", label: "Role", key: "role", component: "Select", col: 1, span: 6, row: 2 },
   { id: "c4", groupId: "g_account", kind: "ai-note", label: "If unsure, default to 'user'", col: 7, span: 6, row: 2 },
   { id: "c5", groupId: "g_account", kind: "field", label: "Bio", key: "bio", component: "Textarea", col: 1, span: 12, row: 3 },
@@ -98,7 +99,9 @@ function serialize(groups: Group[], cards: Card[]) {
           id: c.id,
           kind: c.kind,
           label: c.label,
-          ...(c.kind === "field" ? { key: c.key, component: c.component, required: c.required || undefined } : {}),
+          ...(c.kind === "field"
+            ? { key: c.key, component: c.component, required: c.required || undefined, placeholder: c.placeholder || undefined }
+            : {}),
           col: c.col,
           span: c.span,
           row: c.row,
@@ -126,6 +129,7 @@ function parse(obj: unknown): { groups: Group[]; cards: Card[] } {
         key: it.key as string | undefined,
         component: it.component as Component | undefined,
         required: Boolean(it.required),
+        placeholder: it.placeholder as string | undefined,
         col: clamp(Number(it.col ?? 1), 1, COLS),
         span: clamp(Number(it.span ?? 6), 1, COLS),
         row: Number(it.row ?? i + 1),
@@ -155,6 +159,7 @@ export function CanvasPrototype() {
   const [tab, setTab] = React.useState<"canvas" | "preview" | "json">("canvas");
   const [jsonError, setJsonError] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
+  const [dropGroup, setDropGroup] = React.useState<string | null>(null);
   const bodyRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const drag = React.useRef<{ id: string; mode: "move" | "resize"; col: number; span: number } | null>(null);
   const isWidePreview = useMediaQuery("(min-width: 768px)");
@@ -206,6 +211,7 @@ export function CanvasPrototype() {
       if (!d) return;
       if (d.mode === "move") {
         const { groupId, col, row } = cellAt(ev.clientX, ev.clientY, card.groupId);
+        setDropGroup(groupId);
         patch(d.id, { groupId, col: clamp(col, 1, COLS - card.span + 1), row });
       } else {
         const body = bodyRefs.current[card.groupId];
@@ -218,6 +224,7 @@ export function CanvasPrototype() {
     };
     const onUp = () => {
       drag.current = null;
+      setDropGroup(null);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
@@ -355,6 +362,7 @@ export function CanvasPrototype() {
                     group={group}
                     cards={cards.filter((c) => c.groupId === group.id)}
                     selected={selected}
+                    dropOver={dropGroup === group.id}
                     bodyRef={(el) => {
                       bodyRefs.current[group.id] = el;
                     }}
@@ -423,6 +431,7 @@ function GroupFrame({
   group,
   cards,
   selected,
+  dropOver,
   bodyRef,
   onToggle,
   onMoveStart,
@@ -431,6 +440,7 @@ function GroupFrame({
   group: Group;
   cards: Card[];
   selected: string | null;
+  dropOver: boolean;
   bodyRef: (el: HTMLDivElement | null) => void;
   onToggle: () => void;
   onMoveStart: (e: React.PointerEvent, card: Card, mode: "move") => void;
@@ -439,7 +449,11 @@ function GroupFrame({
   const maxRow = cards.reduce((m, c) => Math.max(m, c.row), 0);
   const rows = Math.max(maxRow + 1, 2);
   return (
-    <section className="overflow-hidden rounded-xl border border-border bg-card/20">
+    <section
+      className={`overflow-hidden rounded-xl border bg-card/20 transition-colors ${
+        dropOver ? "border-[#5b8cff]/70 ring-1 ring-[#5b8cff]/40" : "border-border"
+      }`}
+    >
       <header className="flex items-center gap-2.5 border-b border-border bg-muted/40 px-3 py-2.5">
         <button
           type="button"
@@ -615,6 +629,15 @@ function Inspector({
               ))}
             </select>
           </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Placeholder
+            <input
+              className={input}
+              value={card.placeholder ?? ""}
+              placeholder="(shown in the preview control)"
+              onChange={(e) => onChange({ placeholder: e.target.value })}
+            />
+          </label>
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
             <input type="checkbox" checked={Boolean(card.required)} onChange={(e) => onChange({ required: e.target.checked })} />
             Required
@@ -700,20 +723,23 @@ function PreviewField({ card }: { card: Card }) {
       {card.required ? <span className="ml-1 text-destructive">*</span> : null}
     </label>
   );
+  const ph = card.placeholder;
   switch (card.component) {
     case "Textarea":
       return (
         <div>
           {label}
-          <textarea className={`${ctrl} h-20 py-2`} />
+          <textarea className={`${ctrl} h-20 py-2`} placeholder={ph} />
         </div>
       );
     case "Select":
       return (
         <div>
           {label}
-          <select className={`${ctrl} h-9`}>
-            <option>—</option>
+          <select className={`${ctrl} h-9`} defaultValue="">
+            <option value="" disabled>
+              {ph || "—"}
+            </option>
           </select>
         </div>
       );
@@ -729,7 +755,7 @@ function PreviewField({ card }: { card: Card }) {
         <div>
           {label}
           <button type="button" className={`${ctrl} h-9 text-left text-muted-foreground`}>
-            Pick a date
+            {ph || "Pick a date"}
           </button>
         </div>
       );
@@ -737,7 +763,7 @@ function PreviewField({ card }: { card: Card }) {
       return (
         <div>
           {label}
-          <input type={card.component === "Number" ? "number" : "text"} className={`${ctrl} h-9`} />
+          <input type={card.component === "Number" ? "number" : "text"} className={`${ctrl} h-9`} placeholder={ph} />
         </div>
       );
   }
