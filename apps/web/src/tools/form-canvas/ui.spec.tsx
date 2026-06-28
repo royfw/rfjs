@@ -22,7 +22,7 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
 }
 
 import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { FormCanvasTool } from "./ui";
 
 describe("FormCanvasTool preview", () => {

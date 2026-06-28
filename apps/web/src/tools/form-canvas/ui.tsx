@@ -23,7 +23,7 @@ import { cardsToFormConfig, jsonToCards } from "./model";
 // Direction C (hybrid) — "A structure + C drag freedom", now with a builder
 // shell: Canvas | Preview | JSON tabs, a right-hand inspector for per-field
 // config, and bidirectional JSON (edit JSON → rebuild the canvas). RWD-aware.
-// Still a layout-evaluation prototype — no real validation/data engine.
+// Edits a real FormConfig (cards → groups → fields) and previews it via ConfigForm.
 // ---------------------------------------------------------------------------
 
 const COLS = 12;
