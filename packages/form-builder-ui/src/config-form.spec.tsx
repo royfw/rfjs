@@ -421,3 +421,33 @@ describe('v2 sections rendering', () => {
     expect(c.style.gridColumn).toBe('1 / -1');
   });
 });
+
+describe('grid-layout sections', () => {
+  const cfg = {
+    version: 1,
+    sections: [
+      {
+        id: 's1',
+        rows: [{ id: 'r1', items: [
+          { id: 'i_a', kind: 'field', key: 'a', label: 'A', component: 'Input', dataType: 'string' },
+          { id: 'i_b', kind: 'field', key: 'b', label: 'B', component: 'Input', dataType: 'string' },
+        ] }],
+        layout: { columns: 12, placements: [
+          { itemId: 'i_a', colStart: 1, colSpan: 7, row: 1 },
+          { itemId: 'i_b', colStart: 8, colSpan: 5, row: 1 },
+        ] },
+      },
+    ],
+  };
+
+  it('renders a layout section as one grid, positioning items by placement', () => {
+    const { container } = render(<ConfigForm config={cfg as any} onSubmit={() => {}} />);
+    const grid = container.querySelector('[data-testid="form-grid"]') as HTMLElement;
+    expect(grid.style.gridTemplateColumns).toBe('repeat(12, minmax(0, 1fr))');
+    const a = container.querySelector('[data-item="i_a"]') as HTMLElement;
+    const b = container.querySelector('[data-item="i_b"]') as HTMLElement;
+    expect(a.style.gridColumn).toBe('1 / span 7');
+    expect(b.style.gridColumn).toBe('8 / span 5');
+    expect(a.style.gridRow).toBe('1');
+  });
+});

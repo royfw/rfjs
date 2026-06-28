@@ -15,11 +15,15 @@ import {
   Check,
 } from "lucide-react";
 
+import { ConfigForm } from "@rfjs/form-builder-ui";
+import type { Card, Group, Kind, Component } from "./model";
+import { cardsToFormConfig, jsonToCards } from "./model";
+
 // ---------------------------------------------------------------------------
 // Direction C (hybrid) — "A structure + C drag freedom", now with a builder
 // shell: Canvas | Preview | JSON tabs, a right-hand inspector for per-field
 // config, and bidirectional JSON (edit JSON → rebuild the canvas). RWD-aware.
-// Still a layout-evaluation prototype — no real validation/data engine.
+// Edits a real FormConfig (cards → groups → fields) and previews it via ConfigForm.
 // ---------------------------------------------------------------------------
 
 const COLS = 12;
@@ -27,29 +31,7 @@ const ROW_H = 84;
 const GAP = 8;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-type Kind = "field" | "content" | "divider" | "spacer" | "ai-note";
-type Component = "Input" | "Textarea" | "Select" | "Number" | "Switch" | "DatePicker";
 const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
-
-interface Card {
-  id: string;
-  groupId: string;
-  kind: Kind;
-  label: string;
-  key?: string;
-  component?: Component;
-  required?: boolean;
-  placeholder?: string;
-  col: number;
-  span: number;
-  row: number;
-}
-
-interface Group {
-  id: string;
-  title: string;
-  collapsed: boolean;
-}
 
 const KIND_META: Record<
   Kind,
@@ -84,73 +66,6 @@ const SEED_CARDS: Card[] = [
 let seq = 100;
 let gseq = 10;
 
-// --- (de)serialize: the canvas <-> a readable config JSON --------------------
-function serialize(groups: Group[], cards: Card[]) {
-  return {
-    version: 1,
-    groups: groups.map((g) => ({
-      id: g.id,
-      title: g.title,
-      cols: COLS,
-      items: cards
-        .filter((c) => c.groupId === g.id)
-        .sort((a, b) => a.row - b.row || a.col - b.col)
-        .map((c) => ({
-          id: c.id,
-          kind: c.kind,
-          label: c.label,
-          ...(c.kind === "field"
-            ? { key: c.key, component: c.component, required: c.required || undefined, placeholder: c.placeholder || undefined }
-            : {}),
-          col: c.col,
-          span: c.span,
-          row: c.row,
-        })),
-    })),
-  };
-}
-
-function parse(obj: unknown): { groups: Group[]; cards: Card[] } {
-  if (!obj || typeof obj !== "object" || !Array.isArray((obj as { groups?: unknown }).groups)) {
-    throw new Error("expected { groups: [...] }");
-  }
-  const groups: Group[] = [];
-  const cards: Card[] = [];
-  for (const g of (obj as { groups: Array<Record<string, unknown>> }).groups) {
-    const gid = String(g.id ?? `g${groups.length}`);
-    groups.push({ id: gid, title: String(g.title ?? "Section"), collapsed: false });
-    const items = Array.isArray(g.items) ? (g.items as Array<Record<string, unknown>>) : [];
-    items.forEach((it, i) => {
-      cards.push({
-        id: String(it.id ?? `${gid}_${i}`),
-        groupId: gid,
-        kind: (it.kind as Kind) ?? "field",
-        label: String(it.label ?? "Field"),
-        key: it.key as string | undefined,
-        component: it.component as Component | undefined,
-        required: Boolean(it.required),
-        placeholder: it.placeholder as string | undefined,
-        col: clamp(Number(it.col ?? 1), 1, COLS),
-        span: clamp(Number(it.span ?? 6), 1, COLS),
-        row: Number(it.row ?? i + 1),
-      });
-    });
-  }
-  return { groups, cards };
-}
-
-function useMediaQuery(query: string) {
-  const [m, setM] = React.useState(false);
-  React.useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mql = window.matchMedia(query);
-    const on = () => setM(mql.matches);
-    on();
-    mql.addEventListener("change", on);
-    return () => mql.removeEventListener("change", on);
-  }, [query]);
-  return m;
-}
 
 export function FormCanvasTool() {
   const [groups, setGroups] = React.useState<Group[]>(SEED_GROUPS);
@@ -162,9 +77,9 @@ export function FormCanvasTool() {
   const [dropGroup, setDropGroup] = React.useState<string | null>(null);
   const bodyRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const drag = React.useRef<{ id: string; mode: "move" | "resize"; col: number; span: number } | null>(null);
-  const isWidePreview = useMediaQuery("(min-width: 768px)");
 
   const selectedCard = cards.find((c) => c.id === selected) ?? null;
+  const formConfig = cardsToFormConfig(groups, cards);
 
   const patch = (id: string, p: Partial<Card>) => setCards((cs) => cs.map((c) => (c.id === id ? { ...c, ...p } : c)));
 
@@ -256,18 +171,18 @@ export function FormCanvasTool() {
 
   function applyJson(text: string) {
     try {
-      const { groups: g, cards: c } = parse(JSON.parse(text));
+      const { groups: g, cards: c } = jsonToCards(text);
       setGroups(g);
       setCards(c);
       setJsonError(null);
     } catch (err) {
-      setJsonError(err instanceof Error ? err.message : "invalid JSON");
+      setJsonError(err instanceof Error ? err.message : "invalid config");
     }
   }
 
   async function copyJson() {
     try {
-      await navigator.clipboard?.writeText(JSON.stringify(serialize(groups, cards), null, 2));
+      await navigator.clipboard?.writeText(JSON.stringify(formConfig, null, 2));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1400);
     } catch {
@@ -383,7 +298,9 @@ export function FormCanvasTool() {
           </div>
         </>
       ) : tab === "preview" ? (
-        <PreviewForm groups={groups} cards={cards} wide={isWidePreview} />
+        <div className="rounded-xl border border-border bg-card/30 p-6">
+          <ConfigForm config={formConfig} locale="en" onSubmit={() => {}} />
+        </div>
       ) : (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
@@ -403,7 +320,7 @@ export function FormCanvasTool() {
             aria-label="config json"
             spellCheck={false}
             className="h-[28rem] w-full rounded-md border border-input bg-background p-4 font-mono text-[13px] leading-relaxed"
-            defaultValue={JSON.stringify(serialize(groups, cards), null, 2)}
+            defaultValue={JSON.stringify(formConfig, null, 2)}
             onChange={(e) => applyJson(e.target.value)}
           />
           {jsonError ? <p className="text-xs text-destructive">Invalid config: {jsonError}</p> : null}
@@ -670,91 +587,3 @@ function Inspector({
   );
 }
 
-// ---------------------------------------------------------------------------
-// PreviewForm — renders the model as an actual form (RWD: 1-col on narrow)
-// ---------------------------------------------------------------------------
-
-function PreviewForm({ groups, cards, wide }: { groups: Group[]; cards: Card[]; wide: boolean }) {
-  return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8 rounded-xl border border-border bg-card/30 p-6">
-      {groups.map((group) => {
-        const groupCards = cards
-          .filter((c) => c.groupId === group.id && c.kind !== "ai-note")
-          .sort((a, b) => a.row - b.row || a.col - b.col);
-        return (
-          <section key={group.id} className="flex flex-col gap-4">
-            <h3 className="text-sm font-semibold">{group.title}</h3>
-            <div
-              className="grid gap-4"
-              style={{ gridTemplateColumns: wide ? `repeat(${COLS}, minmax(0, 1fr))` : "1fr" }}
-            >
-              {groupCards.map((c) => (
-                <div key={c.id} style={{ gridColumn: wide ? `span ${c.span}` : "1 / -1" }}>
-                  <PreviewField card={c} />
-                </div>
-              ))}
-            </div>
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
-function PreviewField({ card }: { card: Card }) {
-  if (card.kind === "divider") return <hr className="border-border" />;
-  if (card.kind === "spacer") return <div className="h-4" />;
-  if (card.kind === "content") return <p className="text-sm text-muted-foreground">{card.label}</p>;
-
-  const ctrl = "mt-1.5 w-full rounded-md border border-input bg-background px-3 text-sm";
-  const label = (
-    <label className="text-sm font-medium">
-      {card.label}
-      {card.required ? <span className="ml-1 text-destructive">*</span> : null}
-    </label>
-  );
-  const ph = card.placeholder;
-  switch (card.component) {
-    case "Textarea":
-      return (
-        <div>
-          {label}
-          <textarea className={`${ctrl} h-20 py-2`} placeholder={ph} />
-        </div>
-      );
-    case "Select":
-      return (
-        <div>
-          {label}
-          <select className={`${ctrl} h-9`} defaultValue="">
-            <option value="" disabled>
-              {ph || "—"}
-            </option>
-          </select>
-        </div>
-      );
-    case "Switch":
-      return (
-        <div className="flex items-center justify-between">
-          {label}
-          <span className="h-5 w-9 rounded-full bg-input" />
-        </div>
-      );
-    case "DatePicker":
-      return (
-        <div>
-          {label}
-          <button type="button" className={`${ctrl} h-9 text-left text-muted-foreground`}>
-            {ph || "Pick a date"}
-          </button>
-        </div>
-      );
-    default:
-      return (
-        <div>
-          {label}
-          <input type={card.component === "Number" ? "number" : "text"} className={`${ctrl} h-9`} placeholder={ph} />
-        </div>
-      );
-  }
-}

@@ -1,38 +1,39 @@
-# Task 3 Report: seeded/framed first-run and empty state
+# Task 3 Report — Canvas `cardsToFormConfig` / `formConfigToCards` mappers
 
-## Changes
+## Status: DONE
 
-### 1. Empty state — `packages/form-builder-ui/src/config-form-builder.tsx`
-- When `builder.config.fields.length === 0`, the field-list area renders a `<p data-testid="empty-state-hint">` with "No fields yet — add one from the palette above" instead of an empty DnD list.
-- The preview panel (`data-testid="config-form-preview"`) also shows a muted placeholder ("Preview will appear here once you add fields") and suppresses the `<ConfigForm>` (and therefore its Submit button) when empty.
+## Commits
+- `6506b59` feat(web): canvas <-> FormConfig mappers (model.ts)
 
-### 2. Framing/polish — `packages/form-builder-ui/src/config-form-builder.tsx`
-- Field-list area wrapped in `rounded-lg border bg-card p-4`.
-- Preview panel border upgraded from `rounded-md border-input` to `rounded-lg border bg-card p-4`.
-- No new deps added; all existing `data-testid`/`aria-label`/`role` hooks preserved.
+## Steps completed
 
-### 3. Seed sample — `apps/web/src/tools/form-builder/ui.tsx`
-- `SAMPLE_CONFIG` constant: Name (Input, string, required), Email (Input, string), Role (Select, string, options Admin/User).
-- Passed as `initialConfig` to `<ConfigFormBuilder>`. `locales={["en","zh-TW"]}` retained.
+### Type comparison (`ui.tsx` vs brief)
+The local `Kind`, `Component`, `Card`, `Group` declarations in `ui.tsx` matched the brief's `model.ts` exactly — field names, types, optional markers all identical. No NEEDS_CONTEXT stop required.
 
-## TDD evidence
-- 3 new tests in `config-form-builder.spec.tsx`:
-  - `shows the empty-state hint when there are no fields` — asserts `data-testid="empty-state-hint"` and `/no fields yet/i`.
-  - `does not show the empty-state hint when fields are present` — asserts hint is absent.
-  - `preview panel has a placeholder and no Submit when fields are empty` — asserts preview text and no Submit button.
+### Step 1 — `model.ts` created
+`apps/web/src/tools/form-canvas/model.ts` created verbatim per the brief:
+- Re-exports `Kind`, `Component`, `Card`, `Group`
+- `DATATYPE` mapping: `Input/Textarea/Select → string`, `Number → numeric`, `Switch → boolean`, `DatePicker → date`
+- `cardsToFormConfig` — maps groups → `FormSection[]` with `rows` + `section.layout.placements` (col/span/row preserved 1:1)
+- `formConfigToCards` — inverse, reads placements from `layout.placements` by itemId
+- `jsonToCards` — parses raw JSON text via `parseFormConfig` + `formConfigToCards`
 
-## Test results
-- `pnpm -F @rfjs/form-builder-ui vitest:run`: **39 passed, 0 failed** (5 test files)
-- `pnpm -F web vitest:run`: **73 passed, 0 failed** (23 test files) — registry/nav/i18n tests unaffected; the MISSING_MESSAGE IntlError on `Operators` is a pre-existing noise from `_filter-builder` tests, not caused by this task.
+Imports verified against built `@rfjs/form-builder` dist: `FormConfig`, `FormSection`, `FormItem`, `ScalarType`, `parseFormConfig` all exported. `FieldComponent` is a superset of canvas `Component`, so no cast issues.
 
-## Check-types
-- `pnpm -F @rfjs/form-builder-ui check-types`: clean
-- `pnpm -F web check-types`: clean
+### Step 2 — `model.spec.ts` created
+`apps/web/src/tools/form-canvas/model.spec.ts` created verbatim per the brief.
 
-## Files modified
-- `packages/form-builder-ui/src/config-form-builder.tsx` — empty state + framing
-- `packages/form-builder-ui/src/config-form-builder.spec.tsx` — 3 new TDD tests
-- `apps/web/src/tools/form-builder/ui.tsx` — seed config
+### Step 3 — Tests pass
+`pnpm -F web vitest:run src/tools/form-canvas/model.spec.ts` → 2/2 passed.
+
+### Step 4 — `ui.tsx` type-move
+Deleted local `type Kind`, `type Component`, `interface Card`, `interface Group`. Added `import type { Card, Group, Kind, Component } from "./model";`. `COMPONENTS` array and all behavior (`serialize`/`parse`/`PreviewForm`) left unchanged.
+
+### Step 5 — Typecheck
+`pnpm -F web check-types` → no errors.
+
+### Step 6 — Commit
+Single commit `6506b59` with 3 files (model.ts + model.spec.ts + ui.tsx).
 
 ## Concerns
-None. The web's pre-existing IntlError for `Operators` is not introduced by this task.
+None. Types matched exactly, imports resolved cleanly, both tests pass, typecheck clean.

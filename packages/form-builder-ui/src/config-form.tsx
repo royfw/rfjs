@@ -97,6 +97,13 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   // Items always span the full row width.
   const FULL_SPAN: React.CSSProperties = { gridColumn: '1 / -1' };
 
+  // Explicit grid placement → inline grid-area style (grid-mode sections, Task 2).
+  const placementStyle = (p: { colStart: number; colSpan: number; row: number; rowSpan?: number }): React.CSSProperties => ({
+    gridColumn: `${p.colStart} / span ${p.colSpan}`,
+    gridRow: p.rowSpan ? `${p.row} / span ${p.rowSpan}` : String(p.row),
+    minWidth: 0,
+  });
+
   // Field grid-span derived from the field's width AND the section's column count.
   // #3: columns DRIVE width — an unset width is a single cell, so a section with
   // `columns: 2` lays its fields two-per-row automatically (no per-field width
@@ -110,7 +117,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     return { gridColumn: `span ${span} / span ${span}`, minWidth: 0 };
   }
 
-  function renderItem(item: FormItem, flow: 'v1' | 'section', cols: number) {
+  function renderItem(item: FormItem, flow: 'v1' | 'section', cols: number, place?: { colStart: number; colSpan: number; row: number; rowSpan?: number }) {
     const vals = values as Record<string, unknown>;
 
     if (item.kind === 'ai-note') {
@@ -119,19 +126,19 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
 
     if (item.kind === 'divider') {
       if (!evaluateConditional(item.conditional, vals)) return null;
-      return <hr key={item.id} className="w-full border-input" style={FULL_SPAN} />;
+      return <hr key={item.id} data-item={item.id} className="w-full border-input" style={place ? placementStyle(place) : FULL_SPAN} />;
     }
 
     if (item.kind === 'spacer') {
       if (!evaluateConditional(item.conditional, vals)) return null;
       const height = spacerHeights[item.size ?? 'md'];
-      return <div key={item.id} style={{ ...FULL_SPAN, height }} />;
+      return <div key={item.id} data-item={item.id} style={{ ...(place ? placementStyle(place) : FULL_SPAN), height }} />;
     }
 
     if (item.kind === 'content') {
       if (!evaluateConditional(item.conditional, vals)) return null;
       return (
-        <div key={item.id} className="text-sm" style={FULL_SPAN}>
+        <div key={item.id} data-item={item.id} className="text-sm" style={place ? placementStyle(place) : FULL_SPAN}>
           {item.dataSource ? (
             <DataSourceContent ds={item.dataSource} fetcher={fetcher} />
           ) : (
@@ -151,7 +158,8 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
         key={item.key}
         className="flex min-w-0 flex-col gap-1.5"
         data-width={dataWidth}
-        style={fieldSpanStyle(item.width, flow, cols)}
+        data-item={item.id}
+        style={place ? placementStyle(place) : fieldSpanStyle(item.width, flow, cols)}
       >
         <Label htmlFor={item.key}>{resolveLabel(item.label, locale)}</Label>
         <Controller
@@ -193,6 +201,29 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       {sections.map((section) => {
         // Per-section column count drives the row grid (and thus field widths).
         const sectionCols = section.columns ?? 1;
+
+        if (isV2 && section.layout) {
+          const layout = section.layout;
+          const byId = new Map(layout.placements.map((p) => [p.itemId, p]));
+          const items = section.rows.flatMap((r) => r.items);
+          return (
+            <React.Fragment key={section.id}>
+              {section.title && (
+                <h3 className="font-semibold text-sm" style={{ gridColumn: '1 / -1' }}>
+                  {resolveLabel(section.title, locale)}
+                </h3>
+              )}
+              <div
+                data-testid="form-grid"
+                className="grid gap-4"
+                style={{ gridColumn: '1 / -1', gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))` }}
+              >
+                {items.map((item) => renderItem(item, 'section', layout.columns, byId.get(item.id)))}
+              </div>
+            </React.Fragment>
+          );
+        }
+
         return (
           <React.Fragment key={section.id}>
             {section.title && (
