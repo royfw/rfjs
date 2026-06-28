@@ -577,6 +577,20 @@ describe('setDataSourceField', () => {
     expect(setDataSourceField(current, 'url', '')).toBeUndefined();
   });
 
+  it('setting method updates request.method and preserves url', () => {
+    const current: DataSource = { request: { url: 'https://api.test/items' }, extract: { dialect: 'path', expr: '' } };
+    const result = setDataSourceField(current, 'method', 'POST');
+    expect(result?.request.method).toBe('POST');
+    expect(result?.request.url).toBe('https://api.test/items');
+  });
+
+  it('clearing method removes the key but keeps url', () => {
+    const current: DataSource = { request: { url: 'https://api.test/items', method: 'POST' }, extract: { dialect: 'path', expr: '' } };
+    const result = setDataSourceField(current, 'method', '');
+    expect(result?.request.method).toBeUndefined();
+    expect(result?.request.url).toBe('https://api.test/items');
+  });
+
   it('setting dialect updates extract.dialect', () => {
     const current: DataSource = {
       request: { url: 'https://api.test/items' },
