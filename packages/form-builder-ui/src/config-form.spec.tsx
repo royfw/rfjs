@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ConfigForm } from './config-form';
-import type { FormConfig, DataSource } from '@rfjs/form-builder';
+import type { FormConfig, DataSource, UploadHandler, FileRef } from '@rfjs/form-builder';
 
 const baseConfig: FormConfig = {
   version: 1,
@@ -472,5 +472,94 @@ describe('grid-layout sections', () => {
     expect(a.style.gridColumn).toBe('1 / span 7');
     expect(b.style.gridColumn).toBe('8 / span 5');
     expect(a.style.gridRow).toBe('1');
+  });
+});
+
+describe('FileUpload field', () => {
+  const fileUploadConfig: FormConfig = {
+    version: 1,
+    fields: [
+      {
+        key: 'doc',
+        label: 'Document',
+        component: 'FileUpload',
+        dataType: 'string',
+        fileUpload: { accept: 'application/pdf', multiple: false, maxSize: 1024 },
+      },
+    ],
+  };
+
+  it('shows a disabled fallback when no uploadHandler is provided', () => {
+    render(<ConfigForm config={fileUploadConfig} onSubmit={() => {}} />);
+    // A disabled file input should be rendered as the fallback
+    const inputs = document.querySelectorAll('input[type="file"]');
+    // Either a disabled file input or an explicit fallback message
+    const fallbackMsg = screen.queryByText(/no upload handler/i) ?? screen.queryByText(/upload/i);
+    // The input must be disabled if rendered
+    if (inputs.length > 0) {
+      expect((inputs[0] as HTMLInputElement).disabled).toBe(true);
+    } else {
+      // The fallback message is present
+      expect(fallbackMsg).toBeTruthy();
+    }
+  });
+
+  it('stores a FileRef when uploadHandler resolves', async () => {
+    const fileRef: FileRef = { name: 'test.pdf', size: 500, type: 'application/pdf', url: 'u' };
+    const uploadHandler: UploadHandler = vi.fn(async () => fileRef);
+    const onSubmit = vi.fn();
+
+    render(
+      <ConfigForm
+        config={fileUploadConfig}
+        onSubmit={onSubmit}
+        uploadHandler={uploadHandler}
+      />,
+    );
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input).toBeTruthy();
+
+    const file = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+    Object.defineProperty(file, 'size', { value: 500 });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => expect(uploadHandler).toHaveBeenCalledOnce());
+
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({ doc: fileRef }),
+    );
+  });
+
+  it('rejects a file over maxSize at pick time and keeps value empty', async () => {
+    const uploadHandler: UploadHandler = vi.fn(async (f) => ({
+      name: f.name, size: f.size, type: f.type,
+    }));
+    const onSubmit = vi.fn();
+
+    render(
+      <ConfigForm
+        config={fileUploadConfig}
+        onSubmit={onSubmit}
+        uploadHandler={uploadHandler}
+      />,
+    );
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+
+    // Create a file that exceeds maxSize (1024 bytes)
+    const bigFile = new File(['x'.repeat(2048)], 'big.pdf', { type: 'application/pdf' });
+    Object.defineProperty(bigFile, 'size', { value: 2048 });
+
+    fireEvent.change(input, { target: { files: [bigFile] } });
+
+    // uploadHandler must NOT be called for the oversized file
+    await waitFor(() => expect(uploadHandler).not.toHaveBeenCalled());
+
+    // An error message should appear
+    const errMsg = await screen.findByText(/size|too large|max/i);
+    expect(errMsg).toBeTruthy();
   });
 });

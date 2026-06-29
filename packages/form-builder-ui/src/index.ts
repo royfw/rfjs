@@ -7,3 +7,4 @@ export * from './item-editor';
 export * from './section-arranger';
 export * from './use-config-builder';
 export * from './use-data-source';
+export * from './use-signature-capture';

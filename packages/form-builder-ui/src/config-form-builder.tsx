@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Copy, Check } from 'lucide-react';
-import type { FormConfig, FormItem, ItemKind, DataSourceFetcher } from '@rfjs/form-builder';
+import type { FormConfig, FormItem, ItemKind, DataSourceFetcher, UploadHandler, SignatureTransport } from '@rfjs/form-builder';
 import { parseFormConfig, normalizeToSections, makeItem } from '@rfjs/form-builder';
 
 import { useConfigBuilder } from './use-config-builder';
@@ -57,11 +57,24 @@ export interface ConfigFormBuilderProps {
   /**
    * Pluggable fetcher for `dataSource` fields. Passed through to the live preview `<ConfigForm>`.
    * Memoize with `useCallback` (or a module-level const) to avoid re-fetch loops.
+   * When absent, dataSource fields degrade to their fallback text.
    */
   fetcher?: DataSourceFetcher;
+  /**
+   * Handler for `FileUpload` fields in the live preview. Passed through to `<ConfigForm>`.
+   * When absent, FileUpload fields render a disabled fallback.
+   * Memoize with `useCallback` to avoid unnecessary re-renders.
+   */
+  uploadHandler?: UploadHandler;
+  /**
+   * Transport factory for `Signature` fields in the live preview. Passed through to `<ConfigForm>`.
+   * When absent, the local `<SignaturePad>` drives value directly via `onChange`.
+   * Memoize with `useCallback` to avoid unnecessary session restarts.
+   */
+  signatureTransport?: SignatureTransport;
 }
 
-export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'en', locales = ['en'], fetcher }: ConfigFormBuilderProps) {
+export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'en', locales = ['en'], fetcher, uploadHandler, signatureTransport }: ConfigFormBuilderProps) {
   const builder = useConfigBuilder(initialConfig, onChange);
 
   // The form is "empty" only when no items exist at all (covers both v1 fields[] and v2 sections[]).
@@ -154,7 +167,7 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
       {!hasItems ? (
         <p className="py-4 text-center text-sm text-muted-foreground">Preview will appear here once you add fields</p>
       ) : (
-        <ConfigForm config={builder.config} locale={locale} fetcher={fetcher} onSubmit={() => {}} />
+        <ConfigForm config={builder.config} locale={locale} fetcher={fetcher} uploadHandler={uploadHandler} signatureTransport={signatureTransport} onSubmit={() => {}} />
       )}
     </div>
   );
