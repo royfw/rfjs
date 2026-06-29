@@ -166,7 +166,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
           control={control}
           name={item.key}
           render={({ field: rhf }) => (
-            <FieldControl field={item} value={rhf.value} onChange={rhf.onChange} fetcher={fetcher} />
+            <FieldControl field={item} value={rhf.value} onChange={rhf.onChange} fetcher={fetcher} locale={locale} />
           )}
         />
         {errors[item.key]?.message && (

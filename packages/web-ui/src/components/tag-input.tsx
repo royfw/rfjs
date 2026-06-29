@@ -22,6 +22,7 @@ export interface TagInputProps {
   disabled?: boolean;
   placeholder?: string;
   id?: string;
+  'aria-readonly'?: boolean;
 }
 
 export function TagInput({
@@ -32,6 +33,7 @@ export function TagInput({
   disabled,
   placeholder,
   id,
+  'aria-readonly': ariaReadonly,
 }: TagInputProps): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState('');
@@ -71,6 +73,7 @@ export function TagInput({
     <div
       id={id}
       data-slot="tag-input"
+      aria-readonly={ariaReadonly}
       className={cn(
         'flex min-h-9 flex-wrap items-center gap-1 rounded-md border border-input bg-transparent px-3 py-1.5',
         disabled && 'cursor-not-allowed opacity-50',

@@ -54,6 +54,29 @@ describe('localized labels', () => {
   });
 });
 
+describe('localized description', () => {
+  const cfg: FormConfig = {
+    version: 1,
+    fields: [{
+      key: 'name',
+      label: { en: 'Name', 'zh-TW': '姓名' },
+      description: { en: 'Enter your name', 'zh-TW': '請輸入姓名' },
+      component: 'Input',
+      dataType: 'string',
+    }],
+  };
+  it('resolves description to zh-TW when locale=zh-TW', () => {
+    render(<ConfigForm config={cfg} locale="zh-TW" onSubmit={() => {}} />);
+    expect(screen.getByText('請輸入姓名')).toBeTruthy();
+    expect(screen.queryByText('Enter your name')).toBeNull();
+  });
+  it('resolves description to English when no locale is given', () => {
+    render(<ConfigForm config={cfg} onSubmit={() => {}} />);
+    expect(screen.getByText('Enter your name')).toBeTruthy();
+    expect(screen.queryByText('請輸入姓名')).toBeNull();
+  });
+});
+
 describe('config reactivity', () => {
   it('renders the new field set after config changes without remounting existing inputs', () => {
     const extendedConfig: FormConfig = {

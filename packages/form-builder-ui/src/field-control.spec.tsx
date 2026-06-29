@@ -256,6 +256,17 @@ describe('TagList', () => {
     render(<FieldControl field={tagListField} value={['foo']} onChange={() => {}} />);
     expect(screen.getByText('Foo')).toBeTruthy();
   });
+
+  it('readOnly TagList has aria-readonly on the container and is effectively disabled', () => {
+    const field: FieldConfig = { ...tagListField, readOnly: true };
+    const { container } = render(<FieldControl field={field} value={[]} onChange={() => {}} />);
+    const tagInput = container.querySelector('[data-slot="tag-input"]');
+    expect(tagInput).toBeTruthy();
+    expect(tagInput!.getAttribute('aria-readonly')).toBe('true');
+    // effectiveDisabled=true means the trigger button is disabled
+    const trigger = container.querySelector('button');
+    expect((trigger as HTMLButtonElement).disabled).toBe(true);
+  });
 });
 
 describe('description / disabled / readOnly cross-cutting', () => {
@@ -298,6 +309,37 @@ describe('description / disabled / readOnly cross-cutting', () => {
     const trigger = screen.getByRole('combobox');
     expect(trigger.getAttribute('aria-readonly')).toBe('true');
     expect((trigger as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('readOnly CheckboxGroup items have aria-readonly and are disabled', () => {
+    const field: FieldConfig = {
+      key: 'cg',
+      label: 'CG',
+      component: 'CheckboxGroup',
+      dataType: 'string',
+      options: [{ label: 'A', value: 'a' }],
+      readOnly: true,
+    };
+    render(<FieldControl field={field} value={[]} onChange={() => {}} />);
+    const cb = screen.getByRole('checkbox') as HTMLButtonElement;
+    expect(cb.getAttribute('aria-readonly')).toBe('true');
+    expect(cb.disabled).toBe(true);
+  });
+
+  it('readOnly Switch has aria-readonly and is disabled', () => {
+    const field: FieldConfig = { key: 'sw', label: 'SW', component: 'Switch', dataType: 'boolean', readOnly: true };
+    render(<FieldControl field={field} value={false} onChange={() => {}} />);
+    const sw = screen.getByRole('switch') as HTMLButtonElement;
+    expect(sw.getAttribute('aria-readonly')).toBe('true');
+    expect(sw.disabled).toBe(true);
+  });
+
+  it('readOnly DatePicker trigger button has aria-readonly and is disabled', () => {
+    const field: FieldConfig = { key: 'dp', label: 'DP', component: 'DatePicker', dataType: 'date', readOnly: true };
+    render(<FieldControl field={field} value="" onChange={() => {}} />);
+    const btn = screen.getByRole('button') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-readonly')).toBe('true');
+    expect(btn.disabled).toBe(true);
   });
 });
 

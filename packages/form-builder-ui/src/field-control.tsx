@@ -346,6 +346,7 @@ export function FieldControl({ field, value, onChange, fetcher, locale = 'en' }:
           }))}
           creatable={field.creatable}
           disabled={effectiveDisabled}
+          aria-readonly={ariaReadonly}
           placeholder={field.placeholder}
         />
       );
