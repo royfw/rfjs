@@ -5,8 +5,7 @@ import { Section } from "./section";
 import { OptionsSection } from "./options";
 import { ValidationSection } from "./validation";
 import { cardLabel, type Card, type Group, type Component } from "../model";
-
-export const INPUT_CLS = "h-8 w-full rounded-md border border-input bg-background px-2 text-sm";
+import { INPUT_CLS } from "./constants";
 const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
 const COLS = 12;
 

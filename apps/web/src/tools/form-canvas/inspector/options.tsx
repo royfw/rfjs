@@ -2,7 +2,7 @@
 import * as React from "react";
 import { Plus, X } from "lucide-react";
 import type { FieldOption } from "@rfjs/form-builder";
-import { INPUT_CLS } from "./settings-panel";
+import { INPUT_CLS } from "./constants";
 import type { Card } from "../model";
 
 export function OptionsSection({ card, onChange }: { card: Card; onChange: (p: Partial<Card>) => void }) {

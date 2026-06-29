@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import type { FieldValidation } from "@rfjs/form-builder";
-import { INPUT_CLS } from "./settings-panel";
+import { INPUT_CLS } from "./constants";
 import type { Card } from "../model";
 
 export function ValidationSection({ card, onChange }: { card: Card; onChange: (p: Partial<Card>) => void }) {
