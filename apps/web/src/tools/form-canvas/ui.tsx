@@ -17,7 +17,7 @@ import {
 import { ConfigForm } from "@rfjs/form-builder-ui";
 import type { Card, Group, Kind, Component } from "./model";
 import { cardsToFormConfig, jsonToCards, cardLabel, componentDataType } from "./model";
-import { resolveCards } from "./layout-grid";
+import { resolveCards, moveItem } from "./layout-grid";
 import { SettingsPanel } from "./inspector/settings-panel";
 
 // ---------------------------------------------------------------------------
@@ -77,6 +77,10 @@ export function FormCanvasTool() {
   const [dropGroup, setDropGroup] = React.useState<string | null>(null);
   const bodyRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const drag = React.useRef<{ id: string; mode: "move" | "resize"; col: number; span: number } | null>(null);
+  // Group reorder (drag a group header up/down): refs to each group <section>, and the
+  // live drop indicator { dragged group id, insertion index among the current order }.
+  const groupElRefs = React.useRef<Record<string, HTMLElement | null>>({});
+  const [groupDrag, setGroupDrag] = React.useState<{ id: string; overIndex: number } | null>(null);
 
   const selectedCard = cards.find((c) => c.id === selected) ?? null;
   const siblingFields = cards
@@ -90,6 +94,49 @@ export function FormCanvasTool() {
       const patched = cs.map((c) => (c.id === id ? { ...c, ...p } : c));
       return resolveCards(patched, id, COLS) as Card[];
     });
+
+  // Drag a group header up/down to reorder the group stack. Layout is unchanged
+  // during the drag (rects stay stable); we only show an insertion indicator and
+  // reorder once on drop. A bare click is ignored (DRAG_THRESHOLD), so the collapse
+  // button still works.
+  function beginGroupReorder(e: React.PointerEvent, groupId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    const startY = e.clientY;
+    let active = false;
+    // Insertion index (0..groups.length) for a given pointer Y, from the section rects.
+    const insertionAt = (clientY: number) => {
+      let ins = groups.length;
+      for (let i = 0; i < groups.length; i++) {
+        const el = groupElRefs.current[groups[i]!.id];
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        if (clientY < r.top + r.height / 2) {
+          ins = i;
+          break;
+        }
+      }
+      return ins;
+    };
+    const onMove = (ev: PointerEvent) => {
+      if (!active && Math.abs(ev.clientY - startY) < DRAG_THRESHOLD) return;
+      active = true;
+      setGroupDrag({ id: groupId, overIndex: insertionAt(ev.clientY) });
+    };
+    const onUp = (ev: PointerEvent) => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      if (active) {
+        const from = groups.findIndex((g) => g.id === groupId);
+        const ins = insertionAt(ev.clientY);
+        const to = ins > from ? ins - 1 : ins;
+        if (from >= 0 && from !== to) setGroups((gs) => moveItem(gs, from, to));
+      }
+      setGroupDrag(null);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
 
   function updateCard(id: string, p: Partial<Card>) {
     setCards((cs) =>
@@ -288,23 +335,35 @@ export function FormCanvasTool() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
             <div className="min-w-0 flex-1" onPointerDown={() => setSelected(null)}>
               <div className="flex flex-col gap-4">
-                {groups.map((group) => (
-                  <GroupFrame
-                    key={group.id}
-                    group={group}
-                    cards={cards.filter((c) => c.groupId === group.id)}
-                    selected={selected}
-                    dropOver={dropGroup === group.id}
-                    bodyRef={(el) => {
-                      bodyRefs.current[group.id] = el;
-                    }}
-                    onToggle={() =>
-                      setGroups((gs) => gs.map((g) => (g.id === group.id ? { ...g, collapsed: !g.collapsed } : g)))
-                    }
-                    onMoveStart={beginDrag}
-                    onResizeStart={beginDrag}
-                  />
+                {groups.map((group, index) => (
+                  <React.Fragment key={group.id}>
+                    {groupDrag && groupDrag.id !== group.id && groupDrag.overIndex === index ? (
+                      <div data-testid="group-drop-line" className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]" />
+                    ) : null}
+                    <GroupFrame
+                      group={group}
+                      cards={cards.filter((c) => c.groupId === group.id)}
+                      selected={selected}
+                      dropOver={dropGroup === group.id}
+                      dragging={groupDrag?.id === group.id}
+                      sectionRef={(el) => {
+                        groupElRefs.current[group.id] = el;
+                      }}
+                      bodyRef={(el) => {
+                        bodyRefs.current[group.id] = el;
+                      }}
+                      onToggle={() =>
+                        setGroups((gs) => gs.map((g) => (g.id === group.id ? { ...g, collapsed: !g.collapsed } : g)))
+                      }
+                      onReorderStart={beginGroupReorder}
+                      onMoveStart={beginDrag}
+                      onResizeStart={beginDrag}
+                    />
+                  </React.Fragment>
                 ))}
+                {groupDrag && groupDrag.overIndex === groups.length ? (
+                  <div data-testid="group-drop-line" className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]" />
+                ) : null}
               </div>
             </div>
 
@@ -383,8 +442,11 @@ function GroupFrame({
   cards,
   selected,
   dropOver,
+  dragging,
+  sectionRef,
   bodyRef,
   onToggle,
+  onReorderStart,
   onMoveStart,
   onResizeStart,
 }: {
@@ -392,8 +454,11 @@ function GroupFrame({
   cards: Card[];
   selected: string | null;
   dropOver: boolean;
+  dragging: boolean;
+  sectionRef: (el: HTMLElement | null) => void;
   bodyRef: (el: HTMLDivElement | null) => void;
   onToggle: () => void;
+  onReorderStart: (e: React.PointerEvent, groupId: string) => void;
   onMoveStart: (e: React.PointerEvent, card: Card, mode: "move") => void;
   onResizeStart: (e: React.PointerEvent, card: Card, mode: "resize") => void;
 }) {
@@ -401,11 +466,20 @@ function GroupFrame({
   const rows = Math.max(maxRow + 1, 2);
   return (
     <section
-      className={`overflow-hidden rounded-xl border bg-card/20 transition-colors ${
+      ref={sectionRef}
+      className={`overflow-hidden rounded-xl border bg-card/20 transition-[border,opacity] ${
         dropOver ? "border-[#5b8cff]/70 ring-1 ring-[#5b8cff]/40" : "border-border"
-      }`}
+      } ${dragging ? "opacity-50" : ""}`}
     >
-      <header className="flex items-center gap-2.5 border-b border-border bg-muted/40 px-3 py-2.5">
+      <header className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2.5">
+        <button
+          type="button"
+          aria-label="reorder group"
+          onPointerDown={(e) => onReorderStart(e, group.id)}
+          className="flex size-6 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground/50 hover:text-foreground active:cursor-grabbing"
+        >
+          <GripVertical className="size-4" />
+        </button>
         <button
           type="button"
           aria-label={group.collapsed ? "expand" : "collapse"}

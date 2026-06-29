@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { collides, compact, resolveCollisions, resolveCards, type GridItem, type PlacedCard } from "./layout-grid";
+import { collides, compact, resolveCollisions, resolveCards, moveItem, type GridItem, type PlacedCard } from "./layout-grid";
 
 const g = (id: string, col: number, span: number, row: number): GridItem => ({ id, col, span, row });
 
@@ -62,5 +62,17 @@ describe("resolveCards (per-group orchestration)", () => {
     expect(out.find((c) => c.id === "x")!.row).toBe(2); // displaced in g2
     expect(out.find((c) => c.id === "b")!.row).toBe(1); // g1 compacted upward
     expect(out.find((c) => c.id === "b")!.groupId).toBe("g1"); // groupId preserved
+  });
+});
+
+describe("moveItem", () => {
+  it("moves an item down", () => {
+    expect(moveItem(["a", "b", "c"], 0, 2)).toEqual(["b", "c", "a"]);
+  });
+  it("moves an item up", () => {
+    expect(moveItem(["a", "b", "c"], 2, 0)).toEqual(["c", "a", "b"]);
+  });
+  it("is a no-op for an out-of-range from", () => {
+    expect(moveItem(["a", "b"], 5, 0)).toEqual(["a", "b"]);
   });
 });

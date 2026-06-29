@@ -13,6 +13,12 @@ import { INPUT_CLS } from "./constants";
 const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
 const COLS = 12;
 
+// "Has content" indicators shown on section headers.
+const Dot = () => <span className="size-1.5 rounded-full bg-[#5b8cff]" aria-label="has content" />;
+const Count = ({ n }: { n: number }) => (
+  <span className="rounded-full bg-[#5b8cff]/15 px-1.5 text-[10px] font-medium text-[#5b8cff]">{n}</span>
+);
+
 export function SettingsPanel({
   card, groups, onChange, onRemove, siblingFields = [],
 }: { card: Card | null; groups: Group[]; onChange: (p: Partial<Card>) => void; onRemove: () => void; siblingFields?: { key: string; dataType: string }[] }) {
@@ -69,18 +75,45 @@ export function SettingsPanel({
         </div>
       </Section>
 
-      {isField ? <Section title="Validation" defaultOpen={false}><ValidationSection card={card} onChange={onChange} /></Section> : null}
+      {/* Common config: expanded by default. Advanced: collapsed with a "has content" badge. */}
+      {isField ? (
+        <Section title="Validation" badge={card.validation && Object.keys(card.validation).length ? <Count n={Object.keys(card.validation).length} /> : undefined}>
+          <ValidationSection card={card} onChange={onChange} />
+        </Section>
+      ) : null}
 
-      {isField && card.component === "Select" ? <Section title="Options" defaultOpen={false}><OptionsSection card={card} onChange={onChange} /></Section> : null}
+      {isField && card.component === "Select" ? (
+        <Section title="Options" badge={card.options?.length ? <Count n={card.options.length} /> : undefined}>
+          <OptionsSection card={card} onChange={onChange} />
+        </Section>
+      ) : null}
 
-      {isField ? <Section title="AI Note" defaultOpen={false}><AiNoteSection card={card} onChange={onChange} /></Section> : null}
+      {isField ? (
+        <Section title="Conditional" badge={card.conditional ? <Dot /> : undefined}>
+          <ConditionalSection card={card} siblingFields={siblingFields} onChange={onChange} />
+        </Section>
+      ) : null}
 
-      {isField ? <Section title="Conditional" defaultOpen={false}><ConditionalSection card={card} siblingFields={siblingFields} onChange={onChange} /></Section> : null}
-      {isField && card.component === "Select" ? <Section title="Data Source" defaultOpen={false}><DataSourceSection card={card} onChange={onChange} /></Section> : null}
+      {isField && card.component === "Select" ? (
+        <Section title="Data Source" defaultOpen={false} badge={card.dataSource ? <Dot /> : undefined}>
+          <DataSourceSection card={card} onChange={onChange} />
+        </Section>
+      ) : null}
+
+      {isField ? (
+        <Section title="AI Note" defaultOpen={false} badge={card.aiNote ? <Dot /> : undefined}>
+          <AiNoteSection card={card} onChange={onChange} />
+        </Section>
+      ) : null}
+
       {card.kind === "content" ? <Section title="Content"><ContentSection card={card} onChange={onChange} /></Section> : null}
       {card.kind === "spacer" ? <Section title="Spacer"><SpacerSection card={card} onChange={onChange} /></Section> : null}
 
-      {(card.kind === "field" || card.kind === "content") ? <Section title="Labels (i18n)" defaultOpen={false}><LabelsSection card={card} onChange={onChange} /></Section> : null}
+      {(card.kind === "field" || card.kind === "content") ? (
+        <Section title="Labels (i18n)" defaultOpen={false} badge={typeof card.label === "object" ? <Dot /> : undefined}>
+          <LabelsSection card={card} onChange={onChange} />
+        </Section>
+      ) : null}
 
       <button
         type="button"

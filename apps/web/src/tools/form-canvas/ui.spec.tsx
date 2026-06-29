@@ -71,3 +71,10 @@ describe("FormCanvasTool drag threshold", () => {
     expect(card.style.gridColumn).toBe(before);
   });
 });
+
+describe("FormCanvasTool group reorder", () => {
+  it("each group has a reorder handle", () => {
+    render(<FormCanvasTool />);
+    expect(screen.getAllByRole("button", { name: /reorder group/i }).length).toBeGreaterThanOrEqual(2);
+  });
+});
