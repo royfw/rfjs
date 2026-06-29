@@ -78,6 +78,7 @@ export function FormCanvasTool() {
   const drag = React.useRef<{ id: string; mode: "move" | "resize"; col: number; span: number } | null>(null);
 
   const selectedCard = cards.find((c) => c.id === selected) ?? null;
+  const siblingKeys = cards.filter((c) => c.kind === "field" && c.id !== selectedCard?.id).map((c) => c.key!).filter(Boolean);
   const formConfig = cardsToFormConfig(groups, cards);
 
   // Apply a drag/resize patch to the dragged card, then resolve overlaps (push + compact up).
@@ -311,6 +312,7 @@ export function FormCanvasTool() {
                 <SettingsPanel
                   card={selectedCard}
                   groups={groups}
+                  siblingKeys={siblingKeys}
                   onChange={(p) => selectedCard && updateCard(selectedCard.id, p)}
                   onRemove={() => {
                     if (!selectedCard) return;

@@ -6,14 +6,15 @@ import { OptionsSection } from "./options";
 import { ValidationSection } from "./validation";
 import { AiNoteSection, ContentSection, SpacerSection } from "./misc-sections";
 import { LabelsSection } from "./labels";
+import { ConditionalSection } from "./conditional";
 import { cardLabel, type Card, type Group, type Component } from "../model";
 import { INPUT_CLS } from "./constants";
 const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
 const COLS = 12;
 
 export function SettingsPanel({
-  card, groups, onChange, onRemove,
-}: { card: Card | null; groups: Group[]; onChange: (p: Partial<Card>) => void; onRemove: () => void }) {
+  card, groups, onChange, onRemove, siblingKeys = [],
+}: { card: Card | null; groups: Group[]; onChange: (p: Partial<Card>) => void; onRemove: () => void; siblingKeys?: string[] }) {
   if (!card) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-card/20 p-6 text-center text-sm text-muted-foreground">
@@ -72,6 +73,8 @@ export function SettingsPanel({
       {isField && card.component === "Select" ? <Section title="Options" defaultOpen={false}><OptionsSection card={card} onChange={onChange} /></Section> : null}
 
       {isField ? <Section title="AI Note" defaultOpen={false}><AiNoteSection card={card} onChange={onChange} /></Section> : null}
+
+      {isField ? <Section title="Conditional" defaultOpen={false}><ConditionalSection card={card} siblingKeys={siblingKeys} onChange={onChange} /></Section> : null}
       {card.kind === "content" ? <Section title="Content"><ContentSection card={card} onChange={onChange} /></Section> : null}
       {card.kind === "spacer" ? <Section title="Spacer"><SpacerSection card={card} onChange={onChange} /></Section> : null}
 
