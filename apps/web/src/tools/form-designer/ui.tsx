@@ -16,7 +16,8 @@ import {
 
 import { ConfigForm } from "@rfjs/form-builder-ui";
 import type { Card, Group, Kind, Component } from "./model";
-import { cardsToFormConfig, jsonToCards, cardLabel, componentDataType } from "./model";
+import { cardsToFormConfig, jsonToCards, cardLabel, componentDataType, formConfigToCards } from "./model";
+import { SAMPLE_CONFIG, sampleFetcher } from "../form-builder/sample";
 import { resolveCards, moveItem } from "./layout-grid";
 import { SettingsPanel } from "./inspector/settings-panel";
 
@@ -46,22 +47,13 @@ const KIND_META: Record<
 
 const fieldSub = (c: Card) => (c.kind === "field" ? `${c.key ?? "field"} · ${c.component ?? "Input"}` : undefined);
 
-const SEED_GROUPS: Group[] = [
-  { id: "g_account", title: "Account", collapsed: false },
-  { id: "g_profile", title: "Profile", collapsed: false },
-];
-
-const SEED_CARDS: Card[] = [
-  { id: "c1", groupId: "g_account", kind: "field", label: "Name", key: "name", component: "Input", required: true, placeholder: "e.g. Jane Doe", col: 1, span: 6, row: 1 },
-  { id: "c2", groupId: "g_account", kind: "field", label: "Email", key: "email", component: "Input", required: true, placeholder: "you@example.com", col: 7, span: 6, row: 1 },
-  { id: "c3", groupId: "g_account", kind: "field", label: "Role", key: "role", component: "Select", col: 1, span: 6, row: 2 },
-  { id: "c4", groupId: "g_account", kind: "ai-note", label: "If unsure, default to 'user'", col: 7, span: 6, row: 2 },
-  { id: "c5", groupId: "g_account", kind: "field", label: "Bio", key: "bio", component: "Textarea", col: 1, span: 12, row: 3 },
-  { id: "c6", groupId: "g_profile", kind: "field", label: "Age", key: "age", component: "Number", col: 1, span: 4, row: 1 },
-  { id: "c7", groupId: "g_profile", kind: "field", label: "Country", key: "country", component: "Select", col: 5, span: 4, row: 1 },
-  { id: "c8", groupId: "g_profile", kind: "field", label: "Birthday", key: "birthday", component: "DatePicker", col: 9, span: 4, row: 1 },
-  { id: "c9", groupId: "g_profile", kind: "field", label: "Subscribe", key: "newsletter", component: "Switch", col: 1, span: 6, row: 2 },
-];
+// Seed the canvas from the SAME demo as the form-builder tool (shared SAMPLE_CONFIG),
+// so both tools showcase the same example. The sample has no grid layout (it's the
+// linear builder's config), so each card lands full-width stacked, mirroring the
+// form-builder's one-field-per-row look — the user can drag to a 2-column layout.
+const SEED = formConfigToCards(SAMPLE_CONFIG);
+const SEED_GROUPS: Group[] = SEED.groups;
+const SEED_CARDS: Card[] = SEED.cards.map((c) => ({ ...c, col: 1, span: 12 }));
 
 let seq = 100;
 let gseq = 10;
@@ -402,7 +394,7 @@ export function FormDesignerTool() {
         </>
       ) : tab === "preview" ? (
         <div className="rounded-xl border border-border bg-card/30 p-6">
-          <ConfigForm config={formConfig} locale="en" onSubmit={() => {}} />
+          <ConfigForm config={formConfig} locale="en" fetcher={sampleFetcher} onSubmit={() => {}} />
         </div>
       ) : (
         <div className="flex flex-col gap-2">
