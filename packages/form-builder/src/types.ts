@@ -37,7 +37,9 @@ export type FieldComponent =
   | 'Radio'
   | 'DatePicker'
   | 'CheckboxGroup'
-  | 'TagList';
+  | 'TagList'
+  | 'FileUpload'
+  | 'Signature';
 
 export type FieldWidth = 'full' | 'half';
 
@@ -75,6 +77,8 @@ export interface FieldConfig {
   readOnly?: boolean;
   /** TagList: allows free-text entry without a predefined options list. */
   creatable?: boolean;
+  /** FileUpload: upload configuration (accept MIME filter, multiple, maxSize in bytes). */
+  fileUpload?: { accept?: string; multiple?: boolean; maxSize?: number };
 }
 
 export type ItemKind = 'field' | 'content' | 'divider' | 'spacer' | 'ai-note';
@@ -124,3 +128,14 @@ export interface FormConfig {
   sections?: FormSection[];        // v2
   columns?: 1 | 2 | 3 | 4;        // v1 grid (back-compat)
 }
+
+// --- File / Signature transport types ---
+
+export interface FileRef { name: string; size: number; type: string; url?: string; id?: string; }
+export type UploadHandler = (file: File, ctx?: { fieldKey: string }) => Promise<FileRef>;
+export interface SignatureCaptureHandle {
+  result: Promise<string>;
+  cancel(): void;
+  subscribe?(cb: (s: { status: 'idle' | 'pending' | 'ready' | 'error'; sessionId?: string; error?: unknown }) => void): () => void;
+}
+export type SignatureTransport = (ctx: { fieldKey: string; signal: AbortSignal }) => SignatureCaptureHandle;

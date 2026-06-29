@@ -466,3 +466,22 @@ describe('FormConfig grid layout', () => {
     expect(() => parseFormConfig(bad)).toThrow();
   });
 });
+
+describe('FileUpload/Signature components', () => {
+  it('accepts FileUpload with fileUpload config and Signature', () => {
+    expect(fieldConfigSchema.safeParse({
+      key: 'f', label: 'F', component: 'FileUpload', dataType: 'array',
+      fileUpload: { accept: 'image/*', multiple: true, maxSize: 5_000_000 },
+    }).success).toBe(true);
+    expect(fieldConfigSchema.safeParse({
+      key: 's', label: 'S', component: 'Signature', dataType: 'string',
+    }).success).toBe(true);
+  });
+
+  it('rejects FileUpload with an invalid fileUpload.multiple type', () => {
+    expect(fieldConfigSchema.safeParse({
+      key: 'f', label: 'F', component: 'FileUpload', dataType: 'array',
+      fileUpload: { multiple: 'yes' },
+    }).success).toBe(false);
+  });
+});

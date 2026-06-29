@@ -10,6 +10,15 @@ const emptyToUndefined = (v: unknown) => (v === '' ? undefined : v);
 const MULTI_VALUE = new Set(['CheckboxGroup', 'TagList']);
 
 function baseForField(field: FieldConfig): z.ZodTypeAny {
+  // FileUpload: multiple → array of unknown, single → unknown object
+  if (field.component === 'FileUpload') {
+    return field.fileUpload?.multiple ? z.array(z.unknown()) : z.unknown();
+  }
+  // Signature: always a string (base64/data URL)
+  if (field.component === 'Signature') {
+    return z.string();
+  }
+
   // Multi-value components must be checked before the options short-circuit,
   // because they produce arrays even when options are provided.
   if (MULTI_VALUE.has(field.component)) {
@@ -91,10 +100,14 @@ function fieldSchema(field: FieldConfig): z.ZodTypeAny {
 
   const isMultiValue = MULTI_VALUE.has(field.component);
   const isStringLike =
-    field.dataType === 'string' || field.dataType === 'date' || field.component === 'Email';
+    field.dataType === 'string' || field.dataType === 'date' || field.component === 'Email' || field.component === 'Signature';
   const isNumericLike = field.dataType === 'numeric' || field.component === 'Number';
 
   if (field.required) {
+    // FileUpload multiple: reject empty array
+    if (field.component === 'FileUpload' && field.fileUpload?.multiple) {
+      return (base as z.ZodArray<z.ZodTypeAny>).min(1);
+    }
     // Multi-value: reject empty array
     if (isMultiValue) return (base as z.ZodArray<z.ZodTypeAny>).min(1, field.validation?.message);
     // Single Checkbox: must be checked (true)

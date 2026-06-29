@@ -74,7 +74,7 @@ const fieldConfigObjectSchema = z.object({
   label: localizedLabelSchema,
   component: z.enum([
     'Input', 'Textarea', 'Select', 'Checkbox', 'Date', 'Number', 'Email', 'Switch', 'Radio', 'DatePicker',
-    'CheckboxGroup', 'TagList',
+    'CheckboxGroup', 'TagList', 'FileUpload', 'Signature',
   ]),
   dataType: z.enum(['string', 'numeric', 'date', 'boolean', 'object', 'array']),
   required: z.boolean().optional(),
@@ -89,6 +89,11 @@ const fieldConfigObjectSchema = z.object({
   disabled: z.boolean().optional(),
   readOnly: z.boolean().optional(),
   creatable: z.boolean().optional(),
+  fileUpload: z.object({
+    accept: z.string().optional(),
+    multiple: z.boolean().optional(),
+    maxSize: z.number().optional(),
+  }).optional(),
 });
 
 // Shared refinement: TagList must have options unless creatable:true.

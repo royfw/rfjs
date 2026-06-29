@@ -452,3 +452,28 @@ describe('configToZod — multi-value components', () => {
     expect(schema.safeParse({ t: ['unknown'] }).success).toBe(false); // out-of-enum rejected
   });
 });
+
+describe('configToZod — FileUpload/Signature', () => {
+  it('required Signature rejects empty string', () => {
+    const schema = configToZod(mkConfig({ key: 's', component: 'Signature', required: true }));
+    expect(schema.safeParse({ s: '' }).success).toBe(false);
+    expect(schema.safeParse({ s: 'data:image/png;base64,xxx' }).success).toBe(true);
+  });
+
+  it('required multiple FileUpload rejects empty array', () => {
+    const schema = configToZod(mkConfig({ key: 'f', component: 'FileUpload', required: true,
+      fileUpload: { multiple: true } }));
+    expect(schema.safeParse({ f: [] }).success).toBe(false);
+  });
+
+  it('multiple FileUpload accepts array of items', () => {
+    const schema = configToZod(mkConfig({ key: 'f', component: 'FileUpload',
+      fileUpload: { multiple: true } }));
+    expect(schema.safeParse({ f: [{ name: 'a.png' }, { name: 'b.png' }] }).success).toBe(true);
+  });
+
+  it('single FileUpload accepts an object value', () => {
+    const schema = configToZod(mkConfig({ key: 'f', component: 'FileUpload' }));
+    expect(schema.safeParse({ f: { name: 'a.png', size: 1024 } }).success).toBe(true);
+  });
+});
