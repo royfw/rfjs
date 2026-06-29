@@ -2,6 +2,7 @@
 import * as React from "react";
 import { Trash2 } from "lucide-react";
 import { Section } from "./section";
+import { ValidationSection } from "./validation";
 import { cardLabel, type Card, type Group, type Component } from "../model";
 
 export const INPUT_CLS = "h-8 w-full rounded-md border border-input bg-background px-2 text-sm";
@@ -64,7 +65,9 @@ export function SettingsPanel({
         </div>
       </Section>
 
-      {/* Field-only sections (Validation, Options, Conditional, Data Source, Labels, AI Note) are
+      {isField ? <Section title="Validation" defaultOpen={false}><ValidationSection card={card} onChange={onChange} /></Section> : null}
+
+      {/* Field-only sections (Options, Conditional, Data Source, Labels, AI Note) are
           added in later tasks. Content/Spacer sections too. */}
 
       <button
