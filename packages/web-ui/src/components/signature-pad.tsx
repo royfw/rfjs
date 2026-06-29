@@ -3,6 +3,9 @@
 import * as React from 'react';
 import SignaturePadLib from 'signature_pad';
 
+import { cn } from '../lib/utils';
+import { Button } from './button';
+
 export interface SignaturePadProps {
   value?: string; // data URL (controlled)
   onChange?: (dataUrl: string) => void;
@@ -22,6 +25,13 @@ export function SignaturePad({
 }: SignaturePadProps): React.JSX.Element {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const padRef = React.useRef<SignaturePadLib | null>(null);
+
+  // Keep a ref to always call the latest onChange — avoids a stale closure in
+  // the endStroke listener that is registered once in the [] init effect.
+  const onChangeRef = React.useRef(onChange);
+  React.useEffect(() => {
+    onChangeRef.current = onChange;
+  });
 
   // Initialise the pad once (client-only — canvasRef is null during SSR).
   React.useEffect(() => {
@@ -47,14 +57,14 @@ export function SignaturePad({
     resizeObserver.observe(canvas);
 
     pad.addEventListener('endStroke', () => {
-      onChange?.(pad.toDataURL());
+      onChangeRef.current?.(pad.toDataURL());
     });
 
     return () => {
       resizeObserver.disconnect();
       pad.off();
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync penColor changes without recreating the pad.
   React.useEffect(() => {
@@ -88,14 +98,15 @@ export function SignaturePad({
   };
 
   return (
-    <div data-slot="signature-pad" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div data-slot="signature-pad" className={cn('flex flex-col gap-1')}>
       <canvas
         ref={canvasRef}
-        style={{ border: '1px solid #e2e8f0', borderRadius: 6, width: '100%', height }}
+        className={cn('border border-input rounded-md w-full')}
+        style={{ height }}
       />
-      <button type="button" onClick={handleClear} disabled={disabled}>
+      <Button type="button" variant="outline" size="sm" onClick={handleClear} disabled={disabled}>
         Clear
-      </button>
+      </Button>
     </div>
   );
 }
