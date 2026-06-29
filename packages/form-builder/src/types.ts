@@ -61,7 +61,7 @@ export interface FieldConfig {
   key: string;
   label: LocalizedLabel;
   component: FieldComponent;
-  dataType?: FieldType;
+  dataType: FieldType;
   required?: boolean;
   placeholder?: string;
   defaultValue?: unknown;

@@ -358,7 +358,7 @@ describe('conditional field visibility schema', () => {
 describe('CheckboxGroup/TagList + new props', () => {
   it('accepts CheckboxGroup with description/disabled/readOnly', () => {
     const r = fieldConfigSchema.safeParse({
-      key: 'tags', label: 'Tags', component: 'CheckboxGroup',
+      key: 'tags', label: 'Tags', component: 'CheckboxGroup', dataType: 'array',
       options: [{ label: 'A', value: 'a' }],
       description: 'pick some', disabled: false, readOnly: true,
     });
@@ -366,12 +366,12 @@ describe('CheckboxGroup/TagList + new props', () => {
   });
 
   it('requires options for non-creatable TagList', () => {
-    const r = fieldConfigSchema.safeParse({ key: 't', label: 'T', component: 'TagList' });
+    const r = fieldConfigSchema.safeParse({ key: 't', label: 'T', component: 'TagList', dataType: 'array' });
     expect(r.success).toBe(false);
   });
 
   it('allows creatable TagList without options', () => {
-    const r = fieldConfigSchema.safeParse({ key: 't', label: 'T', component: 'TagList', creatable: true });
+    const r = fieldConfigSchema.safeParse({ key: 't', label: 'T', component: 'TagList', dataType: 'array', creatable: true });
     expect(r.success).toBe(true);
   });
 
@@ -392,6 +392,45 @@ describe('CheckboxGroup/TagList + new props', () => {
     };
     const parsed = formConfigSchema.parse(cfg);
     expect(JSON.parse(JSON.stringify(parsed))).toEqual(cfg);
+  });
+});
+
+describe('TagList validation in sections path', () => {
+  const makeTagListItem = (extra: Record<string, unknown> = {}) => ({
+    id: 'tl1',
+    kind: 'field',
+    key: 'tags',
+    label: 'Tags',
+    component: 'TagList',
+    dataType: 'array',
+    ...extra,
+  });
+
+  it('rejects a non-creatable TagList without options in sections[].rows[].items[]', () => {
+    const cfg = {
+      version: 1,
+      sections: [{ id: 's1', rows: [{ id: 'r1', items: [makeTagListItem()] }] }],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+
+  it('accepts a creatable TagList without options in sections[].rows[].items[]', () => {
+    const cfg = {
+      version: 1,
+      sections: [{ id: 's1', rows: [{ id: 'r1', items: [makeTagListItem({ creatable: true })] }] }],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('accepts a TagList with options in sections[].rows[].items[]', () => {
+    const cfg = {
+      version: 1,
+      sections: [{
+        id: 's1',
+        rows: [{ id: 'r1', items: [makeTagListItem({ options: [{ label: 'A', value: 'a' }] })] }],
+      }],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
   });
 });
 

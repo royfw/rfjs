@@ -76,7 +76,7 @@ const fieldConfigObjectSchema = z.object({
     'Input', 'Textarea', 'Select', 'Checkbox', 'Date', 'Number', 'Email', 'Switch', 'Radio', 'DatePicker',
     'CheckboxGroup', 'TagList',
   ]),
-  dataType: z.enum(['string', 'numeric', 'date', 'boolean', 'object', 'array']).optional(),
+  dataType: z.enum(['string', 'numeric', 'date', 'boolean', 'object', 'array']),
   required: z.boolean().optional(),
   placeholder: z.string().optional(),
   defaultValue: z.unknown().optional(),
@@ -91,18 +91,25 @@ const fieldConfigObjectSchema = z.object({
   creatable: z.boolean().optional(),
 });
 
-// Exported schema — includes TagList superRefine: options required unless creatable.
-export const fieldConfigSchema = fieldConfigObjectSchema.superRefine((val, ctx) => {
+// Shared refinement: TagList must have options unless creatable:true.
+// Applied to both fieldConfigSchema and fieldItemSchema so the sections path is also guarded.
+function validateTagListOptions(
+  val: { component?: string; creatable?: boolean; options?: unknown[] },
+  ctx: z.RefinementCtx
+) {
   if (val.component === 'TagList' && val.creatable !== true && !(val.options?.length)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['options'], message: 'TagList requires options unless creatable' });
   }
-});
+}
+
+// Exported schema — includes TagList superRefine: options required unless creatable.
+export const fieldConfigSchema = fieldConfigObjectSchema.superRefine(validateTagListOptions);
 
 const fieldItemSchema = fieldConfigObjectSchema.extend({
   id: z.string().min(1),
   kind: z.literal('field'),
   aiNote: z.string().optional(),
-});
+}).superRefine(validateTagListOptions);
 const contentItemSchema = z.object({
   id: z.string().min(1),
   kind: z.literal('content'),
