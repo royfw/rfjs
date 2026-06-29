@@ -41,9 +41,15 @@ export function useSignatureCapture(
   // active flag — flipped false on cancel/unmount so late resolves are ignored.
   const activeRef = React.useRef(false);
 
+  // Holds the unsubscribe function from handle.subscribe so teardown can
+  // clean it up even if the result promise never settles.
+  const unsubRef = React.useRef<(() => void) | undefined>(undefined);
+
   // Cleanup teardown — called by both cancel() and the unmount effect.
   const teardown = React.useCallback(() => {
     activeRef.current = false;
+    unsubRef.current?.();
+    unsubRef.current = undefined;
     handleRef.current?.cancel();
     handleRef.current = null;
     abortRef.current?.abort();
@@ -73,9 +79,8 @@ export function useSignatureCapture(
     setStatus('pending');
 
     // Subscribe to intermediate status updates (e.g. remote session lifecycle).
-    let unsub: (() => void) | undefined;
     if (handle.subscribe) {
-      unsub = handle.subscribe((s) => {
+      unsubRef.current = handle.subscribe((s) => {
         if (!activeRef.current) return;
         // Only update while still pending (ready is set by the result promise below).
         if (s.status === 'error') {
@@ -93,9 +98,6 @@ export function useSignatureCapture(
       .catch(() => {
         if (!activeRef.current) return;
         setStatus('error');
-      })
-      .finally(() => {
-        unsub?.();
       });
   }, [transport, fieldKey, teardown]);
 

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ConfigForm } from './config-form';
-import type { FormConfig, DataSource, UploadHandler, FileRef } from '@rfjs/form-builder';
+import type { FormConfig, DataSource, UploadHandler, FileRef, SignatureTransport } from '@rfjs/form-builder';
+
 
 const baseConfig: FormConfig = {
   version: 1,
@@ -491,17 +492,13 @@ describe('FileUpload field', () => {
 
   it('shows a disabled fallback when no uploadHandler is provided', () => {
     render(<ConfigForm config={fileUploadConfig} onSubmit={() => {}} />);
-    // A disabled file input should be rendered as the fallback
-    const inputs = document.querySelectorAll('input[type="file"]');
-    // Either a disabled file input or an explicit fallback message
-    const fallbackMsg = screen.queryByText(/no upload handler/i) ?? screen.queryByText(/upload/i);
-    // The input must be disabled if rendered
-    if (inputs.length > 0) {
-      expect((inputs[0] as HTMLInputElement).disabled).toBe(true);
-    } else {
-      // The fallback message is present
-      expect(fallbackMsg).toBeTruthy();
-    }
+    // The fallback must render BOTH a message AND a disabled input.
+    const fallbackMsg = screen.queryByText(/no upload handler/i);
+    expect(fallbackMsg).toBeTruthy();
+    // The disabled file input must be present inside the fallback container.
+    const fallbackInput = fallbackMsg!.closest('div')!.querySelector('input[type="file"]') as HTMLInputElement | null;
+    expect(fallbackInput).toBeTruthy();
+    expect(fallbackInput!.disabled).toBe(true);
   });
 
   it('stores a FileRef when uploadHandler resolves', async () => {
@@ -533,6 +530,29 @@ describe('FileUpload field', () => {
     );
   });
 
+  it('calls onFileError when uploadHandler rejects', async () => {
+    const uploadHandler: UploadHandler = vi.fn().mockRejectedValue(new Error('Server error'));
+    const onSubmit = vi.fn();
+
+    render(
+      <ConfigForm
+        config={fileUploadConfig}
+        onSubmit={onSubmit}
+        uploadHandler={uploadHandler}
+      />,
+    );
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+    Object.defineProperty(file, 'size', { value: 500 });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => expect(uploadHandler).toHaveBeenCalledOnce());
+    // The error message from the rejected handler should surface in the form
+    await waitFor(() => expect(screen.getByText(/server error/i)).toBeTruthy());
+  });
+
   it('rejects a file over maxSize at pick time and keeps value empty', async () => {
     const uploadHandler: UploadHandler = vi.fn(async (f) => ({
       name: f.name, size: f.size, type: f.type,
@@ -561,5 +581,42 @@ describe('FileUpload field', () => {
     // An error message should appear
     const errMsg = await screen.findByText(/size|too large|max/i);
     expect(errMsg).toBeTruthy();
+  });
+});
+
+describe('Signature field submit gating', () => {
+  const signatureConfig: FormConfig = {
+    version: 1,
+    fields: [
+      { key: 'sig', label: 'Signature', component: 'Signature', dataType: 'string' },
+    ],
+  };
+
+  it('disables the submit button while signature capture status is pending', async () => {
+    const cancelFn = vi.fn();
+    const signatureTransport: SignatureTransport = vi.fn(() => ({
+      result: new Promise<string>(() => {}), // never resolves — keeps status 'pending'
+      cancel: cancelFn,
+    }));
+
+    render(
+      <ConfigForm
+        config={signatureConfig}
+        onSubmit={() => {}}
+        signatureTransport={signatureTransport}
+      />,
+    );
+
+    const submitBtn = screen.getByRole('button', { name: /submit/i });
+
+    // Before capture starts the submit button is enabled
+    expect(submitBtn.hasAttribute('disabled')).toBe(false);
+
+    // Click "Capture signature" to start the pending capture session
+    const captureBtn = screen.getByRole('button', { name: /capture signature/i });
+    fireEvent.click(captureBtn);
+
+    // The submit button must be disabled while status === 'pending'
+    await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(true));
   });
 });

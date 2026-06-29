@@ -111,8 +111,13 @@ function FileUploadControl({ field, value: _value, onChange, uploadHandler, onFi
 
     if (accepted.length === 0) return;
 
-    const refs = await Promise.all(accepted.map((f) => uploadHandler(f, { fieldKey: field.key })));
-    onChange(multiple ? refs : refs[0]);
+    try {
+      const refs = await Promise.all(accepted.map((f) => uploadHandler(f, { fieldKey: field.key })));
+      onChange(multiple ? refs : refs[0]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      onFileError?.(field.key, message);
+    }
   }
 
   return (
