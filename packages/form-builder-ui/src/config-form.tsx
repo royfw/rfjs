@@ -115,8 +115,12 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   }, []);
 
   // Re-initialise form state when `config` changes so stale field values are cleared.
+  // Also clear pendingCaptures: any Signature fields that were pending will unmount
+  // and emit 'idle' via their cleanup, but resetting here is an additional safeguard
+  // for in-tree fields that may not unmount (e.g. same key, changed config).
   React.useEffect(() => {
     reset(defaultValues ?? {});
+    setPendingCaptures(new Set());
   }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Subscribe to all form values to decide which items to RENDER (live show/hide).

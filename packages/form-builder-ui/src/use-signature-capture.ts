@@ -79,6 +79,12 @@ export function useSignatureCapture(
     setStatus('pending');
 
     // Subscribe to intermediate status updates (e.g. remote session lifecycle).
+    // Contract for transport authors:
+    //   - `result` (the promise) is the source of truth for `ready` and `value`; it
+    //     resolves with the captured dataUrl or rejects on failure.
+    //   - `subscribe` is used only for error/lifecycle signaling WHILE the session is
+    //     in-flight (e.g. reporting `'error'` before the promise settles). It never
+    //     needs to emit `'ready'` — that is handled exclusively by the result promise.
     if (handle.subscribe) {
       unsubRef.current = handle.subscribe((s) => {
         if (!activeRef.current) return;

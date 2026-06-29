@@ -89,7 +89,7 @@ function FileUploadControl({ field, value: _value, onChange, uploadHandler, onFi
     return (
       <div className="flex flex-col gap-1">
         <p className="text-sm text-muted-foreground">No upload handler provided — upload unavailable</p>
-        <input type="file" disabled aria-label={`${String(field.key)} file upload (unavailable)`} />
+        <input id={field.key} type="file" disabled aria-label={`${String(field.key)} file upload (unavailable)`} />
       </div>
     );
   }
@@ -158,8 +158,13 @@ function SignatureControl({ field, value, onChange, signatureTransport, onSignat
   }, [capture.status, capture.value, onChange]);
 
   // Report status changes upward (e.g. to gate ConfigForm's submit button).
+  // On unmount (e.g. field hidden by conditional or config change), emit 'idle'
+  // so ConfigForm removes this key from pendingCaptures and submit is not stuck.
   React.useEffect(() => {
     onSignatureStatus?.(field.key, capture.status);
+    return () => {
+      onSignatureStatus?.(field.key, 'idle');
+    };
   }, [field.key, capture.status, onSignatureStatus]);
 
   return (

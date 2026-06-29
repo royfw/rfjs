@@ -619,4 +619,81 @@ describe('Signature field submit gating', () => {
     // The submit button must be disabled while status === 'pending'
     await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(true));
   });
+
+  it('re-enables submit when a pending Signature field is conditionally hidden (unmount clears pendingCaptures)', async () => {
+    const conditionalSigConfig: FormConfig = {
+      version: 1,
+      fields: [
+        { key: 'role', label: 'Role', component: 'Input', dataType: 'string' },
+        {
+          key: 'sig',
+          label: 'Signature',
+          component: 'Signature',
+          dataType: 'string',
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'show' }],
+          },
+        },
+      ],
+    };
+
+    const signatureTransport: SignatureTransport = vi.fn(() => ({
+      result: new Promise<string>(() => {}), // never resolves — keeps status 'pending'
+      cancel: vi.fn(),
+    }));
+
+    render(
+      <ConfigForm
+        config={conditionalSigConfig}
+        onSubmit={() => {}}
+        signatureTransport={signatureTransport}
+      />,
+    );
+
+    const roleInput = screen.getByRole('textbox', { name: 'Role' });
+    const submitBtn = screen.getByRole('button', { name: /submit/i });
+
+    // Show the Signature field
+    fireEvent.change(roleInput, { target: { value: 'show' } });
+    await waitFor(() => expect(screen.getByRole('button', { name: /capture signature/i })).toBeTruthy());
+
+    // Start a pending capture — submit becomes disabled
+    fireEvent.click(screen.getByRole('button', { name: /capture signature/i }));
+    await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(true));
+
+    // Hide the Signature field by changing the controlling field — field unmounts
+    fireEvent.change(roleInput, { target: { value: 'hide' } });
+    await waitFor(() => expect(screen.queryByRole('button', { name: /capture signature/i })).toBeNull());
+
+    // Submit must no longer be disabled — pendingCaptures cleared on unmount
+    await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(false));
+  });
+
+  it('re-enables submit when config changes and removes a pending Signature field', async () => {
+    const signatureTransport: SignatureTransport = vi.fn(() => ({
+      result: new Promise<string>(() => {}), // never resolves — keeps status 'pending'
+      cancel: vi.fn(),
+    }));
+
+    const { rerender } = render(
+      <ConfigForm
+        config={signatureConfig}
+        onSubmit={() => {}}
+        signatureTransport={signatureTransport}
+      />,
+    );
+
+    const submitBtn = screen.getByRole('button', { name: /submit/i });
+
+    // Start a pending capture — submit becomes disabled
+    fireEvent.click(screen.getByRole('button', { name: /capture signature/i }));
+    await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(true));
+
+    // Replace config with one that has no Signature field
+    rerender(<ConfigForm config={baseConfig} onSubmit={() => {}} signatureTransport={signatureTransport} />);
+
+    // Submit must no longer be disabled — pendingCaptures cleared on config change
+    await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(false));
+  });
 });
