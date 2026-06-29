@@ -22,6 +22,8 @@ const DATATYPE_BY_COMPONENT: Record<FieldComponent, FieldConfig['dataType']> = {
   Switch: 'boolean',
   Radio: 'string',
   DatePicker: 'date',
+  CheckboxGroup: 'array',
+  TagList: 'array',
 };
 
 const COMPONENTS: FieldComponent[] = [

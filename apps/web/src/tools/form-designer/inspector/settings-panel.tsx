@@ -10,7 +10,17 @@ import { ConditionalSection } from "./conditional";
 import { DataSourceSection } from "./data-source";
 import { cardLabel, type Card, type Group, type Component } from "../model";
 import { INPUT_CLS } from "./constants";
-const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
+
+const COMPONENTS: Component[] = [
+  "Input", "Textarea", "Number", "Email",
+  "Select", "Radio", "Checkbox", "CheckboxGroup", "TagList",
+  "Switch", "Date", "DatePicker",
+];
+
+// Components that show the Options editor and/or Data Source section.
+const OPTIONS_COMPONENTS = new Set<Component>(["Select", "Radio", "CheckboxGroup", "TagList"]);
+const DATASOURCE_COMPONENTS = new Set<Component>(["Select", "Radio", "CheckboxGroup", "TagList"]);
+
 const COLS = 12;
 
 // "Has content" indicators shown on section headers.
@@ -30,6 +40,7 @@ export function SettingsPanel({
     );
   }
   const isField = card.kind === "field";
+  const comp = card.component;
   return (
     <div className="flex flex-col gap-3">
       <Section title="Basics">
@@ -50,12 +61,24 @@ export function SettingsPanel({
               </select>
             </label>
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              Description
+              <input className={INPUT_CLS} value={cardLabel(card.description ?? "")} onChange={(e) => onChange({ description: e.target.value || undefined })} />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               Placeholder
               <input className={INPUT_CLS} value={card.placeholder ?? ""} onChange={(e) => onChange({ placeholder: e.target.value })} />
             </label>
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
               <input type="checkbox" checked={Boolean(card.required)} onChange={(e) => onChange({ required: e.target.checked || undefined })} />
               Required
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input type="checkbox" checked={Boolean(card.disabled)} onChange={(e) => onChange({ disabled: e.target.checked || undefined })} />
+              Disabled
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input type="checkbox" checked={Boolean(card.readOnly)} onChange={(e) => onChange({ readOnly: e.target.checked || undefined })} />
+              Read-only
             </label>
           </>
         ) : null}
@@ -82,7 +105,7 @@ export function SettingsPanel({
         </Section>
       ) : null}
 
-      {isField && card.component === "Select" ? (
+      {isField && comp && OPTIONS_COMPONENTS.has(comp) ? (
         <Section title="Options" badge={card.options?.length ? <Count n={card.options.length} /> : undefined}>
           <OptionsSection card={card} onChange={onChange} />
         </Section>
@@ -94,7 +117,7 @@ export function SettingsPanel({
         </Section>
       ) : null}
 
-      {isField && card.component === "Select" ? (
+      {isField && comp && DATASOURCE_COMPONENTS.has(comp) ? (
         <Section title="Data Source" defaultOpen={false} badge={card.dataSource ? <Dot /> : undefined}>
           <DataSourceSection card={card} onChange={onChange} />
         </Section>

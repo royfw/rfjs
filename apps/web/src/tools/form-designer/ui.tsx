@@ -12,6 +12,12 @@ import {
   Plus,
   Copy,
   Check,
+  CircleDot,
+  CheckSquare,
+  ListChecks,
+  Tags,
+  Calendar,
+  Mail,
 } from "lucide-react";
 
 import { ConfigForm } from "@rfjs/form-builder-ui";
@@ -79,6 +85,21 @@ const packGroup = (cards: Card[]): Card[] => {
   });
 };
 const SEED_CARDS: Card[] = SEED.groups.flatMap((g) => packGroup(SEED.cards.filter((c) => c.groupId === g.id)));
+
+// Component-specific palette entries for field cards.
+const COMPONENT_PALETTE: Array<{
+  component: Component;
+  label: string;
+  color: string;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+}> = [
+  { component: "Radio", label: "Radio", color: "#5b8cff", icon: CircleDot },
+  { component: "Checkbox", label: "Checkbox", color: "#5b8cff", icon: CheckSquare },
+  { component: "CheckboxGroup", label: "Checkbox Group", color: "#5b8cff", icon: ListChecks },
+  { component: "TagList", label: "Tag List", color: "#5b8cff", icon: Tags },
+  { component: "Date", label: "Date", color: "#5b8cff", icon: Calendar },
+  { component: "Email", label: "Email", color: "#5b8cff", icon: Mail },
+];
 
 let seq = 100;
 let gseq = 10;
@@ -233,20 +254,21 @@ export function FormDesignerTool() {
     window.addEventListener("pointerup", onUp);
   }
 
-  function addCard(kind: Kind) {
+  function addCard(kind: Kind, component?: Component) {
     const groupId = selectedCard?.groupId || groups[0]?.id;
     if (!groupId) return;
     const maxRow = cards.filter((c) => c.groupId === groupId).reduce((m, c) => Math.max(m, c.row), 0);
     seq += 1;
     const id = `c${seq}`;
+    const comp = kind === "field" ? (component ?? "Input") : undefined;
     setCards((cs) => [
       ...cs,
       {
         id,
         groupId,
         kind,
-        label: KIND_META[kind].label,
-        ...(kind === "field" ? { key: `field_${seq}`, component: "Input" as Component } : {}),
+        label: component ?? KIND_META[kind].label,
+        ...(kind === "field" ? { key: `field_${seq}`, component: comp as Component } : {}),
         col: 1,
         span: kind === "field" ? 6 : 12,
         row: maxRow + 1,
@@ -336,6 +358,17 @@ export function FormDesignerTool() {
                 </button>
               );
             })}
+            {COMPONENT_PALETTE.map(({ component, label, color, icon: Icon }) => (
+              <button
+                key={component}
+                type="button"
+                onClick={() => addCard("field", component)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              >
+                <Icon className="size-3.5" style={{ color }} />
+                {label}
+              </button>
+            ))}
             <div className="ml-auto flex items-center gap-2">
               <button
                 type="button"

@@ -29,7 +29,7 @@ describe("canvas <-> FormConfig", () => {
 });
 
 describe("formConfigToCards — import guards", () => {
-  it("normalizes an unsupported component (Checkbox) to Input and round-trips with a defined dataType", () => {
+  it("preserves Checkbox (now a first-class component) and round-trips with dataType boolean", () => {
     const config: FormConfig = {
       version: 1,
       sections: [
@@ -40,8 +40,8 @@ describe("formConfigToCards — import guards", () => {
             {
               id: "r1",
               items: [
-                // "Checkbox" is valid in form-builder but not in the canvas Component union
-                { id: "f1", kind: "field", key: "agree", label: "Agree", component: "Checkbox" as never, dataType: "boolean" },
+                // "Checkbox" is now valid in the canvas Component union
+                { id: "f1", kind: "field", key: "agree", label: "Agree", component: "Checkbox", dataType: "boolean" },
               ],
             },
           ],
@@ -49,11 +49,11 @@ describe("formConfigToCards — import guards", () => {
       ],
     };
     const { cards } = formConfigToCards(config);
-    expect(cards[0]?.component).toBe("Input"); // normalized
+    expect(cards[0]?.component).toBe("Checkbox"); // preserved, not normalized
     const cfg = cardsToFormConfig([{ id: "s1", title: "Section", collapsed: false }], cards);
     const item = cfg.sections![0]!.rows[0]!.items[0]!;
     expect("dataType" in item && (item as { dataType?: unknown }).dataType).toBeDefined();
-    expect((item as { dataType?: unknown }).dataType).toBe("string");
+    expect((item as { dataType?: unknown }).dataType).toBe("boolean");
   });
 
   it("assigns distinct rows (index-based) when no layout.placements present", () => {
@@ -80,6 +80,25 @@ describe("formConfigToCards — import guards", () => {
     expect(cards[0]?.row).toBe(1);
     expect(cards[1]?.row).toBe(2);
     expect(cards[0]?.row).not.toBe(cards[1]?.row);
+  });
+});
+
+describe("new components + new field props round-trip", () => {
+  it("round-trips CheckboxGroup/Radio/Date + description/disabled/readOnly without losing data", () => {
+    const cfg = {
+      version: 1,
+      sections: [{ id: "s", title: "S", rows: [{ id: "r", items: [
+        { id: "g", key: "g", label: "G", kind: "field", component: "CheckboxGroup", dataType: "array",
+          options: [{ label: "A", value: "a" }], description: "d", readOnly: true },
+        { id: "d", key: "d", label: "D", kind: "field", component: "Date", dataType: "date" },
+      ] }] }],
+    };
+    const { groups: g, cards: cs } = formConfigToCards(cfg as FormConfig);
+    const back = cardsToFormConfig(g, cs);
+    const item0 = back.sections![0]!.rows[0]!.items[0]!;
+    expect((item0 as { component?: unknown }).component).toBe("CheckboxGroup"); // not normalized to Input
+    expect((item0 as { description?: unknown }).description).toBe("d");
+    expect((item0 as { readOnly?: unknown }).readOnly).toBe(true);
   });
 });
 
