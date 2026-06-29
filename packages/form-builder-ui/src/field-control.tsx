@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import type { FieldConfig, DataSourceFetcher } from '@rfjs/form-builder';
+import { resolveLabel } from '@rfjs/form-builder';
 import { Input } from '@rfjs/web-ui/components/input';
 import { Textarea } from '@rfjs/web-ui/components/textarea';
 import { Checkbox } from '@rfjs/web-ui/components/checkbox';
@@ -18,6 +19,7 @@ import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@rfjs/web-ui/components/popover';
 import { Calendar } from '@rfjs/web-ui/components/calendar';
+import { TagInput } from '@rfjs/web-ui/components/tag-input';
 import { useDataSource } from './use-data-source';
 
 export interface FieldControlProps {
@@ -25,6 +27,8 @@ export interface FieldControlProps {
   value: unknown;
   onChange: (value: unknown) => void;
   fetcher?: DataSourceFetcher;
+  /** BCP-47 locale for resolving LocalizedLabel descriptions. Defaults to 'en'. */
+  locale?: string;
 }
 
 /** Format a Date as a LOCAL `yyyy-mm-dd` ISO string (no UTC shift). */
@@ -56,6 +60,9 @@ function SelectControl({ field, value, onChange, fetcher }: SelectControlProps) 
   // Hook ALWAYS called unconditionally — returns idle when ds or fetcher is absent.
   const dsState = useDataSource(field.dataSource, fetcher);
 
+  const effectiveDisabled = field.disabled || field.readOnly;
+  const ariaReadonly = field.readOnly || undefined;
+
   if (field.dataSource) {
     if (dsState.status === 'loading') {
       return (
@@ -70,7 +77,12 @@ function SelectControl({ field, value, onChange, fetcher }: SelectControlProps) 
     if (dsState.status === 'ready' && dsState.options.length > 0) {
       return (
         <Select value={(value as string) ?? ''} onValueChange={onChange}>
-          <SelectTrigger id={field.key} className="w-full">
+          <SelectTrigger
+            id={field.key}
+            className="w-full"
+            disabled={effectiveDisabled}
+            aria-readonly={ariaReadonly}
+          >
             <SelectValue placeholder={field.placeholder} />
           </SelectTrigger>
           <SelectContent>
@@ -94,7 +106,12 @@ function SelectControl({ field, value, onChange, fetcher }: SelectControlProps) 
   // No dataSource → static options (unchanged behavior)
   return (
     <Select value={(value as string) ?? ''} onValueChange={onChange}>
-      <SelectTrigger id={field.key} className="w-full">
+      <SelectTrigger
+        id={field.key}
+        className="w-full"
+        disabled={effectiveDisabled}
+        aria-readonly={ariaReadonly}
+      >
         <SelectValue placeholder={field.placeholder} />
       </SelectTrigger>
       <SelectContent>
@@ -119,13 +136,22 @@ function RadioControl({ field, value, onChange, fetcher }: RadioControlProps) {
   // Hook ALWAYS called unconditionally — returns idle when ds or fetcher is absent.
   const dsState = useDataSource(field.dataSource, fetcher);
 
+  const effectiveDisabled = field.disabled || field.readOnly;
+  const ariaReadonly = field.readOnly || undefined;
+
   if (field.dataSource) {
     if (dsState.status === 'loading') {
       return <p className="text-sm text-muted-foreground">Loading…</p>;
     }
     if (dsState.status === 'ready' && dsState.options.length > 0) {
       return (
-        <RadioGroup id={field.key} value={String(value ?? '')} onValueChange={onChange}>
+        <RadioGroup
+          id={field.key}
+          value={String(value ?? '')}
+          onValueChange={onChange}
+          disabled={effectiveDisabled}
+          aria-readonly={ariaReadonly}
+        >
           {dsState.options.map((opt) => (
             <div key={String(opt.value)} className="flex items-center gap-2">
               <RadioGroupItem
@@ -148,7 +174,13 @@ function RadioControl({ field, value, onChange, fetcher }: RadioControlProps) {
 
   // No dataSource → static options (unchanged behavior)
   return (
-    <RadioGroup id={field.key} value={String(value ?? '')} onValueChange={onChange}>
+    <RadioGroup
+      id={field.key}
+      value={String(value ?? '')}
+      onValueChange={onChange}
+      disabled={effectiveDisabled}
+      aria-readonly={ariaReadonly}
+    >
       {(field.options ?? []).map((opt) => (
         <div key={String(opt.value)} className="flex items-center gap-2">
           <RadioGroupItem
@@ -164,71 +196,105 @@ function RadioControl({ field, value, onChange, fetcher }: RadioControlProps) {
 
 // --- Main FieldControl ---
 
-export function FieldControl({ field, value, onChange, fetcher }: FieldControlProps) {
+export function FieldControl({ field, value, onChange, fetcher, locale = 'en' }: FieldControlProps) {
+  const disabled = field.disabled;
+  const readOnly = field.readOnly;
+  // Radix controls have no readOnly — treat readOnly as disabled for interaction,
+  // but signal the semantic via aria-readonly so assistive tech reports it correctly.
+  const effectiveDisabled = disabled || readOnly;
+  const ariaReadonly = readOnly || undefined;
+
+  let control: React.ReactNode;
+
   switch (field.component) {
     case 'Textarea':
-      return (
+      control = (
         <Textarea
           id={field.key}
           placeholder={field.placeholder}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          readOnly={readOnly}
         />
       );
+      break;
     case 'Checkbox':
-      return (
+      control = (
         <Checkbox
           id={field.key}
           checked={Boolean(value)}
           onCheckedChange={(checked) => onChange(checked === true)}
+          disabled={effectiveDisabled}
+          aria-readonly={ariaReadonly}
         />
       );
+      break;
     case 'Select':
-      return <SelectControl field={field} value={value} onChange={onChange} fetcher={fetcher} />;
+      control = <SelectControl field={field} value={value} onChange={onChange} fetcher={fetcher} />;
+      break;
     case 'Date':
-      return (
+      control = (
         <Input
           id={field.key}
           type="date"
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          readOnly={readOnly}
         />
       );
+      break;
     case 'Number':
-      return (
+      control = (
         <Input
           id={field.key}
           type="number"
           placeholder={field.placeholder}
           value={(value as string | number | undefined) ?? ''}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          readOnly={readOnly}
         />
       );
+      break;
     case 'Email':
-      return (
+      control = (
         <Input
           id={field.key}
           type="email"
           placeholder={field.placeholder}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          readOnly={readOnly}
         />
       );
+      break;
     case 'Switch':
-      return (
+      control = (
         <Switch
           id={field.key}
           checked={Boolean(value)}
           onCheckedChange={(c) => onChange(c === true)}
+          disabled={effectiveDisabled}
+          aria-readonly={ariaReadonly}
         />
       );
+      break;
     case 'Radio':
-      return <RadioControl field={field} value={value} onChange={onChange} fetcher={fetcher} />;
+      control = <RadioControl field={field} value={value} onChange={onChange} fetcher={fetcher} />;
+      break;
     case 'DatePicker':
-      return (
+      control = (
         <Popover>
           <PopoverTrigger asChild>
-            <Button id={field.key} variant="outline">
+            <Button
+              id={field.key}
+              variant="outline"
+              disabled={effectiveDisabled}
+              aria-readonly={ariaReadonly}
+            >
               {(value as string) || (field.placeholder ?? 'Pick a date')}
             </Button>
           </PopoverTrigger>
@@ -241,16 +307,70 @@ export function FieldControl({ field, value, onChange, fetcher }: FieldControlPr
           </PopoverContent>
         </Popover>
       );
+      break;
+    case 'CheckboxGroup': {
+      const arr = (value as string[]) ?? [];
+      control = (
+        <div className="flex flex-col gap-2">
+          {(field.options ?? []).map((opt) => (
+            <div key={String(opt.value)} className="flex items-center gap-2">
+              <Checkbox
+                id={`${field.key}-${opt.value}`}
+                checked={arr.includes(String(opt.value))}
+                onCheckedChange={(checked) => {
+                  if (checked === true) {
+                    onChange([...arr, String(opt.value)]);
+                  } else {
+                    onChange(arr.filter((v) => v !== String(opt.value)));
+                  }
+                }}
+                disabled={effectiveDisabled}
+                aria-readonly={ariaReadonly}
+              />
+              <Label htmlFor={`${field.key}-${opt.value}`}>{opt.label}</Label>
+            </div>
+          ))}
+        </div>
+      );
+      break;
+    }
+    case 'TagList':
+      control = (
+        <TagInput
+          id={field.key}
+          value={(value as string[]) ?? []}
+          onChange={(next) => onChange(next)}
+          options={field.options?.map((opt) => ({
+            label: String(opt.label),
+            value: String(opt.value),
+          }))}
+          creatable={field.creatable}
+          disabled={effectiveDisabled}
+          placeholder={field.placeholder}
+        />
+      );
+      break;
     case 'Input':
     default:
-      return (
+      control = (
         <Input
           id={field.key}
           type={field.dataType === 'numeric' ? 'number' : 'text'}
           placeholder={field.placeholder}
           value={(value as string | number | undefined) ?? ''}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          readOnly={readOnly}
         />
       );
   }
+
+  const descText = field.description ? resolveLabel(field.description, locale) : undefined;
+
+  return (
+    <>
+      {control}
+      {descText && <p className="text-xs text-muted-foreground">{descText}</p>}
+    </>
+  );
 }
