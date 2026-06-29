@@ -54,6 +54,11 @@ const DATATYPE: Record<Component, ScalarType> = {
 // Canvas-supported components — anything outside this set is normalized to "Input" on import.
 const CANVAS_COMPONENT_SET = new Set<string>(Object.keys(DATATYPE));
 
+/** Returns the engine dataType for a given component (defaults to "string"). */
+export function componentDataType(component?: Component): ScalarType {
+  return DATATYPE[component ?? "Input"] ?? "string";
+}
+
 function cardToItem(c: Card): FormItem {
   switch (c.kind) {
     case "field":
