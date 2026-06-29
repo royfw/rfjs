@@ -139,3 +139,18 @@ describe("full-config round-trip", () => {
     expect(cardLabel({ "zh-TW": "嗨" }, "en")).toBe("嗨"); // falls back to first value
   });
 });
+
+describe("FileUpload / Signature round-trip", () => {
+  it("round-trips FileUpload config (accept/multiple/maxSize) and Signature", () => {
+    const cfg = { sections: [{ id: "s", title: "S", rows: [{ id: "r", items: [
+      { id: "fu", key: "f", kind: "field", label: "F", component: "FileUpload", dataType: "object", fileUpload: { accept: "image/*", multiple: true, maxSize: 1000 } },
+      { id: "sig", key: "s", kind: "field", label: "S", component: "Signature", dataType: "string" },
+    ] }] }] };
+    const { groups: g, cards: cs } = formConfigToCards(cfg as any);
+    const back = cardsToFormConfig(g, cs);
+    const items = back.sections![0]!.rows[0]!.items;
+    expect((items[0] as any).component).toBe("FileUpload");
+    expect((items[0] as any).fileUpload).toEqual({ accept: "image/*", multiple: true, maxSize: 1000 });
+    expect((items[1] as any).component).toBe("Signature");
+  });
+});

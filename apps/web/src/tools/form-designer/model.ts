@@ -28,6 +28,7 @@ export interface Card {
   readOnly?: boolean;
   creatable?: boolean;
   aiNote?: string;
+  fileUpload?: { accept?: string; multiple?: boolean; maxSize?: number };
   locked?: boolean; // content
   size?: "sm" | "md" | "lg"; // spacer
   col: number;
@@ -61,6 +62,8 @@ const DATATYPE: Record<Component, FieldType> = {
   DatePicker: "date",
   CheckboxGroup: "array",
   TagList: "array",
+  FileUpload: "object",
+  Signature: "string",
 };
 
 /** Returns the engine dataType for a given component (defaults to "string"). */
@@ -86,6 +89,7 @@ function cardToItem(c: Card): FormItem {
         ...(c.readOnly ? { readOnly: c.readOnly } : {}),
         ...(c.creatable ? { creatable: c.creatable } : {}),
         ...(c.aiNote ? { aiNote: c.aiNote } : {}),
+        ...(c.fileUpload ? { fileUpload: c.fileUpload } : {}),
       };
     case "content":
       return { id: c.id, kind: "content", text: c.label, ...(c.locked ? { locked: true } : {}) };
@@ -139,6 +143,7 @@ export function formConfigToCards(config: FormConfig): { groups: Group[]; cards:
           conditional: item.conditional, dataSource: item.dataSource,
           description: item.description, disabled: item.disabled, readOnly: item.readOnly, creatable: item.creatable,
           aiNote: item.aiNote,
+          fileUpload: item.fileUpload,
         });
       } else if (item.kind === "content") {
         cards.push({ ...base, kind: "content", label: item.text, locked: item.locked });

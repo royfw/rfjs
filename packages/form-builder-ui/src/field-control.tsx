@@ -94,6 +94,7 @@ function FileUploadControl({ field, value: _value, onChange, uploadHandler, onFi
     );
   }
 
+  const handler = uploadHandler;
   const { accept, multiple, maxSize } = field.fileUpload ?? {};
 
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -112,7 +113,7 @@ function FileUploadControl({ field, value: _value, onChange, uploadHandler, onFi
     if (accepted.length === 0) return;
 
     try {
-      const refs = await Promise.all(accepted.map((f) => uploadHandler(f, { fieldKey: field.key })));
+      const refs = await Promise.all(accepted.map((f) => handler(f, { fieldKey: field.key })));
       onChange(multiple ? refs : refs[0]);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';

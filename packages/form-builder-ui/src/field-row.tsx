@@ -24,6 +24,8 @@ const DATATYPE_BY_COMPONENT: Record<FieldComponent, FieldConfig['dataType']> = {
   DatePicker: 'date',
   CheckboxGroup: 'array',
   TagList: 'array',
+  FileUpload: 'object',
+  Signature: 'string',
 };
 
 const COMPONENTS: FieldComponent[] = [

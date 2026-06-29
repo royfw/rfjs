@@ -18,12 +18,14 @@ import {
   Tags,
   Calendar,
   Mail,
+  Upload,
+  PenLine,
 } from "lucide-react";
 
 import { ConfigForm } from "@rfjs/form-builder-ui";
 import type { Card, Group, Kind, Component } from "./model";
 import { cardsToFormConfig, jsonToCards, cardLabel, componentDataType, formConfigToCards } from "./model";
-import { SAMPLE_CONFIG, sampleFetcher } from "../form-builder/sample";
+import { SAMPLE_CONFIG, sampleFetcher, sampleUploader } from "../form-builder/sample";
 import { resolveCards, moveItem } from "./layout-grid";
 import { SettingsPanel } from "./inspector/settings-panel";
 
@@ -99,6 +101,8 @@ const COMPONENT_PALETTE: Array<{
   { component: "TagList", label: "Tag List", color: "#5b8cff", icon: Tags },
   { component: "Date", label: "Date", color: "#5b8cff", icon: Calendar },
   { component: "Email", label: "Email", color: "#5b8cff", icon: Mail },
+  { component: "FileUpload", label: "File Upload", color: "#5b8cff", icon: Upload },
+  { component: "Signature", label: "Signature", color: "#5b8cff", icon: PenLine },
 ];
 
 let seq = 100;
@@ -452,7 +456,7 @@ export function FormDesignerTool() {
         </>
       ) : tab === "preview" ? (
         <div className="rounded-xl border border-border bg-card/30 p-6">
-          <ConfigForm config={formConfig} locale="en" fetcher={sampleFetcher} onSubmit={() => {}} />
+          <ConfigForm config={formConfig} locale="en" fetcher={sampleFetcher} uploadHandler={sampleUploader} onSubmit={() => {}} />
         </div>
       ) : (
         <div className="flex flex-col gap-2">

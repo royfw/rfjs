@@ -15,6 +15,7 @@ const COMPONENTS: Component[] = [
   "Input", "Textarea", "Number", "Email",
   "Select", "Radio", "Checkbox", "CheckboxGroup", "TagList",
   "Switch", "Date", "DatePicker",
+  "FileUpload", "Signature",
 ];
 
 // Components that show the Options editor and/or Data Source section.
@@ -121,6 +122,50 @@ export function SettingsPanel({
       {isField ? (
         <Section title="AI Note" defaultOpen={false} badge={card.aiNote ? <Dot /> : undefined}>
           <AiNoteSection card={card} onChange={onChange} />
+        </Section>
+      ) : null}
+
+      {isField && comp === "FileUpload" ? (
+        <Section title="File Upload" badge={card.fileUpload && (card.fileUpload.accept || card.fileUpload.multiple || card.fileUpload.maxSize !== undefined) ? <Dot /> : undefined}>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Accept
+            <input
+              className={INPUT_CLS}
+              value={card.fileUpload?.accept ?? ""}
+              placeholder="e.g. image/*,.pdf"
+              onChange={(e) => onChange({ fileUpload: { ...card.fileUpload, accept: e.target.value || undefined } })}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={Boolean(card.fileUpload?.multiple)}
+              onChange={(e) => onChange({ fileUpload: { ...card.fileUpload, multiple: e.target.checked || undefined } })}
+            />
+            Allow multiple files
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Max size (bytes)
+            <input
+              className={INPUT_CLS}
+              type="number"
+              min={0}
+              value={card.fileUpload?.maxSize ?? ""}
+              placeholder="e.g. 5242880"
+              onChange={(e) => {
+                const v = e.target.value ? Number(e.target.value) : undefined;
+                onChange({ fileUpload: { ...card.fileUpload, maxSize: v } });
+              }}
+            />
+          </label>
+        </Section>
+      ) : null}
+
+      {isField && comp === "Signature" ? (
+        <Section title="Signature">
+          <p className="text-xs text-muted-foreground">
+            Hand-drawn signature pad. No extra config required.
+          </p>
         </Section>
       ) : null}
 
