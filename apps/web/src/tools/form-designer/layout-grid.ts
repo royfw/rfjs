@@ -1,4 +1,4 @@
-// Pure grid collision + compaction for the form-canvas (react-grid-layout-style, vertical compaction).
+// Pure grid collision + compaction for the form-designer (react-grid-layout-style, vertical compaction).
 // Operates on a per-group 12-column grid; only ROW positions change (col/span are user-driven).
 
 export interface GridItem {

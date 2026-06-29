@@ -114,7 +114,7 @@ export const toolRegistry: ToolDefinition[] = [
     tags: ['form', 'builder', 'config'],
   },
   {
-    id: 'form-canvas',
+    id: 'form-designer',
     category: 'generator',
     surface: 'web',
     status: 'preview',

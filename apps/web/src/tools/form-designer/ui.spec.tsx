@@ -23,12 +23,12 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
 
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { FormCanvasTool } from "./ui";
+import { FormDesignerTool } from "./ui";
 import { resolveCards, collides, type PlacedCard } from "./layout-grid";
 
-describe("FormCanvasTool preview", () => {
+describe("FormDesignerTool preview", () => {
   it("Preview tab renders the real ConfigForm with a labelled control", () => {
-    render(<FormCanvasTool />);
+    render(<FormDesignerTool />);
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // The seed has a "Name" field → real <Label> + a real input render.
     expect(screen.getByText("Name")).toBeTruthy();
@@ -36,7 +36,7 @@ describe("FormCanvasTool preview", () => {
   });
 
   it("JSON tab shows a FormConfig (version + sections)", () => {
-    render(<FormCanvasTool />);
+    render(<FormDesignerTool />);
     fireEvent.click(screen.getByRole("button", { name: /^json$/i }));
     const ta = screen.getByLabelText(/config json/i) as HTMLTextAreaElement;
     const parsed = JSON.parse(ta.value);
@@ -60,9 +60,9 @@ describe("canvas no-overlap invariant", () => {
   });
 });
 
-describe("FormCanvasTool drag threshold", () => {
+describe("FormDesignerTool drag threshold", () => {
   it("a sub-threshold pointer move (a click) does not move the card", () => {
-    render(<FormCanvasTool />);
+    render(<FormDesignerTool />);
     const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
     const before = card.style.gridColumn;
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
@@ -72,9 +72,9 @@ describe("FormCanvasTool drag threshold", () => {
   });
 });
 
-describe("FormCanvasTool group reorder", () => {
+describe("FormDesignerTool group reorder", () => {
   it("each group has a reorder handle", () => {
-    render(<FormCanvasTool />);
+    render(<FormDesignerTool />);
     expect(screen.getAllByRole("button", { name: /reorder group/i }).length).toBeGreaterThanOrEqual(2);
   });
 });

@@ -116,7 +116,7 @@ export const packageRegistry: PackageDefinition[] = [
     href: '/packages/form-builder',
     github: GITHUB,
     tags: ['form', 'builder', 'config'],
-    relatedTools: ['form-builder', 'form-canvas'],
+    relatedTools: ['form-builder', 'form-designer'],
   },
   {
     name: '@rfjs/pg-toolkit',

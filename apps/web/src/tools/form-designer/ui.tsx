@@ -67,7 +67,7 @@ let seq = 100;
 let gseq = 10;
 
 
-export function FormCanvasTool() {
+export function FormDesignerTool() {
   const [groups, setGroups] = React.useState<Group[]>(SEED_GROUPS);
   const [cards, setCards] = React.useState<Card[]>(SEED_CARDS);
   const [selected, setSelected] = React.useState<string | null>(null);
