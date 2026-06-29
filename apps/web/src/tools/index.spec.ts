@@ -22,7 +22,7 @@ const EXPECTED_WEB_TOOL_IDS = [
   "es-client-demo",
   "pg-filter-builder",
   "form-builder",
-  "form-canvas",
+  "form-designer",
 ].sort();
 
 describe("implementation registry", () => {
