@@ -443,4 +443,12 @@ describe('configToZod — multi-value components', () => {
     expect(schema.safeParse({ agree: false }).success).toBe(false);
     expect(schema.safeParse({ agree: true }).success).toBe(true);
   });
+
+  it('non-creatable TagList with options validates as enum array', () => {
+    const schema = configToZod(mkConfig({ key: 't', component: 'TagList',
+      options: [{ label: 'X', value: 'x' }] }));
+    expect(schema.safeParse({ t: ['x'] }).success).toBe(true);
+    expect(schema.safeParse({ t: 'x' }).success).toBe(false);        // single string rejected
+    expect(schema.safeParse({ t: ['unknown'] }).success).toBe(false); // out-of-enum rejected
+  });
 });
