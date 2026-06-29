@@ -5,11 +5,13 @@ import type { FormConfig } from './types';
 
 // Permissive structural schema for ConditionalRule (FilterMatchQuery).
 // We validate shape (logic + filters array) without deep-validating every operator.
+// elementType is preserved explicitly so it survives a parse/serialize round-trip.
 const conditionSchema: ZodTypeAny = z.object({
   field: z.string(),
   dataType: z.string(),
   operator: z.string(),
   value: z.unknown().optional(),
+  elementType: z.string().optional(),
 });
 
 // Recursive group schema: z.lazy defers the self-reference so the outer `conditionalSchema`
@@ -64,11 +66,17 @@ const fieldValidationSchema = z.object({
   message: z.string().optional(),
 });
 
-const fieldConfigSchema = z.object({
+const localizedLabelSchema = z.union([z.string(), z.record(z.string(), z.string())]);
+
+// Internal raw ZodObject — used by fieldItemSchema.extend() which requires a ZodObject, not ZodEffects.
+const fieldConfigObjectSchema = z.object({
   key: z.string().min(1),
-  label: z.union([z.string(), z.record(z.string(), z.string())]),
-  component: z.enum(['Input', 'Textarea', 'Select', 'Checkbox', 'Date', 'Number', 'Email', 'Switch', 'Radio', 'DatePicker']),
-  dataType: z.enum(['string', 'numeric', 'date', 'boolean', 'object', 'array']),
+  label: localizedLabelSchema,
+  component: z.enum([
+    'Input', 'Textarea', 'Select', 'Checkbox', 'Date', 'Number', 'Email', 'Switch', 'Radio', 'DatePicker',
+    'CheckboxGroup', 'TagList',
+  ]),
+  dataType: z.enum(['string', 'numeric', 'date', 'boolean', 'object', 'array']).optional(),
   required: z.boolean().optional(),
   placeholder: z.string().optional(),
   defaultValue: z.unknown().optional(),
@@ -77,11 +85,20 @@ const fieldConfigSchema = z.object({
   validation: fieldValidationSchema.optional(),
   conditional: conditionalSchema.optional(),
   dataSource: dataSourceSchema.optional(),
+  description: localizedLabelSchema.optional(),
+  disabled: z.boolean().optional(),
+  readOnly: z.boolean().optional(),
+  creatable: z.boolean().optional(),
 });
 
-const localizedLabelSchema = z.union([z.string(), z.record(z.string(), z.string())]);
+// Exported schema — includes TagList superRefine: options required unless creatable.
+export const fieldConfigSchema = fieldConfigObjectSchema.superRefine((val, ctx) => {
+  if (val.component === 'TagList' && val.creatable !== true && !(val.options?.length)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['options'], message: 'TagList requires options unless creatable' });
+  }
+});
 
-const fieldItemSchema = fieldConfigSchema.extend({
+const fieldItemSchema = fieldConfigObjectSchema.extend({
   id: z.string().min(1),
   kind: z.literal('field'),
   aiNote: z.string().optional(),
@@ -149,6 +166,9 @@ export const FormConfigSchema: ZodType<FormConfig> = z
     (c) => c.fields !== undefined || c.sections !== undefined,
     'config must have fields or sections'
   );
+
+/** Alias for FormConfigSchema — provided for ergonomic named imports. */
+export const formConfigSchema = FormConfigSchema;
 
 export function parseFormConfig(input: unknown): FormConfig {
   return FormConfigSchema.parse(input) as FormConfig;

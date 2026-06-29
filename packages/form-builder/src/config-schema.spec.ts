@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseFormConfig, FormConfigSchema } from './config-schema';
+import { parseFormConfig, FormConfigSchema, fieldConfigSchema, formConfigSchema } from './config-schema';
 
 const valid = {
   version: 1,
@@ -352,6 +352,46 @@ describe('conditional field visibility schema', () => {
       ],
     };
     expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+});
+
+describe('CheckboxGroup/TagList + new props', () => {
+  it('accepts CheckboxGroup with description/disabled/readOnly', () => {
+    const r = fieldConfigSchema.safeParse({
+      key: 'tags', label: 'Tags', component: 'CheckboxGroup',
+      options: [{ label: 'A', value: 'a' }],
+      description: 'pick some', disabled: false, readOnly: true,
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('requires options for non-creatable TagList', () => {
+    const r = fieldConfigSchema.safeParse({ key: 't', label: 'T', component: 'TagList' });
+    expect(r.success).toBe(false);
+  });
+
+  it('allows creatable TagList without options', () => {
+    const r = fieldConfigSchema.safeParse({ key: 't', label: 'T', component: 'TagList', creatable: true });
+    expect(r.success).toBe(true);
+  });
+
+  it('preserves description (LocalizedLabel record) and elementType on round-trip', () => {
+    const cfg = {
+      version: 1,
+      sections: [{ id: 's', title: 'S', rows: [{ id: 'r', items: [
+        {
+          id: 'f1', kind: 'field',
+          key: 'tags', label: { en: 'Tags', 'zh-TW': '標籤' }, component: 'CheckboxGroup', dataType: 'string',
+          description: { en: 'help', 'zh-TW': '說明' }, options: [{ label: 'A', value: 'a' }],
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'tags', dataType: 'string', operator: 'terms', value: ['a'], elementType: 'string' }],
+          },
+        },
+      ] }] }],
+    };
+    const parsed = formConfigSchema.parse(cfg);
+    expect(JSON.parse(JSON.stringify(parsed))).toEqual(cfg);
   });
 });
 

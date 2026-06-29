@@ -35,7 +35,9 @@ export type FieldComponent =
   | 'Email'
   | 'Switch'
   | 'Radio'
-  | 'DatePicker';
+  | 'DatePicker'
+  | 'CheckboxGroup'
+  | 'TagList';
 
 export type FieldWidth = 'full' | 'half';
 
@@ -59,7 +61,7 @@ export interface FieldConfig {
   key: string;
   label: LocalizedLabel;
   component: FieldComponent;
-  dataType: FieldType;
+  dataType?: FieldType;
   required?: boolean;
   placeholder?: string;
   defaultValue?: unknown;
@@ -68,6 +70,11 @@ export interface FieldConfig {
   validation?: FieldValidation;
   conditional?: ConditionalRule;
   dataSource?: DataSource;
+  description?: LocalizedLabel;
+  disabled?: boolean;
+  readOnly?: boolean;
+  /** TagList: allows free-text entry without a predefined options list. */
+  creatable?: boolean;
 }
 
 export type ItemKind = 'field' | 'content' | 'divider' | 'spacer' | 'ai-note';
