@@ -48,12 +48,37 @@ const KIND_META: Record<
 const fieldSub = (c: Card) => (c.kind === "field" ? `${c.key ?? "field"} · ${c.component ?? "Input"}` : undefined);
 
 // Seed the canvas from the SAME demo as the form-builder tool (shared SAMPLE_CONFIG),
-// so both tools showcase the same example. The sample has no grid layout (it's the
-// linear builder's config), so each card lands full-width stacked, mirroring the
-// form-builder's one-field-per-row look — the user can drag to a 2-column layout.
+// but lay it out in COLUMNS to show off what form-designer can do that the linear
+// form-builder can't: short fields pack two-per-row; long/structural items
+// (textarea, content, ai-note, divider, spacer) take the full row.
 const SEED = formConfigToCards(SAMPLE_CONFIG);
 const SEED_GROUPS: Group[] = SEED.groups;
-const SEED_CARDS: Card[] = SEED.cards.map((c) => ({ ...c, col: 1, span: 12 }));
+
+const seedSpan = (c: Card): number => {
+  if (c.kind !== "field") return COLS; // content / ai-note / divider / spacer → full row
+  if (c.component === "Textarea") return COLS; // textareas read better full-width
+  return COLS / 2; // ordinary fields → two per row (the column advantage)
+};
+// Flow-pack a group's cards into rows of up to COLS columns.
+const packGroup = (cards: Card[]): Card[] => {
+  let row = 1;
+  let x = 0; // 0-based column offset filled so far in the current row
+  return cards.map((c) => {
+    const span = seedSpan(c);
+    if (x + span > COLS) {
+      row += 1;
+      x = 0;
+    }
+    const placed: Card = { ...c, col: x + 1, span, row };
+    x += span;
+    if (x >= COLS) {
+      row += 1;
+      x = 0;
+    }
+    return placed;
+  });
+};
+const SEED_CARDS: Card[] = SEED.groups.flatMap((g) => packGroup(SEED.cards.filter((c) => c.groupId === g.id)));
 
 let seq = 100;
 let gseq = 10;
