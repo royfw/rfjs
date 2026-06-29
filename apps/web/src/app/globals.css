@@ -1,8 +1,10 @@
 @import "@rfjs/web-ui/globals.css";
 
-/* @rfjs/filter-builder-ui ships its own Tailwind classes (the filter-tree
-   editor) that this app renders via transpilePackages. Tailwind only generates
-   CSS for classes it can find by scanning source, so its src must be an
-   explicit @source — otherwise classes unique to that package (e.g. the
-   condition-row grid, the logic badges) produce no CSS. */
+/* @rfjs/filter-builder-ui and @rfjs/form-builder-ui ship their own Tailwind
+   classes (the filter-tree editor / the form builder + its tabs) rendered here
+   via transpilePackages. Tailwind only generates CSS for classes it can find by
+   scanning source, so each package src must be an explicit @source — otherwise
+   classes unique to a package (the condition-row grid, the logic badges, or the
+   form-builder's `px-3.5` tab control) produce no CSS. */
 @source "../../../../packages/filter-builder-ui/src";
+@source "../../../../packages/form-builder-ui/src";
