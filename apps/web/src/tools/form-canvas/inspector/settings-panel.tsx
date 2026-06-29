@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import { Section } from "./section";
 import { OptionsSection } from "./options";
 import { ValidationSection } from "./validation";
+import { AiNoteSection, ContentSection, SpacerSection } from "./misc-sections";
 import { cardLabel, type Card, type Group, type Component } from "../model";
 import { INPUT_CLS } from "./constants";
 const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
@@ -69,8 +70,9 @@ export function SettingsPanel({
 
       {isField && card.component === "Select" ? <Section title="Options" defaultOpen={false}><OptionsSection card={card} onChange={onChange} /></Section> : null}
 
-      {/* Field-only sections (Conditional, Data Source, Labels, AI Note) are
-          added in later tasks. Content/Spacer sections too. */}
+      {isField ? <Section title="AI Note" defaultOpen={false}><AiNoteSection card={card} onChange={onChange} /></Section> : null}
+      {card.kind === "content" ? <Section title="Content"><ContentSection card={card} onChange={onChange} /></Section> : null}
+      {card.kind === "spacer" ? <Section title="Spacer"><SpacerSection card={card} onChange={onChange} /></Section> : null}
 
       <button
         type="button"
