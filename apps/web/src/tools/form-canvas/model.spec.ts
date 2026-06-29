@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cardsToFormConfig, formConfigToCards, type Card, type Group } from "./model";
+import { cardsToFormConfig, formConfigToCards, cardLabel, type Card, type Group } from "./model";
 import type { FormConfig } from "@rfjs/form-builder";
 
 const groups: Group[] = [{ id: "g1", title: "Account", collapsed: false }];
@@ -80,5 +80,43 @@ describe("formConfigToCards — import guards", () => {
     expect(cards[0]?.row).toBe(1);
     expect(cards[1]?.row).toBe(2);
     expect(cards[0]?.row).not.toBe(cards[1]?.row);
+  });
+});
+
+describe("full-config round-trip", () => {
+  const groups: Group[] = [{ id: "g1", title: "G", collapsed: false }];
+  const rich: Card = {
+    id: "f1", groupId: "g1", kind: "field", label: { en: "Email", "zh-TW": "電郵" },
+    key: "email", component: "Select", required: true, placeholder: "pick",
+    defaultValue: "a", options: [{ label: "A", value: "a" }, { label: "B", value: "b" }],
+    validation: { minLength: 2, pattern: "^.+$", message: "bad" },
+    conditional: { logic: "and", filters: [{ field: "role", dataType: "string", operator: "eq", value: "admin" }] },
+    dataSource: { request: { url: "/api/x" }, extract: { dialect: "path", expr: "data" }, optionLabel: "name", optionValue: "id" },
+    aiNote: "fill carefully", col: 1, span: 6, row: 1,
+  };
+  it("round-trips every field through FormConfig", () => {
+    const back = formConfigToCards(cardsToFormConfig(groups, [rich])).cards[0]!;
+    expect(back.label).toEqual({ en: "Email", "zh-TW": "電郵" });
+    expect(back.required).toBe(true);
+    expect(back.defaultValue).toBe("a");
+    expect(back.options).toEqual([{ label: "A", value: "a" }, { label: "B", value: "b" }]);
+    expect(back.validation).toEqual({ minLength: 2, pattern: "^.+$", message: "bad" });
+    expect(back.conditional!.logic).toBe("and");
+    expect(back.dataSource!.request.url).toBe("/api/x");
+    expect(back.aiNote).toBe("fill carefully");
+  });
+  it("round-trips content locked + spacer size", () => {
+    const cards: Card[] = [
+      { id: "c1", groupId: "g1", kind: "content", label: "Hi", locked: true, col: 1, span: 12, row: 1 },
+      { id: "s1", groupId: "g1", kind: "spacer", label: "Spacer", size: "lg", col: 1, span: 12, row: 2 },
+    ];
+    const back = formConfigToCards(cardsToFormConfig(groups, cards)).cards;
+    expect(back.find((c) => c.id === "c1")!.locked).toBe(true);
+    expect(back.find((c) => c.id === "s1")!.size).toBe("lg");
+  });
+  it("cardLabel resolves localized + string labels", () => {
+    expect(cardLabel({ en: "Hi", "zh-TW": "嗨" }, "zh-TW")).toBe("嗨");
+    expect(cardLabel("Plain", "en")).toBe("Plain");
+    expect(cardLabel({ "zh-TW": "嗨" }, "en")).toBe("嗨"); // falls back to first value
   });
 });

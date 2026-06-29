@@ -17,7 +17,7 @@ import {
 
 import { ConfigForm } from "@rfjs/form-builder-ui";
 import type { Card, Group, Kind, Component } from "./model";
-import { cardsToFormConfig, jsonToCards } from "./model";
+import { cardsToFormConfig, jsonToCards, cardLabel } from "./model";
 import { resolveCards } from "./layout-grid";
 
 // ---------------------------------------------------------------------------
@@ -468,7 +468,7 @@ function CanvasCard({
             >
               <Icon className="size-3" />
             </span>
-            <span className="truncate text-sm font-medium">{card.label}</span>
+            <span className="truncate text-sm font-medium">{cardLabel(card.label)}</span>
             {sub ? <span className="truncate font-mono text-[11px] text-muted-foreground/70">{sub}</span> : null}
             {card.required ? (
               <span
@@ -529,7 +529,7 @@ function Inspector({
 
       <label className="flex flex-col gap-1 text-xs text-muted-foreground">
         Label
-        <input className={input} value={card.label} onChange={(e) => onChange({ label: e.target.value })} />
+        <input className={input} value={cardLabel(card.label)} onChange={(e) => onChange({ label: e.target.value })} />
       </label>
 
       {card.kind === "field" ? (
