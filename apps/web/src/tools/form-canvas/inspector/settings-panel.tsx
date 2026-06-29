@@ -5,6 +5,7 @@ import { Section } from "./section";
 import { OptionsSection } from "./options";
 import { ValidationSection } from "./validation";
 import { AiNoteSection, ContentSection, SpacerSection } from "./misc-sections";
+import { LabelsSection } from "./labels";
 import { cardLabel, type Card, type Group, type Component } from "../model";
 import { INPUT_CLS } from "./constants";
 const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
@@ -73,6 +74,8 @@ export function SettingsPanel({
       {isField ? <Section title="AI Note" defaultOpen={false}><AiNoteSection card={card} onChange={onChange} /></Section> : null}
       {card.kind === "content" ? <Section title="Content"><ContentSection card={card} onChange={onChange} /></Section> : null}
       {card.kind === "spacer" ? <Section title="Spacer"><SpacerSection card={card} onChange={onChange} /></Section> : null}
+
+      {card.kind !== "divider" && card.kind !== "spacer" ? <Section title="Labels (i18n)" defaultOpen={false}><LabelsSection card={card} onChange={onChange} /></Section> : null}
 
       <button
         type="button"
