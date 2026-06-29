@@ -1,4 +1,8 @@
-import { parseFormConfig, type FormConfig, type FormItem, type FormSection, type ScalarType } from "@rfjs/form-builder";
+import {
+  parseFormConfig,
+  type FormConfig, type FormItem, type FormSection, type ScalarType,
+  type LocalizedLabel, type FieldOption, type FieldValidation, type ConditionalRule, type DataSource,
+} from "@rfjs/form-builder";
 
 export type Kind = "field" | "content" | "divider" | "spacer" | "ai-note";
 export type Component = "Input" | "Textarea" | "Select" | "Number" | "Switch" | "DatePicker";
@@ -7,11 +11,19 @@ export interface Card {
   id: string;
   groupId: string;
   kind: Kind;
-  label: string;
+  label: LocalizedLabel;
   key?: string;
   component?: Component;
   required?: boolean;
   placeholder?: string;
+  defaultValue?: unknown;
+  options?: FieldOption[];
+  validation?: FieldValidation;
+  conditional?: ConditionalRule;
+  dataSource?: DataSource;
+  aiNote?: string;
+  locked?: boolean; // content
+  size?: "sm" | "md" | "lg"; // spacer
   col: number;
   span: number;
   row: number;
@@ -20,6 +32,11 @@ export interface Group {
   id: string;
   title: string;
   collapsed: boolean;
+}
+
+export function cardLabel(label: LocalizedLabel, locale = "en"): string {
+  if (typeof label === "string") return label;
+  return label[locale] ?? Object.values(label)[0] ?? "";
 }
 
 const CANVAS_COLUMNS = 12;
@@ -37,27 +54,34 @@ const DATATYPE: Record<Component, ScalarType> = {
 // Canvas-supported components — anything outside this set is normalized to "Input" on import.
 const CANVAS_COMPONENT_SET = new Set<string>(Object.keys(DATATYPE));
 
+/** Returns the engine dataType for a given component (defaults to "string"). */
+export function componentDataType(component?: Component): ScalarType {
+  return DATATYPE[component ?? "Input"] ?? "string";
+}
+
 function cardToItem(c: Card): FormItem {
   switch (c.kind) {
     case "field":
       return {
-        id: c.id,
-        kind: "field",
-        key: c.key ?? c.id,
-        label: c.label,
-        component: c.component ?? "Input",
-        dataType: DATATYPE[c.component ?? "Input"] ?? "string",
+        id: c.id, kind: "field", key: c.key ?? c.id, label: c.label,
+        component: c.component ?? "Input", dataType: DATATYPE[c.component ?? "Input"] ?? "string",
         ...(c.required ? { required: true } : {}),
         ...(c.placeholder ? { placeholder: c.placeholder } : {}),
+        ...(c.defaultValue !== undefined ? { defaultValue: c.defaultValue } : {}),
+        ...(c.options ? { options: c.options } : {}),
+        ...(c.validation ? { validation: c.validation } : {}),
+        ...(c.conditional ? { conditional: c.conditional } : {}),
+        ...(c.dataSource ? { dataSource: c.dataSource } : {}),
+        ...(c.aiNote ? { aiNote: c.aiNote } : {}),
       };
     case "content":
-      return { id: c.id, kind: "content", text: c.label };
+      return { id: c.id, kind: "content", text: c.label, ...(c.locked ? { locked: true } : {}) };
     case "ai-note":
-      return { id: c.id, kind: "ai-note", text: c.label };
+      return { id: c.id, kind: "ai-note", text: cardLabel(c.label) };
     case "divider":
       return { id: c.id, kind: "divider" };
     case "spacer":
-      return { id: c.id, kind: "spacer" };
+      return { id: c.id, kind: "spacer", ...(c.size ? { size: c.size } : {}) };
   }
 }
 
@@ -97,11 +121,18 @@ export function formConfigToCards(config: FormConfig): { groups: Group[]; cards:
       if (item.kind === "field") {
         const rawComponent = item.component;
         const component = (rawComponent && CANVAS_COMPONENT_SET.has(rawComponent) ? rawComponent : "Input") as Component;
-        cards.push({ ...base, kind: "field", label: labelToString(item.label), key: item.key, component, required: item.required, placeholder: item.placeholder });
-      } else if (item.kind === "content" || item.kind === "ai-note") {
-        cards.push({ ...base, kind: item.kind, label: labelToString(item.text) });
+        cards.push({
+          ...base, kind: "field", label: item.label, key: item.key, component,
+          required: item.required, placeholder: item.placeholder,
+          defaultValue: item.defaultValue, options: item.options, validation: item.validation,
+          conditional: item.conditional, dataSource: item.dataSource, aiNote: item.aiNote,
+        });
+      } else if (item.kind === "content") {
+        cards.push({ ...base, kind: "content", label: item.text, locked: item.locked });
+      } else if (item.kind === "ai-note") {
+        cards.push({ ...base, kind: "ai-note", label: item.text });
       } else {
-        cards.push({ ...base, kind: item.kind, label: item.kind === "divider" ? "Divider" : "Spacer" });
+        cards.push({ ...base, kind: item.kind, label: item.kind === "divider" ? "Divider" : "Spacer", ...(item.kind === "spacer" ? { size: item.size } : {}) });
       }
     }
   }

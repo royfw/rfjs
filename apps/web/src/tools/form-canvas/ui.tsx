@@ -7,7 +7,6 @@ import {
   Minus,
   MoveVertical,
   Sparkles,
-  Trash2,
   ChevronDown,
   GripVertical,
   Plus,
@@ -17,8 +16,9 @@ import {
 
 import { ConfigForm } from "@rfjs/form-builder-ui";
 import type { Card, Group, Kind, Component } from "./model";
-import { cardsToFormConfig, jsonToCards } from "./model";
+import { cardsToFormConfig, jsonToCards, cardLabel, componentDataType } from "./model";
 import { resolveCards } from "./layout-grid";
+import { SettingsPanel } from "./inspector/settings-panel";
 
 // ---------------------------------------------------------------------------
 // Direction C (hybrid) — "A structure + C drag freedom", now with a builder
@@ -31,8 +31,6 @@ const COLS = 12;
 const ROW_H = 84;
 const GAP = 8;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-
-const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
 
 const KIND_META: Record<
   Kind,
@@ -80,6 +78,9 @@ export function FormCanvasTool() {
   const drag = React.useRef<{ id: string; mode: "move" | "resize"; col: number; span: number } | null>(null);
 
   const selectedCard = cards.find((c) => c.id === selected) ?? null;
+  const siblingFields = cards
+    .filter((c) => c.kind === "field" && c.id !== selectedCard?.id && c.key)
+    .map((c) => ({ key: c.key!, dataType: componentDataType(c.component) }));
   const formConfig = cardsToFormConfig(groups, cards);
 
   // Apply a drag/resize patch to the dragged card, then resolve overlaps (push + compact up).
@@ -292,20 +293,36 @@ export function FormCanvasTool() {
               </div>
             </div>
 
-            <aside className="shrink-0 lg:w-80">
-              <Inspector
-                card={selectedCard}
-                groups={groups}
-                onChange={(p) => selectedCard && updateCard(selectedCard.id, p)}
-                onRemove={() => {
-                  if (!selectedCard) return;
-                  setCards((cs) => {
-                    const remaining = cs.filter((c) => c.id !== selectedCard.id) as Card[];
-                    return resolveCards(remaining, "", COLS) as Card[]; // "" matches no id → every group compacts
-                  });
-                  setSelected(null);
-                }}
-              />
+            <aside className="shrink-0 lg:w-[420px]">
+              {/* Mobile: full-screen sheet when a card is selected; Desktop: inline column. */}
+              <div
+                className={
+                  selectedCard
+                    ? "fixed inset-0 z-30 overflow-y-auto bg-background p-4 lg:static lg:z-auto lg:bg-transparent lg:p-0"
+                    : "hidden lg:block"
+                }
+              >
+                {selectedCard ? (
+                  <button
+                    type="button"
+                    onClick={() => setSelected(null)}
+                    className="mb-3 text-xs text-muted-foreground hover:text-foreground lg:hidden"
+                  >
+                    ← Back to canvas
+                  </button>
+                ) : null}
+                <SettingsPanel
+                  card={selectedCard}
+                  groups={groups}
+                  siblingFields={siblingFields}
+                  onChange={(p) => selectedCard && updateCard(selectedCard.id, p)}
+                  onRemove={() => {
+                    if (!selectedCard) return;
+                    setCards((cs) => resolveCards(cs.filter((c) => c.id !== selectedCard.id) as Card[], "", COLS) as Card[]);
+                    setSelected(null);
+                  }}
+                />
+              </div>
             </aside>
           </div>
         </>
@@ -468,7 +485,7 @@ function CanvasCard({
             >
               <Icon className="size-3" />
             </span>
-            <span className="truncate text-sm font-medium">{card.label}</span>
+            <span className="truncate text-sm font-medium">{cardLabel(card.label)}</span>
             {sub ? <span className="truncate font-mono text-[11px] text-muted-foreground/70">{sub}</span> : null}
             {card.required ? (
               <span
@@ -492,110 +509,5 @@ function CanvasCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Inspector — right-hand per-card config panel
-// ---------------------------------------------------------------------------
 
-function Inspector({
-  card,
-  groups,
-  onChange,
-  onRemove,
-}: {
-  card: Card | null;
-  groups: Group[];
-  onChange: (p: Partial<Card>) => void;
-  onRemove: () => void;
-}) {
-  if (!card) {
-    return (
-      <div className="rounded-xl border border-dashed border-border bg-card/20 p-6 text-center text-sm text-muted-foreground">
-        Select a card to edit its config
-      </div>
-    );
-  }
-  const m = KIND_META[card.kind];
-  const Icon = m.icon;
-  const input = "h-8 w-full rounded-md border border-input bg-background px-2 text-sm";
-  return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card/30 p-4">
-      <div className="flex items-center gap-2">
-        <span className="flex size-5 items-center justify-center rounded-[5px]" style={{ backgroundColor: `${m.color}1f`, color: m.color }}>
-          <Icon className="size-3" />
-        </span>
-        <span className="text-sm font-semibold">{m.label}</span>
-        <span className="ml-auto font-mono text-[11px] text-muted-foreground/50">{card.id}</span>
-      </div>
-
-      <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-        Label
-        <input className={input} value={card.label} onChange={(e) => onChange({ label: e.target.value })} />
-      </label>
-
-      {card.kind === "field" ? (
-        <>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Key
-            <input className={`${input} font-mono`} value={card.key ?? ""} onChange={(e) => onChange({ key: e.target.value })} />
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Component
-            <select className={input} value={card.component ?? "Input"} onChange={(e) => onChange({ component: e.target.value as Component })}>
-              {COMPONENTS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Placeholder
-            <input
-              className={input}
-              value={card.placeholder ?? ""}
-              placeholder="(shown in the preview control)"
-              onChange={(e) => onChange({ placeholder: e.target.value })}
-            />
-          </label>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input type="checkbox" checked={Boolean(card.required)} onChange={(e) => onChange({ required: e.target.checked })} />
-            Required
-          </label>
-        </>
-      ) : null}
-
-      <div className="grid grid-cols-2 gap-2">
-        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-          Width (cols)
-          <select className={input} value={card.span} onChange={(e) => onChange({ span: Number(e.target.value) })}>
-            {Array.from({ length: COLS }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-          Group
-          <select className={input} value={card.groupId} onChange={(e) => onChange({ groupId: e.target.value })}>
-            {groups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.title}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <button
-        type="button"
-        onClick={onRemove}
-        className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-destructive/50 hover:text-destructive"
-      >
-        <Trash2 className="size-3.5" />
-        Delete card
-      </button>
-    </div>
-  );
-}
 
