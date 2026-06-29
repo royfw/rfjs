@@ -6,7 +6,18 @@ import { collectFieldItems } from './normalize';
 /** Converts empty string inputs to undefined so optional fields are omitted rather than coerced. */
 const emptyToUndefined = (v: unknown) => (v === '' ? undefined : v);
 
+/** Components that produce an array of values rather than a single value. */
+const MULTI_VALUE = new Set(['CheckboxGroup', 'TagList']);
+
 function baseForField(field: FieldConfig): z.ZodTypeAny {
+  // Multi-value components must be checked before the options short-circuit,
+  // because they produce arrays even when options are provided.
+  if (MULTI_VALUE.has(field.component)) {
+    if (field.component === 'TagList' && field.creatable) return z.array(z.string());
+    const values = (field.options ?? []).map((o) => String(o.value));
+    return values.length ? z.array(z.enum(values as [string, ...string[]])) : z.array(z.string());
+  }
+
   if (field.options && field.options.length > 0) {
     const values = field.options.map((o) => String(o.value));
     return z.enum(values as [string, ...string[]]);
@@ -78,11 +89,16 @@ function fieldSchema(field: FieldConfig): z.ZodTypeAny {
     base = (base as z.ZodString).email(field.validation?.message);
   }
 
+  const isMultiValue = MULTI_VALUE.has(field.component);
   const isStringLike =
     field.dataType === 'string' || field.dataType === 'date' || field.component === 'Email';
   const isNumericLike = field.dataType === 'numeric' || field.component === 'Number';
 
   if (field.required) {
+    // Multi-value: reject empty array
+    if (isMultiValue) return (base as z.ZodArray<z.ZodTypeAny>).min(1, field.validation?.message);
+    // Single Checkbox: must be checked (true)
+    if (field.component === 'Checkbox') return z.literal(true);
     // enum already rejects invalid values including ''
     if (field.options?.length) return base;
     if (isStringLike) return (base as z.ZodString).min(1, field.validation?.message);
