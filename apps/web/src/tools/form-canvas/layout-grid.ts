@@ -70,3 +70,12 @@ export function resolveCards(cards: PlacedCard[], draggedId: string, columns: nu
     return r ? { ...c, col: r.col, row: r.row } : c;
   });
 }
+
+// Move an array item from index `from` to `to` (immutable). Used for group reorder.
+export function moveItem<T>(arr: T[], from: number, to: number): T[] {
+  if (from < 0 || from >= arr.length) return arr;
+  const next = arr.slice();
+  const [m] = next.splice(from, 1) as [T];
+  next.splice(Math.max(0, Math.min(to, next.length)), 0, m);
+  return next;
+}

@@ -27,4 +27,13 @@ describe("SettingsPanel", () => {
     render(<SettingsPanel card={ai} groups={[{ id: "g1", title: "G", collapsed: false }]} onChange={() => {}} onRemove={() => {}} />);
     expect(screen.queryByRole("button", { name: /labels/i })).toBeNull();
   });
+  it("expands Validation by default (its fields are visible without clicking)", () => {
+    render(<SettingsPanel card={field} groups={[{ id: "g1", title: "G", collapsed: false }]} onChange={() => {}} onRemove={() => {}} />);
+    expect(screen.getByLabelText(/min length/i)).toBeTruthy();
+  });
+  it("shows a count badge on Options for a Select field with options", () => {
+    const sel: Card = { ...field, component: "Select", options: [{ label: "A", value: "a" }, { label: "B", value: "b" }] };
+    render(<SettingsPanel card={sel} groups={[{ id: "g1", title: "G", collapsed: false }]} onChange={() => {}} onRemove={() => {}} />);
+    expect(screen.getByRole("button", { name: /options/i }).textContent).toContain("2");
+  });
 });
