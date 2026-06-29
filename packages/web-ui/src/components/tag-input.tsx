@@ -4,7 +4,14 @@ import { ChevronDown, X } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '../lib/utils';
-import { Command, CommandGroup, CommandItem, CommandList } from './command';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from './command';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 export interface TagInputProps {
@@ -36,6 +43,7 @@ export function TagInput({
     if (!value.includes(optValue)) {
       onChange([...value, optValue]);
     }
+    setInputValue('');
     setOpen(false);
   };
 
@@ -43,18 +51,21 @@ export function TagInput({
     onChange(value.filter((v) => v !== val));
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && creatable) {
       const trimmed = inputValue.trim();
       if (trimmed && !value.includes(trimmed)) {
         onChange([...value, trimmed]);
       }
       setInputValue('');
+      setOpen(false);
       e.preventDefault();
     }
   };
 
   const hasOptions = Array.isArray(options) && options.length > 0;
+  const showTrigger = hasOptions || creatable;
+  const availableOptions = hasOptions ? options.filter((opt) => !value.includes(opt.value)) : [];
 
   return (
     <div
@@ -86,19 +97,7 @@ export function TagInput({
         );
       })}
 
-      {creatable && (
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={disabled}
-          placeholder={value.length === 0 ? placeholder : undefined}
-          className="min-w-[6rem] flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
-        />
-      )}
-
-      {hasOptions && (
+      {showTrigger && (
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <button
@@ -112,19 +111,24 @@ export function TagInput({
           </PopoverTrigger>
           <PopoverContent className="w-48 p-0" align="start">
             <Command>
+              <CommandInput
+                placeholder={placeholder ?? 'Search…'}
+                value={inputValue}
+                onValueChange={setInputValue}
+                onKeyDown={handleInputKeyDown}
+              />
               <CommandList>
+                <CommandEmpty>No options.</CommandEmpty>
                 <CommandGroup>
-                  {options!
-                    .filter((opt) => !value.includes(opt.value))
-                    .map((opt) => (
-                      <CommandItem
-                        key={opt.value}
-                        value={opt.value}
-                        onSelect={() => handleSelect(opt.value)}
-                      >
-                        {opt.label}
-                      </CommandItem>
-                    ))}
+                  {availableOptions.map((opt) => (
+                    <CommandItem
+                      key={opt.value}
+                      value={opt.value}
+                      onSelect={() => handleSelect(opt.value)}
+                    >
+                      {opt.label}
+                    </CommandItem>
+                  ))}
                 </CommandGroup>
               </CommandList>
             </Command>

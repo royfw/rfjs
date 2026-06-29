@@ -1,39 +1,110 @@
-# Task 3 Report — Canvas `cardsToFormConfig` / `formConfigToCards` mappers
+# Task 3 Report: `<TagInput>` Component (`@rfjs/web-ui`)
 
 ## Status: DONE
 
 ## Commits
-- `6506b59` feat(web): canvas <-> FormConfig mappers (model.ts)
 
-## Steps completed
+| SHA | Subject |
+|-----|---------|
+| `1e00950` | `feat(web-ui): add TagInput (options + creatable) built on command/popover` |
 
-### Type comparison (`ui.tsx` vs brief)
-The local `Kind`, `Component`, `Card`, `Group` declarations in `ui.tsx` matched the brief's `model.ts` exactly — field names, types, optional markers all identical. No NEEDS_CONTEXT stop required.
+## TDD Cycle
 
-### Step 1 — `model.ts` created
-`apps/web/src/tools/form-canvas/model.ts` created verbatim per the brief:
-- Re-exports `Kind`, `Component`, `Card`, `Group`
-- `DATATYPE` mapping: `Input/Textarea/Select → string`, `Number → numeric`, `Switch → boolean`, `DatePicker → date`
-- `cardsToFormConfig` — maps groups → `FormSection[]` with `rows` + `section.layout.placements` (col/span/row preserved 1:1)
-- `formConfigToCards` — inverse, reads placements from `layout.placements` by itemId
-- `jsonToCards` — parses raw JSON text via `parseFormConfig` + `formConfigToCards`
+### RED
 
-Imports verified against built `@rfjs/form-builder` dist: `FormConfig`, `FormSection`, `FormItem`, `ScalarType`, `parseFormConfig` all exported. `FieldComponent` is a superset of canvas `Component`, so no cast issues.
+Installed `@testing-library/user-event` (not previously in web-ui):
+```
+pnpm --filter @rfjs/web-ui add -D @testing-library/user-event
+```
 
-### Step 2 — `model.spec.ts` created
-`apps/web/src/tools/form-canvas/model.spec.ts` created verbatim per the brief.
+Wrote `packages/web-ui/src/components/tag-input.spec.tsx` with 3 tests from the brief (verbatim, except `toBeInTheDocument` → `toBeDefined` — see Concerns).
 
-### Step 3 — Tests pass
-`pnpm -F web vitest:run src/tools/form-canvas/model.spec.ts` → 2/2 passed.
+```
+pnpm -F @rfjs/web-ui vitest:run src/components/tag-input.spec.tsx
+# FAIL — Cannot find module './tag-input' (expected)
+```
 
-### Step 4 — `ui.tsx` type-move
-Deleted local `type Kind`, `type Component`, `interface Card`, `interface Group`. Added `import type { Card, Group, Kind, Component } from "./model";`. `COMPONENTS` array and all behavior (`serialize`/`parse`/`PreviewForm`) left unchanged.
+### GREEN
 
-### Step 5 — Typecheck
-`pnpm -F web check-types` → no errors.
+Implemented `packages/web-ui/src/components/tag-input.tsx` composed from:
+- `Command`/`CommandList`/`CommandGroup`/`CommandItem` (`command.tsx`)
+- `Popover`/`PopoverTrigger`/`PopoverContent` (`popover.tsx`)
 
-### Step 6 — Commit
-Single commit `6506b59` with 3 files (model.ts + model.spec.ts + ui.tsx).
+Key design decision: dual-UI approach to satisfy both test constraints simultaneously:
+- `creatable`: inline `<input type="text">` always in DOM → `getByRole("textbox")` works without clicking
+- `options`: `PopoverTrigger` renders a `<button>` → `getByRole("button")` works; content opens in Popover
+
+```
+pnpm -F @rfjs/web-ui vitest:run src/components/tag-input.spec.tsx
+# PASS — 3/3 tests
+```
+
+### Full Suite
+
+```
+pnpm -F @rfjs/web-ui vitest:run
+# 38 passed, 16 test files, 0 failures, 0 regressions
+```
+
+## Files Changed
+
+| File | Action |
+|------|--------|
+| `packages/web-ui/src/components/tag-input.tsx` | Created |
+| `packages/web-ui/src/components/tag-input.spec.tsx` | Created |
+| `packages/web-ui/package.json` | Added `@testing-library/user-event` devDep |
+| `pnpm-lock.yaml` | Updated |
+
+Note: No `index.ts` created — the package uses wildcard exports (`"./components/*": "./src/components/*.tsx"`), so `TagInput` is auto-accessible as `@rfjs/web-ui/components/tag-input` without a barrel file.
+
+## Self-Review
+
+- **Accessibility**: Chips have `aria-label="Remove <label>"` buttons; popover trigger has `aria-label="Open tag options"`.
+- **Deduplication**: Both `handleSelect` (options path) and `handleKeyDown` (creatable path) guard `!value.includes(...)`.
+- **jsdom compatibility**: No new stubs needed — Radix Popover opened correctly with `userEvent.click` using the existing `ResizeObserver`/`scrollIntoView` stubs in `vitest.setup.ts`.
+- **No new runtime deps**: uses only `cmdk` + `radix-ui` already present.
 
 ## Concerns
-None. Types matched exactly, imports resolved cleanly, both tests pass, typecheck clean.
+
+1. **`toBeInTheDocument`**: Brief used this jest-dom matcher, but the project doesn't configure `@testing-library/jest-dom` (other tests all use `toBeDefined()`). Changed to `toBeDefined()` — semantically equivalent since RTL's `getByText` throws when not found.
+2. **No barrel export**: The brief mentioned modifying `packages/web-ui/src/index.ts`, but that file doesn't exist in this package. The wildcard exports handle discoverability automatically.
+3. **All-selected empty state**: When all options are already in `value`, the `CommandList` is empty. No `CommandEmpty` placeholder — minor UX gap, not in spec.
+
+---
+
+## Review Fix (2026-06-30)
+
+### Finding 1 — CommandInput inside Popover (remove bare always-visible input)
+
+Refactored `tag-input.tsx`:
+- Removed the standalone `<input type="text">` that was always-visible for the `creatable` case.
+- `showTrigger = hasOptions || creatable` — the chevron trigger now appears whenever the popover has content (options, free-type, or both).
+- `CommandInput` (with `value`, `onValueChange`, `onKeyDown`) lives inside the `PopoverContent`'s `Command` block — the only text field is the one inside the Popover.
+- Creatable Enter handler moved to `handleInputKeyDown` on `CommandInput`'s `onKeyDown`; calls `e.preventDefault()` to prevent cmdk from also acting on the event.
+- Added `CommandEmpty` ("No options.") so the empty-list state has feedback.
+- Dropped the `options!` non-null assertion; `availableOptions` is derived from `hasOptions ? options.filter(...) : []` so the guard is implicit.
+
+### Finding 2 — Test the remove interaction (Test 3 replaced)
+
+Replaced the label-presence assertion with a real interaction test:
+- Renders with `value={['a']}` and `options={[{ label: 'Alpha', value: 'a' }]}`.
+- Clicks `aria-label="Remove Alpha"` button.
+- Asserts `onChange` was called with `[]`.
+- Renamed to "removes a chip and emits the remaining array".
+
+### Also (cheap)
+
+- Added **disabled test**: renders with `disabled` + `options`, clicks the trigger button, asserts `onChange` was never called.
+- Updated **creatable test**: clicks trigger to open Popover first, then finds the `combobox` role (`CommandInput` renders as cmdk combobox), types `custom{Enter}`.
+- All button queries use `{ name: '...' }` for specificity.
+- No new jsdom stubs needed — existing `ResizeObserver` + `scrollIntoView` stubs cover Radix + cmdk.
+
+### Test run
+
+```
+pnpm -F @rfjs/web-ui vitest:run src/components/tag-input.spec.tsx
+# 4 passed (4)
+
+pnpm -F @rfjs/web-ui vitest:run
+# Test Files  16 passed (16) | Tests  39 passed (39)
+```
