@@ -22,4 +22,9 @@ describe("SettingsPanel", () => {
     fireEvent.click(basics); // collapse
     expect(screen.queryByLabelText(/^label$/i)).toBeNull();
   });
+  it("does not show the i18n Labels section for an ai-note card", () => {
+    const ai: Card = { id: "a", groupId: "g1", kind: "ai-note", label: "note", col: 1, span: 12, row: 1 };
+    render(<SettingsPanel card={ai} groups={[{ id: "g1", title: "G", collapsed: false }]} onChange={() => {}} onRemove={() => {}} />);
+    expect(screen.queryByRole("button", { name: /labels/i })).toBeNull();
+  });
 });

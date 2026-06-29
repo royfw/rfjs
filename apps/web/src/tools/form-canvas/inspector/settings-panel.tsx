@@ -48,7 +48,7 @@ export function SettingsPanel({
               <input className={INPUT_CLS} value={card.placeholder ?? ""} onChange={(e) => onChange({ placeholder: e.target.value })} />
             </label>
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <input type="checkbox" checked={Boolean(card.required)} onChange={(e) => onChange({ required: e.target.checked })} />
+              <input type="checkbox" checked={Boolean(card.required)} onChange={(e) => onChange({ required: e.target.checked || undefined })} />
               Required
             </label>
           </>
@@ -80,7 +80,7 @@ export function SettingsPanel({
       {card.kind === "content" ? <Section title="Content"><ContentSection card={card} onChange={onChange} /></Section> : null}
       {card.kind === "spacer" ? <Section title="Spacer"><SpacerSection card={card} onChange={onChange} /></Section> : null}
 
-      {card.kind !== "divider" && card.kind !== "spacer" ? <Section title="Labels (i18n)" defaultOpen={false}><LabelsSection card={card} onChange={onChange} /></Section> : null}
+      {(card.kind === "field" || card.kind === "content") ? <Section title="Labels (i18n)" defaultOpen={false}><LabelsSection card={card} onChange={onChange} /></Section> : null}
 
       <button
         type="button"
