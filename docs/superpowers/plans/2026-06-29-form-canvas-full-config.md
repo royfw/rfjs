@@ -433,7 +433,7 @@ describe("ValidationSection", () => {
 "use client";
 import * as React from "react";
 import type { FieldValidation } from "@rfjs/form-builder";
-import { INPUT_CLS } from "./settings-panel";
+import { INPUT_CLS } from "./constants";
 import type { Card } from "../model";
 
 export function ValidationSection({ card, onChange }: { card: Card; onChange: (p: Partial<Card>) => void }) {
@@ -542,7 +542,7 @@ describe("OptionsSection", () => {
 import * as React from "react";
 import { Plus, X } from "lucide-react";
 import type { FieldOption } from "@rfjs/form-builder";
-import { INPUT_CLS } from "./settings-panel";
+import { INPUT_CLS } from "./constants";
 import type { Card } from "../model";
 
 export function OptionsSection({ card, onChange }: { card: Card; onChange: (p: Partial<Card>) => void }) {
@@ -641,7 +641,7 @@ describe("misc sections", () => {
 ```tsx
 "use client";
 import * as React from "react";
-import { INPUT_CLS } from "./settings-panel";
+import { INPUT_CLS } from "./constants";
 import type { Card } from "../model";
 
 export function AiNoteSection({ card, onChange }: { card: Card; onChange: (p: Partial<Card>) => void }) {
@@ -734,7 +734,7 @@ describe("LabelsSection", () => {
 "use client";
 import * as React from "react";
 import type { LocalizedLabel } from "@rfjs/form-builder";
-import { INPUT_CLS } from "./settings-panel";
+import { INPUT_CLS } from "./constants";
 import type { Card } from "../model";
 
 export const LOCALES = ["en", "zh-TW"] as const;
@@ -832,7 +832,7 @@ describe("ConditionalSection", () => {
 import * as React from "react";
 import { Plus, X } from "lucide-react";
 import type { ConditionalRule } from "@rfjs/form-builder";
-import { INPUT_CLS } from "./settings-panel";
+import { INPUT_CLS } from "./constants";
 import type { Card } from "../model";
 
 type Condition = { field: string; dataType: string; operator: string; value?: unknown };
@@ -967,7 +967,7 @@ describe("DataSourceSection", () => {
 "use client";
 import * as React from "react";
 import type { DataSource } from "@rfjs/form-builder";
-import { INPUT_CLS } from "./settings-panel";
+import { INPUT_CLS } from "./constants";
 import type { Card } from "../model";
 
 const DIALECTS = ["path", "jsonata", "jsonpath"] as const;
