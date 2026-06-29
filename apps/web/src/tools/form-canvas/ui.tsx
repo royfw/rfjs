@@ -30,6 +30,7 @@ import { resolveCards } from "./layout-grid";
 const COLS = 12;
 const ROW_H = 84;
 const GAP = 8;
+const DRAG_THRESHOLD = 4; // px the pointer must travel before a press becomes a drag (a click just selects)
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
@@ -126,14 +127,28 @@ export function FormCanvasTool() {
     e.preventDefault();
     e.stopPropagation();
     setSelected(card.id);
+    const startX = e.clientX;
+    const startY = e.clientY;
+    // Grab offset (move): the cell under the pointer at grab time minus the card's
+    // origin, so the card follows the cursor instead of snapping its origin to it.
+    const grab = mode === "move" ? cellAt(startX, startY, card.groupId) : null;
+    const offCol = grab ? grab.col - card.col : 0;
+    const offRow = grab ? grab.row - card.row : 0;
     drag.current = { id: card.id, mode, col: card.col, span: card.span };
+    // A bare click selects but must NOT move: only treat it as a drag once the
+    // pointer travels past DRAG_THRESHOLD.
+    let active = false;
     const onMove = (ev: PointerEvent) => {
       const d = drag.current;
       if (!d) return;
+      if (!active && Math.hypot(ev.clientX - startX, ev.clientY - startY) < DRAG_THRESHOLD) return;
+      active = true;
       if (d.mode === "move") {
-        const { groupId, col, row } = cellAt(ev.clientX, ev.clientY, card.groupId);
-        setDropGroup(groupId);
-        placeDragged(d.id, { groupId, col: clamp(col, 1, COLS - card.span + 1), row });
+        const cell = cellAt(ev.clientX, ev.clientY, card.groupId);
+        const col = clamp(cell.col - offCol, 1, COLS - card.span + 1);
+        const row = clamp(cell.row - offRow, 1, 99);
+        setDropGroup(cell.groupId);
+        placeDragged(d.id, { groupId: cell.groupId, col, row });
       } else {
         const body = bodyRefs.current[card.groupId];
         if (!body) return;

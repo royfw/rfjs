@@ -59,3 +59,15 @@ describe("canvas no-overlap invariant", () => {
         if (out[i]!.groupId === out[j]!.groupId) expect(collides(out[i]!, out[j]!)).toBe(false);
   });
 });
+
+describe("FormCanvasTool drag threshold", () => {
+  it("a sub-threshold pointer move (a click) does not move the card", () => {
+    render(<FormCanvasTool />);
+    const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
+    const before = card.style.gridColumn;
+    fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { clientX: 102, clientY: 101 }); // ~2px, below the 4px threshold
+    fireEvent.pointerUp(window, { clientX: 102, clientY: 101 });
+    expect(card.style.gridColumn).toBe(before);
+  });
+});
