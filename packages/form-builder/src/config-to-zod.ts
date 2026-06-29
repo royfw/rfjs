@@ -104,9 +104,11 @@ function fieldSchema(field: FieldConfig): z.ZodTypeAny {
   const isNumericLike = field.dataType === 'numeric' || field.component === 'Number';
 
   if (field.required) {
-    // FileUpload multiple: reject empty array
-    if (field.component === 'FileUpload' && field.fileUpload?.multiple) {
-      return (base as z.ZodArray<z.ZodTypeAny>).min(1);
+    // FileUpload: multiple → reject empty array; single → reject undefined
+    if (field.component === 'FileUpload') {
+      return field.fileUpload?.multiple
+        ? (base as z.ZodArray<z.ZodTypeAny>).min(1)
+        : base.refine((v) => v !== undefined, { message: 'Required' });
     }
     // Multi-value: reject empty array
     if (isMultiValue) return (base as z.ZodArray<z.ZodTypeAny>).min(1, field.validation?.message);

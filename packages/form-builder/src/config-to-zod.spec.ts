@@ -476,4 +476,10 @@ describe('configToZod — FileUpload/Signature', () => {
     const schema = configToZod(mkConfig({ key: 'f', component: 'FileUpload' }));
     expect(schema.safeParse({ f: { name: 'a.png', size: 1024 } }).success).toBe(true);
   });
+
+  it('required single FileUpload rejects undefined', () => {
+    const schema = configToZod(mkConfig({ key: 'f', component: 'FileUpload', required: true }));
+    expect(schema.safeParse({ f: undefined }).success).toBe(false);
+    expect(schema.safeParse({ f: { name: 'a.png', size: 1024, type: 'image/png' } }).success).toBe(true);
+  });
 });
