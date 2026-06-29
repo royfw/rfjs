@@ -18,8 +18,7 @@ const COMPONENTS: Component[] = [
 ];
 
 // Components that show the Options editor and/or Data Source section.
-const OPTIONS_COMPONENTS = new Set<Component>(["Select", "Radio", "CheckboxGroup", "TagList"]);
-const DATASOURCE_COMPONENTS = new Set<Component>(["Select", "Radio", "CheckboxGroup", "TagList"]);
+const CHOICE_COMPONENTS = new Set<Component>(["Select", "Radio", "CheckboxGroup", "TagList"]);
 
 const COLS = 12;
 
@@ -59,10 +58,6 @@ export function SettingsPanel({
               <select className={INPUT_CLS} value={card.component ?? "Input"} onChange={(e) => onChange({ component: e.target.value as Component })}>
                 {COMPONENTS.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-              Description
-              <input className={INPUT_CLS} value={cardLabel(card.description ?? "")} onChange={(e) => onChange({ description: e.target.value || undefined })} />
             </label>
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               Placeholder
@@ -105,7 +100,7 @@ export function SettingsPanel({
         </Section>
       ) : null}
 
-      {isField && comp && OPTIONS_COMPONENTS.has(comp) ? (
+      {isField && comp && CHOICE_COMPONENTS.has(comp) ? (
         <Section title="Options" badge={card.options?.length ? <Count n={card.options.length} /> : undefined}>
           <OptionsSection card={card} onChange={onChange} />
         </Section>
@@ -117,7 +112,7 @@ export function SettingsPanel({
         </Section>
       ) : null}
 
-      {isField && comp && DATASOURCE_COMPONENTS.has(comp) ? (
+      {isField && comp && CHOICE_COMPONENTS.has(comp) ? (
         <Section title="Data Source" defaultOpen={false} badge={card.dataSource ? <Dot /> : undefined}>
           <DataSourceSection card={card} onChange={onChange} />
         </Section>
@@ -133,7 +128,7 @@ export function SettingsPanel({
       {card.kind === "spacer" ? <Section title="Spacer"><SpacerSection card={card} onChange={onChange} /></Section> : null}
 
       {(card.kind === "field" || card.kind === "content") ? (
-        <Section title="Labels (i18n)" defaultOpen={false} badge={typeof card.label === "object" ? <Dot /> : undefined}>
+        <Section title="Labels (i18n)" defaultOpen={false} badge={typeof card.label === "object" || typeof card.description === "object" ? <Dot /> : undefined}>
           <LabelsSection card={card} onChange={onChange} />
         </Section>
       ) : null}
