@@ -18,4 +18,10 @@ describe("LabelsSection", () => {
     fireEvent.change(screen.getByLabelText(/^en$/i), { target: { value: "Full name" } });
     expect(onChange).toHaveBeenCalledWith({ label: { en: "Full name", "zh-TW": "姓名" } });
   });
+  it("clearing the only locale yields an empty string, not an empty object", () => {
+    const onChange = vi.fn();
+    render(<LabelsSection card={f} onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText(/^en$/i), { target: { value: "" } });
+    expect(onChange).toHaveBeenCalledWith({ label: "" });
+  });
 });

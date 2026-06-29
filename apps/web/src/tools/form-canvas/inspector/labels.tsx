@@ -17,6 +17,7 @@ export function LabelsSection({ card, onChange }: { card: Card; onChange: (p: Pa
     if (!value) delete next[loc];
     // collapse to a plain string when only the default locale remains
     const keys = Object.keys(next);
+    if (keys.length === 0) { onChange({ label: "" }); return; }
     onChange({ label: keys.length === 1 && keys[0] === "en" ? next.en! : next });
   };
   return (
