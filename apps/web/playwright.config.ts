@@ -16,7 +16,7 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: `next dev --port ${E2E_PORT}`,
+    command: `pnpm exec next dev --port ${E2E_PORT}`,
     url: `http://localhost:${E2E_PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
