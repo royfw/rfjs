@@ -4,6 +4,7 @@ import { messages as dataFilterBuilder } from "./data-filter-builder/messages";
 import { messages as dataFilterTester } from "./data-filter-tester/messages";
 import { messages as formBuilder } from "./form-builder/messages";
 import { messages as bpmnViewer } from "./bpmn-viewer/messages";
+import { messages as flowBuilder } from "./flow-builder/messages";
 import { messages as esClientDemo } from "./es-client-demo/messages";
 import { messages as esQueryBuilder } from "./es-query-builder/messages";
 import { messages as jsonbQueryBuilder } from "./jsonb-query-builder/messages";
@@ -33,4 +34,5 @@ export const toolMessages: LocaleMessages[] = [
   pgFilterBuilder,
   formBuilder,
   bpmnViewer,
+  flowBuilder,
 ];

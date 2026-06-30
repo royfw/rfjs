@@ -23,6 +23,7 @@ const EXPECTED_WEB_TOOL_IDS = [
   "pg-filter-builder",
   "form-builder",
   "bpmn-viewer",
+  "flow-builder",
 ].sort();
 
 describe("implementation registry", () => {

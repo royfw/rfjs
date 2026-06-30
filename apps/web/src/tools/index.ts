@@ -6,6 +6,7 @@ import { tool as dataFilterBuilder } from "./data-filter-builder";
 import { tool as dataFilterTester } from "./data-filter-tester";
 import { tool as formBuilder } from "./form-builder";
 import { tool as bpmnViewer } from "./bpmn-viewer";
+import { tool as flowBuilder } from "./flow-builder";
 import { tool as esClientDemo } from "./es-client-demo";
 import { tool as esQueryBuilder } from "./es-query-builder";
 import { tool as jsonbQueryBuilder } from "./jsonb-query-builder";
@@ -35,6 +36,7 @@ export const toolModules: ToolModule[] = [
   pgFilterBuilder,
   formBuilder,
   bpmnViewer,
+  flowBuilder,
 ];
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = Object.fromEntries(
