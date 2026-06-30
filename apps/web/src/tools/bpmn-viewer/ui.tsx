@@ -58,7 +58,9 @@ export function BpmnViewerTool() {
       setInputError(null);
       setXml(String(reader.result ?? ""));
     };
+    reader.onerror = () => setInputError(t("bpmnErrImport"));
     reader.readAsText(file);
+    e.target.value = "";
   };
 
   const error = inputError ?? (v.error ? t("bpmnErrImport") : null);
