@@ -18,6 +18,11 @@ import {
   type UploadHandler,
   type SignatureTransport,
 } from '@rfjs/form-builder';
+import { useDataSource } from './use-data-source';
+import { useContainerBreakpoint } from './use-container-breakpoint';
+import { Label } from '@rfjs/web-ui/components/label';
+import { Button } from '@rfjs/web-ui/components/button';
+import { FieldControl } from './field-control';
 
 // ---------------------------------------------------------------------------
 // SubmissionMeta — shape of the meta object emitted by onPayloadChange.
@@ -44,12 +49,6 @@ export function computePayload(
   );
   return Object.fromEntries(Object.entries(values).filter(([k]) => visibleKeys.has(k)));
 }
-import { useDataSource } from './use-data-source';
-import { useContainerBreakpoint } from './use-container-breakpoint';
-import { Label } from '@rfjs/web-ui/components/label';
-import { Button } from '@rfjs/web-ui/components/button';
-
-import { FieldControl } from './field-control';
 
 // Stable style constant — outside the component so it's never recreated on render.
 const FULL_SPAN: React.CSSProperties = { gridColumn: '1 / -1' };
@@ -174,16 +173,17 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   const watchedValues = useWatch({ control });
   const onPayloadChangeRef = React.useRef(onPayloadChange);
   onPayloadChangeRef.current = onPayloadChange;
-  // schemaRef lets the effect read the latest schema without rebuilding on every render.
-  const schemaRef = React.useRef(configToZod(config));
-  React.useEffect(() => {
-    schemaRef.current = configToZod(config);
-  }, [config]);
-
   React.useEffect(() => {
     if (!onPayloadChangeRef.current) return;
-    const data = computePayload(watchedValues as Record<string, unknown>, config);
-    const parsed = schemaRef.current.safeParse(data);
+    const vals = watchedValues as Record<string, unknown>;
+    const data = computePayload(vals, config);
+    // Build visible-only schema — mirrors the resolver so meta.valid reflects actual
+    // submittability: hidden required fields are excluded, just as the resolver excludes them.
+    const visibleFieldItems = collectFieldItems(config).filter((f) =>
+      evaluateConditional(f.conditional, vals),
+    );
+    const visibleConfig: FormConfig = { version: config.version, fields: visibleFieldItems };
+    const parsed = configToZod(visibleConfig).safeParse(data);
     const errors: Record<string, string> = {};
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {

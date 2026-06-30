@@ -769,6 +769,34 @@ describe('onPayloadChange', () => {
     });
   });
 
+  it('reports meta.valid=true when a hidden required field is empty (excluded from meta validation, consistent with submit)', async () => {
+    const onPayloadChange = vi.fn();
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        { key: 'role', label: 'Role', component: 'Input', dataType: 'string' },
+        {
+          key: 'adminCode',
+          label: 'Admin Code',
+          component: 'Input',
+          dataType: 'string',
+          required: true,
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'admin' }],
+          },
+        },
+      ],
+    };
+    render(<ConfigForm config={cfg} onSubmit={() => {}} onPayloadChange={onPayloadChange} />);
+    // role !== 'admin' → adminCode is hidden; even though it's required, the form would submit
+    // → meta.valid must be true (no visible required fields are failing)
+    await waitFor(() => expect(onPayloadChange).toHaveBeenCalled());
+    const lastCall = onPayloadChange.mock.calls.at(-1)![0];
+    expect(lastCall.meta.valid).toBe(true);
+    expect(lastCall.meta.visibleKeys).not.toContain('adminCode');
+  });
+
   it('reports meta.valid=false and errors when a required field is empty', async () => {
     const onPayloadChange = vi.fn();
     const cfg: FormConfig = {
