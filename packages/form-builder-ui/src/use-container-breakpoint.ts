@@ -1,7 +1,7 @@
 import * as React from "react";
 
 export function useContainerBreakpoint(
-  ref: React.RefObject<Element>,
+  ref: React.RefObject<HTMLElement | null>,
   breakpoint: number,
 ): boolean {
   const [narrow, setNarrow] = React.useState(false);

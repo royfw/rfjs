@@ -1,3 +1,4 @@
+import { it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import * as React from "react";
 import { useContainerBreakpoint } from "./use-container-breakpoint";

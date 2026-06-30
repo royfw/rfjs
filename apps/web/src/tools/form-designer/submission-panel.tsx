@@ -14,7 +14,7 @@ export interface SubmissionPanelProps {
   compact?: boolean;
 }
 
-export function SubmissionPanel({ payload, compact = false }: SubmissionPanelProps): JSX.Element {
+export function SubmissionPanel({ payload, compact = false }: SubmissionPanelProps): React.JSX.Element {
   if (payload === null) {
     return (
       <div

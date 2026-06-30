@@ -31,7 +31,7 @@ export function ResponsivePreview({
   min = DEFAULT_MIN,
   max = DEFAULT_MAX,
   compact = false,
-}: ResponsivePreviewProps): JSX.Element {
+}: ResponsivePreviewProps): React.JSX.Element {
   const clamp = (v: number) => Math.max(min, Math.min(max, v));
 
   const PRESETS = [
