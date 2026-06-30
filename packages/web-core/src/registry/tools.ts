@@ -118,7 +118,7 @@ export const toolRegistry: ToolDefinition[] = [
     category: 'inspect',
     surface: 'web',
     status: 'preview',
-    relatedPackages: ['@rfjs/bpmn'],
+    relatedPackages: ['@rfjs/bpmn-ui'],
     tags: ['diagram', 'bpmn', 'workflow', 'viewer'],
   },
   {

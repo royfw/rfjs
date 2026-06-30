@@ -1,5 +1,5 @@
 {
-  "name": "@rfjs/bpmn",
+  "name": "@rfjs/bpmn-ui",
   "version": "0.0.0",
   "description": "Headless React wrapper around bpmn-js NavigatedViewer (read-only BPMN viewer); consumed via transpilePackages",
   "type": "module",
