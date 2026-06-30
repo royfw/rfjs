@@ -24,6 +24,8 @@ export interface BpmnViewerProps {
   onImport?: (result: BpmnImportResult) => void;
   onError?: (error: BpmnViewerError) => void;
   onLoadingChange?: (loading: boolean) => void;
+  /** 無障礙標籤;有值時容器會帶上 `role="group"` + `aria-label`。 */
+  ariaLabel?: string;
 }
 
 export interface BpmnViewerHandle {

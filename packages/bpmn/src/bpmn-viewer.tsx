@@ -25,7 +25,7 @@ interface BpmnInstance {
 }
 
 export const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
-  function BpmnViewer({ xml, options, className, style, onImport, onError, onLoadingChange }, ref) {
+  function BpmnViewer({ xml, options, className, style, onImport, onError, onLoadingChange, ariaLabel }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const viewerRef = useRef<BpmnInstance | null>(null);
     const importSeq = useRef(0);
@@ -122,6 +122,14 @@ export const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
       [],
     );
 
-    return <div ref={containerRef} className={className} style={style} />;
+    return (
+      <div
+        ref={containerRef}
+        className={className}
+        style={style}
+        role={ariaLabel ? "group" : undefined}
+        aria-label={ariaLabel}
+      />
+    );
   },
 );

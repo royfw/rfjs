@@ -146,11 +146,11 @@ describe("FileUpload / Signature round-trip", () => {
       { id: "fu", key: "f", kind: "field", label: "F", component: "FileUpload", dataType: "object", fileUpload: { accept: "image/*", multiple: true, maxSize: 1000 } },
       { id: "sig", key: "s", kind: "field", label: "S", component: "Signature", dataType: "string" },
     ] }] }] };
-    const { groups: g, cards: cs } = formConfigToCards(cfg as any);
+    const { groups: g, cards: cs } = formConfigToCards(cfg as unknown as FormConfig);
     const back = cardsToFormConfig(g, cs);
     const items = back.sections![0]!.rows[0]!.items;
-    expect((items[0] as any).component).toBe("FileUpload");
-    expect((items[0] as any).fileUpload).toEqual({ accept: "image/*", multiple: true, maxSize: 1000 });
-    expect((items[1] as any).component).toBe("Signature");
+    expect((items[0] as { component?: string }).component).toBe("FileUpload");
+    expect((items[0] as { fileUpload?: unknown }).fileUpload).toEqual({ accept: "image/*", multiple: true, maxSize: 1000 });
+    expect((items[1] as { component?: string }).component).toBe("Signature");
   });
 });
