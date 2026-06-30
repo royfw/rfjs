@@ -484,7 +484,7 @@ export function FormDesignerTool() {
           </Section>
         </>
       ) : tab === "preview" ? (
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="flex flex-col gap-4">
           <ResponsivePreview width={previewW} onWidthChange={setPreviewW}>
             <ConfigForm
               config={formConfig}
@@ -495,7 +495,9 @@ export function FormDesignerTool() {
               onSubmit={() => {}}
             />
           </ResponsivePreview>
-          <SubmissionPanel payload={payload} />
+          <Section title="Submission" defaultOpen={false}>
+            <SubmissionPanel payload={payload} />
+          </Section>
         </div>
       ) : (
         <div className="flex flex-col gap-2">

@@ -14,6 +14,17 @@ export interface SubmissionPanelProps {
   compact?: boolean;
 }
 
+/** Translate raw zod type messages to a user-friendly label. */
+function friendlyError(msg: string): string {
+  if (/received undefined/i.test(msg)) return "Required";
+  return msg;
+}
+
+/** Returns true when every value in data is null/undefined/empty-string. */
+function isAllEmpty(data: Record<string, unknown>): boolean {
+  return Object.values(data).every((v) => v === undefined || v === null || v === "");
+}
+
 export function SubmissionPanel({ payload, compact = false }: SubmissionPanelProps): React.JSX.Element {
   if (payload === null) {
     return (
@@ -33,6 +44,11 @@ export function SubmissionPanel({ payload, compact = false }: SubmissionPanelPro
   const { data, meta } = payload;
   const { valid, errors, visibleKeys, schemaVersion } = meta;
 
+  // When the form is invalid but completely untouched/empty, show a neutral Incomplete state
+  // instead of the alarming red Invalid badge + raw error dump.
+  const errorCount = Object.keys(errors).length;
+  const showIncomplete = !valid && errorCount > 0 && isAllEmpty(data);
+
   return (
     <div className={cn("flex flex-col gap-4", compact && "gap-2")}>
       {/* Metadata Block */}
@@ -46,28 +62,39 @@ export function SubmissionPanel({ payload, compact = false }: SubmissionPanelPro
           Metadata
         </h3>
 
-        {/* Valid Badge */}
+        {/* Status Badge */}
         <div className={cn("flex items-center gap-2", compact && "mb-2")}>
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-              valid
-                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-            )}
-          >
-            {valid ? "Valid" : "Invalid"}
-          </span>
+          {showIncomplete ? (
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+              )}
+            >
+              {`Incomplete — ${errorCount} required field${errorCount === 1 ? "" : "s"} not yet filled`}
+            </span>
+          ) : (
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                valid
+                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                  : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+              )}
+            >
+              {valid ? "Valid" : "Invalid"}
+            </span>
+          )}
         </div>
 
-        {/* Errors List */}
-        {Object.keys(errors).length > 0 && (
+        {/* Errors List — only shown when NOT in the calm Incomplete state */}
+        {!showIncomplete && errorCount > 0 && (
           <div className={cn("mb-3 space-y-1", compact && "mb-2 space-y-0.5")}>
             <p className="text-xs font-medium text-muted-foreground">Errors:</p>
             <ul className="space-y-0.5 text-xs">
               {Object.entries(errors).map(([key, error]) => (
                 <li key={key} className="text-red-600 dark:text-red-400">
-                  <span className="font-mono font-medium">{key}</span>: {error}
+                  <span className="font-mono font-medium">{key}</span>: {friendlyError(error)}
                 </li>
               ))}
             </ul>

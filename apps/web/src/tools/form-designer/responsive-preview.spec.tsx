@@ -146,4 +146,14 @@ describe("ResponsivePreview", () => {
     const mobileBtn = screen.getByRole("button", { name: /mobile/i });
     expect(mobileBtn.getAttribute("data-size")).toBe("sm");
   });
+
+  it("rp-frame has a visible border class to show device-width boundary", () => {
+    render(
+      <ResponsivePreview width={400} onWidthChange={() => {}}>
+        <div />
+      </ResponsivePreview>,
+    );
+    const frame = screen.getByTestId("rp-frame");
+    expect(frame.className).toMatch(/border/);
+  });
 });

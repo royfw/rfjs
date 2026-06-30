@@ -19,7 +19,7 @@ describe("SubmissionPanel", () => {
     const meta: SubmissionMeta = { valid: false, errors: { name: "Required" }, visibleKeys: [] };
     render(
       <SubmissionPanel
-        payload={{ data: {}, meta }}
+        payload={{ data: { name: "filled" }, meta }}
       />,
     );
     expect(screen.getByText(/Required/)).toBeDefined();
@@ -28,5 +28,59 @@ describe("SubmissionPanel", () => {
   it("renders empty-state when payload is null", () => {
     render(<SubmissionPanel payload={null} />);
     expect(screen.getByText(/fill the form/i)).toBeDefined();
+  });
+
+  it("translates 'Expected string, received undefined' error to 'Required' when errors are shown", () => {
+    // name is filled (form has data) → errors list is shown → "Required" should appear
+    const meta: SubmissionMeta = {
+      valid: false,
+      errors: { email: "Expected string, received undefined" },
+      visibleKeys: ["name", "email"],
+    };
+    render(
+      <SubmissionPanel
+        payload={{ data: { name: "Ann", email: undefined }, meta }}
+      />,
+    );
+    // Should NOT show the raw zod message
+    expect(screen.queryByText(/Expected string, received undefined/)).toBeNull();
+    // Should show the friendly label instead
+    expect(screen.getByText(/Required/)).toBeDefined();
+  });
+
+  it("shows calm Incomplete state when valid=false and all data values are empty/undefined", () => {
+    const meta: SubmissionMeta = {
+      valid: false,
+      errors: { name: "Expected string, received undefined", email: "Expected string, received undefined" },
+      visibleKeys: [],
+    };
+    render(
+      <SubmissionPanel
+        payload={{ data: {}, meta }}
+      />,
+    );
+    // Should show the amber Incomplete message, not red "Invalid"
+    expect(screen.getByText(/incomplete/i)).toBeDefined();
+    // Should include the count of required fields (2)
+    expect(screen.getByText(/2 required field/i)).toBeDefined();
+    // Should NOT show "Invalid"
+    expect(screen.queryByText(/^Invalid$/i)).toBeNull();
+  });
+
+  it("shows red Invalid badge when valid=false but form has actual data", () => {
+    const meta: SubmissionMeta = {
+      valid: false,
+      errors: { email: "Invalid email format" },
+      visibleKeys: ["name", "email"],
+    };
+    render(
+      <SubmissionPanel
+        payload={{ data: { name: "Ann", email: "not-an-email" }, meta }}
+      />,
+    );
+    // Has real data → real validation failure → show Invalid
+    expect(screen.getByText("Invalid")).toBeDefined();
+    // Friendly error message shown
+    expect(screen.getByText(/Invalid email format/)).toBeDefined();
   });
 });

@@ -148,6 +148,7 @@ export function ResponsivePreview({
         {/* The constrained frame */}
         <div
           data-testid="rp-frame"
+          className={cn("rounded-lg border border-border bg-background p-4 shadow-sm")}
           style={{ width: `${width}px`, maxWidth: "100%", margin: "0 auto" }}
         >
           {children}
