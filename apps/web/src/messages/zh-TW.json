@@ -97,6 +97,7 @@
     "object-utils": { "description": "物件操作工具(壓平、路徑、合併)。" },
     "pg-toolkit": { "description": "PostgreSQL 管理工具(seed 歷史、建立 DB/schema)。" },
     "retry": { "description": "可設定延遲的重試工具。" },
+    "bpmn": { "description": "在 React 中從 XML 渲染唯讀的 BPMN 2.0 流程圖。" },
     "tpl-toolkit": { "description": "rfjs 專案範本的共用設定工廠。" }
   }
 }
