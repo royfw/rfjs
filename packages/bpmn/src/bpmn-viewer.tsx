@@ -119,7 +119,7 @@ export const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
           },
         };
       },
-      [ready],
+      [],
     );
 
     return <div ref={containerRef} className={className} style={style} />;
