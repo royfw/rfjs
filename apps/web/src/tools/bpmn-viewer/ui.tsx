@@ -42,6 +42,7 @@ export function BpmnViewerTool() {
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
     const result = validateBpmnFile({ name: file.name, size: file.size });
     if (!result.ok) {
       setInputError(
@@ -60,7 +61,6 @@ export function BpmnViewerTool() {
     };
     reader.onerror = () => setInputError(t("bpmnErrImport"));
     reader.readAsText(file);
-    e.target.value = "";
   };
 
   const error = inputError ?? (v.error ? t("bpmnErrImport") : null);
