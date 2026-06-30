@@ -22,7 +22,6 @@ const EXPECTED_WEB_TOOL_IDS = [
   "es-client-demo",
   "pg-filter-builder",
   "form-builder",
-  "form-designer",
   "bpmn-viewer",
 ].sort();
 

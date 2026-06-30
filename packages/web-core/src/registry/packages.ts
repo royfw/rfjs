@@ -116,7 +116,7 @@ export const packageRegistry: PackageDefinition[] = [
     href: '/packages/form-builder',
     github: GITHUB,
     tags: ['form', 'builder', 'config'],
-    relatedTools: ['form-builder', 'form-designer'],
+    relatedTools: ['form-builder'],
   },
   {
     name: '@rfjs/bpmn',

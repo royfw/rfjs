@@ -1,8 +1,6 @@
 import type { FormConfig, DataSourceFetcher, UploadHandler } from "@rfjs/form-builder";
 
-// Shared demo data for both the form-builder (linear) and form-designer (2D) tools,
-// so they showcase the same example form. form-builder renders it linearly; the
-// form-designer seeds its canvas from it (see formConfigToCards).
+// Shared demo data for the form-builder tool (seeded into the 2D canvas via formConfigToCards).
 
 // Mock uploader — returns a FileRef from the File object (uses createObjectURL when available).
 // Module-level const is a stable reference (no re-upload loops).
