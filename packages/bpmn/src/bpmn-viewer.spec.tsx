@@ -93,6 +93,20 @@ describe("<BpmnViewer>", () => {
     expect(ref.current!.getZoom()).toBe(1);
   });
 
+  it("does not invoke callbacks after unmount when an in-flight import resolves late", async () => {
+    let resolveImport!: (v: { warnings: unknown[] }) => void;
+    importXML.mockImplementationOnce(() => new Promise((res) => (resolveImport = res)));
+    const onImport = vi.fn();
+    const onError = vi.fn();
+    const { unmount } = render(<BpmnViewer xml={XML_A} onImport={onImport} onError={onError} />);
+    await waitFor(() => expect(importXML).toHaveBeenCalledTimes(1));
+    unmount();
+    resolveImport({ warnings: [] });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onImport).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
   it("ignores a stale import result when a newer import supersedes it", async () => {
     // 第一次 import 延遲解析,第二次先解析 → 只有第二次的 onImport 生效。
     let resolveFirst!: (v: { warnings: unknown[] }) => void;

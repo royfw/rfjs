@@ -13,7 +13,11 @@ export interface BpmnViewerError {
 export interface BpmnViewerProps {
   /** 受控的 BPMN 2.0 XML 字串。 */
   xml: string;
-  /** 透傳給 NavigatedViewer 建構子的額外選項。 */
+  /**
+   * 透傳給 NavigatedViewer 建構子的額外選項。
+   * @warning 請務必將此物件 memoize(例如 `useMemo`)。若每次 render 都傳入新的 inline 物件,
+   * viewer 將在每次 render 時被銷毀並重新建立。
+   */
   options?: Record<string, unknown>;
   className?: string;
   style?: CSSProperties;

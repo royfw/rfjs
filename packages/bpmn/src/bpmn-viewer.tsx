@@ -59,22 +59,25 @@ export const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
       };
     }, [options]);
 
-    // viewer 就緒或 xml 變更 → import(含競態保護)。
+    // viewer 就緒或 xml 變更 → import(含競態保護 + unmount 保護)。
     useEffect(() => {
       const viewer = viewerRef.current;
       if (!ready || !viewer || !xml) return;
       const seq = ++importSeq.current;
+      let active = true;
       cbRef.current.onLoadingChange?.(true);
       viewer
         .importXML(xml)
         .then((result) => {
-          if (seq !== importSeq.current) return;
+          if (!active || seq !== importSeq.current) return;
+          // 注意:被 seq 超越的過期 import 刻意不呼叫 onLoadingChange(false),
+          // 因為勝出的那次 import 會自行結束 loading 狀態。
           cbRef.current.onLoadingChange?.(false);
           (viewer.get("canvas") as BpmnCanvas).zoom("fit-viewport");
           cbRef.current.onImport?.({ warnings: result?.warnings ?? [] });
         })
         .catch((err: unknown) => {
-          if (seq !== importSeq.current) return;
+          if (!active || seq !== importSeq.current) return;
           cbRef.current.onLoadingChange?.(false);
           const e: BpmnViewerError = {
             message: err instanceof Error ? err.message : String(err),
@@ -83,6 +86,9 @@ export const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
           };
           cbRef.current.onError?.(e);
         });
+      return () => {
+        active = false;
+      };
     }, [ready, xml]);
 
     useImperativeHandle(
