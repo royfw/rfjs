@@ -10,7 +10,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@rfjs/bpmn", () => ({
+vi.mock("@rfjs/bpmn-ui", () => ({
   BpmnViewer: ({ xml }: { xml: string }) => <div data-testid="bpmn-viewer">{xml}</div>,
   useBpmnViewer: () => ({
     viewerProps: { ref: { current: null }, onLoadingChange: () => {}, onError: () => {} },

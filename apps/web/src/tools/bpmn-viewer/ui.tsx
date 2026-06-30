@@ -4,7 +4,7 @@ import * as React from "react";
 import { ZoomIn, ZoomOut, Maximize, RotateCcw, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { BpmnViewer, useBpmnViewer } from "@rfjs/bpmn";
+import { BpmnViewer, useBpmnViewer } from "@rfjs/bpmn-ui";
 import { Button } from "@rfjs/web-ui/components/button";
 import {
   Select,
@@ -122,7 +122,7 @@ export function BpmnViewerTool() {
         {...v.viewerProps}
         xml={xml}
         ariaLabel={t("bpmnDiagramLabel")}
-        className="h-[600px] w-full rounded-md border bg-card"
+        className="h-[600px] w-full rounded-md border bg-white"
       />
 
       <div className="flex flex-col gap-2">

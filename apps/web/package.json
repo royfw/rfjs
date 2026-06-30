@@ -14,7 +14,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@rfjs/bpmn": "workspace:*",
+    "@rfjs/bpmn-ui": "workspace:*",
     "@rfjs/filter-builder": "workspace:*",
     "@rfjs/filter-builder-ui": "workspace:*",
     "@rfjs/form-builder": "workspace:*",

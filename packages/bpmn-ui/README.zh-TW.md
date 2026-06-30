@@ -1,4 +1,4 @@
-# @rfjs/bpmn
+# @rfjs/bpmn-ui
 
 封裝 [`bpmn-js`](https://github.com/bpmn-io/bpmn-js) `NavigatedViewer` 的無頭 React 元件 —— 唯讀 BPMN 2.0 流程圖檢視器。Private workspace 套件,透過 Next.js `transpilePackages` 消費(無 build step)。
 
@@ -7,7 +7,7 @@
 ## 用法
 
 ```tsx
-import { BpmnViewer, useBpmnViewer } from "@rfjs/bpmn";
+import { BpmnViewer, useBpmnViewer } from "@rfjs/bpmn-ui";
 
 function Demo({ xml }: { xml: string }) {
   const v = useBpmnViewer();

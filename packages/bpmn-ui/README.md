@@ -1,4 +1,4 @@
-# @rfjs/bpmn
+# @rfjs/bpmn-ui
 
 Headless React wrapper around [`bpmn-js`](https://github.com/bpmn-io/bpmn-js) `NavigatedViewer` — a read-only BPMN 2.0 diagram viewer. Private workspace package, consumed via Next.js `transpilePackages` (no build step).
 
@@ -7,7 +7,7 @@ Headless React wrapper around [`bpmn-js`](https://github.com/bpmn-io/bpmn-js) `N
 ## Usage
 
 ```tsx
-import { BpmnViewer, useBpmnViewer } from "@rfjs/bpmn";
+import { BpmnViewer, useBpmnViewer } from "@rfjs/bpmn-ui";
 
 function Demo({ xml }: { xml: string }) {
   const v = useBpmnViewer();

@@ -119,9 +119,9 @@ export const packageRegistry: PackageDefinition[] = [
     relatedTools: ['form-builder'],
   },
   {
-    name: '@rfjs/bpmn',
+    name: '@rfjs/bpmn-ui',
     status: 'preview',
-    href: '/packages/bpmn',
+    href: '/packages/bpmn-ui',
     github: GITHUB,
     tags: ['bpmn', 'diagram', 'viewer'],
     relatedTools: ['bpmn-viewer'],
