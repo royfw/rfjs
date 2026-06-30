@@ -7,7 +7,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <AppHeader />
       <div className="mx-auto flex w-full max-w-[1440px]">
         <aside className="hidden w-60 shrink-0 border-r border-border lg:block">
-          <div className="sticky top-14">
+          {/* Bound the sticky sidebar to the viewport and give it its own
+              scroll, so a long nav scrolls independently of the page content
+              instead of scrolling along with it once it exceeds the viewport. */}
+          <div className="sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto overscroll-contain">
             <AppSidebar />
           </div>
         </aside>
