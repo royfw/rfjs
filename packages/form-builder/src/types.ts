@@ -127,6 +127,7 @@ export interface FormConfig {
   fields?: FieldConfig[];          // v1 (back-compat)
   sections?: FormSection[];        // v2
   columns?: 1 | 2 | 3 | 4;        // v1 grid (back-compat)
+  responsive?: { stackBelow?: number };
 }
 
 // --- File / Signature transport types ---

@@ -97,6 +97,7 @@
     "object-utils": { "description": "Object manipulation utilities (flatten, paths, merge)." },
     "pg-toolkit": { "description": "PostgreSQL admin utilities (seed history, DB/schema creation)." },
     "retry": { "description": "Retry helper with configurable delay." },
+    "bpmn": { "description": "Render read-only BPMN 2.0 process diagrams from XML in React." },
     "tpl-toolkit": { "description": "Shared config factories for rfjs project templates." }
   }
 }

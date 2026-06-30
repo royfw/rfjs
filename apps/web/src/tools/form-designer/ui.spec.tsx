@@ -78,3 +78,55 @@ describe("FormDesignerTool group reorder", () => {
     expect(screen.getAllByRole("button", { name: /reorder group/i }).length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("FormDesignerTool canvas collapsible sections", () => {
+  it("Canvas tab has two independent collapsible sections: Editor and Live Preview", () => {
+    render(<FormDesignerTool />);
+    // Canvas is the default tab — both section headers should be present
+    expect(screen.getByRole("button", { name: /editor/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /live preview/i })).toBeTruthy();
+    // Live Preview is collapsed by default: Mobile preset button is inside its content → not in DOM
+    expect(screen.queryByRole("button", { name: /^mobile$/i })).toBeNull();
+  });
+});
+
+describe("FormDesignerTool preview tab integration", () => {
+  it("Preview tab renders ResponsivePreview with device controls + a submission panel", () => {
+    render(<FormDesignerTool />);
+    fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
+    // Device preset buttons from ResponsivePreview
+    expect(screen.getByRole("button", { name: /^mobile$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^tablet$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^desktop$/i })).toBeTruthy();
+    // SubmissionPanel is mounted inside a collapsed "Submission" section —
+    // the section toggle button is always present even when collapsed.
+    expect(screen.getByRole("button", { name: /submission/i })).toBeTruthy();
+  });
+
+  it("Preview tab uses vertical stack layout (no lg:flex-row)", () => {
+    render(<FormDesignerTool />);
+    fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
+    // The preview tab wrapper must NOT have lg:flex-row — find the rp-frame and walk up
+    const frame = screen.getByTestId("rp-frame");
+    // Walk up to the direct parent of ResponsivePreview root and check no lg:flex-row in the chain
+    let el: HTMLElement | null = frame.parentElement;
+    let foundFlexRow = false;
+    while (el && !el.classList.contains("form-designer-root")) {
+      if (el.className.includes("lg:flex-row")) {
+        foundFlexRow = true;
+        break;
+      }
+      el = el.parentElement;
+    }
+    expect(foundFlexRow).toBe(false);
+  });
+
+  it("Preview tab wraps SubmissionPanel in a collapsible Submission section (collapsed by default)", () => {
+    render(<FormDesignerTool />);
+    fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
+    // "Submission" section header should be present
+    expect(screen.getByRole("button", { name: /submission/i })).toBeTruthy();
+    // Section is collapsed by default: the inner panel content (Metadata heading) is NOT in the DOM
+    expect(screen.queryByText(/^metadata$/i)).toBeNull();
+  });
+});

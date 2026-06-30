@@ -25,7 +25,6 @@ export function collides(a: GridItem, b: GridItem): boolean {
 // Lowest row >= 1 at which `item` does not collide with any of `placed`.
 function lowestFreeRow(item: GridItem, placed: GridItem[]): number {
   let row = 1;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const probe = { ...item, row };
     if (!placed.some((p) => collides(probe, p))) return row;

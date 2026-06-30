@@ -122,6 +122,14 @@ export const toolRegistry: ToolDefinition[] = [
     tags: ['form', 'builder', 'canvas', '2d'],
   },
   {
+    id: 'bpmn-viewer',
+    category: 'inspect',
+    surface: 'web',
+    status: 'preview',
+    relatedPackages: ['@rfjs/bpmn'],
+    tags: ['diagram', 'bpmn', 'workflow', 'viewer'],
+  },
+  {
     id: 'object-transformer',
     category: 'transform',
     surface: 'workbench',

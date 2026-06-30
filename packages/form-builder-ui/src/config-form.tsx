@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Controller, useForm, type Resolver } from 'react-hook-form';
+import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   configToZod,
@@ -19,10 +19,39 @@ import {
   type SignatureTransport,
 } from '@rfjs/form-builder';
 import { useDataSource } from './use-data-source';
+import { useContainerBreakpoint } from './use-container-breakpoint';
 import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
-
 import { FieldControl } from './field-control';
+
+// ---------------------------------------------------------------------------
+// SubmissionMeta — shape of the meta object emitted by onPayloadChange.
+// ---------------------------------------------------------------------------
+export interface SubmissionMeta {
+  valid: boolean;
+  errors: Record<string, string>;
+  visibleKeys: string[];
+  schemaVersion?: number;
+}
+
+// ---------------------------------------------------------------------------
+// computePayload — pure function: strips conditionally-hidden field values
+// from the raw RHF values object (same logic as the submit handler).
+// ---------------------------------------------------------------------------
+export function computePayload(
+  values: Record<string, unknown>,
+  config: FormConfig,
+): Record<string, unknown> {
+  const visibleKeys = new Set(
+    collectFieldItems(config)
+      .filter((f) => evaluateConditional(f.conditional, values))
+      .map((f) => f.key),
+  );
+  return Object.fromEntries(Object.entries(values).filter(([k]) => visibleKeys.has(k)));
+}
+
+// Stable style constant — outside the component so it's never recreated on render.
+const FULL_SPAN: React.CSSProperties = { gridColumn: '1 / -1' };
 
 interface DataSourceContentProps {
   ds: DataSource;
@@ -76,9 +105,22 @@ export interface ConfigFormProps {
    * Memoize with `useCallback` to avoid unnecessary session restarts.
    */
   signatureTransport?: SignatureTransport;
+  /**
+   * Called on every form value change (live, no submit required) with the current
+   * payload (conditionally-hidden fields excluded) and a `SubmissionMeta` object
+   * containing the zod validation result, per-field errors, visible keys, and the
+   * config's schema version.
+   * Only wired up (and triggers an effect) when provided.
+   */
+  onPayloadChange?: (p: { data: Record<string, unknown>; meta: SubmissionMeta }) => void;
 }
 
-export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher, uploadHandler, signatureTransport }: ConfigFormProps) {
+export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher, uploadHandler, signatureTransport, onPayloadChange }: ConfigFormProps) {
+  // Container ref for ResizeObserver-driven responsive collapse.
+  const rootRef = React.useRef<HTMLFormElement>(null);
+  const stackBelow = config.responsive?.stackBelow ?? 640;
+  const narrow = useContainerBreakpoint(rootRef, stackBelow);
+
   // Keep the latest config reachable inside the stable resolver without re-creating it.
   const configRef = React.useRef(config);
   configRef.current = config;
@@ -126,19 +168,56 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   // Subscribe to all form values to decide which items to RENDER (live show/hide).
   const values = watch();
 
+  // Live-payload seam: compute and emit payload + meta on every value change.
+  // useWatch gives a stable reference to the latest values for the effect.
+  const watchedValues = useWatch({ control });
+  const onPayloadChangeRef = React.useRef(onPayloadChange);
+  onPayloadChangeRef.current = onPayloadChange;
+  React.useEffect(() => {
+    if (!onPayloadChangeRef.current) return;
+    const vals = watchedValues as Record<string, unknown>;
+    const data = computePayload(vals, config);
+    // Build visible-only schema — mirrors the resolver so meta.valid reflects actual
+    // submittability: hidden required fields are excluded, just as the resolver excludes them.
+    const visibleFieldItems = collectFieldItems(config).filter((f) =>
+      evaluateConditional(f.conditional, vals),
+    );
+    const visibleConfig: FormConfig = { version: config.version, fields: visibleFieldItems };
+    const parsed = configToZod(visibleConfig).safeParse(data);
+    const errors: Record<string, string> = {};
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        const k = String(issue.path[0]);
+        if (k && !errors[k]) errors[k] = issue.message;
+      }
+    }
+    onPayloadChangeRef.current({
+      data,
+      meta: {
+        valid: parsed.success,
+        errors,
+        visibleKeys: Object.keys(data),
+        schemaVersion: config.version,
+      },
+    });
+  }, [watchedValues, config]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const spacerHeights: Record<string, number> = { sm: 8, md: 16, lg: 32 };
 
   // Span styles are applied INLINE, not via Tailwind `col-span-*` utilities —
   // those aren't reliably emitted for this package. Inline is guaranteed.
-  // Items always span the full row width.
-  const FULL_SPAN: React.CSSProperties = { gridColumn: '1 / -1' };
+  // Items always span the full row width. (FULL_SPAN is module-level — see above.)
 
   // Explicit grid placement → inline grid-area style (grid-mode sections, Task 2).
-  const placementStyle = (p: { colStart: number; colSpan: number; row: number; rowSpan?: number }): React.CSSProperties => ({
-    gridColumn: `${p.colStart} / span ${p.colSpan}`,
-    gridRow: p.rowSpan ? `${p.row} / span ${p.rowSpan}` : String(p.row),
-    minWidth: 0,
-  });
+  // When narrow, collapse to full width (no placement).
+  const placementStyle = (p: { colStart: number; colSpan: number; row: number; rowSpan?: number }): React.CSSProperties =>
+    narrow
+      ? { ...FULL_SPAN, minWidth: 0 }
+      : {
+          gridColumn: `${p.colStart} / span ${p.colSpan}`,
+          gridRow: p.rowSpan ? `${p.row} / span ${p.rowSpan}` : String(p.row),
+          minWidth: 0,
+        };
 
   // Field grid-span derived from the field's width AND the section's column count.
   // #3: columns DRIVE width — an unset width is a single cell, so a section with
@@ -146,6 +225,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   // needed). 'half' ≈ half the row; 'full' spans the whole row. `flow: 'v1'`
   // keeps the legacy behaviour (unset = full) for back-compat with `fields[]`.
   function fieldSpanStyle(width: FieldWidth | undefined, flow: 'v1' | 'section', cols: number): React.CSSProperties {
+    if (narrow) return FULL_SPAN;
     if (flow === 'v1') return { gridColumn: (width ?? 'full') === 'full' ? '1 / -1' : undefined };
     if (width === 'full') return FULL_SPAN;
     const cells = width === 'half' ? Math.max(1, Math.ceil(cols / 2)) : 1;
@@ -228,20 +308,41 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   // Use the first section's columns for the overall form grid (v1 back-compat).
   const columns = config.columns ?? sections[0]?.columns ?? 1;
 
+  // Pre-sort grid-mode section items once per config+narrow change rather than
+  // on every keystroke. `watch()` causes re-renders on every field change, so
+  // the sort cost is proportional to input frequency without this memo.
+  const sortedGridItems = React.useMemo(() => {
+    const result = new Map<string, FormItem[]>();
+    for (const section of sections) {
+      if (section.layout) {
+        const byId = new Map(section.layout.placements.map((p) => [p.itemId, p]));
+        const allItems = section.rows.flatMap((r) => r.items);
+        result.set(
+          section.id,
+          narrow
+            ? [...allItems].sort((a, b) => {
+                const pa = byId.get(a.id);
+                const pb = byId.get(b.id);
+                return (pa?.row ?? Number.MAX_SAFE_INTEGER) - (pb?.row ?? Number.MAX_SAFE_INTEGER) || (pa?.colStart ?? Number.MAX_SAFE_INTEGER) - (pb?.colStart ?? Number.MAX_SAFE_INTEGER);
+              })
+            : allItems,
+        );
+      }
+    }
+    return result;
+  }, [config, narrow]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <form
+      ref={rootRef}
       onSubmit={handleSubmit((all) => {
-        // Strip hidden fields' values from the submit payload.
-        const visibleKeys = new Set(
-          collectFieldItems(config)
-            .filter((f) => evaluateConditional(f.conditional, all as Record<string, unknown>))
-            .map((f) => f.key),
-        );
-        const out = Object.fromEntries(Object.entries(all).filter(([k]) => visibleKeys.has(k)));
-        onSubmit(out as Record<string, unknown>);
+        onSubmit(computePayload(all as Record<string, unknown>, config));
       })}
-      className="grid grid-cols-1 gap-4 md:[grid-template-columns:repeat(var(--form-cols),minmax(0,1fr))]"
-      style={{ '--form-cols': String(columns) } as React.CSSProperties}
+      className="grid gap-4"
+      style={{
+        gridTemplateColumns: narrow ? '1fr' : 'repeat(var(--form-cols), minmax(0, 1fr))',
+        ...(!narrow && { ['--form-cols' as any]: String(columns) }),
+      }}
       data-columns={columns}
     >
       {sections.map((section) => {
@@ -251,7 +352,9 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
         if (isV2 && section.layout) {
           const layout = section.layout;
           const byId = new Map(layout.placements.map((p) => [p.itemId, p]));
-          const items = section.rows.flatMap((r) => r.items);
+          // Sorted order is pre-computed in sortedGridItems (memoized) to avoid re-sorting
+          // on every keystroke (watch() re-renders on each field change).
+          const items = sortedGridItems.get(section.id) ?? section.rows.flatMap((r) => r.items);
           return (
             <React.Fragment key={section.id}>
               {section.title && (
@@ -262,7 +365,10 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
               <div
                 data-testid="form-grid"
                 className="grid gap-4"
-                style={{ gridColumn: '1 / -1', gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))` }}
+                style={{
+                  gridColumn: '1 / -1',
+                  gridTemplateColumns: narrow ? '1fr' : `repeat(${layout.columns}, minmax(0, 1fr))`,
+                }}
               >
                 {items.map((item) => renderItem(item, 'section', layout.columns, byId.get(item.id)))}
               </div>
@@ -283,7 +389,10 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
                   key={row.id}
                   data-testid="form-row"
                   className="grid gap-4"
-                  style={{ gridColumn: '1 / -1', gridTemplateColumns: `repeat(${sectionCols}, minmax(0, 1fr))` }}
+                  style={{
+                    gridColumn: '1 / -1',
+                    gridTemplateColumns: narrow ? '1fr' : `repeat(${sectionCols}, minmax(0, 1fr))`,
+                  }}
                 >
                   {row.items.map((item) => renderItem(item, 'section', sectionCols))}
                 </div>
