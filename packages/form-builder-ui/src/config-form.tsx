@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Controller, useForm, type Resolver } from 'react-hook-form';
+import { Controller, useForm, useWatch, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   configToZod,
@@ -18,6 +18,32 @@ import {
   type UploadHandler,
   type SignatureTransport,
 } from '@rfjs/form-builder';
+
+// ---------------------------------------------------------------------------
+// SubmissionMeta — shape of the meta object emitted by onPayloadChange.
+// ---------------------------------------------------------------------------
+export interface SubmissionMeta {
+  valid: boolean;
+  errors: Record<string, string>;
+  visibleKeys: string[];
+  schemaVersion?: number;
+}
+
+// ---------------------------------------------------------------------------
+// computePayload — pure function: strips conditionally-hidden field values
+// from the raw RHF values object (same logic as the submit handler).
+// ---------------------------------------------------------------------------
+export function computePayload(
+  values: Record<string, unknown>,
+  config: FormConfig,
+): Record<string, unknown> {
+  const visibleKeys = new Set(
+    collectFieldItems(config)
+      .filter((f) => evaluateConditional(f.conditional, values))
+      .map((f) => f.key),
+  );
+  return Object.fromEntries(Object.entries(values).filter(([k]) => visibleKeys.has(k)));
+}
 import { useDataSource } from './use-data-source';
 import { useContainerBreakpoint } from './use-container-breakpoint';
 import { Label } from '@rfjs/web-ui/components/label';
@@ -80,9 +106,17 @@ export interface ConfigFormProps {
    * Memoize with `useCallback` to avoid unnecessary session restarts.
    */
   signatureTransport?: SignatureTransport;
+  /**
+   * Called on every form value change (live, no submit required) with the current
+   * payload (conditionally-hidden fields excluded) and a `SubmissionMeta` object
+   * containing the zod validation result, per-field errors, visible keys, and the
+   * config's schema version.
+   * Only wired up (and triggers an effect) when provided.
+   */
+  onPayloadChange?: (p: { data: Record<string, unknown>; meta: SubmissionMeta }) => void;
 }
 
-export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher, uploadHandler, signatureTransport }: ConfigFormProps) {
+export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher, uploadHandler, signatureTransport, onPayloadChange }: ConfigFormProps) {
   // Container ref for ResizeObserver-driven responsive collapse.
   const rootRef = React.useRef<HTMLFormElement>(null);
   const stackBelow = config.responsive?.stackBelow ?? 640;
@@ -134,6 +168,39 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
 
   // Subscribe to all form values to decide which items to RENDER (live show/hide).
   const values = watch();
+
+  // Live-payload seam: compute and emit payload + meta on every value change.
+  // useWatch gives a stable reference to the latest values for the effect.
+  const watchedValues = useWatch({ control });
+  const onPayloadChangeRef = React.useRef(onPayloadChange);
+  onPayloadChangeRef.current = onPayloadChange;
+  // schemaRef lets the effect read the latest schema without rebuilding on every render.
+  const schemaRef = React.useRef(configToZod(config));
+  React.useEffect(() => {
+    schemaRef.current = configToZod(config);
+  }, [config]);
+
+  React.useEffect(() => {
+    if (!onPayloadChangeRef.current) return;
+    const data = computePayload(watchedValues as Record<string, unknown>, config);
+    const parsed = schemaRef.current.safeParse(data);
+    const errors: Record<string, string> = {};
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        const k = String(issue.path[0]);
+        if (k && !errors[k]) errors[k] = issue.message;
+      }
+    }
+    onPayloadChangeRef.current({
+      data,
+      meta: {
+        valid: parsed.success,
+        errors,
+        visibleKeys: Object.keys(data),
+        schemaVersion: config.version,
+      },
+    });
+  }, [watchedValues, config]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const spacerHeights: Record<string, number> = { sm: 8, md: 16, lg: 32 };
 
@@ -269,14 +336,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     <form
       ref={rootRef}
       onSubmit={handleSubmit((all) => {
-        // Strip hidden fields' values from the submit payload.
-        const visibleKeys = new Set(
-          collectFieldItems(config)
-            .filter((f) => evaluateConditional(f.conditional, all as Record<string, unknown>))
-            .map((f) => f.key),
-        );
-        const out = Object.fromEntries(Object.entries(all).filter(([k]) => visibleKeys.has(k)));
-        onSubmit(out as Record<string, unknown>);
+        onSubmit(computePayload(all as Record<string, unknown>, config));
       })}
       className="grid gap-4"
       style={{

@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Copy, Check } from 'lucide-react';
 import type { FormConfig, FormItem, ItemKind, DataSourceFetcher, UploadHandler, SignatureTransport } from '@rfjs/form-builder';
+import type { SubmissionMeta } from './config-form';
 import { parseFormConfig, normalizeToSections, makeItem } from '@rfjs/form-builder';
 
 import { useConfigBuilder } from './use-config-builder';
@@ -72,9 +73,14 @@ export interface ConfigFormBuilderProps {
    * Memoize with `useCallback` to avoid unnecessary session restarts.
    */
   signatureTransport?: SignatureTransport;
+  /**
+   * Live payload change callback forwarded to the preview `<ConfigForm>`.
+   * Fires on every value change with the current data and `SubmissionMeta`.
+   */
+  onPayloadChange?: (p: { data: Record<string, unknown>; meta: SubmissionMeta }) => void;
 }
 
-export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'en', locales = ['en'], fetcher, uploadHandler, signatureTransport }: ConfigFormBuilderProps) {
+export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'en', locales = ['en'], fetcher, uploadHandler, signatureTransport, onPayloadChange }: ConfigFormBuilderProps) {
   const builder = useConfigBuilder(initialConfig, onChange);
 
   // The form is "empty" only when no items exist at all (covers both v1 fields[] and v2 sections[]).
@@ -167,7 +173,7 @@ export function ConfigFormBuilder({ initialConfig = EMPTY, onChange, locale = 'e
       {!hasItems ? (
         <p className="py-4 text-center text-sm text-muted-foreground">Preview will appear here once you add fields</p>
       ) : (
-        <ConfigForm config={builder.config} locale={locale} fetcher={fetcher} uploadHandler={uploadHandler} signatureTransport={signatureTransport} onSubmit={() => {}} />
+        <ConfigForm config={builder.config} locale={locale} fetcher={fetcher} uploadHandler={uploadHandler} signatureTransport={signatureTransport} onSubmit={() => {}} onPayloadChange={onPayloadChange} />
       )}
     </div>
   );

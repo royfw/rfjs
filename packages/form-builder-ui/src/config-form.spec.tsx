@@ -722,6 +722,69 @@ describe('Signature field submit gating', () => {
 });
 
 // ---------------------------------------------------------------------------
+// onPayloadChange — live payload seam
+// ---------------------------------------------------------------------------
+
+describe('onPayloadChange', () => {
+  it('emits live payload (data + meta) on value change without submit', async () => {
+    const onPayloadChange = vi.fn();
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string', required: true }],
+    };
+    render(<ConfigForm config={cfg} onSubmit={() => {}} onPayloadChange={onPayloadChange} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Ann' } });
+    await waitFor(() => {
+      const lastCall = onPayloadChange.mock.calls.at(-1)![0];
+      expect(lastCall.data.name).toBe('Ann');
+      expect(lastCall.meta.visibleKeys).toContain('name');
+    });
+  });
+
+  it('excludes conditionally-hidden fields from payload data and visibleKeys', async () => {
+    const onPayloadChange = vi.fn();
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        { key: 'role', label: 'Role', component: 'Input', dataType: 'string' },
+        {
+          key: 'secret',
+          label: 'Secret',
+          component: 'Input',
+          dataType: 'string',
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'admin' }],
+          },
+        },
+      ],
+    };
+    render(<ConfigForm config={cfg} onSubmit={() => {}} onPayloadChange={onPayloadChange} />);
+    // role !== 'admin' → secret is hidden
+    fireEvent.change(screen.getByRole('textbox', { name: 'Role' }), { target: { value: 'user' } });
+    await waitFor(() => {
+      const lastCall = onPayloadChange.mock.calls.at(-1)![0];
+      expect(Object.keys(lastCall.data)).not.toContain('secret');
+      expect(lastCall.meta.visibleKeys).not.toContain('secret');
+    });
+  });
+
+  it('reports meta.valid=false and errors when a required field is empty', async () => {
+    const onPayloadChange = vi.fn();
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string', required: true }],
+    };
+    render(<ConfigForm config={cfg} onSubmit={() => {}} onPayloadChange={onPayloadChange} />);
+    // Trigger a re-render by typing then clearing — or just wait for the initial emit
+    await waitFor(() => expect(onPayloadChange).toHaveBeenCalled());
+    const lastCall = onPayloadChange.mock.calls.at(-1)![0];
+    expect(lastCall.meta.valid).toBe(false);
+    expect(lastCall.meta.errors).toHaveProperty('name');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Responsive collapse (container-driven via ResizeObserver)
 // ---------------------------------------------------------------------------
 
