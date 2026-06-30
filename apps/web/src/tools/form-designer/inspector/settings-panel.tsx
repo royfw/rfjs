@@ -10,7 +10,17 @@ import { ConditionalSection } from "./conditional";
 import { DataSourceSection } from "./data-source";
 import { cardLabel, type Card, type Group, type Component } from "../model";
 import { INPUT_CLS } from "./constants";
-const COMPONENTS: Component[] = ["Input", "Textarea", "Select", "Number", "Switch", "DatePicker"];
+
+const COMPONENTS: Component[] = [
+  "Input", "Textarea", "Number", "Email",
+  "Select", "Radio", "Checkbox", "CheckboxGroup", "TagList",
+  "Switch", "Date", "DatePicker",
+  "FileUpload", "Signature",
+];
+
+// Components that show the Options editor and/or Data Source section.
+const CHOICE_COMPONENTS = new Set<Component>(["Select", "Radio", "CheckboxGroup", "TagList"]);
+
 const COLS = 12;
 
 // "Has content" indicators shown on section headers.
@@ -30,6 +40,7 @@ export function SettingsPanel({
     );
   }
   const isField = card.kind === "field";
+  const comp = card.component;
   return (
     <div className="flex flex-col gap-3">
       <Section title="Basics">
@@ -57,6 +68,14 @@ export function SettingsPanel({
               <input type="checkbox" checked={Boolean(card.required)} onChange={(e) => onChange({ required: e.target.checked || undefined })} />
               Required
             </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input type="checkbox" checked={Boolean(card.disabled)} onChange={(e) => onChange({ disabled: e.target.checked || undefined })} />
+              Disabled
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input type="checkbox" checked={Boolean(card.readOnly)} onChange={(e) => onChange({ readOnly: e.target.checked || undefined })} />
+              Read-only
+            </label>
           </>
         ) : null}
         <div className="grid grid-cols-2 gap-2">
@@ -82,7 +101,7 @@ export function SettingsPanel({
         </Section>
       ) : null}
 
-      {isField && card.component === "Select" ? (
+      {isField && comp && CHOICE_COMPONENTS.has(comp) ? (
         <Section title="Options" badge={card.options?.length ? <Count n={card.options.length} /> : undefined}>
           <OptionsSection card={card} onChange={onChange} />
         </Section>
@@ -94,7 +113,7 @@ export function SettingsPanel({
         </Section>
       ) : null}
 
-      {isField && card.component === "Select" ? (
+      {isField && comp && CHOICE_COMPONENTS.has(comp) ? (
         <Section title="Data Source" defaultOpen={false} badge={card.dataSource ? <Dot /> : undefined}>
           <DataSourceSection card={card} onChange={onChange} />
         </Section>
@@ -106,11 +125,55 @@ export function SettingsPanel({
         </Section>
       ) : null}
 
+      {isField && comp === "FileUpload" ? (
+        <Section title="File Upload" badge={card.fileUpload && (card.fileUpload.accept || card.fileUpload.multiple || card.fileUpload.maxSize !== undefined) ? <Dot /> : undefined}>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Accept
+            <input
+              className={INPUT_CLS}
+              value={card.fileUpload?.accept ?? ""}
+              placeholder="e.g. image/*,.pdf"
+              onChange={(e) => onChange({ fileUpload: { ...card.fileUpload, accept: e.target.value || undefined } })}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={Boolean(card.fileUpload?.multiple)}
+              onChange={(e) => onChange({ fileUpload: { ...card.fileUpload, multiple: e.target.checked || undefined } })}
+            />
+            Allow multiple files
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Max size (bytes)
+            <input
+              className={INPUT_CLS}
+              type="number"
+              min={0}
+              value={card.fileUpload?.maxSize ?? ""}
+              placeholder="e.g. 5242880"
+              onChange={(e) => {
+                const v = e.target.value ? Number(e.target.value) : undefined;
+                onChange({ fileUpload: { ...card.fileUpload, maxSize: v } });
+              }}
+            />
+          </label>
+        </Section>
+      ) : null}
+
+      {isField && comp === "Signature" ? (
+        <Section title="Signature">
+          <p className="text-xs text-muted-foreground">
+            Hand-drawn signature pad. No extra config required.
+          </p>
+        </Section>
+      ) : null}
+
       {card.kind === "content" ? <Section title="Content"><ContentSection card={card} onChange={onChange} /></Section> : null}
       {card.kind === "spacer" ? <Section title="Spacer"><SpacerSection card={card} onChange={onChange} /></Section> : null}
 
       {(card.kind === "field" || card.kind === "content") ? (
-        <Section title="Labels (i18n)" defaultOpen={false} badge={typeof card.label === "object" ? <Dot /> : undefined}>
+        <Section title="Labels (i18n)" defaultOpen={false} badge={typeof card.label === "object" || typeof card.description === "object" ? <Dot /> : undefined}>
           <LabelsSection card={card} onChange={onChange} />
         </Section>
       ) : null}

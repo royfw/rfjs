@@ -15,6 +15,8 @@ import {
   type FieldWidth,
   type DataSource,
   type DataSourceFetcher,
+  type UploadHandler,
+  type SignatureTransport,
 } from '@rfjs/form-builder';
 import { useDataSource } from './use-data-source';
 import { Label } from '@rfjs/web-ui/components/label';
@@ -58,11 +60,25 @@ export interface ConfigFormProps {
   /**
    * Fetcher for `dataSource` fields (Select/Radio). Receives a `DataSourceRequest` and
    * returns the raw response. Memoize with `useCallback` to avoid unnecessary refetches.
+   * When absent, dataSource fields degrade to their fallback text.
    */
   fetcher?: DataSourceFetcher;
+  /**
+   * Handler for `FileUpload` fields. Receives a `File` and `{ fieldKey }` context
+   * and returns a `FileRef`. When absent, FileUpload fields render a disabled fallback.
+   * Memoize with `useCallback` to avoid unnecessary re-renders.
+   */
+  uploadHandler?: UploadHandler;
+  /**
+   * Transport factory for `Signature` fields. Receives `{ fieldKey, signal }` and
+   * returns a `SignatureCaptureHandle`. When absent, the local `<SignaturePad>`
+   * drives value directly via `onChange` (no remote capture session).
+   * Memoize with `useCallback` to avoid unnecessary session restarts.
+   */
+  signatureTransport?: SignatureTransport;
 }
 
-export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher }: ConfigFormProps) {
+export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher, uploadHandler, signatureTransport }: ConfigFormProps) {
   // Keep the latest config reachable inside the stable resolver without re-creating it.
   const configRef = React.useRef(config);
   configRef.current = config;
@@ -80,11 +96,31 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     return zodResolver(configToZod(visibleConfig))(values, ctx, opts);
   }, []);
 
-  const { control, handleSubmit, reset, watch, formState: { errors } } = useForm({ resolver, defaultValues });
+  const { control, handleSubmit, reset, watch, setError, formState: { errors } } = useForm({ resolver, defaultValues });
+
+  // Track which Signature fields have an active capture in progress — used to
+  // gate the submit button while a capture is pending.
+  const [pendingCaptures, setPendingCaptures] = React.useState<Set<string>>(new Set());
+
+  const handleSignatureStatus = React.useCallback((fieldKey: string, status: string) => {
+    setPendingCaptures((prev) => {
+      const next = new Set(prev);
+      if (status === 'pending') {
+        next.add(fieldKey);
+      } else {
+        next.delete(fieldKey);
+      }
+      return next;
+    });
+  }, []);
 
   // Re-initialise form state when `config` changes so stale field values are cleared.
+  // Also clear pendingCaptures: any Signature fields that were pending will unmount
+  // and emit 'idle' via their cleanup, but resetting here is an additional safeguard
+  // for in-tree fields that may not unmount (e.g. same key, changed config).
   React.useEffect(() => {
     reset(defaultValues ?? {});
+    setPendingCaptures(new Set());
   }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Subscribe to all form values to decide which items to RENDER (live show/hide).
@@ -166,7 +202,17 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
           control={control}
           name={item.key}
           render={({ field: rhf }) => (
-            <FieldControl field={item} value={rhf.value} onChange={rhf.onChange} fetcher={fetcher} />
+            <FieldControl
+              field={item}
+              value={rhf.value}
+              onChange={rhf.onChange}
+              fetcher={fetcher}
+              locale={locale}
+              uploadHandler={uploadHandler}
+              signatureTransport={signatureTransport}
+              onFileError={(key, message) => setError(key, { message })}
+              onSignatureStatus={handleSignatureStatus}
+            />
           )}
         />
         {errors[item.key]?.message && (
@@ -254,6 +300,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       <div style={{ gridColumn: '1 / -1' }}>
         <Button
           type="submit"
+          disabled={pendingCaptures.size > 0}
           className="self-start border-0 text-white"
           style={{ background: 'linear-gradient(180deg,#5b8cff,#4a78ee)', boxShadow: '0 6px 16px rgba(74,120,238,.3)' }}
         >

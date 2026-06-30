@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ConfigForm } from './config-form';
-import type { FormConfig, DataSource } from '@rfjs/form-builder';
+import type { FormConfig, DataSource, UploadHandler, FileRef, SignatureTransport } from '@rfjs/form-builder';
+
 
 const baseConfig: FormConfig = {
   version: 1,
@@ -51,6 +52,29 @@ describe('localized labels', () => {
   it('defaults to the en label', () => {
     render(<ConfigForm config={cfg} onSubmit={() => {}} />);
     expect(screen.getByText('Name')).toBeTruthy();
+  });
+});
+
+describe('localized description', () => {
+  const cfg: FormConfig = {
+    version: 1,
+    fields: [{
+      key: 'name',
+      label: { en: 'Name', 'zh-TW': '姓名' },
+      description: { en: 'Enter your name', 'zh-TW': '請輸入姓名' },
+      component: 'Input',
+      dataType: 'string',
+    }],
+  };
+  it('resolves description to zh-TW when locale=zh-TW', () => {
+    render(<ConfigForm config={cfg} locale="zh-TW" onSubmit={() => {}} />);
+    expect(screen.getByText('請輸入姓名')).toBeTruthy();
+    expect(screen.queryByText('Enter your name')).toBeNull();
+  });
+  it('resolves description to English when no locale is given', () => {
+    render(<ConfigForm config={cfg} onSubmit={() => {}} />);
+    expect(screen.getByText('Enter your name')).toBeTruthy();
+    expect(screen.queryByText('請輸入姓名')).toBeNull();
   });
 });
 
@@ -449,5 +473,227 @@ describe('grid-layout sections', () => {
     expect(a.style.gridColumn).toBe('1 / span 7');
     expect(b.style.gridColumn).toBe('8 / span 5');
     expect(a.style.gridRow).toBe('1');
+  });
+});
+
+describe('FileUpload field', () => {
+  const fileUploadConfig: FormConfig = {
+    version: 1,
+    fields: [
+      {
+        key: 'doc',
+        label: 'Document',
+        component: 'FileUpload',
+        dataType: 'string',
+        fileUpload: { accept: 'application/pdf', multiple: false, maxSize: 1024 },
+      },
+    ],
+  };
+
+  it('shows a disabled fallback when no uploadHandler is provided', () => {
+    render(<ConfigForm config={fileUploadConfig} onSubmit={() => {}} />);
+    // The fallback must render BOTH a message AND a disabled input.
+    const fallbackMsg = screen.queryByText(/no upload handler/i);
+    expect(fallbackMsg).toBeTruthy();
+    // The disabled file input must be present inside the fallback container.
+    const fallbackInput = fallbackMsg!.closest('div')!.querySelector('input[type="file"]') as HTMLInputElement | null;
+    expect(fallbackInput).toBeTruthy();
+    expect(fallbackInput!.disabled).toBe(true);
+  });
+
+  it('stores a FileRef when uploadHandler resolves', async () => {
+    const fileRef: FileRef = { name: 'test.pdf', size: 500, type: 'application/pdf', url: 'u' };
+    const uploadHandler: UploadHandler = vi.fn(async () => fileRef);
+    const onSubmit = vi.fn();
+
+    render(
+      <ConfigForm
+        config={fileUploadConfig}
+        onSubmit={onSubmit}
+        uploadHandler={uploadHandler}
+      />,
+    );
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input).toBeTruthy();
+
+    const file = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+    Object.defineProperty(file, 'size', { value: 500 });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => expect(uploadHandler).toHaveBeenCalledOnce());
+
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({ doc: fileRef }),
+    );
+  });
+
+  it('calls onFileError when uploadHandler rejects', async () => {
+    const uploadHandler: UploadHandler = vi.fn().mockRejectedValue(new Error('Server error'));
+    const onSubmit = vi.fn();
+
+    render(
+      <ConfigForm
+        config={fileUploadConfig}
+        onSubmit={onSubmit}
+        uploadHandler={uploadHandler}
+      />,
+    );
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+    Object.defineProperty(file, 'size', { value: 500 });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => expect(uploadHandler).toHaveBeenCalledOnce());
+    // The error message from the rejected handler should surface in the form
+    await waitFor(() => expect(screen.getByText(/server error/i)).toBeTruthy());
+  });
+
+  it('rejects a file over maxSize at pick time and keeps value empty', async () => {
+    const uploadHandler: UploadHandler = vi.fn(async (f) => ({
+      name: f.name, size: f.size, type: f.type,
+    }));
+    const onSubmit = vi.fn();
+
+    render(
+      <ConfigForm
+        config={fileUploadConfig}
+        onSubmit={onSubmit}
+        uploadHandler={uploadHandler}
+      />,
+    );
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+
+    // Create a file that exceeds maxSize (1024 bytes)
+    const bigFile = new File(['x'.repeat(2048)], 'big.pdf', { type: 'application/pdf' });
+    Object.defineProperty(bigFile, 'size', { value: 2048 });
+
+    fireEvent.change(input, { target: { files: [bigFile] } });
+
+    // uploadHandler must NOT be called for the oversized file
+    await waitFor(() => expect(uploadHandler).not.toHaveBeenCalled());
+
+    // An error message should appear
+    const errMsg = await screen.findByText(/size|too large|max/i);
+    expect(errMsg).toBeTruthy();
+  });
+});
+
+describe('Signature field submit gating', () => {
+  const signatureConfig: FormConfig = {
+    version: 1,
+    fields: [
+      { key: 'sig', label: 'Signature', component: 'Signature', dataType: 'string' },
+    ],
+  };
+
+  it('disables the submit button while signature capture status is pending', async () => {
+    const cancelFn = vi.fn();
+    const signatureTransport: SignatureTransport = vi.fn(() => ({
+      result: new Promise<string>(() => {}), // never resolves — keeps status 'pending'
+      cancel: cancelFn,
+    }));
+
+    render(
+      <ConfigForm
+        config={signatureConfig}
+        onSubmit={() => {}}
+        signatureTransport={signatureTransport}
+      />,
+    );
+
+    const submitBtn = screen.getByRole('button', { name: /submit/i });
+
+    // Before capture starts the submit button is enabled
+    expect(submitBtn.hasAttribute('disabled')).toBe(false);
+
+    // Click "Capture signature" to start the pending capture session
+    const captureBtn = screen.getByRole('button', { name: /capture signature/i });
+    fireEvent.click(captureBtn);
+
+    // The submit button must be disabled while status === 'pending'
+    await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(true));
+  });
+
+  it('re-enables submit when a pending Signature field is conditionally hidden (unmount clears pendingCaptures)', async () => {
+    const conditionalSigConfig: FormConfig = {
+      version: 1,
+      fields: [
+        { key: 'role', label: 'Role', component: 'Input', dataType: 'string' },
+        {
+          key: 'sig',
+          label: 'Signature',
+          component: 'Signature',
+          dataType: 'string',
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'show' }],
+          },
+        },
+      ],
+    };
+
+    const signatureTransport: SignatureTransport = vi.fn(() => ({
+      result: new Promise<string>(() => {}), // never resolves — keeps status 'pending'
+      cancel: vi.fn(),
+    }));
+
+    render(
+      <ConfigForm
+        config={conditionalSigConfig}
+        onSubmit={() => {}}
+        signatureTransport={signatureTransport}
+      />,
+    );
+
+    const roleInput = screen.getByRole('textbox', { name: 'Role' });
+    const submitBtn = screen.getByRole('button', { name: /submit/i });
+
+    // Show the Signature field
+    fireEvent.change(roleInput, { target: { value: 'show' } });
+    await waitFor(() => expect(screen.getByRole('button', { name: /capture signature/i })).toBeTruthy());
+
+    // Start a pending capture — submit becomes disabled
+    fireEvent.click(screen.getByRole('button', { name: /capture signature/i }));
+    await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(true));
+
+    // Hide the Signature field by changing the controlling field — field unmounts
+    fireEvent.change(roleInput, { target: { value: 'hide' } });
+    await waitFor(() => expect(screen.queryByRole('button', { name: /capture signature/i })).toBeNull());
+
+    // Submit must no longer be disabled — pendingCaptures cleared on unmount
+    await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(false));
+  });
+
+  it('re-enables submit when config changes and removes a pending Signature field', async () => {
+    const signatureTransport: SignatureTransport = vi.fn(() => ({
+      result: new Promise<string>(() => {}), // never resolves — keeps status 'pending'
+      cancel: vi.fn(),
+    }));
+
+    const { rerender } = render(
+      <ConfigForm
+        config={signatureConfig}
+        onSubmit={() => {}}
+        signatureTransport={signatureTransport}
+      />,
+    );
+
+    const submitBtn = screen.getByRole('button', { name: /submit/i });
+
+    // Start a pending capture — submit becomes disabled
+    fireEvent.click(screen.getByRole('button', { name: /capture signature/i }));
+    await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(true));
+
+    // Replace config with one that has no Signature field
+    rerender(<ConfigForm config={baseConfig} onSubmit={() => {}} signatureTransport={signatureTransport} />);
+
+    // Submit must no longer be disabled — pendingCaptures cleared on config change
+    await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(false));
   });
 });

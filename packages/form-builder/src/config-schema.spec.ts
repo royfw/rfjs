@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseFormConfig, FormConfigSchema } from './config-schema';
+import { parseFormConfig, FormConfigSchema, fieldConfigSchema, formConfigSchema } from './config-schema';
 
 const valid = {
   version: 1,
@@ -355,6 +355,85 @@ describe('conditional field visibility schema', () => {
   });
 });
 
+describe('CheckboxGroup/TagList + new props', () => {
+  it('accepts CheckboxGroup with description/disabled/readOnly', () => {
+    const r = fieldConfigSchema.safeParse({
+      key: 'tags', label: 'Tags', component: 'CheckboxGroup', dataType: 'array',
+      options: [{ label: 'A', value: 'a' }],
+      description: 'pick some', disabled: false, readOnly: true,
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('requires options for non-creatable TagList', () => {
+    const r = fieldConfigSchema.safeParse({ key: 't', label: 'T', component: 'TagList', dataType: 'array' });
+    expect(r.success).toBe(false);
+  });
+
+  it('allows creatable TagList without options', () => {
+    const r = fieldConfigSchema.safeParse({ key: 't', label: 'T', component: 'TagList', dataType: 'array', creatable: true });
+    expect(r.success).toBe(true);
+  });
+
+  it('preserves description (LocalizedLabel record) and elementType on round-trip', () => {
+    const cfg = {
+      version: 1,
+      sections: [{ id: 's', title: 'S', rows: [{ id: 'r', items: [
+        {
+          id: 'f1', kind: 'field',
+          key: 'tags', label: { en: 'Tags', 'zh-TW': '標籤' }, component: 'CheckboxGroup', dataType: 'string',
+          description: { en: 'help', 'zh-TW': '說明' }, options: [{ label: 'A', value: 'a' }],
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'tags', dataType: 'string', operator: 'terms', value: ['a'], elementType: 'string' }],
+          },
+        },
+      ] }] }],
+    };
+    const parsed = formConfigSchema.parse(cfg);
+    expect(JSON.parse(JSON.stringify(parsed))).toEqual(cfg);
+  });
+});
+
+describe('TagList validation in sections path', () => {
+  const makeTagListItem = (extra: Record<string, unknown> = {}) => ({
+    id: 'tl1',
+    kind: 'field',
+    key: 'tags',
+    label: 'Tags',
+    component: 'TagList',
+    dataType: 'array',
+    ...extra,
+  });
+
+  it('rejects a non-creatable TagList without options in sections[].rows[].items[]', () => {
+    const cfg = {
+      version: 1,
+      sections: [{ id: 's1', rows: [{ id: 'r1', items: [makeTagListItem()] }] }],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(false);
+  });
+
+  it('accepts a creatable TagList without options in sections[].rows[].items[]', () => {
+    const cfg = {
+      version: 1,
+      sections: [{ id: 's1', rows: [{ id: 'r1', items: [makeTagListItem({ creatable: true })] }] }],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
+  it('accepts a TagList with options in sections[].rows[].items[]', () => {
+    const cfg = {
+      version: 1,
+      sections: [{
+        id: 's1',
+        rows: [{ id: 'r1', items: [makeTagListItem({ options: [{ label: 'A', value: 'a' }] })] }],
+      }],
+    };
+    expect(FormConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+});
+
 describe('FormConfig grid layout', () => {
   const gridConfig = {
     version: 1,
@@ -385,5 +464,24 @@ describe('FormConfig grid layout', () => {
     const bad = structuredClone(gridConfig);
     bad.sections[0]!.layout!.placements[0]!.colSpan = 0;
     expect(() => parseFormConfig(bad)).toThrow();
+  });
+});
+
+describe('FileUpload/Signature components', () => {
+  it('accepts FileUpload with fileUpload config and Signature', () => {
+    expect(fieldConfigSchema.safeParse({
+      key: 'f', label: 'F', component: 'FileUpload', dataType: 'array',
+      fileUpload: { accept: 'image/*', multiple: true, maxSize: 5_000_000 },
+    }).success).toBe(true);
+    expect(fieldConfigSchema.safeParse({
+      key: 's', label: 'S', component: 'Signature', dataType: 'string',
+    }).success).toBe(true);
+  });
+
+  it('rejects FileUpload with an invalid fileUpload.multiple type', () => {
+    expect(fieldConfigSchema.safeParse({
+      key: 'f', label: 'F', component: 'FileUpload', dataType: 'array',
+      fileUpload: { multiple: 'yes' },
+    }).success).toBe(false);
   });
 });

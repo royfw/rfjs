@@ -1,8 +1,17 @@
-import type { FormConfig, DataSourceFetcher } from "@rfjs/form-builder";
+import type { FormConfig, DataSourceFetcher, UploadHandler } from "@rfjs/form-builder";
 
 // Shared demo data for both the form-builder (linear) and form-designer (2D) tools,
 // so they showcase the same example form. form-builder renders it linearly; the
 // form-designer seeds its canvas from it (see formConfigToCards).
+
+// Mock uploader — returns a FileRef from the File object (uses createObjectURL when available).
+// Module-level const is a stable reference (no re-upload loops).
+export const sampleUploader: UploadHandler = async (file) => ({
+  name: file.name,
+  size: file.size,
+  type: file.type,
+  url: typeof URL !== "undefined" ? URL.createObjectURL(file) : undefined,
+});
 
 // Mock fetcher — no network. Returns canned data for known dataSource URLs.
 // Module-level const is a stable reference (no re-fetch loops).

@@ -197,6 +197,152 @@ describe('FieldControl with dataSource', () => {
   });
 });
 
+describe('CheckboxGroup', () => {
+  const checkboxGroupField: FieldConfig = {
+    key: 'tags',
+    label: 'Tags',
+    component: 'CheckboxGroup',
+    dataType: 'string',
+    options: [
+      { label: 'Alpha', value: 'a' },
+      { label: 'Beta', value: 'b' },
+    ],
+  };
+
+  it('renders one checkbox per option', () => {
+    render(<FieldControl field={checkboxGroupField} value={[]} onChange={() => {}} />);
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+    expect(screen.getByLabelText('Alpha')).toBeTruthy();
+    expect(screen.getByLabelText('Beta')).toBeTruthy();
+  });
+
+  it('checking unchecked option calls onChange with value added to array', () => {
+    const onChange = vi.fn();
+    render(<FieldControl field={checkboxGroupField} value={[]} onChange={onChange} />);
+    fireEvent.click(screen.getByLabelText('Alpha'));
+    expect(onChange).toHaveBeenCalledWith(['a']);
+  });
+
+  it('unchecking checked option calls onChange with value removed from array', () => {
+    const onChange = vi.fn();
+    render(<FieldControl field={checkboxGroupField} value={['a', 'b']} onChange={onChange} />);
+    fireEvent.click(screen.getByLabelText('Alpha'));
+    expect(onChange).toHaveBeenCalledWith(['b']);
+  });
+
+  it('checking second option appends to existing array', () => {
+    const onChange = vi.fn();
+    render(<FieldControl field={checkboxGroupField} value={['a']} onChange={onChange} />);
+    fireEvent.click(screen.getByLabelText('Beta'));
+    expect(onChange).toHaveBeenCalledWith(['a', 'b']);
+  });
+});
+
+describe('TagList', () => {
+  const tagListField: FieldConfig = {
+    key: 'items',
+    label: 'Items',
+    component: 'TagList',
+    dataType: 'string',
+    options: [{ label: 'Foo', value: 'foo' }, { label: 'Bar', value: 'bar' }],
+  };
+
+  it('renders a TagInput element', () => {
+    const { container } = render(<FieldControl field={tagListField} value={[]} onChange={() => {}} />);
+    expect(container.querySelector('[data-slot="tag-input"]')).toBeTruthy();
+  });
+
+  it('passes existing value tags to TagInput', () => {
+    render(<FieldControl field={tagListField} value={['foo']} onChange={() => {}} />);
+    expect(screen.getByText('Foo')).toBeTruthy();
+  });
+
+  it('readOnly TagList has aria-readonly on the container and is effectively disabled', () => {
+    const field: FieldConfig = { ...tagListField, readOnly: true };
+    const { container } = render(<FieldControl field={field} value={[]} onChange={() => {}} />);
+    const tagInput = container.querySelector('[data-slot="tag-input"]');
+    expect(tagInput).toBeTruthy();
+    expect(tagInput!.getAttribute('aria-readonly')).toBe('true');
+    // effectiveDisabled=true means the trigger button is disabled
+    const trigger = container.querySelector('button');
+    expect((trigger as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe('description / disabled / readOnly cross-cutting', () => {
+  it('renders description text below the control', () => {
+    const field: FieldConfig = { ...inputField, description: 'help me' };
+    render(<FieldControl field={field} value="" onChange={() => {}} />);
+    expect(screen.getByText('help me')).toBeTruthy();
+  });
+
+  it('disabled Input is disabled', () => {
+    const field: FieldConfig = { ...inputField, disabled: true };
+    render(<FieldControl field={field} value="" onChange={() => {}} />);
+    expect((screen.getByRole('textbox') as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it('readOnly Input has readonly attribute and is not disabled', () => {
+    const field: FieldConfig = { ...inputField, readOnly: true };
+    render(<FieldControl field={field} value="" onChange={() => {}} />);
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+    expect(input.readOnly).toBe(true);
+    expect(input.disabled).toBe(false);
+  });
+
+  it('readOnly Textarea has readonly attribute', () => {
+    const field: FieldConfig = { key: 'bio', label: 'Bio', component: 'Textarea', dataType: 'string', readOnly: true };
+    const { container } = render(<FieldControl field={field} value="" onChange={() => {}} />);
+    expect((container.querySelector('textarea') as HTMLTextAreaElement).readOnly).toBe(true);
+  });
+
+  it('readOnly Select trigger has aria-readonly="true" and is disabled', () => {
+    const field: FieldConfig = {
+      key: 'x',
+      label: 'X',
+      component: 'Select',
+      dataType: 'string',
+      options: [{ label: 'One', value: '1' }],
+      readOnly: true,
+    };
+    render(<FieldControl field={field} value="" onChange={() => {}} />);
+    const trigger = screen.getByRole('combobox');
+    expect(trigger.getAttribute('aria-readonly')).toBe('true');
+    expect((trigger as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('readOnly CheckboxGroup items have aria-readonly and are disabled', () => {
+    const field: FieldConfig = {
+      key: 'cg',
+      label: 'CG',
+      component: 'CheckboxGroup',
+      dataType: 'string',
+      options: [{ label: 'A', value: 'a' }],
+      readOnly: true,
+    };
+    render(<FieldControl field={field} value={[]} onChange={() => {}} />);
+    const cb = screen.getByRole('checkbox') as HTMLButtonElement;
+    expect(cb.getAttribute('aria-readonly')).toBe('true');
+    expect(cb.disabled).toBe(true);
+  });
+
+  it('readOnly Switch has aria-readonly and is disabled', () => {
+    const field: FieldConfig = { key: 'sw', label: 'SW', component: 'Switch', dataType: 'boolean', readOnly: true };
+    render(<FieldControl field={field} value={false} onChange={() => {}} />);
+    const sw = screen.getByRole('switch') as HTMLButtonElement;
+    expect(sw.getAttribute('aria-readonly')).toBe('true');
+    expect(sw.disabled).toBe(true);
+  });
+
+  it('readOnly DatePicker trigger button has aria-readonly and is disabled', () => {
+    const field: FieldConfig = { key: 'dp', label: 'DP', component: 'DatePicker', dataType: 'date', readOnly: true };
+    render(<FieldControl field={field} value="" onChange={() => {}} />);
+    const btn = screen.getByRole('button') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-readonly')).toBe('true');
+    expect(btn.disabled).toBe(true);
+  });
+});
+
 describe('dateToISO / isoToDate (local-date, no UTC shift)', () => {
   it('dateToISO formats a local Date as yyyy-mm-dd', () => {
     expect(dateToISO(new Date(2026, 5, 28))).toBe('2026-06-28');

@@ -1,6 +1,23 @@
 import { describe, it, expect } from 'vitest';
 import { configToZod } from './config-to-zod';
-import type { FormConfig } from './types';
+import type { FormConfig, FieldConfig } from './types';
+
+/** Wraps a single partial FieldConfig into a minimal FormConfig for test convenience. */
+function mkConfig(partial: Pick<FieldConfig, 'key' | 'component'> & Partial<FieldConfig>): FormConfig {
+  const defaultDataType: Partial<Record<FieldConfig['component'], FieldConfig['dataType']>> = {
+    CheckboxGroup: 'array',
+    TagList: 'array',
+    Checkbox: 'boolean',
+    Switch: 'boolean',
+    Number: 'numeric',
+  };
+  const field = {
+    label: partial.key,
+    dataType: defaultDataType[partial.component] ?? 'string',
+    ...partial,
+  } as FieldConfig;
+  return { version: 1, fields: [field] };
+}
 
 const config: FormConfig = {
   version: 1,
@@ -398,5 +415,71 @@ describe('configToZod — v1/v2 shape compatibility', () => {
   it('still builds the schema from a v1 fields[] config (back-compat)', () => {
     const cfg = { version: 1, fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string', required: true }] };
     expect(configToZod(cfg as any).safeParse({ name: 'a' }).success).toBe(true);
+  });
+});
+
+describe('configToZod — multi-value components', () => {
+  it('validates CheckboxGroup as string[] not a single string', () => {
+    const schema = configToZod(mkConfig({ key: 'g', component: 'CheckboxGroup',
+      options: [{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }] }));
+    expect(schema.safeParse({ g: ['a', 'b'] }).success).toBe(true);
+    expect(schema.safeParse({ g: 'a' }).success).toBe(false);
+  });
+
+  it('required CheckboxGroup rejects empty array', () => {
+    const schema = configToZod(mkConfig({ key: 'g', component: 'CheckboxGroup', required: true,
+      options: [{ label: 'A', value: 'a' }] }));
+    expect(schema.safeParse({ g: [] }).success).toBe(false);
+    expect(schema.safeParse({ g: ['a'] }).success).toBe(true);
+  });
+
+  it('creatable TagList accepts arbitrary strings', () => {
+    const schema = configToZod(mkConfig({ key: 't', component: 'TagList', creatable: true }));
+    expect(schema.safeParse({ t: ['anything', 'new-tag'] }).success).toBe(true);
+  });
+
+  it('required single Checkbox must be true', () => {
+    const schema = configToZod(mkConfig({ key: 'agree', component: 'Checkbox', required: true }));
+    expect(schema.safeParse({ agree: false }).success).toBe(false);
+    expect(schema.safeParse({ agree: true }).success).toBe(true);
+  });
+
+  it('non-creatable TagList with options validates as enum array', () => {
+    const schema = configToZod(mkConfig({ key: 't', component: 'TagList',
+      options: [{ label: 'X', value: 'x' }] }));
+    expect(schema.safeParse({ t: ['x'] }).success).toBe(true);
+    expect(schema.safeParse({ t: 'x' }).success).toBe(false);        // single string rejected
+    expect(schema.safeParse({ t: ['unknown'] }).success).toBe(false); // out-of-enum rejected
+  });
+});
+
+describe('configToZod — FileUpload/Signature', () => {
+  it('required Signature rejects empty string', () => {
+    const schema = configToZod(mkConfig({ key: 's', component: 'Signature', required: true }));
+    expect(schema.safeParse({ s: '' }).success).toBe(false);
+    expect(schema.safeParse({ s: 'data:image/png;base64,xxx' }).success).toBe(true);
+  });
+
+  it('required multiple FileUpload rejects empty array', () => {
+    const schema = configToZod(mkConfig({ key: 'f', component: 'FileUpload', required: true,
+      fileUpload: { multiple: true } }));
+    expect(schema.safeParse({ f: [] }).success).toBe(false);
+  });
+
+  it('multiple FileUpload accepts array of items', () => {
+    const schema = configToZod(mkConfig({ key: 'f', component: 'FileUpload',
+      fileUpload: { multiple: true } }));
+    expect(schema.safeParse({ f: [{ name: 'a.png' }, { name: 'b.png' }] }).success).toBe(true);
+  });
+
+  it('single FileUpload accepts an object value', () => {
+    const schema = configToZod(mkConfig({ key: 'f', component: 'FileUpload' }));
+    expect(schema.safeParse({ f: { name: 'a.png', size: 1024 } }).success).toBe(true);
+  });
+
+  it('required single FileUpload rejects undefined', () => {
+    const schema = configToZod(mkConfig({ key: 'f', component: 'FileUpload', required: true }));
+    expect(schema.safeParse({ f: undefined }).success).toBe(false);
+    expect(schema.safeParse({ f: { name: 'a.png', size: 1024, type: 'image/png' } }).success).toBe(true);
   });
 });
