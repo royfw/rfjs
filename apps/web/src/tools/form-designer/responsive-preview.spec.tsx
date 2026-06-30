@@ -9,7 +9,7 @@ if (typeof Element !== "undefined") {
 }
 
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ResponsivePreview } from "./responsive-preview";
 
@@ -25,7 +25,7 @@ describe("ResponsivePreview", () => {
     expect(onWidthChange).toHaveBeenCalledWith(375);
   });
 
-  it("number input clamps to [min,max]", async () => {
+  it("number input clamps to max when above range", async () => {
     const onWidthChange = vi.fn();
     render(
       <ResponsivePreview width={500} min={320} max={1280} onWidthChange={onWidthChange}>
@@ -36,6 +36,18 @@ describe("ResponsivePreview", () => {
     await userEvent.clear(num);
     await userEvent.type(num, "99999");
     expect(onWidthChange).toHaveBeenLastCalledWith(1280);
+  });
+
+  it("number input clamps to min when below range", () => {
+    const onWidthChange = vi.fn();
+    render(
+      <ResponsivePreview width={500} min={320} max={1280} onWidthChange={onWidthChange}>
+        <div />
+      </ResponsivePreview>,
+    );
+    const num = screen.getByRole("spinbutton");
+    fireEvent.change(num, { target: { value: "10" } });
+    expect(onWidthChange).toHaveBeenLastCalledWith(320);
   });
 
   it("renders children inside a width-constrained frame", () => {
@@ -82,7 +94,7 @@ describe("ResponsivePreview", () => {
     expect(onWidthChange).toHaveBeenCalledWith(1440);
   });
 
-  it("range slider clamps value to [min, max]", async () => {
+  it("range slider clamps value to max when above range", () => {
     const onWidthChange = vi.fn();
     render(
       <ResponsivePreview width={500} min={320} max={1280} onWidthChange={onWidthChange}>
@@ -90,7 +102,20 @@ describe("ResponsivePreview", () => {
       </ResponsivePreview>,
     );
     const slider = screen.getByRole("slider");
-    expect(slider).toBeDefined();
+    fireEvent.change(slider, { target: { value: "99999" } });
+    expect(onWidthChange).toHaveBeenLastCalledWith(1280);
+  });
+
+  it("range slider clamps value to min when below range", () => {
+    const onWidthChange = vi.fn();
+    render(
+      <ResponsivePreview width={500} min={320} max={1280} onWidthChange={onWidthChange}>
+        <div />
+      </ResponsivePreview>,
+    );
+    const slider = screen.getByRole("slider");
+    fireEvent.change(slider, { target: { value: "10" } });
+    expect(onWidthChange).toHaveBeenLastCalledWith(320);
   });
 
   it("displays current width label", () => {
@@ -102,13 +127,23 @@ describe("ResponsivePreview", () => {
     expect(screen.getByText(/640/)).toBeDefined();
   });
 
-  it("compact mode renders without errors", () => {
+  it("compact mode uses xs size on preset buttons", () => {
     render(
       <ResponsivePreview width={375} onWidthChange={() => {}} compact>
         <div data-testid="compact-child" />
       </ResponsivePreview>,
     );
-    expect(screen.getByTestId("rp-frame")).toBeDefined();
-    expect(screen.getByTestId("compact-child")).toBeDefined();
+    const mobileBtn = screen.getByRole("button", { name: /mobile/i });
+    expect(mobileBtn.getAttribute("data-size")).toBe("xs");
+  });
+
+  it("non-compact mode uses sm size on preset buttons", () => {
+    render(
+      <ResponsivePreview width={375} onWidthChange={() => {}}>
+        <div />
+      </ResponsivePreview>,
+    );
+    const mobileBtn = screen.getByRole("button", { name: /mobile/i });
+    expect(mobileBtn.getAttribute("data-size")).toBe("sm");
   });
 });

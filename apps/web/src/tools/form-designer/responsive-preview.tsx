@@ -41,7 +41,6 @@ export function ResponsivePreview({
   ] as const;
 
   // Drag handle: right edge of the frame
-  const frameRef = React.useRef<HTMLDivElement>(null);
   const dragRef = React.useRef<{ startX: number; startWidth: number } | null>(null);
 
   function beginDrag(e: React.PointerEvent<HTMLDivElement>) {
@@ -95,7 +94,7 @@ export function ResponsivePreview({
             key={preset.label}
             type="button"
             variant="outline"
-            size={compact ? "sm" : "sm"}
+            size={compact ? "xs" : "sm"}
             onClick={() => onWidthChange(clamp(preset.value))}
             aria-pressed={width === preset.value}
             className={cn(
@@ -111,7 +110,6 @@ export function ResponsivePreview({
           {/* Range slider */}
           <input
             type="range"
-            role="slider"
             min={min}
             max={max}
             value={width}
@@ -126,7 +124,6 @@ export function ResponsivePreview({
           {/* Number input (spinbutton) */}
           <Input
             type="number"
-            role="spinbutton"
             min={min}
             max={max}
             value={width}
@@ -150,7 +147,6 @@ export function ResponsivePreview({
       <div className="relative overflow-hidden">
         {/* The constrained frame */}
         <div
-          ref={frameRef}
           data-testid="rp-frame"
           style={{ width: `${width}px`, maxWidth: "100%", margin: "0 auto" }}
         >
