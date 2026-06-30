@@ -12,7 +12,13 @@ vi.mock("@rfjs/filter-builder-ui", () => ({
 
 import { Inspector } from "./inspector";
 
-const labels = { filter: {} as never, actionKinds: ["notify", "db.update"] };
+const labels = {
+  filter: {} as never,
+  actionKinds: ["notify", "db.update"],
+  selectHint: "Select a node to edit it.",
+  noSettings: "no settings",
+  actionKindLabel: "Action kind",
+};
 
 describe("Inspector", () => {
   it("form node → ConfigFormBuilder, and forwards config change", () => {

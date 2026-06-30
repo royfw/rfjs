@@ -18,7 +18,6 @@ import { useTranslations } from "next-intl";
 import { Button } from "@rfjs/web-ui/components/button";
 import type { FilterTreeLabels } from "@rfjs/filter-builder-ui";
 
-import type { ToolModule } from "@/tools/types";
 import { nodeTypes } from "./nodes";
 import { Inspector } from "./inspector";
 import { newNode, toFlowDoc, toReactFlow, type FlowNodeData } from "./model";
@@ -87,9 +86,16 @@ function FlowBuilderInner() {
         <div className="rounded-md border p-3">
           <p className="mb-2 text-xs font-semibold text-muted-foreground">{t("flowInspector")}</p>
           <Inspector
+            key={selected?.id ?? "none"}
             node={selected ? { id: selected.id, data: selected.data as FlowNodeData } : null}
             onConfigChange={onConfigChange}
-            labels={{ filter: filterLabels, actionKinds: ["notify", "db.update", "http"] }}
+            labels={{
+              filter: filterLabels,
+              actionKinds: ["notify", "db.update", "http"],
+              selectHint: t("flowSelectHint"),
+              noSettings: t("flowNoSettings"),
+              actionKindLabel: t("flowActionKind"),
+            }}
           />
         </div>
       </div>
@@ -110,6 +116,3 @@ export function FlowBuilderTool() {
     </ReactFlowProvider>
   );
 }
-
-// Satisfy ToolModule shape at module level (index.ts imports separately).
-export type { ToolModule };
