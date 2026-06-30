@@ -15,4 +15,9 @@ describe("zoom helpers", () => {
     expect(zoomBy(MAX_ZOOM, ZOOM_FACTOR)).toBe(MAX_ZOOM); // already at max
     expect(zoomBy(MIN_ZOOM, 1 / ZOOM_FACTOR)).toBe(MIN_ZOOM); // already at min
   });
+
+  it("zoomOut never increases zoom below the floor; zoomIn still moves up", () => {
+    expect(zoomBy(0.12, 1 / ZOOM_FACTOR)).toBeLessThanOrEqual(0.12);
+    expect(zoomBy(0.12, ZOOM_FACTOR)).toBeGreaterThan(0.12);
+  });
 });
