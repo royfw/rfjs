@@ -5,22 +5,17 @@ export const messages: LocaleMessages = {
     Tools: {
       "form-builder": {
         title: "Form Builder",
-        description: "Visually build a form config (JSON) with drag-and-drop fields and a live preview.",
+        description:
+          "A 2D form builder — drag fields on a 12-column grid, group them, set per-field config, and preview live.",
       },
-    },
-    ToolUI: {
-      fbTitle: "FORM BUILDER",
     },
   },
   "zh-TW": {
     Tools: {
       "form-builder": {
         title: "表單建構器",
-        description: "透過拖放欄位視覺化建構表單設定（JSON），並即時預覽結果。",
+        description: "2D 表單建構器：在 12 欄網格上拖放欄位、分組、設定每欄屬性,並即時預覽。",
       },
-    },
-    ToolUI: {
-      fbTitle: "表單建構器",
     },
   },
 };

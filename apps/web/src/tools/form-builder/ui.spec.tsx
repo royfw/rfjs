@@ -23,12 +23,12 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
 
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { FormDesignerTool } from "./ui";
+import { FormBuilderTool } from "./ui";
 import { resolveCards, collides, type PlacedCard } from "./layout-grid";
 
-describe("FormDesignerTool preview", () => {
+describe("FormBuilderTool preview", () => {
   it("Preview tab renders the real ConfigForm with a labelled control", () => {
-    render(<FormDesignerTool />);
+    render(<FormBuilderTool />);
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // The seed has a "Name" field → real <Label> + a real input render.
     expect(screen.getByText("Name")).toBeTruthy();
@@ -36,7 +36,7 @@ describe("FormDesignerTool preview", () => {
   });
 
   it("JSON tab shows a FormConfig (version + sections)", () => {
-    render(<FormDesignerTool />);
+    render(<FormBuilderTool />);
     fireEvent.click(screen.getByRole("button", { name: /^json$/i }));
     const ta = screen.getByLabelText(/config json/i) as HTMLTextAreaElement;
     const parsed = JSON.parse(ta.value);
@@ -60,9 +60,9 @@ describe("canvas no-overlap invariant", () => {
   });
 });
 
-describe("FormDesignerTool drag threshold", () => {
+describe("FormBuilderTool drag threshold", () => {
   it("a sub-threshold pointer move (a click) does not move the card", () => {
-    render(<FormDesignerTool />);
+    render(<FormBuilderTool />);
     const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
     const before = card.style.gridColumn;
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
@@ -72,16 +72,16 @@ describe("FormDesignerTool drag threshold", () => {
   });
 });
 
-describe("FormDesignerTool group reorder", () => {
+describe("FormBuilderTool group reorder", () => {
   it("each group has a reorder handle", () => {
-    render(<FormDesignerTool />);
+    render(<FormBuilderTool />);
     expect(screen.getAllByRole("button", { name: /reorder group/i }).length).toBeGreaterThanOrEqual(2);
   });
 });
 
-describe("FormDesignerTool canvas collapsible sections", () => {
+describe("FormBuilderTool canvas collapsible sections", () => {
   it("Canvas tab has two independent collapsible sections: Editor and Live Preview", () => {
-    render(<FormDesignerTool />);
+    render(<FormBuilderTool />);
     // Canvas is the default tab — both section headers should be present
     expect(screen.getByRole("button", { name: /editor/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /live preview/i })).toBeTruthy();
@@ -90,9 +90,9 @@ describe("FormDesignerTool canvas collapsible sections", () => {
   });
 });
 
-describe("FormDesignerTool preview tab integration", () => {
+describe("FormBuilderTool preview tab integration", () => {
   it("Preview tab renders ResponsivePreview with device controls + a submission panel", () => {
-    render(<FormDesignerTool />);
+    render(<FormBuilderTool />);
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // Device preset buttons from ResponsivePreview
     expect(screen.getByRole("button", { name: /^mobile$/i })).toBeTruthy();
@@ -104,14 +104,14 @@ describe("FormDesignerTool preview tab integration", () => {
   });
 
   it("Preview tab uses vertical stack layout (no lg:flex-row)", () => {
-    render(<FormDesignerTool />);
+    render(<FormBuilderTool />);
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // The preview tab wrapper must NOT have lg:flex-row — find the rp-frame and walk up
     const frame = screen.getByTestId("rp-frame");
     // Walk up to the direct parent of ResponsivePreview root and check no lg:flex-row in the chain
     let el: HTMLElement | null = frame.parentElement;
     let foundFlexRow = false;
-    while (el && !el.classList.contains("form-designer-root")) {
+    while (el && !el.classList.contains("form-builder-root")) {
       if (el.className.includes("lg:flex-row")) {
         foundFlexRow = true;
         break;
@@ -122,7 +122,7 @@ describe("FormDesignerTool preview tab integration", () => {
   });
 
   it("Preview tab wraps SubmissionPanel in a collapsible Submission section (collapsed by default)", () => {
-    render(<FormDesignerTool />);
+    render(<FormBuilderTool />);
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // "Submission" section header should be present
     expect(screen.getByRole("button", { name: /submission/i })).toBeTruthy();
