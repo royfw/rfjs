@@ -1,110 +1,92 @@
-# Task 3 Report: `<TagInput>` Component (`@rfjs/web-ui`)
+# Task 3 Report: ConfigForm Container-Responsive Collapse
 
 ## Status: DONE
 
-## Commits
-
-| SHA | Subject |
-|-----|---------|
-| `1e00950` | `feat(web-ui): add TagInput (options + creatable) built on command/popover` |
-
-## TDD Cycle
-
-### RED
-
-Installed `@testing-library/user-event` (not previously in web-ui):
-```
-pnpm --filter @rfjs/web-ui add -D @testing-library/user-event
-```
-
-Wrote `packages/web-ui/src/components/tag-input.spec.tsx` with 3 tests from the brief (verbatim, except `toBeInTheDocument` → `toBeDefined` — see Concerns).
-
-```
-pnpm -F @rfjs/web-ui vitest:run src/components/tag-input.spec.tsx
-# FAIL — Cannot find module './tag-input' (expected)
-```
-
-### GREEN
-
-Implemented `packages/web-ui/src/components/tag-input.tsx` composed from:
-- `Command`/`CommandList`/`CommandGroup`/`CommandItem` (`command.tsx`)
-- `Popover`/`PopoverTrigger`/`PopoverContent` (`popover.tsx`)
-
-Key design decision: dual-UI approach to satisfy both test constraints simultaneously:
-- `creatable`: inline `<input type="text">` always in DOM → `getByRole("textbox")` works without clicking
-- `options`: `PopoverTrigger` renders a `<button>` → `getByRole("button")` works; content opens in Popover
-
-```
-pnpm -F @rfjs/web-ui vitest:run src/components/tag-input.spec.tsx
-# PASS — 3/3 tests
-```
-
-### Full Suite
-
-```
-pnpm -F @rfjs/web-ui vitest:run
-# 38 passed, 16 test files, 0 failures, 0 regressions
-```
-
-## Files Changed
-
-| File | Action |
-|------|--------|
-| `packages/web-ui/src/components/tag-input.tsx` | Created |
-| `packages/web-ui/src/components/tag-input.spec.tsx` | Created |
-| `packages/web-ui/package.json` | Added `@testing-library/user-event` devDep |
-| `pnpm-lock.yaml` | Updated |
-
-Note: No `index.ts` created — the package uses wildcard exports (`"./components/*": "./src/components/*.tsx"`), so `TagInput` is auto-accessible as `@rfjs/web-ui/components/tag-input` without a barrel file.
-
-## Self-Review
-
-- **Accessibility**: Chips have `aria-label="Remove <label>"` buttons; popover trigger has `aria-label="Open tag options"`.
-- **Deduplication**: Both `handleSelect` (options path) and `handleKeyDown` (creatable path) guard `!value.includes(...)`.
-- **jsdom compatibility**: No new stubs needed — Radix Popover opened correctly with `userEvent.click` using the existing `ResizeObserver`/`scrollIntoView` stubs in `vitest.setup.ts`.
-- **No new runtime deps**: uses only `cmdk` + `radix-ui` already present.
-
-## Concerns
-
-1. **`toBeInTheDocument`**: Brief used this jest-dom matcher, but the project doesn't configure `@testing-library/jest-dom` (other tests all use `toBeDefined()`). Changed to `toBeDefined()` — semantically equivalent since RTL's `getByText` throws when not found.
-2. **No barrel export**: The brief mentioned modifying `packages/web-ui/src/index.ts`, but that file doesn't exist in this package. The wildcard exports handle discoverability automatically.
-3. **All-selected empty state**: When all options are already in `value`, the `CommandList` is empty. No `CommandEmpty` placeholder — minor UX gap, not in spec.
+**Commit:** `f1e2e2e feat(form-builder-ui): container-driven responsive collapse (ResizeObserver + stackBelow)`
 
 ---
 
-## Review Fix (2026-06-30)
+## What Was Implemented
 
-### Finding 1 — CommandInput inside Popover (remove bare always-visible input)
+### Files Modified
+- `packages/form-builder-ui/src/config-form.tsx` — implementation
+- `packages/form-builder-ui/src/config-form.spec.tsx` — new responsive tests (4 cases in `responsive container collapse` describe block)
 
-Refactored `tag-input.tsx`:
-- Removed the standalone `<input type="text">` that was always-visible for the `creatable` case.
-- `showTrigger = hasOptions || creatable` — the chevron trigger now appears whenever the popover has content (options, free-type, or both).
-- `CommandInput` (with `value`, `onValueChange`, `onKeyDown`) lives inside the `PopoverContent`'s `Command` block — the only text field is the one inside the Popover.
-- Creatable Enter handler moved to `handleInputKeyDown` on `CommandInput`'s `onKeyDown`; calls `e.preventDefault()` to prevent cmdk from also acting on the event.
-- Added `CommandEmpty` ("No options.") so the empty-list state has feedback.
-- Dropped the `options!` non-null assertion; `availableOptions` is derived from `hasOptions ? options.filter(...) : []` so the guard is implicit.
+### Implementation Details
 
-### Finding 2 — Test the remove interaction (Test 3 replaced)
+1. **Container ref + breakpoint hook** — added `rootRef` (`useRef<HTMLFormElement|null>`), `stackBelow = config.responsive?.stackBelow ?? 640`, and `narrow = useContainerBreakpoint(rootRef, stackBelow)` at the top of `ConfigForm`. Attached `ref={rootRef}` to the `<form>` element.
 
-Replaced the label-presence assertion with a real interaction test:
-- Renders with `value={['a']}` and `options={[{ label: 'Alpha', value: 'a' }]}`.
-- Clicks `aria-label="Remove Alpha"` button.
-- Asserts `onChange` was called with `[]`.
-- Renamed to "removes a chip and emits the remaining array".
+2. **Outer form grid** — replaced `className="grid grid-cols-1 gap-4 md:[…]"` (viewport-based) with `className="grid gap-4"` and moved columns to inline style: `gridTemplateColumns: narrow ? '1fr' : 'repeat(var(--form-cols), minmax(0, 1fr))'`. The `--form-cols` CSS custom property is kept.
 
-### Also (cheap)
+3. **Grid-mode section grid** (where `section.layout` exists) — `gridTemplateColumns: narrow ? '1fr' : \`repeat(${layout.columns}, minmax(0, 1fr))\``. When narrow, items are sorted by `(row, colStart)` from the placement map (copy, no mutation) before mapping so single-column stack order equals visual reading order.
 
-- Added **disabled test**: renders with `disabled` + `options`, clicks the trigger button, asserts `onChange` was never called.
-- Updated **creatable test**: clicks trigger to open Popover first, then finds the `combobox` role (`CommandInput` renders as cmdk combobox), types `custom{Enter}`.
-- All button queries use `{ name: '...' }` for specificity.
-- No new jsdom stubs needed — existing `ResizeObserver` + `scrollIntoView` stubs cover Radix + cmdk.
+4. **Flow-section row grid** — `gridTemplateColumns: narrow ? '1fr' : \`repeat(${sectionCols}, minmax(0, 1fr))\``.
 
-### Test run
+5. **Item-level style overrides** — `placementStyle` and `fieldSpanStyle` both accept an `isNarrow` boolean; when true they return `{ gridColumn: '1 / -1' }`. `renderItem` gains an `isNarrow = false` parameter, threaded through from every call site.
+
+---
+
+## TDD RED → GREEN
+
+### RED phase
+```
+pnpm -F @rfjs/form-builder build && pnpm -F @rfjs/form-builder-ui vitest:run src/config-form.spec.tsx
+```
+Result: **3 failed | 39 passed** — new responsive tests failed as expected (grid still used viewport `md:` class, not container-driven logic).
+
+### GREEN phase (after implementation)
+```
+pnpm -F @rfjs/form-builder-ui vitest:run src/config-form.spec.tsx
+```
+Result: **42 passed (42)** — all new + pre-existing tests pass.
+
+### Full regression suite
+```
+pnpm -F @rfjs/form-builder-ui vitest:run
+```
+Result: **230 passed (230)** across 10 test files. All v1/linear/existing tests remain green.
+
+---
+
+## Self-Review
+
+- **No viewport breakpoints remain** — the `md:[…]` arbitrary Tailwind variant has been fully removed. All responsiveness is now container-driven via `ResizeObserver`.
+- **No mutation of `items` array** — grid-mode sort uses `[...allItems].sort(…)`.
+- **`stackBelow` default 640** — matches spec §4 and brief.
+- **v1 back-compat** — v1 `fields[]` path does not pass `isNarrow` to `renderItem` (uses default `false`), so v1 single-column forms are completely unaffected.
+- **SSR-safe** — `useContainerBreakpoint` initialises `narrow=false`; no hydration mismatch risk.
+- **`--form-cols` custom property preserved** — kept in the inline style map for downstream CSS targeting.
+
+## Concerns
+
+None. Implementation is straightforward, no ambiguous forks encountered, all 230 tests green.
+
+---
+
+## Review Findings Fix (post-implementation)
+
+### Finding A — Orphaned-item sort fallback (Important)
+
+**Resolution:** Changed `?? 0` to `?? Number.MAX_SAFE_INTEGER` for both `row` and `colStart` fallbacks in the narrow-mode sort inside `sortedGridItems` (`config-form.tsx` line 259). Items without a placement now sort to the end rather than floating to the top before all 1-indexed placed items.
+
+**New test added:** `"orphaned items (no placement) sort after all placed items in narrow mode"` — a grid section with one placed item (row 1) and one orphan (no placement); after `fireWidth(400)` the placed item is first in the DOM.
+
+### Finding B — Wide test never exercised narrow→wide restoration (Confirmed test gap)
+
+**Resolution:** Rewrote the `"keeps multi-column layout when container is wide"` test to fire `fireWidth(400)` first (asserting `gridTemplateColumns === '1fr'`), then `fireWidth(900)` (asserting `repeat(` restored and item `gridColumn` is `'1 / span 7'`). The hook no longer bails without first crossing the narrow threshold.
+
+### Finding C — Module-level `_roCb` shared state (Minor, test hygiene)
+
+**Resolution:** Removed the module-level `_roCb` variable. `installResizeObserverMock()` now holds `roCb` as a closure variable and returns `{ fireWidth }`. All call sites inside `responsive container collapse` destructure `fireWidth` from the return value.
+
+### Test command and result
 
 ```
-pnpm -F @rfjs/web-ui vitest:run src/components/tag-input.spec.tsx
-# 4 passed (4)
-
-pnpm -F @rfjs/web-ui vitest:run
-# Test Files  16 passed (16) | Tests  39 passed (39)
+pnpm -F @rfjs/form-builder-ui vitest:run src/config-form.spec.tsx
 ```
+Result: **43 passed (43)** — 1 new test added (Finding A); Finding B and C were existing-test changes only.
+
+```
+pnpm -F @rfjs/form-builder-ui vitest:run
+```
+Result: **231 passed (231)** across 10 test files. No regressions.

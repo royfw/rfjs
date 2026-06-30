@@ -25,6 +25,9 @@ import { Button } from '@rfjs/web-ui/components/button';
 
 import { FieldControl } from './field-control';
 
+// Stable style constant — outside the component so it's never recreated on render.
+const FULL_SPAN: React.CSSProperties = { gridColumn: '1 / -1' };
+
 interface DataSourceContentProps {
   ds: DataSource;
   fetcher?: DataSourceFetcher;
@@ -81,9 +84,9 @@ export interface ConfigFormProps {
 
 export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher, uploadHandler, signatureTransport }: ConfigFormProps) {
   // Container ref for ResizeObserver-driven responsive collapse.
-  const rootRef = React.useRef<HTMLFormElement | null>(null);
+  const rootRef = React.useRef<HTMLFormElement>(null);
   const stackBelow = config.responsive?.stackBelow ?? 640;
-  const narrow = useContainerBreakpoint(rootRef as React.RefObject<HTMLElement>, stackBelow);
+  const narrow = useContainerBreakpoint(rootRef, stackBelow);
 
   // Keep the latest config reachable inside the stable resolver without re-creating it.
   const configRef = React.useRef(config);
@@ -136,14 +139,13 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
 
   // Span styles are applied INLINE, not via Tailwind `col-span-*` utilities —
   // those aren't reliably emitted for this package. Inline is guaranteed.
-  // Items always span the full row width.
-  const FULL_SPAN: React.CSSProperties = { gridColumn: '1 / -1' };
+  // Items always span the full row width. (FULL_SPAN is module-level — see above.)
 
   // Explicit grid placement → inline grid-area style (grid-mode sections, Task 2).
   // When narrow, collapse to full width (no placement).
-  const placementStyle = (p: { colStart: number; colSpan: number; row: number; rowSpan?: number }, isNarrow: boolean): React.CSSProperties =>
-    isNarrow
-      ? { gridColumn: '1 / -1', minWidth: 0 }
+  const placementStyle = (p: { colStart: number; colSpan: number; row: number; rowSpan?: number }): React.CSSProperties =>
+    narrow
+      ? { ...FULL_SPAN, minWidth: 0 }
       : {
           gridColumn: `${p.colStart} / span ${p.colSpan}`,
           gridRow: p.rowSpan ? `${p.row} / span ${p.rowSpan}` : String(p.row),
@@ -155,8 +157,8 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   // `columns: 2` lays its fields two-per-row automatically (no per-field width
   // needed). 'half' ≈ half the row; 'full' spans the whole row. `flow: 'v1'`
   // keeps the legacy behaviour (unset = full) for back-compat with `fields[]`.
-  function fieldSpanStyle(width: FieldWidth | undefined, flow: 'v1' | 'section', cols: number, isNarrow = false): React.CSSProperties {
-    if (isNarrow) return FULL_SPAN;
+  function fieldSpanStyle(width: FieldWidth | undefined, flow: 'v1' | 'section', cols: number): React.CSSProperties {
+    if (narrow) return FULL_SPAN;
     if (flow === 'v1') return { gridColumn: (width ?? 'full') === 'full' ? '1 / -1' : undefined };
     if (width === 'full') return FULL_SPAN;
     const cells = width === 'half' ? Math.max(1, Math.ceil(cols / 2)) : 1;
@@ -164,7 +166,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     return { gridColumn: `span ${span} / span ${span}`, minWidth: 0 };
   }
 
-  function renderItem(item: FormItem, flow: 'v1' | 'section', cols: number, place?: { colStart: number; colSpan: number; row: number; rowSpan?: number }, isNarrow = false) {
+  function renderItem(item: FormItem, flow: 'v1' | 'section', cols: number, place?: { colStart: number; colSpan: number; row: number; rowSpan?: number }) {
     const vals = values as Record<string, unknown>;
 
     if (item.kind === 'ai-note') {
@@ -173,19 +175,19 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
 
     if (item.kind === 'divider') {
       if (!evaluateConditional(item.conditional, vals)) return null;
-      return <hr key={item.id} data-item={item.id} className="w-full border-input" style={place ? placementStyle(place, isNarrow) : FULL_SPAN} />;
+      return <hr key={item.id} data-item={item.id} className="w-full border-input" style={place ? placementStyle(place) : FULL_SPAN} />;
     }
 
     if (item.kind === 'spacer') {
       if (!evaluateConditional(item.conditional, vals)) return null;
       const height = spacerHeights[item.size ?? 'md'];
-      return <div key={item.id} data-item={item.id} style={{ ...(place ? placementStyle(place, isNarrow) : FULL_SPAN), height }} />;
+      return <div key={item.id} data-item={item.id} style={{ ...(place ? placementStyle(place) : FULL_SPAN), height }} />;
     }
 
     if (item.kind === 'content') {
       if (!evaluateConditional(item.conditional, vals)) return null;
       return (
-        <div key={item.id} data-item={item.id} className="text-sm" style={place ? placementStyle(place, isNarrow) : FULL_SPAN}>
+        <div key={item.id} data-item={item.id} className="text-sm" style={place ? placementStyle(place) : FULL_SPAN}>
           {item.dataSource ? (
             <DataSourceContent ds={item.dataSource} fetcher={fetcher} />
           ) : (
@@ -206,7 +208,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
         className="flex min-w-0 flex-col gap-1.5"
         data-width={dataWidth}
         data-item={item.id}
-        style={place ? placementStyle(place, isNarrow) : fieldSpanStyle(item.width, flow, cols, isNarrow)}
+        style={place ? placementStyle(place) : fieldSpanStyle(item.width, flow, cols)}
       >
         <Label htmlFor={item.key}>{resolveLabel(item.label, locale)}</Label>
         <Controller
@@ -239,6 +241,30 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   // Use the first section's columns for the overall form grid (v1 back-compat).
   const columns = config.columns ?? sections[0]?.columns ?? 1;
 
+  // Pre-sort grid-mode section items once per config+narrow change rather than
+  // on every keystroke. `watch()` causes re-renders on every field change, so
+  // the sort cost is proportional to input frequency without this memo.
+  const sortedGridItems = React.useMemo(() => {
+    const result = new Map<string, FormItem[]>();
+    for (const section of sections) {
+      if (section.layout) {
+        const byId = new Map(section.layout.placements.map((p) => [p.itemId, p]));
+        const allItems = section.rows.flatMap((r) => r.items);
+        result.set(
+          section.id,
+          narrow
+            ? [...allItems].sort((a, b) => {
+                const pa = byId.get(a.id);
+                const pb = byId.get(b.id);
+                return (pa?.row ?? Number.MAX_SAFE_INTEGER) - (pb?.row ?? Number.MAX_SAFE_INTEGER) || (pa?.colStart ?? Number.MAX_SAFE_INTEGER) - (pb?.colStart ?? Number.MAX_SAFE_INTEGER);
+              })
+            : allItems,
+        );
+      }
+    }
+    return result;
+  }, [config, narrow]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <form
       ref={rootRef}
@@ -255,7 +281,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       className="grid gap-4"
       style={{
         gridTemplateColumns: narrow ? '1fr' : 'repeat(var(--form-cols), minmax(0, 1fr))',
-        ['--form-cols' as any]: String(columns),
+        ...(!narrow && { ['--form-cols' as any]: String(columns) }),
       }}
       data-columns={columns}
     >
@@ -266,16 +292,9 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
         if (isV2 && section.layout) {
           const layout = section.layout;
           const byId = new Map(layout.placements.map((p) => [p.itemId, p]));
-          const allItems = section.rows.flatMap((r) => r.items);
-          // When narrow: sort items by (row, colStart) so visual reading order is preserved
-          // in single-column stack. Always sort a copy — never mutate.
-          const items = narrow
-            ? [...allItems].sort((a, b) => {
-                const pa = byId.get(a.id);
-                const pb = byId.get(b.id);
-                return (pa?.row ?? 0) - (pb?.row ?? 0) || (pa?.colStart ?? 0) - (pb?.colStart ?? 0);
-              })
-            : allItems;
+          // Sorted order is pre-computed in sortedGridItems (memoized) to avoid re-sorting
+          // on every keystroke (watch() re-renders on each field change).
+          const items = sortedGridItems.get(section.id) ?? section.rows.flatMap((r) => r.items);
           return (
             <React.Fragment key={section.id}>
               {section.title && (
@@ -291,7 +310,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
                   gridTemplateColumns: narrow ? '1fr' : `repeat(${layout.columns}, minmax(0, 1fr))`,
                 }}
               >
-                {items.map((item) => renderItem(item, 'section', layout.columns, byId.get(item.id), narrow))}
+                {items.map((item) => renderItem(item, 'section', layout.columns, byId.get(item.id)))}
               </div>
             </React.Fragment>
           );
@@ -315,7 +334,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
                     gridTemplateColumns: narrow ? '1fr' : `repeat(${sectionCols}, minmax(0, 1fr))`,
                   }}
                 >
-                  {row.items.map((item) => renderItem(item, 'section', sectionCols, undefined, narrow))}
+                  {row.items.map((item) => renderItem(item, 'section', sectionCols))}
                 </div>
               ) : (
                 // v1 implicit section: render items FLAT into the outer grid (unchanged v1 behavior).

@@ -5,21 +5,25 @@ import type { FormConfig, DataSource, UploadHandler, FileRef, SignatureTransport
 
 // ---------------------------------------------------------------------------
 // Controllable ResizeObserver mock (used by responsive tests below).
-// Re-set per describe block via `beforeEach` so other tests are unaffected.
+// installResizeObserverMock() registers a beforeEach that installs the mock
+// and returns a fireWidth helper — the callback is a closure inside the
+// function so no module-level state leaks between describe blocks.
 // ---------------------------------------------------------------------------
-let _roCb: (entries: any[]) => void = () => {};
 function installResizeObserverMock() {
+  let roCb: (entries: any[]) => void = () => {};
   beforeEach(() => {
-    _roCb = () => {};
+    roCb = () => {};
     (globalThis as any).ResizeObserver = class {
-      constructor(cb: any) { _roCb = cb; }
+      constructor(cb: any) { roCb = cb; }
       observe() {}
       disconnect() {}
     };
   });
-}
-function fireWidth(width: number) {
-  act(() => _roCb([{ contentRect: { width } }]));
+  return {
+    fireWidth(width: number) {
+      act(() => roCb([{ contentRect: { width } }]));
+    },
+  };
 }
 
 
@@ -722,7 +726,7 @@ describe('Signature field submit gating', () => {
 // ---------------------------------------------------------------------------
 
 describe('responsive container collapse', () => {
-  installResizeObserverMock();
+  const { fireWidth } = installResizeObserverMock();
 
   const gridCfg = {
     version: 1,
@@ -755,12 +759,15 @@ describe('responsive container collapse', () => {
 
   it('keeps multi-column layout when container is wide (>= default stackBelow 640)', () => {
     const { container } = render(<ConfigForm config={gridCfg} onSubmit={() => {}} />);
-    // trigger wide width (>= 640 — default stackBelow)
-    fireWidth(900);
+    // First go narrow to confirm collapsed state…
+    fireWidth(400);
     const grid = container.querySelector('[data-testid="form-grid"]') as HTMLElement;
+    expect(grid.style.gridTemplateColumns).toBe('1fr');
+    // …then fire a wide width to confirm restoration.
+    fireWidth(900);
     expect(grid.style.gridTemplateColumns).toContain('repeat(');
     const a = container.querySelector('[data-item="i_a"]') as HTMLElement;
-    // in wide mode the placement span is preserved
+    // in wide mode the placement span is restored
     expect(a.style.gridColumn).toBe('1 / span 7');
   });
 
@@ -803,5 +810,34 @@ describe('responsive container collapse', () => {
     expect(form.style.gridTemplateColumns).toBe('1fr');
     const row = container.querySelector('[data-testid="form-row"]') as HTMLElement;
     expect(row.style.gridTemplateColumns).toBe('1fr');
+  });
+
+  it('orphaned items (no placement) sort after all placed items in narrow mode', () => {
+    const orphanCfg = {
+      version: 1,
+      sections: [
+        {
+          id: 's1',
+          rows: [
+            { id: 'r1', items: [
+              { id: 'placed', kind: 'field', key: 'placed', label: 'Placed', component: 'Input', dataType: 'string' },
+            ] },
+            { id: 'r2', items: [
+              { id: 'orphan', kind: 'field', key: 'orphan', label: 'Orphan', component: 'Input', dataType: 'string' },
+            ] },
+          ],
+          // Only 'placed' has a placement; 'orphan' has none.
+          layout: { columns: 12, placements: [
+            { itemId: 'placed', colStart: 1, colSpan: 12, row: 1 },
+          ] },
+        },
+      ],
+    } as any as FormConfig;
+    const { container } = render(<ConfigForm config={orphanCfg} onSubmit={() => {}} />);
+    fireWidth(400); // go narrow → sort kicks in
+    const items = container.querySelectorAll('[data-item]');
+    // placed item (row 1) must appear before orphan (MAX_SAFE_INTEGER fallback)
+    expect(items[0]!.getAttribute('data-item')).toBe('placed');
+    expect(items[1]!.getAttribute('data-item')).toBe('orphan');
   });
 });
