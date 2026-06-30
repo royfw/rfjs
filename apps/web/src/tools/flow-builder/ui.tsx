@@ -20,6 +20,7 @@ import type { FilterTreeLabels } from "@rfjs/filter-builder-ui";
 
 import { nodeTypes } from "./nodes";
 import { Inspector } from "./inspector";
+import { NodeSheet } from "./node-sheet";
 import { newNode, toFlowDoc, toReactFlow, type FlowNodeData } from "./model";
 import { flowToJson } from "./schema";
 import { sample } from "./sample";
@@ -66,28 +67,33 @@ function FlowBuilderInner() {
         <Button size="sm" variant="outline" onClick={() => addNode("end")}>{t("flowAddEnd")}</Button>
       </div>
 
-      <div className="grid grid-cols-[1fr_320px] gap-3">
-        <div className="h-[520px] rounded-md border">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onNodeClick={(_e: React.MouseEvent, n: Node) => setSelectedId(n.id)}
-            onPaneClick={() => setSelectedId(null)}
-            fitView
-          >
-            <Background />
-            <Controls />
-          </ReactFlow>
-        </div>
-        <div className="rounded-md border p-3">
-          <p className="mb-2 text-xs font-semibold text-muted-foreground">{t("flowInspector")}</p>
+      <div className="h-[560px] w-full rounded-md border">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeClick={(_e: React.MouseEvent, n: Node) => setSelectedId(n.id)}
+          onPaneClick={() => setSelectedId(null)}
+          fitView
+        >
+          <Background />
+          <Controls />
+        </ReactFlow>
+      </div>
+
+      <div>
+        <p className="mb-1 text-xs font-semibold text-muted-foreground">{t("flowJson")}</p>
+        <pre className="max-h-56 overflow-auto rounded-md border bg-muted/30 p-3 text-[11px] leading-relaxed">{json}</pre>
+      </div>
+
+      {selected ? (
+        <NodeSheet title={t("flowInspector")} closeLabel={t("flowClose")} onClose={() => setSelectedId(null)}>
           <Inspector
-            key={selected?.id ?? "none"}
-            node={selected ? { id: selected.id, data: selected.data as FlowNodeData } : null}
+            key={selected.id}
+            node={{ id: selected.id, data: selected.data as FlowNodeData }}
             onConfigChange={onConfigChange}
             labels={{
               filter: filterLabels,
@@ -97,13 +103,8 @@ function FlowBuilderInner() {
               actionKindLabel: t("flowActionKind"),
             }}
           />
-        </div>
-      </div>
-
-      <div>
-        <p className="mb-1 text-xs font-semibold text-muted-foreground">{t("flowJson")}</p>
-        <pre className="max-h-56 overflow-auto rounded-md border bg-muted/30 p-3 text-[11px] leading-relaxed">{json}</pre>
-      </div>
+        </NodeSheet>
+      ) : null}
     </div>
   );
 }
