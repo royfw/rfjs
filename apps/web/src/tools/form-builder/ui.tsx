@@ -116,6 +116,12 @@ export function FormBuilderTool() {
   const [groups, setGroups] = React.useState<Group[]>(SEED_GROUPS);
   const [cards, setCards] = React.useState<Card[]>(SEED_CARDS);
   const [selected, setSelected] = React.useState<string | null>(null);
+  // Mobile only: the config panel is a full-screen overlay. Selection (set on
+  // pointer-down for drag/highlight) must NOT open it, or a press-to-drag would
+  // immediately raise the overlay and block the canvas. It opens only on a
+  // confirmed tap (pointer-up without crossing the drag threshold). Desktop is
+  // unaffected — the panel is always inline there (lg: classes).
+  const [mobileConfigOpen, setMobileConfigOpen] = React.useState(false);
   const [tab, setTab] = React.useState<"canvas" | "preview" | "json">("canvas");
   const [jsonError, setJsonError] = React.useState<string | null>(null);
   const [payload, setPayload] = React.useState<{ data: Record<string, unknown>; meta: SubmissionMeta } | null>(null);
@@ -257,6 +263,9 @@ export function FormBuilderTool() {
       }
     };
     const onUp = () => {
+      // A confirmed tap (press that never became a drag) on a card opens the
+      // mobile config overlay; a drag never does, so the canvas stays draggable.
+      if (!active && mode === "move") setMobileConfigOpen(true);
       drag.current = null;
       setDropGroup(null);
       window.removeEventListener("pointermove", onMove);
@@ -397,7 +406,13 @@ export function FormBuilderTool() {
           <Section title="Editor" defaultOpen={true}>
             {/* Canvas + inspector (RWD: stacks below lg) */}
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-              <div className="min-w-0 flex-1" onPointerDown={() => setSelected(null)}>
+              <div
+                className="min-w-0 flex-1"
+                onPointerDown={() => {
+                  setSelected(null);
+                  setMobileConfigOpen(false);
+                }}
+              >
                 <div className="flex flex-col gap-4">
                   {groups.map((group, index) => (
                     <React.Fragment key={group.id}>
@@ -432,10 +447,12 @@ export function FormBuilderTool() {
               </div>
 
               <aside className="shrink-0 lg:w-[420px]">
-                {/* Mobile: full-screen sheet when a card is selected; Desktop: inline column. */}
+                {/* Mobile: full-screen overlay only after a confirmed tap (mobileConfigOpen);
+                    Desktop: always inline when a card is selected (lg: classes). */}
                 <div
+                  data-testid="card-inspector"
                   className={
-                    selectedCard
+                    selectedCard && mobileConfigOpen
                       ? "fixed inset-0 z-50 overflow-y-auto bg-background p-4 lg:static lg:z-auto lg:bg-transparent lg:p-0"
                       : "hidden lg:block"
                   }
@@ -443,7 +460,7 @@ export function FormBuilderTool() {
                   {selectedCard ? (
                     <button
                       type="button"
-                      onClick={() => setSelected(null)}
+                      onClick={() => setMobileConfigOpen(false)}
                       className="mb-3 text-xs text-muted-foreground hover:text-foreground lg:hidden"
                     >
                       ← Back to canvas
@@ -458,6 +475,7 @@ export function FormBuilderTool() {
                       if (!selectedCard) return;
                       setCards((cs) => resolveCards(cs.filter((c) => c.id !== selectedCard.id) as Card[], "", COLS) as Card[]);
                       setSelected(null);
+                      setMobileConfigOpen(false);
                     }}
                   />
                 </div>

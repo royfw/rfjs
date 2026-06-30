@@ -130,3 +130,28 @@ describe("FormBuilderTool preview tab integration", () => {
     expect(screen.queryByText(/^metadata$/i)).toBeNull();
   });
 });
+
+describe("FormBuilderTool mobile config overlay (does not block canvas drag)", () => {
+  // The inspector container uses the full-screen overlay classes on mobile only
+  // when the mobile config is open. A press-to-drag must NOT open it.
+  const isOverlayOpen = () => screen.getByTestId("card-inspector").className.includes("fixed");
+
+  it("a tap (press-release without moving) opens the mobile config overlay", () => {
+    render(<FormBuilderTool />);
+    const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
+    expect(isOverlayOpen()).toBe(false);
+    fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
+    expect(isOverlayOpen()).toBe(false); // still closed mid-press → canvas not covered
+    fireEvent.pointerUp(window, { clientX: 100, clientY: 100 }); // no movement → a tap
+    expect(isOverlayOpen()).toBe(true);
+  });
+
+  it("a press-drag (past the threshold) does NOT open the overlay, so the canvas stays draggable", () => {
+    render(<FormBuilderTool />);
+    const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
+    fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { clientX: 140, clientY: 140 }); // ~57px, past the 4px threshold → a drag
+    fireEvent.pointerUp(window, { clientX: 140, clientY: 140 });
+    expect(isOverlayOpen()).toBe(false);
+  });
+});
