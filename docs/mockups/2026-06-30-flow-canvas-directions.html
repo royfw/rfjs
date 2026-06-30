@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8" />
+<title>@rfjs/flow — canvas mockup (3 directions)</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --line:#e5e7eb; --line2:#eef0f3;
+    --ink:#0f172a; --muted:#64748b; --faint:#94a3b8;
+    --form:#3b82f6; --cond:#f59e0b; --act:#8b5cf6; --term:#10b981;
+    --formbg:#eff6ff; --condbg:#fffbeb; --actbg:#f5f3ff; --termbg:#ecfdf5;
+    --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 12px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;}
+  .wrap{max-width:1240px;margin:0 auto;padding:28px 24px 60px}
+  h1{font-size:22px;margin:0 0 4px} .sub{color:var(--muted);margin:0 0 8px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0 26px;color:var(--muted);font-size:12.5px}
+  .legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  .dir{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin:0 0 30px;overflow:hidden}
+  .dir-head{padding:14px 18px;border-bottom:1px solid var(--line2);background:linear-gradient(#fff,#fcfcfd)}
+  .dir-head .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;color:#fff;background:#0f172a;border-radius:999px;padding:3px 9px;margin-right:10px}
+  .dir-head h2{display:inline;font-size:16px} .dir-head p{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .editor{display:grid;grid-template-columns:158px 1fr 246px;min-height:430px}
+  .palette{border-right:1px solid var(--line2);padding:12px;background:#fcfcfd}
+  .palette .h{font-size:11px;font-weight:700;color:var(--faint);letter-spacing:.07em;margin:2px 0 10px}
+  .pitem{display:flex;align-items:center;gap:8px;padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:#fff;margin-bottom:8px;font-size:12.5px;cursor:grab}
+  .dot{width:9px;height:9px;border-radius:3px;flex:none}
+  .canvas{position:relative;overflow:hidden;background:
+    radial-gradient(circle at 1px 1px,#e3e7ec 1px,transparent 0);background-size:18px 18px}
+  .inspect{border-left:1px solid var(--line2);padding:14px;background:#fcfcfd}
+  .inspect .h{font-size:11px;font-weight:700;color:var(--faint);letter-spacing:.07em;margin:0 0 10px}
+  .field{margin-bottom:11px}
+  .field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px}
+  .ctrl{border:1px solid var(--line);border-radius:8px;background:#fff;padding:7px 9px;font-size:12.5px;color:var(--ink)}
+  .ctrl.sel{display:flex;justify-content:space-between;align-items:center;color:var(--cond)}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:var(--condbg);color:#b45309;border:1px solid #fcd9a3;border-radius:999px;padding:4px 10px;font-size:12px}
+  /* node card */
+  .node{position:absolute;width:174px;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);overflow:hidden}
+  .node .top{display:flex;align-items:center;gap:7px;padding:7px 10px;font-weight:600;font-size:12.5px;border-bottom:1px solid var(--line2)}
+  .node .ico{width:18px;height:18px;border-radius:5px;flex:none;display:grid;place-items:center;color:#fff;font-size:11px}
+  .node .body{padding:9px 10px;font-size:11.5px;color:var(--muted)}
+  .node.form{border-color:#bfdbfe} .node.form .top{background:var(--formbg);color:#1d4ed8}
+  .node.cond{border-color:#fcd9a3;width:150px} .node.cond .top{background:var(--condbg);color:#b45309}
+  .node.act{border-color:#ddd6fe} .node.act .top{background:var(--actbg);color:#6d28d9}
+  .mini{height:7px;border-radius:3px;background:#eef2f7;margin:5px 0}
+  .mini.s{width:60%} .mini.m{width:85%}
+  .tinput{border:1px solid #e2e8f0;border-radius:5px;padding:3px 6px;font-size:10.5px;color:#475569;background:#fff;display:inline-block}
+  .term{position:absolute;width:74px;text-align:center;background:var(--termbg);border:1px solid #a7f3d0;color:#047857;border-radius:999px;padding:8px 0;font-size:12px;font-weight:600;box-shadow:var(--shadow)}
+  .term.start{background:#f1f5f9;border-color:#cbd5e1;color:#475569}
+  .elabel{position:absolute;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;background:#fff;border:1px solid var(--line)}
+  .elabel.yes{color:#047857;border-color:#a7f3d0}.elabel.no{color:#b91c1c;border-color:#fecaca}
+  svg.edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .edges path{fill:none;stroke:#cbd5e1;stroke-width:2}
+  .edges path.y{stroke:#34d399}.edges path.n{stroke:#f87171}
+  /* swimlane */
+  .lanes{position:absolute;inset:0;display:grid;grid-template-columns:repeat(4,1fr)}
+  .lane{border-right:1px dashed #e2e8f0;position:relative}
+  .lane:last-child{border-right:0}
+  .lane .lh{position:absolute;top:8px;left:0;right:0;text-align:center;font-size:11px;font-weight:700;color:var(--faint);letter-spacing:.05em}
+  /* spine note */
+  .hint{position:absolute;bottom:10px;left:12px;font-size:11px;color:var(--faint)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>@rfjs/flow — 流程畫布 mockup</h1>
+  <p class="sub">同一個編輯器框(palette｜canvas｜inspector),三種畫布佈局方向。範例流程:請假申請 → 判斷天數 → 通知主管 / 自動核准。<b style="color:#b91c1c">※ 視覺草稿,非真功能</b></p>
+  <div class="legend">
+    <span><b style="background:var(--form)"></b>Form 節點(form-builder)</span>
+    <span><b style="background:var(--cond)"></b>Condition 節點(filter-builder)</span>
+    <span><b style="background:var(--act)"></b>Action 節點(可插拔 kind)</span>
+    <span><b style="background:var(--term)"></b>Start / End</span>
+  </div>
+
+  <!-- ============ DIRECTION A ============ -->
+  <div class="dir">
+    <div class="dir-head">
+      <span class="tag">方向 A</span><h2>經典節點圖(n8n / React Flow 風)</h2>
+      <p>自由擺放 + 貝茲連線。最大彈性、最像主流自動化工具;複雜流程容易變「義大利麵」。</p>
+    </div>
+    <div class="editor">
+      <div class="palette">
+        <div class="h">節點</div>
+        <div class="pitem"><span class="dot" style="background:var(--form)"></span>表單 Form</div>
+        <div class="pitem"><span class="dot" style="background:var(--cond)"></span>條件 Condition</div>
+        <div class="pitem"><span class="dot" style="background:var(--act)"></span>動作 Action</div>
+        <div class="pitem"><span class="dot" style="background:var(--act)"></span>轉換 Transform</div>
+        <div class="pitem"><span class="dot" style="background:var(--term)"></span>結束 End</div>
+      </div>
+      <div class="canvas" style="height:430px">
+        <svg class="edges" viewBox="0 0 760 430" preserveAspectRatio="none">
+          <path d="M96,212 C120,212 120,212 132,212"/>
+          <path d="M306,212 C326,214 330,222 342,222"/>
+          <path class="y" d="M462,200 C500,196 500,150 524,150"/>
+          <path class="n" d="M462,236 C500,250 500,292 524,292"/>
+          <path d="M698,150 C720,150 716,205 706,212"/>
+          <path d="M698,292 C720,292 716,222 706,214"/>
+        </svg>
+        <div class="term start" style="left:18px;top:196px">開始</div>
+        <div class="node form" style="left:132px;top:158px">
+          <div class="top"><span class="ico" style="background:var(--form)">▤</span>請假申請</div>
+          <div class="body"><div class="tinput">起訖日期</div> <div class="tinput">事由</div><div class="mini m"></div><div class="mini s"></div></div>
+        </div>
+        <div class="node cond" style="left:342px;top:176px">
+          <div class="top"><span class="ico" style="background:var(--cond)">◆</span>天數 &gt; 3?</div>
+          <div class="body"><span class="pill">days &gt; 3</span></div>
+        </div>
+        <div class="node act" style="left:524px;top:110px">
+          <div class="top"><span class="ico" style="background:var(--act)">⚡</span>通知主管</div>
+          <div class="body">kind: <b>notify</b><br>to: manager</div>
+        </div>
+        <div class="node act" style="left:524px;top:255px">
+          <div class="top"><span class="ico" style="background:var(--act)">⚡</span>自動核准</div>
+          <div class="body">kind: <b>db.update</b><br>status: approved</div>
+        </div>
+        <div class="term" style="left:704px;top:196px">結束</div>
+        <div class="elabel yes" style="left:486px;top:158px">是</div>
+        <div class="elabel no" style="left:486px;top:258px">否</div>
+      </div>
+      <div class="inspect">
+        <div class="h">INSPECTOR · 條件節點</div>
+        <div class="field"><label>節點名稱</label><div class="ctrl">天數 &gt; 3?</div></div>
+        <div class="field"><label>條件(filter-builder)</label><div class="ctrl sel">days &gt; 3 <span>▾</span></div></div>
+        <div class="field"><label>出邊</label>
+          <div class="ctrl" style="display:flex;gap:6px"><span class="elabel yes" style="position:static">是 → 通知主管</span></div>
+          <div class="ctrl" style="display:flex;gap:6px;margin-top:6px"><span class="elabel no" style="position:static">否 → 自動核准</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DIRECTION B ============ -->
+  <div class="dir">
+    <div class="dir-head">
+      <span class="tag">方向 B</span><h2>泳道 / 階段欄</h2>
+      <p>由左到右的固定階段欄,節點落進欄裡。對「審批流程」最直覺、最整齊;自由度低,迴圈/跳關較難表達。</p>
+    </div>
+    <div class="editor">
+      <div class="palette">
+        <div class="h">節點</div>
+        <div class="pitem"><span class="dot" style="background:var(--form)"></span>表單 Form</div>
+        <div class="pitem"><span class="dot" style="background:var(--cond)"></span>條件 Condition</div>
+        <div class="pitem"><span class="dot" style="background:var(--act)"></span>動作 Action</div>
+        <div class="pitem"><span class="dot" style="background:var(--term)"></span>結束 End</div>
+      </div>
+      <div class="canvas" style="height:430px">
+        <div class="lanes">
+          <div class="lane"><div class="lh">① 申請</div></div>
+          <div class="lane"><div class="lh">② 判斷</div></div>
+          <div class="lane"><div class="lh">③ 處理</div></div>
+          <div class="lane"><div class="lh">④ 完成</div></div>
+        </div>
+        <svg class="edges" viewBox="0 0 760 430" preserveAspectRatio="none">
+          <path d="M174,212 C196,212 196,212 206,212"/>
+          <path class="y" d="M356,205 C390,200 390,150 396,150"/>
+          <path class="n" d="M356,236 C390,250 390,300 396,300"/>
+          <path d="M570,150 C592,150 590,206 596,210"/>
+          <path d="M570,300 C592,300 590,220 596,214"/>
+        </svg>
+        <div class="term start" style="left:24px;top:196px">開始</div>
+        <div class="node form" style="left:36px;top:250px;width:140px">
+          <div class="top"><span class="ico" style="background:var(--form)">▤</span>請假申請</div>
+          <div class="body"><div class="tinput">起訖日期</div><div class="mini m"></div></div>
+        </div>
+        <div class="node cond" style="left:212px;top:176px">
+          <div class="top"><span class="ico" style="background:var(--cond)">◆</span>天數 &gt; 3?</div>
+          <div class="body"><span class="pill">days &gt; 3</span></div>
+        </div>
+        <div class="node act" style="left:396px;top:112px;width:150px">
+          <div class="top"><span class="ico" style="background:var(--act)">⚡</span>通知主管</div>
+          <div class="body">kind: <b>notify</b></div>
+        </div>
+        <div class="node act" style="left:396px;top:264px;width:150px">
+          <div class="top"><span class="ico" style="background:var(--act)">⚡</span>自動核准</div>
+          <div class="body">kind: <b>db.update</b></div>
+        </div>
+        <div class="term" style="left:600px;top:196px">結束</div>
+        <div class="elabel yes" style="left:372px;top:150px">是</div>
+        <div class="elabel no" style="left:372px;top:300px">否</div>
+      </div>
+      <div class="inspect">
+        <div class="h">INSPECTOR · 表單節點</div>
+        <div class="field"><label>節點名稱</label><div class="ctrl">請假申請</div></div>
+        <div class="field"><label>表單(form-builder)</label><div class="ctrl sel" style="color:var(--form)">FormConfig: 2 欄位 ▾</div></div>
+        <div class="field"><label>階段</label><div class="ctrl">① 申請</div></div>
+        <div class="field"><label>輸出 → context</label><div class="ctrl">leave.request</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DIRECTION C ============ -->
+  <div class="dir">
+    <div class="dir-head">
+      <span class="tag">方向 C</span><h2>混合:主軸線性 + 分支展開</h2>
+      <p>主流程是一條由上而下的脊椎,只有遇到條件時才向左右展開。一開始最簡單好讀,分支多時仍可成圖。</p>
+    </div>
+    <div class="editor">
+      <div class="palette">
+        <div class="h">節點</div>
+        <div class="pitem"><span class="dot" style="background:var(--form)"></span>表單 Form</div>
+        <div class="pitem"><span class="dot" style="background:var(--cond)"></span>條件 Condition</div>
+        <div class="pitem"><span class="dot" style="background:var(--act)"></span>動作 Action</div>
+        <div class="pitem"><span class="dot" style="background:var(--term)"></span>結束 End</div>
+      </div>
+      <div class="canvas" style="height:430px">
+        <svg class="edges" viewBox="0 0 760 430" preserveAspectRatio="none">
+          <path d="M380,52 L380,74"/>
+          <path d="M380,150 L380,172"/>
+          <path class="y" d="M340,210 C250,212 210,250 210,270"/>
+          <path class="n" d="M420,210 C540,212 560,250 560,270"/>
+          <path d="M210,330 C210,360 360,360 380,360"/>
+          <path d="M560,330 C560,360 400,360 384,360"/>
+        </svg>
+        <div class="term start" style="left:343px;top:30px">開始</div>
+        <div class="node form" style="left:293px;top:74px;width:174px">
+          <div class="top"><span class="ico" style="background:var(--form)">▤</span>請假申請</div>
+          <div class="body"><div class="tinput">起訖日期</div> <div class="tinput">事由</div><div class="mini m"></div></div>
+        </div>
+        <div class="node cond" style="left:305px;top:172px">
+          <div class="top"><span class="ico" style="background:var(--cond)">◆</span>天數 &gt; 3?</div>
+          <div class="body"><span class="pill">days &gt; 3</span></div>
+        </div>
+        <div class="node act" style="left:123px;top:270px">
+          <div class="top"><span class="ico" style="background:var(--act)">⚡</span>通知主管</div>
+          <div class="body">kind: <b>notify</b></div>
+        </div>
+        <div class="node act" style="left:473px;top:270px">
+          <div class="top"><span class="ico" style="background:var(--act)">⚡</span>自動核准</div>
+          <div class="body">kind: <b>db.update</b></div>
+        </div>
+        <div class="term" style="left:343px;top:344px">結束</div>
+        <div class="elabel yes" style="left:250px;top:232px">是</div>
+        <div class="elabel no" style="left:486px;top:232px">否</div>
+        <div class="hint">分支只在條件節點展開,其餘步驟維持單一直線</div>
+      </div>
+      <div class="inspect">
+        <div class="h">INSPECTOR · 動作節點</div>
+        <div class="field"><label>節點名稱</label><div class="ctrl">通知主管</div></div>
+        <div class="field"><label>Action kind</label><div class="ctrl sel" style="color:var(--act)">notify ▾</div></div>
+        <div class="field"><label>params</label><div class="ctrl">to: {{leave.managerId}}</div></div>
+        <div class="field"><label>輸入來自 context</label><div class="ctrl">leave.request</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
