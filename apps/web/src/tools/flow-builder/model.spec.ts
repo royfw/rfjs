@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { toReactFlow, toFlowDoc, newNode, defaultConfig } from "./model";
-import { emptyFlow, flowDocSchema } from "./schema";
+import { emptyFlow, flowDocSchema, type FlowDoc } from "./schema";
 
 describe("flow model", () => {
   it("toReactFlow maps nodes/edges and carries type+config in data", () => {
@@ -38,5 +38,33 @@ describe("flow model", () => {
     expect(defaultConfig("action")).toEqual({ kind: "notify", params: {} });
     expect(defaultConfig("condition")).toBeUndefined();
     expect(defaultConfig("start")).toBeUndefined();
+  });
+
+  it("toFlowDoc(toReactFlow(doc)) round-trips reserved phase-2 fields (inputs/outputCollection/trigger/condition)", () => {
+    const doc: FlowDoc = {
+      version: 1,
+      nodes: [
+        {
+          id: "f1",
+          type: "form",
+          position: { x: 0, y: 0 },
+          config: { version: 1, fields: [] },
+          inputs: ["a", "b"],
+          outputCollection: true,
+        },
+      ],
+      edges: [
+        {
+          id: "e1",
+          source: "f1",
+          target: "f1",
+          trigger: "onSubmit",
+          condition: { any: true },
+        },
+      ],
+    };
+    const { nodes, edges } = toReactFlow(doc);
+    const back = toFlowDoc(nodes, edges);
+    expect(back).toEqual(doc);
   });
 });
