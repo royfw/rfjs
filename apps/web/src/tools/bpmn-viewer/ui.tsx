@@ -121,6 +121,7 @@ export function BpmnViewerTool() {
       <BpmnViewer
         {...v.viewerProps}
         xml={xml}
+        ariaLabel={t("bpmnDiagramLabel")}
         className="h-[600px] w-full rounded-md border bg-card"
       />
 

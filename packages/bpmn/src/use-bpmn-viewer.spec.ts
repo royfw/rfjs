@@ -24,9 +24,24 @@ describe("useBpmnViewer", () => {
     };
     result.current.viewerProps.ref.current = handle;
     act(() => result.current.zoomIn());
+    act(() => result.current.zoomOut());
+    act(() => result.current.resetZoom());
     act(() => result.current.fitViewport());
     expect(handle.zoomIn).toHaveBeenCalledTimes(1);
+    expect(handle.zoomOut).toHaveBeenCalledTimes(1);
+    expect(handle.resetZoom).toHaveBeenCalledTimes(1);
     expect(handle.fitViewport).toHaveBeenCalledTimes(1);
+  });
+
+  it("zoom actions are safe no-ops before a viewer is attached (ref still null)", () => {
+    const { result } = renderHook(() => useBpmnViewer());
+    expect(result.current.viewerProps.ref.current).toBeNull();
+    expect(() => {
+      act(() => result.current.zoomIn());
+      act(() => result.current.zoomOut());
+      act(() => result.current.resetZoom());
+      act(() => result.current.fitViewport());
+    }).not.toThrow();
   });
 
   it("tracks importing state and clears error when a new load starts", () => {

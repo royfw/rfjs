@@ -24,6 +24,7 @@ export const messages: LocaleMessages = {
       bpmnErrEmpty: "File is empty",
       bpmnErrImport: "Could not render this diagram — the XML may be invalid",
       bpmnErrRead: "Could not read the file",
+      bpmnDiagramLabel: "BPMN process diagram",
     },
   },
   "zh-TW": {
@@ -49,6 +50,7 @@ export const messages: LocaleMessages = {
       bpmnErrEmpty: "檔案是空的",
       bpmnErrImport: "無法渲染此圖 —— XML 可能無效",
       bpmnErrRead: "無法讀取檔案",
+      bpmnDiagramLabel: "BPMN 流程圖",
     },
   },
 };
