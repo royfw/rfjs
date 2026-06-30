@@ -1,92 +1,77 @@
-# Task 3 Report: ConfigForm Container-Responsive Collapse
+# Task 3 Report: Custom React Flow Node Components
 
-## Status: DONE
+**Status:** COMPLETE
 
-**Commit:** `f1e2e2e feat(form-builder-ui): container-driven responsive collapse (ResizeObserver + stackBelow)`
+**Commit:** `3d2d0d4` — feat(flow): add custom React Flow node components with compact previews
 
----
+## Summary
 
-## What Was Implemented
+Implemented five custom React Flow node components (StartNode, EndNode, FormNode, ActionNode, ConditionNode) with compact label/preview text following the task brief exactly. All tests pass, TypeScript clean.
 
-### Files Modified
-- `packages/form-builder-ui/src/config-form.tsx` — implementation
-- `packages/form-builder-ui/src/config-form.spec.tsx` — new responsive tests (4 cases in `responsive container collapse` describe block)
+## TDD Evidence
 
-### Implementation Details
-
-1. **Container ref + breakpoint hook** — added `rootRef` (`useRef<HTMLFormElement|null>`), `stackBelow = config.responsive?.stackBelow ?? 640`, and `narrow = useContainerBreakpoint(rootRef, stackBelow)` at the top of `ConfigForm`. Attached `ref={rootRef}` to the `<form>` element.
-
-2. **Outer form grid** — replaced `className="grid grid-cols-1 gap-4 md:[…]"` (viewport-based) with `className="grid gap-4"` and moved columns to inline style: `gridTemplateColumns: narrow ? '1fr' : 'repeat(var(--form-cols), minmax(0, 1fr))'`. The `--form-cols` CSS custom property is kept.
-
-3. **Grid-mode section grid** (where `section.layout` exists) — `gridTemplateColumns: narrow ? '1fr' : \`repeat(${layout.columns}, minmax(0, 1fr))\``. When narrow, items are sorted by `(row, colStart)` from the placement map (copy, no mutation) before mapping so single-column stack order equals visual reading order.
-
-4. **Flow-section row grid** — `gridTemplateColumns: narrow ? '1fr' : \`repeat(${sectionCols}, minmax(0, 1fr))\``.
-
-5. **Item-level style overrides** — `placementStyle` and `fieldSpanStyle` both accept an `isNarrow` boolean; when true they return `{ gridColumn: '1 / -1' }`. `renderItem` gains an `isNarrow = false` parameter, threaded through from every call site.
-
----
-
-## TDD RED → GREEN
-
-### RED phase
+### Step 1-2: RED — Failing Test
+Test file created (`nodes.spec.tsx`) with mocked `@xyflow/react` (Handle, Position). Test ran and **FAILED** as expected:
 ```
-pnpm -F @rfjs/form-builder build && pnpm -F @rfjs/form-builder-ui vitest:run src/config-form.spec.tsx
+FAIL  src/tools/flow-builder/nodes.spec.tsx
+Error: Failed to resolve import "./nodes" from "src/tools/flow-builder/nodes.spec.tsx"
 ```
-Result: **3 failed | 39 passed** — new responsive tests failed as expected (grid still used viewport `md:` class, not container-driven logic).
+Test suite: 1 failed, 40 passed.
 
-### GREEN phase (after implementation)
-```
-pnpm -F @rfjs/form-builder-ui vitest:run src/config-form.spec.tsx
-```
-Result: **42 passed (42)** — all new + pre-existing tests pass.
+### Step 3: Implementation
+Transcribed `nodes.tsx` exactly per brief:
+- `Shell()` wrapper component with type-specific styling (META colors + BG)
+- `fieldCount()` helper to count fields from config (supports `fields` array or `sections` structure)
+- Five node components (StartNode, EndNode, FormNode, ActionNode, ConditionNode)
+- Exported `nodeTypes` record mapping `FlowNodeType` to components
+- Template literals preserved for test matching (e.g., `` {`${fieldCount(d.config)} fields`} ``)
 
-### Full regression suite
+### Step 4: GREEN — Passing Tests
+All tests pass:
 ```
-pnpm -F @rfjs/form-builder-ui vitest:run
+Test Files  41 passed (41)
+     Tests  173 passed (173)
 ```
-Result: **230 passed (230)** across 10 test files. All v1/linear/existing tests remain green.
 
----
+Three flow node tests verified:
+- ✓ form node shows its label and field count
+- ✓ action node shows its kind
+- ✓ condition node renders its label
+
+## Type Check
+
+```bash
+pnpm --filter web check-types
+```
+Result: **PASS** (no TypeScript errors).
+
+## Files Changed
+
+- **Created:** `apps/web/src/tools/flow-builder/nodes.tsx` (81 lines)
+- **Created:** `apps/web/src/tools/flow-builder/nodes.spec.tsx` (30 lines)
 
 ## Self-Review
 
-- **No viewport breakpoints remain** — the `md:[…]` arbitrary Tailwind variant has been fully removed. All responsiveness is now container-driven via `ResizeObserver`.
-- **No mutation of `items` array** — grid-mode sort uses `[...allItems].sort(…)`.
-- **`stackBelow` default 640** — matches spec §4 and brief.
-- **v1 back-compat** — v1 `fields[]` path does not pass `isNarrow` to `renderItem` (uses default `false`), so v1 single-column forms are completely unaffected.
-- **SSR-safe** — `useContainerBreakpoint` initialises `narrow=false`; no hydration mismatch risk.
-- **`--form-cols` custom property preserved** — kept in the inline style map for downstream CSS targeting.
+**What works:**
+- Each node component strictly follows the brief's implementation
+- Compact previews use template literals (`${fieldCount()}`, `kind: ${kind}`) for single text node in test assertions
+- Shell wrapper unifies styling: border color + header background/text per node type
+- Condition node has dual output handles (`id="yes"` at 35%, `id="no"` at 65%)
+- fieldCount handles both v1 form config (flat `fields[]`) and complex nested `sections` structure
+- All handles positioned correctly (target/source, position based on node type)
+- Components properly cast to `NodeProps` type or use inference
+
+**Potential concerns:**
+- `fieldCount()` defensive coding: silently returns 0 if config is missing/invalid (no error feedback) — acceptable for compact preview
+- Shape assumptions on `config` (unknown type with optional `fields`, `sections`, `kind` props) — config shape validated in schema layer, this is view layer only
+- Mock in test removes real React Flow context (layout, drag, etc.) — acceptable per brief intent to test preview text only
+
+**Code quality:**
+- Follows kebab-case file names (nodes.tsx, nodes.spec.tsx)
+- Co-located test per repo conventions
+- No unused imports; clean, minimal surface
+- Consistent with existing tool component patterns in rfjs
 
 ## Concerns
 
-None. Implementation is straightforward, no ambiguous forks encountered, all 230 tests green.
-
----
-
-## Review Findings Fix (post-implementation)
-
-### Finding A — Orphaned-item sort fallback (Important)
-
-**Resolution:** Changed `?? 0` to `?? Number.MAX_SAFE_INTEGER` for both `row` and `colStart` fallbacks in the narrow-mode sort inside `sortedGridItems` (`config-form.tsx` line 259). Items without a placement now sort to the end rather than floating to the top before all 1-indexed placed items.
-
-**New test added:** `"orphaned items (no placement) sort after all placed items in narrow mode"` — a grid section with one placed item (row 1) and one orphan (no placement); after `fireWidth(400)` the placed item is first in the DOM.
-
-### Finding B — Wide test never exercised narrow→wide restoration (Confirmed test gap)
-
-**Resolution:** Rewrote the `"keeps multi-column layout when container is wide"` test to fire `fireWidth(400)` first (asserting `gridTemplateColumns === '1fr'`), then `fireWidth(900)` (asserting `repeat(` restored and item `gridColumn` is `'1 / span 7'`). The hook no longer bails without first crossing the narrow threshold.
-
-### Finding C — Module-level `_roCb` shared state (Minor, test hygiene)
-
-**Resolution:** Removed the module-level `_roCb` variable. `installResizeObserverMock()` now holds `roCb` as a closure variable and returns `{ fireWidth }`. All call sites inside `responsive container collapse` destructure `fireWidth` from the return value.
-
-### Test command and result
-
-```
-pnpm -F @rfjs/form-builder-ui vitest:run src/config-form.spec.tsx
-```
-Result: **43 passed (43)** — 1 new test added (Finding A); Finding B and C were existing-test changes only.
-
-```
-pnpm -F @rfjs/form-builder-ui vitest:run
-```
-Result: **231 passed (231)** across 10 test files. No regressions.
+None. Implementation is complete, TDD verified, type-safe, and matches brief verbatim.
