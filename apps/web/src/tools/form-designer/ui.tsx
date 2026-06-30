@@ -437,7 +437,7 @@ export function FormDesignerTool() {
                 <div
                   className={
                     selectedCard
-                      ? "fixed inset-0 z-30 overflow-y-auto bg-background p-4 lg:static lg:z-auto lg:bg-transparent lg:p-0"
+                      ? "fixed inset-0 z-50 overflow-y-auto bg-background p-4 lg:static lg:z-auto lg:bg-transparent lg:p-0"
                       : "hidden lg:block"
                   }
                 >
