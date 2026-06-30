@@ -23,6 +23,7 @@ export const messages: LocaleMessages = {
       bpmnErrSize: "File too large (max 1 MB)",
       bpmnErrEmpty: "File is empty",
       bpmnErrImport: "Could not render this diagram — the XML may be invalid",
+      bpmnErrRead: "Could not read the file",
     },
   },
   "zh-TW": {
@@ -47,6 +48,7 @@ export const messages: LocaleMessages = {
       bpmnErrSize: "檔案過大(上限 1 MB)",
       bpmnErrEmpty: "檔案是空的",
       bpmnErrImport: "無法渲染此圖 —— XML 可能無效",
+      bpmnErrRead: "無法讀取檔案",
     },
   },
 };

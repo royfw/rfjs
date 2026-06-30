@@ -17,5 +17,6 @@ describe("validateBpmnFile", () => {
   it("rejects empty and oversized files", () => {
     expect(validateBpmnFile({ name: "flow.bpmn", size: 0 })).toEqual({ ok: false, reason: "empty" });
     expect(validateBpmnFile({ name: "flow.bpmn", size: MAX_BPMN_BYTES + 1 })).toEqual({ ok: false, reason: "size" });
+    expect(validateBpmnFile({ name: "flow.bpmn", size: MAX_BPMN_BYTES })).toEqual({ ok: true });
   });
 });

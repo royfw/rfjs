@@ -11,7 +11,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@rfjs/bpmn", () => ({
-  BpmnViewer: ({ xml }: { xml: string }) => <div data-testid="bpmn-viewer" data-xml={xml} />,
+  BpmnViewer: ({ xml }: { xml: string }) => <div data-testid="bpmn-viewer">{xml}</div>,
   useBpmnViewer: () => ({
     viewerProps: { ref: { current: null }, onLoadingChange: () => {}, onError: () => {} },
     zoomIn: () => {},
@@ -38,7 +38,7 @@ describe("BpmnViewerTool", () => {
   it("renders the default sample into the viewer", () => {
     renderTool();
     const viewer = screen.getByTestId("bpmn-viewer");
-    expect(viewer.getAttribute("data-xml")).toContain("<bpmn:definitions");
+    expect(viewer.textContent).toContain("<bpmn:definitions");
   });
 
   it("renders pasted XML when Render is clicked", () => {
@@ -46,7 +46,7 @@ describe("BpmnViewerTool", () => {
     const textarea = screen.getByLabelText(/paste bpmn xml/i) as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: "<bpmn:definitions id='X'/>" } });
     fireEvent.click(screen.getByRole("button", { name: /^render$/i }));
-    expect(screen.getByTestId("bpmn-viewer").getAttribute("data-xml")).toContain("id='X'");
+    expect(screen.getByTestId("bpmn-viewer").textContent).toContain("id='X'");
   });
 
   it("shows an error for an unsupported uploaded file type", () => {
