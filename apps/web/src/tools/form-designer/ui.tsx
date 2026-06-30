@@ -23,11 +23,15 @@ import {
 } from "lucide-react";
 
 import { ConfigForm } from "@rfjs/form-builder-ui";
+import type { SubmissionMeta } from "@rfjs/form-builder-ui";
 import type { Card, Group, Kind, Component } from "./model";
 import { cardsToFormConfig, jsonToCards, cardLabel, componentDataType, formConfigToCards } from "./model";
 import { SAMPLE_CONFIG, sampleFetcher, sampleUploader } from "../form-builder/sample";
 import { resolveCards, moveItem } from "./layout-grid";
 import { SettingsPanel } from "./inspector/settings-panel";
+import { Section } from "./inspector/section";
+import { ResponsivePreview } from "./responsive-preview";
+import { SubmissionPanel } from "./submission-panel";
 
 // ---------------------------------------------------------------------------
 // Direction C (hybrid) — "A structure + C drag freedom", now with a builder
@@ -115,6 +119,9 @@ export function FormDesignerTool() {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<"canvas" | "preview" | "json">("canvas");
   const [jsonError, setJsonError] = React.useState<string | null>(null);
+  const [payload, setPayload] = React.useState<{ data: Record<string, unknown>; meta: SubmissionMeta } | null>(null);
+  const [previewW, setPreviewW] = React.useState(1100);
+  const [canvasW, setCanvasW] = React.useState(390);
   const [copied, setCopied] = React.useState(false);
   const [dropGroup, setDropGroup] = React.useState<string | null>(null);
   const bodyRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
@@ -128,7 +135,9 @@ export function FormDesignerTool() {
   const siblingFields = cards
     .filter((c) => c.kind === "field" && c.id !== selectedCard?.id && c.key)
     .map((c) => ({ key: c.key!, dataType: componentDataType(c.component) }));
-  const formConfig = cardsToFormConfig(groups, cards);
+  // Memoize to keep a stable reference: onPayloadChange fires on config changes,
+  // so an unstable formConfig would create an infinite re-render loop.
+  const formConfig = React.useMemo(() => cardsToFormConfig(groups, cards), [groups, cards]);
 
   // Apply a drag/resize patch to the dragged card, then resolve overlaps (push + compact up).
   const placeDragged = (id: string, p: Partial<Card>) =>
@@ -385,78 +394,110 @@ export function FormDesignerTool() {
             </div>
           </div>
 
-          {/* Canvas + inspector (RWD: stacks below lg) */}
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-            <div className="min-w-0 flex-1" onPointerDown={() => setSelected(null)}>
-              <div className="flex flex-col gap-4">
-                {groups.map((group, index) => (
-                  <React.Fragment key={group.id}>
-                    {groupDrag && groupDrag.id !== group.id && groupDrag.overIndex === index ? (
-                      <div data-testid="group-drop-line" className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]" />
-                    ) : null}
-                    <GroupFrame
-                      group={group}
-                      cards={cards.filter((c) => c.groupId === group.id)}
-                      selected={selected}
-                      dropOver={dropGroup === group.id}
-                      dragging={groupDrag?.id === group.id}
-                      sectionRef={(el) => {
-                        groupElRefs.current[group.id] = el;
-                      }}
-                      bodyRef={(el) => {
-                        bodyRefs.current[group.id] = el;
-                      }}
-                      onToggle={() =>
-                        setGroups((gs) => gs.map((g) => (g.id === group.id ? { ...g, collapsed: !g.collapsed } : g)))
-                      }
-                      onReorderStart={beginGroupReorder}
-                      onMoveStart={beginDrag}
-                      onResizeStart={beginDrag}
-                    />
-                  </React.Fragment>
-                ))}
-                {groupDrag && groupDrag.overIndex === groups.length ? (
-                  <div data-testid="group-drop-line" className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]" />
-                ) : null}
+          {/* Section 1: Editor (default expanded) */}
+          <Section title="Editor" defaultOpen={true}>
+            {/* Canvas + inspector (RWD: stacks below lg) */}
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+              <div className="min-w-0 flex-1" onPointerDown={() => setSelected(null)}>
+                <div className="flex flex-col gap-4">
+                  {groups.map((group, index) => (
+                    <React.Fragment key={group.id}>
+                      {groupDrag && groupDrag.id !== group.id && groupDrag.overIndex === index ? (
+                        <div data-testid="group-drop-line" className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]" />
+                      ) : null}
+                      <GroupFrame
+                        group={group}
+                        cards={cards.filter((c) => c.groupId === group.id)}
+                        selected={selected}
+                        dropOver={dropGroup === group.id}
+                        dragging={groupDrag?.id === group.id}
+                        sectionRef={(el) => {
+                          groupElRefs.current[group.id] = el;
+                        }}
+                        bodyRef={(el) => {
+                          bodyRefs.current[group.id] = el;
+                        }}
+                        onToggle={() =>
+                          setGroups((gs) => gs.map((g) => (g.id === group.id ? { ...g, collapsed: !g.collapsed } : g)))
+                        }
+                        onReorderStart={beginGroupReorder}
+                        onMoveStart={beginDrag}
+                        onResizeStart={beginDrag}
+                      />
+                    </React.Fragment>
+                  ))}
+                  {groupDrag && groupDrag.overIndex === groups.length ? (
+                    <div data-testid="group-drop-line" className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]" />
+                  ) : null}
+                </div>
               </div>
-            </div>
 
-            <aside className="shrink-0 lg:w-[420px]">
-              {/* Mobile: full-screen sheet when a card is selected; Desktop: inline column. */}
-              <div
-                className={
-                  selectedCard
-                    ? "fixed inset-0 z-30 overflow-y-auto bg-background p-4 lg:static lg:z-auto lg:bg-transparent lg:p-0"
-                    : "hidden lg:block"
-                }
-              >
-                {selectedCard ? (
-                  <button
-                    type="button"
-                    onClick={() => setSelected(null)}
-                    className="mb-3 text-xs text-muted-foreground hover:text-foreground lg:hidden"
-                  >
-                    ← Back to canvas
-                  </button>
-                ) : null}
-                <SettingsPanel
-                  card={selectedCard}
-                  groups={groups}
-                  siblingFields={siblingFields}
-                  onChange={(p) => selectedCard && updateCard(selectedCard.id, p)}
-                  onRemove={() => {
-                    if (!selectedCard) return;
-                    setCards((cs) => resolveCards(cs.filter((c) => c.id !== selectedCard.id) as Card[], "", COLS) as Card[]);
-                    setSelected(null);
-                  }}
+              <aside className="shrink-0 lg:w-[420px]">
+                {/* Mobile: full-screen sheet when a card is selected; Desktop: inline column. */}
+                <div
+                  className={
+                    selectedCard
+                      ? "fixed inset-0 z-30 overflow-y-auto bg-background p-4 lg:static lg:z-auto lg:bg-transparent lg:p-0"
+                      : "hidden lg:block"
+                  }
+                >
+                  {selectedCard ? (
+                    <button
+                      type="button"
+                      onClick={() => setSelected(null)}
+                      className="mb-3 text-xs text-muted-foreground hover:text-foreground lg:hidden"
+                    >
+                      ← Back to canvas
+                    </button>
+                  ) : null}
+                  <SettingsPanel
+                    card={selectedCard}
+                    groups={groups}
+                    siblingFields={siblingFields}
+                    onChange={(p) => selectedCard && updateCard(selectedCard.id, p)}
+                    onRemove={() => {
+                      if (!selectedCard) return;
+                      setCards((cs) => resolveCards(cs.filter((c) => c.id !== selectedCard.id) as Card[], "", COLS) as Card[]);
+                      setSelected(null);
+                    }}
+                  />
+                </div>
+              </aside>
+            </div>
+          </Section>
+
+          {/* Section 2: Live Preview (default collapsed) */}
+          <Section title="Live Preview" defaultOpen={false}>
+            <div className="flex flex-col gap-4">
+              <ResponsivePreview compact width={canvasW} onWidthChange={setCanvasW}>
+                <ConfigForm
+                  config={formConfig}
+                  locale="en"
+                  fetcher={sampleFetcher}
+                  uploadHandler={sampleUploader}
+                  onPayloadChange={setPayload}
+                  onSubmit={() => {}}
                 />
-              </div>
-            </aside>
-          </div>
+              </ResponsivePreview>
+              <SubmissionPanel compact payload={payload} />
+            </div>
+          </Section>
         </>
       ) : tab === "preview" ? (
-        <div className="rounded-xl border border-border bg-card/30 p-6">
-          <ConfigForm config={formConfig} locale="en" fetcher={sampleFetcher} uploadHandler={sampleUploader} onSubmit={() => {}} />
+        <div className="flex flex-col gap-4">
+          <ResponsivePreview width={previewW} onWidthChange={setPreviewW}>
+            <ConfigForm
+              config={formConfig}
+              locale="en"
+              fetcher={sampleFetcher}
+              uploadHandler={sampleUploader}
+              onPayloadChange={setPayload}
+              onSubmit={() => {}}
+            />
+          </ResponsivePreview>
+          <Section title="Submission" defaultOpen={false}>
+            <SubmissionPanel payload={payload} />
+          </Section>
         </div>
       ) : (
         <div className="flex flex-col gap-2">

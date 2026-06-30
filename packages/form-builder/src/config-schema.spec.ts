@@ -485,3 +485,16 @@ describe('FileUpload/Signature components', () => {
     }).success).toBe(false);
   });
 });
+
+describe('FormConfig responsive', () => {
+  it('accepts and round-trips responsive.stackBelow', () => {
+    const cfg = { version: 1, sections: [{ id: 's', title: 'S', rows: [] }], responsive: { stackBelow: 540 } };
+    const parsed = formConfigSchema.parse(cfg as any);
+    expect(parsed.responsive?.stackBelow).toBe(540);
+    expect(JSON.parse(JSON.stringify(parsed))).toEqual(cfg);
+  });
+
+  it('allows omitting responsive', () => {
+    expect(formConfigSchema.safeParse({ version: 1, sections: [{ id: 's', title: 'S', rows: [] }] }).success).toBe(true);
+  });
+});

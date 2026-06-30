@@ -1,7 +1,30 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { ConfigForm } from './config-form';
 import type { FormConfig, DataSource, UploadHandler, FileRef, SignatureTransport } from '@rfjs/form-builder';
+
+// ---------------------------------------------------------------------------
+// Controllable ResizeObserver mock (used by responsive tests below).
+// installResizeObserverMock() registers a beforeEach that installs the mock
+// and returns a fireWidth helper — the callback is a closure inside the
+// function so no module-level state leaks between describe blocks.
+// ---------------------------------------------------------------------------
+function installResizeObserverMock() {
+  let roCb: (entries: any[]) => void = () => {};
+  beforeEach(() => {
+    roCb = () => {};
+    (globalThis as any).ResizeObserver = class {
+      constructor(cb: any) { roCb = cb; }
+      observe() {}
+      disconnect() {}
+    };
+  });
+  return {
+    fireWidth(width: number) {
+      act(() => roCb([{ contentRect: { width } }]));
+    },
+  };
+}
 
 
 const baseConfig: FormConfig = {
@@ -695,5 +718,217 @@ describe('Signature field submit gating', () => {
 
     // Submit must no longer be disabled — pendingCaptures cleared on config change
     await waitFor(() => expect(submitBtn.hasAttribute('disabled')).toBe(false));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// onPayloadChange — live payload seam
+// ---------------------------------------------------------------------------
+
+describe('onPayloadChange', () => {
+  it('emits live payload (data + meta) on value change without submit', async () => {
+    const onPayloadChange = vi.fn();
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string', required: true }],
+    };
+    render(<ConfigForm config={cfg} onSubmit={() => {}} onPayloadChange={onPayloadChange} />);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Ann' } });
+    await waitFor(() => {
+      const lastCall = onPayloadChange.mock.calls.at(-1)![0];
+      expect(lastCall.data.name).toBe('Ann');
+      expect(lastCall.meta.visibleKeys).toContain('name');
+    });
+  });
+
+  it('excludes conditionally-hidden fields from payload data and visibleKeys', async () => {
+    const onPayloadChange = vi.fn();
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        { key: 'role', label: 'Role', component: 'Input', dataType: 'string' },
+        {
+          key: 'secret',
+          label: 'Secret',
+          component: 'Input',
+          dataType: 'string',
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'admin' }],
+          },
+        },
+      ],
+    };
+    render(<ConfigForm config={cfg} onSubmit={() => {}} onPayloadChange={onPayloadChange} />);
+    // role !== 'admin' → secret is hidden
+    fireEvent.change(screen.getByRole('textbox', { name: 'Role' }), { target: { value: 'user' } });
+    await waitFor(() => {
+      const lastCall = onPayloadChange.mock.calls.at(-1)![0];
+      expect(Object.keys(lastCall.data)).not.toContain('secret');
+      expect(lastCall.meta.visibleKeys).not.toContain('secret');
+    });
+  });
+
+  it('reports meta.valid=true when a hidden required field is empty (excluded from meta validation, consistent with submit)', async () => {
+    const onPayloadChange = vi.fn();
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [
+        { key: 'role', label: 'Role', component: 'Input', dataType: 'string' },
+        {
+          key: 'adminCode',
+          label: 'Admin Code',
+          component: 'Input',
+          dataType: 'string',
+          required: true,
+          conditional: {
+            logic: 'and',
+            filters: [{ field: 'role', dataType: 'string', operator: 'eq', value: 'admin' }],
+          },
+        },
+      ],
+    };
+    render(<ConfigForm config={cfg} onSubmit={() => {}} onPayloadChange={onPayloadChange} />);
+    // role !== 'admin' → adminCode is hidden; even though it's required, the form would submit
+    // → meta.valid must be true (no visible required fields are failing)
+    await waitFor(() => expect(onPayloadChange).toHaveBeenCalled());
+    const lastCall = onPayloadChange.mock.calls.at(-1)![0];
+    expect(lastCall.meta.valid).toBe(true);
+    expect(lastCall.meta.visibleKeys).not.toContain('adminCode');
+  });
+
+  it('reports meta.valid=false and errors when a required field is empty', async () => {
+    const onPayloadChange = vi.fn();
+    const cfg: FormConfig = {
+      version: 1,
+      fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string', required: true }],
+    };
+    render(<ConfigForm config={cfg} onSubmit={() => {}} onPayloadChange={onPayloadChange} />);
+    // Trigger a re-render by typing then clearing — or just wait for the initial emit
+    await waitFor(() => expect(onPayloadChange).toHaveBeenCalled());
+    const lastCall = onPayloadChange.mock.calls.at(-1)![0];
+    expect(lastCall.meta.valid).toBe(false);
+    expect(lastCall.meta.errors).toHaveProperty('name');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Responsive collapse (container-driven via ResizeObserver)
+// ---------------------------------------------------------------------------
+
+describe('responsive container collapse', () => {
+  const { fireWidth } = installResizeObserverMock();
+
+  const gridCfg = {
+    version: 1,
+    sections: [
+      {
+        id: 's1',
+        rows: [{ id: 'r1', items: [
+          { id: 'i_a', kind: 'field', key: 'a', label: 'A', component: 'Input', dataType: 'string' },
+          { id: 'i_b', kind: 'field', key: 'b', label: 'B', component: 'Input', dataType: 'string' },
+        ] }],
+        layout: { columns: 12, placements: [
+          { itemId: 'i_a', colStart: 1, colSpan: 7, row: 1 },
+          { itemId: 'i_b', colStart: 8, colSpan: 5, row: 1 },
+        ] },
+      },
+    ],
+  } as any as FormConfig;
+
+  it('collapses grid-mode section to single column when container is narrow', () => {
+    const { container } = render(<ConfigForm config={gridCfg} onSubmit={() => {}} />);
+    // trigger narrow width (< default 640)
+    fireWidth(400);
+    const grid = container.querySelector('[data-testid="form-grid"]') as HTMLElement;
+    expect(grid.style.gridTemplateColumns).toBe('1fr');
+    const a = container.querySelector('[data-item="i_a"]') as HTMLElement;
+    const b = container.querySelector('[data-item="i_b"]') as HTMLElement;
+    expect(a.style.gridColumn).toBe('1 / -1');
+    expect(b.style.gridColumn).toBe('1 / -1');
+  });
+
+  it('keeps multi-column layout when container is wide (>= default stackBelow 640)', () => {
+    const { container } = render(<ConfigForm config={gridCfg} onSubmit={() => {}} />);
+    // First go narrow to confirm collapsed state…
+    fireWidth(400);
+    const grid = container.querySelector('[data-testid="form-grid"]') as HTMLElement;
+    expect(grid.style.gridTemplateColumns).toBe('1fr');
+    // …then fire a wide width to confirm restoration.
+    fireWidth(900);
+    expect(grid.style.gridTemplateColumns).toContain('repeat(');
+    const a = container.querySelector('[data-item="i_a"]') as HTMLElement;
+    // in wide mode the placement span is restored
+    expect(a.style.gridColumn).toBe('1 / span 7');
+  });
+
+  it('honors config.responsive.stackBelow override (480)', () => {
+    const cfg: FormConfig = {
+      ...(gridCfg as any),
+      responsive: { stackBelow: 480 },
+    } as any;
+    const { container } = render(<ConfigForm config={cfg} onSubmit={() => {}} />);
+    // width=520 — above the 480 threshold → wide, multi-column preserved
+    fireWidth(520);
+    const grid1 = container.querySelector('[data-testid="form-grid"]') as HTMLElement;
+    expect(grid1.style.gridTemplateColumns).toContain('repeat(');
+    // width=400 — below 480 threshold → narrow, collapsed
+    fireWidth(400);
+    const grid2 = container.querySelector('[data-testid="form-grid"]') as HTMLElement;
+    expect(grid2.style.gridTemplateColumns).toBe('1fr');
+  });
+
+  it('collapses outer form grid and flow-section rows when narrow', () => {
+    const flowCfg: FormConfig = {
+      version: 1,
+      columns: 2,
+      sections: [
+        {
+          id: 's1',
+          columns: 2,
+          rows: [
+            { id: 'r1', items: [
+              { id: 'f1', kind: 'field', key: 'x', label: 'X', component: 'Input', dataType: 'string' },
+              { id: 'f2', kind: 'field', key: 'y', label: 'Y', component: 'Input', dataType: 'string' },
+            ] },
+          ],
+        },
+      ],
+    } as any;
+    const { container } = render(<ConfigForm config={flowCfg} onSubmit={() => {}} />);
+    fireWidth(300);
+    const form = container.querySelector('form') as HTMLElement;
+    expect(form.style.gridTemplateColumns).toBe('1fr');
+    const row = container.querySelector('[data-testid="form-row"]') as HTMLElement;
+    expect(row.style.gridTemplateColumns).toBe('1fr');
+  });
+
+  it('orphaned items (no placement) sort after all placed items in narrow mode', () => {
+    const orphanCfg = {
+      version: 1,
+      sections: [
+        {
+          id: 's1',
+          rows: [
+            { id: 'r1', items: [
+              { id: 'placed', kind: 'field', key: 'placed', label: 'Placed', component: 'Input', dataType: 'string' },
+            ] },
+            { id: 'r2', items: [
+              { id: 'orphan', kind: 'field', key: 'orphan', label: 'Orphan', component: 'Input', dataType: 'string' },
+            ] },
+          ],
+          // Only 'placed' has a placement; 'orphan' has none.
+          layout: { columns: 12, placements: [
+            { itemId: 'placed', colStart: 1, colSpan: 12, row: 1 },
+          ] },
+        },
+      ],
+    } as any as FormConfig;
+    const { container } = render(<ConfigForm config={orphanCfg} onSubmit={() => {}} />);
+    fireWidth(400); // go narrow → sort kicks in
+    const items = container.querySelectorAll('[data-item]');
+    // placed item (row 1) must appear before orphan (MAX_SAFE_INTEGER fallback)
+    expect(items[0]!.getAttribute('data-item')).toBe('placed');
+    expect(items[1]!.getAttribute('data-item')).toBe('orphan');
   });
 });

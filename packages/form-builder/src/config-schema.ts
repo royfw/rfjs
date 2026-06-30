@@ -173,6 +173,7 @@ export const FormConfigSchema: ZodType<FormConfig> = z
     fields: z.array(fieldConfigSchema).optional(),
     sections: z.array(formSectionSchema).optional(),
     columns: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+    responsive: z.object({ stackBelow: z.number().positive().optional() }).optional(),
   })
   .refine(
     (c) => c.fields !== undefined || c.sections !== undefined,
