@@ -190,6 +190,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@rfjs/bpmn':
+        specifier: workspace:*
+        version: link:../../packages/bpmn
       '@rfjs/data-filter':
         specifier: workspace:*
         version: link:../../packages/data-filter

@@ -13,6 +13,7 @@
     "vitest:run": "vitest run"
   },
   "dependencies": {
+    "@rfjs/bpmn": "workspace:*",
     "@rfjs/filter-builder": "workspace:*",
     "@rfjs/filter-builder-ui": "workspace:*",
     "@rfjs/form-builder": "workspace:*",
