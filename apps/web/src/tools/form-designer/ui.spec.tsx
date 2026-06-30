@@ -78,3 +78,31 @@ describe("FormDesignerTool group reorder", () => {
     expect(screen.getAllByRole("button", { name: /reorder group/i }).length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("FormDesignerTool canvas collapsible sections", () => {
+  it("Canvas tab has two independent collapsible sections: Editor and Live Preview", () => {
+    render(<FormDesignerTool />);
+    // Canvas is the default tab — both section headers should be present
+    expect(screen.getByRole("button", { name: /editor/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /live preview/i })).toBeTruthy();
+    // Live Preview is collapsed by default: Mobile preset button is inside its content → not in DOM
+    expect(screen.queryByRole("button", { name: /^mobile$/i })).toBeNull();
+  });
+});
+
+describe("FormDesignerTool preview tab integration", () => {
+  it("Preview tab renders ResponsivePreview with device controls + a submission panel", () => {
+    render(<FormDesignerTool />);
+    fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
+    // Device preset buttons from ResponsivePreview
+    expect(screen.getByRole("button", { name: /^mobile$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^tablet$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^desktop$/i })).toBeTruthy();
+    // SubmissionPanel is mounted: shows empty state ("Fill the form") before onPayloadChange fires,
+    // or the "Metadata" heading after the initial payload is emitted. Either proves the panel is present.
+    const hasPanel =
+      screen.queryByText(/fill the form/i) !== null ||
+      screen.queryByText(/metadata/i) !== null;
+    expect(hasPanel).toBe(true);
+  });
+});
