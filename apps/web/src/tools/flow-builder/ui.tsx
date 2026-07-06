@@ -66,7 +66,7 @@ function FlowBuilderInner() {
 
   const addNode = (type: Parameters<typeof newNode>[0]) => {
     // 找一個不與既有節點重疊的空位再放。
-    setNodes((ns) => [...ns, newNode(type, findFreePosition(ns.map((n) => n.position)))]);
+    setNodes((ns) => [...ns, newNode(type, findFreePosition(ns.map((n) => n.position)), ns.map((n) => n.id))]);
   };
 
   const onConfigChange = React.useCallback((id: string, config: unknown) => {

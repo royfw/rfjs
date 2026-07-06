@@ -1,7 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { toReactFlow, toFlowDoc, newNode, defaultConfig, findFreePosition } from "./model";
+import { toReactFlow, toFlowDoc, newNode, nextNodeId, defaultConfig, findFreePosition } from "./model";
 import { emptyFlow, flowDocSchema, type FlowDoc } from "./schema";
+
+describe("nextNodeId", () => {
+  it("starts at 1 on an empty canvas", () => {
+    expect(nextNodeId("action", [])).toBe("action-1");
+  });
+
+  it("continues after the max existing number of the same type", () => {
+    expect(nextNodeId("action", ["action-2", "action-7", "form-9"])).toBe("action-8");
+  });
+
+  it("ignores other types and non-matching id formats", () => {
+    // sample 的 "act-1"、自由命名的 "action-x" 都不符合 ^action-\d+$,不干擾編號
+    expect(nextNodeId("action", ["act-1", "action-x", "start", "form-3"])).toBe("action-1");
+  });
+});
 
 describe("flow model", () => {
   it("toReactFlow maps nodes/edges and carries type+config in data", () => {
@@ -27,7 +42,7 @@ describe("flow model", () => {
 
   it("newNode gives a typed node with default config and a unique id", () => {
     const a = newNode("action", { x: 1, y: 1 });
-    const b = newNode("action", { x: 2, y: 2 });
+    const b = newNode("action", { x: 2, y: 2 }, [a.id]);
     expect(a.type).toBe("action");
     expect((a.data as { config: unknown }).config).toEqual({ kind: "notify", params: {} });
     expect(a.id).not.toBe(b.id);
