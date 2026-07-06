@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  MarkerType,
   ReactFlow,
   ReactFlowProvider,
   Background,
@@ -96,7 +97,7 @@ function FlowBuilderInner() {
           onNodeClick={(_e: React.MouseEvent, n: Node) => setSelectedId(n.id)}
           onPaneClick={() => setSelectedId(null)}
           edgeTypes={edgeTypes}
-          defaultEdgeOptions={{ type: "adaptive" }}
+          defaultEdgeOptions={{ type: "adaptive", markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 } }}
           snapToGrid
           snapGrid={[10, 10]}
           colorMode={isDark ? "dark" : "light"}

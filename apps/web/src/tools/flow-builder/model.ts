@@ -1,4 +1,4 @@
-import type { Node as RFNode, Edge as RFEdge } from "@xyflow/react";
+import { MarkerType, type Node as RFNode, type Edge as RFEdge } from "@xyflow/react";
 
 import type { FlowDoc, FlowNodeType } from "./schema";
 
@@ -40,6 +40,7 @@ export function toReactFlow(doc: FlowDoc): { nodes: RFNode[]; edges: RFEdge[] } 
     sourceHandle: e.sourceHandle,
     label: e.label,
     type: "adaptive", // 顯示用:對齊吸直線、大角度弧線(不存回 FlowDoc)
+    markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 }, // 方向箭頭(顯示用)
     ...(e.trigger !== undefined || e.condition !== undefined
       ? {
           data: {

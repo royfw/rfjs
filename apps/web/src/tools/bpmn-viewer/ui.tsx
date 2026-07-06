@@ -17,6 +17,17 @@ import {
 import { SAMPLES, DEFAULT_SAMPLE_ID, getSample } from "./samples";
 import { validateBpmnFile } from "./file-input";
 
+// dark 模式容器套 invert,所以這裡寫「反轉前」的顏色:
+// 圖形填色 #b9b9b9 → 反轉後 ≈ #464646,明顯比畫布(#d4d4d4 → #2b2b2b)亮,
+// task/事件的內底不再是死黑。
+const BPMN_DARK_CSS = `
+.dark .bpmn-invert .djs-visual rect,
+.dark .bpmn-invert .djs-visual circle,
+.dark .bpmn-invert .djs-visual polygon {
+  fill: #b9b9b9 !important;
+}
+`;
+
 export function BpmnViewerTool() {
   const t = useTranslations("ToolUI");
   const v = useBpmnViewer();
@@ -119,12 +130,13 @@ export function BpmnViewerTool() {
       )}
 
       {/* dark 模式用 invert+hue-rotate 讓圖轉成「暗底亮線」,避免整塊白底刺眼;
-          dark:bg-[#cfcfcf] 反轉後 ≈ #303030(炭灰,不至於過暗)。 */}
+          dark:bg-[#d4d4d4] 反轉後 ≈ #2b2b2b;圖形填色由 BPMN_DARK_CSS 覆寫。 */}
+      <style>{BPMN_DARK_CSS}</style>
       <BpmnViewer
         {...v.viewerProps}
         xml={xml}
         ariaLabel={t("bpmnDiagramLabel")}
-        className="h-[600px] w-full rounded-md border bg-white dark:bg-[#cfcfcf] dark:invert dark:hue-rotate-180"
+        className="bpmn-invert h-[600px] w-full rounded-md border bg-white dark:bg-[#d4d4d4] dark:invert dark:hue-rotate-180"
       />
 
       <div className="flex flex-col gap-2">

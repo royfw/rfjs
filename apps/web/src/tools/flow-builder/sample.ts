@@ -3,16 +3,16 @@ import type { FlowDoc } from "./schema";
 /** 內建範例:請假申請 → 判斷 → 通知 / 自動核准。
  * 座標刻意讓主軸(start→form→cond→end)的把手中心對齊 y=150:
  * start/cond/end 高 46(中心 +23)、form/action 高 62(中心 +31),
- * 節點寬 150、水平間距 100 —— 主線筆直、節點不相黏。 */
+ * 節點寬 150、水平間距 60 —— 主線筆直、節點不相黏也不鬆散。 */
 export const sample: FlowDoc = {
   version: 1,
   nodes: [
     { id: "start", type: "start", position: { x: 40, y: 127 } },
-    { id: "form-1", type: "form", position: { x: 290, y: 119 }, config: { version: 1, fields: [{ key: "days", label: "Days", component: "Number", dataType: "number" }] } },
-    { id: "cond-1", type: "condition", position: { x: 540, y: 127 } },
-    { id: "act-1", type: "action", position: { x: 790, y: 29 }, config: { kind: "notify", params: {} } },
-    { id: "act-2", type: "action", position: { x: 790, y: 209 }, config: { kind: "db.update", params: {} } },
-    { id: "end", type: "end", position: { x: 1040, y: 127 } },
+    { id: "form-1", type: "form", position: { x: 250, y: 119 }, config: { version: 1, fields: [{ key: "days", label: "Days", component: "Number", dataType: "number" }] } },
+    { id: "cond-1", type: "condition", position: { x: 460, y: 127 } },
+    { id: "act-1", type: "action", position: { x: 670, y: 29 }, config: { kind: "notify", params: {} } },
+    { id: "act-2", type: "action", position: { x: 670, y: 209 }, config: { kind: "db.update", params: {} } },
+    { id: "end", type: "end", position: { x: 880, y: 127 } },
   ],
   edges: [
     { id: "e1", source: "start", target: "form-1" },
