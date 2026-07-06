@@ -14,21 +14,39 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 
 import { Button } from "@rfjs/web-ui/components/button";
 import type { FilterTreeLabels } from "@rfjs/filter-builder-ui";
 
 import { nodeTypes } from "./nodes";
+import { AdaptiveEdge } from "./edges";
 import { Inspector } from "./inspector";
 import { NodeSheet } from "./node-sheet";
 import { findFreePosition, newNode, toFlowDoc, toReactFlow, type FlowNodeData } from "./model";
 import { flowToJson } from "./schema";
 import { sample } from "./sample";
 
+// 直接觀察 <html> 的 class(next-themes attribute="class"):比 useTheme 的
+// resolvedTheme 可靠 —— 後者在 hydration 時序下可能停留在 undefined,導致
+// ReactFlow colorMode 卡在 light(Controls 等內建 UI 變白)。
+const edgeTypes = { adaptive: AdaptiveEdge };
+
+function useIsDark() {
+  const [dark, setDark] = React.useState(false);
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const update = () => setDark(root.classList.contains("dark"));
+    update();
+    const mo = new MutationObserver(update);
+    mo.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => mo.disconnect();
+  }, []);
+  return dark;
+}
+
 function FlowBuilderInner() {
   const t = useTranslations("ToolUI");
-  const { resolvedTheme } = useTheme();
+  const isDark = useIsDark();
   const seeded = React.useMemo(() => toReactFlow(sample), []);
   const [nodes, setNodes, onNodesChange] = useNodesState(seeded.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(seeded.edges);
@@ -77,8 +95,11 @@ function FlowBuilderInner() {
           onConnect={onConnect}
           onNodeClick={(_e: React.MouseEvent, n: Node) => setSelectedId(n.id)}
           onPaneClick={() => setSelectedId(null)}
-          defaultEdgeOptions={{ type: "step" }}
-          colorMode={resolvedTheme === "dark" ? "dark" : "light"}
+          edgeTypes={edgeTypes}
+          defaultEdgeOptions={{ type: "adaptive" }}
+          snapToGrid
+          snapGrid={[10, 10]}
+          colorMode={isDark ? "dark" : "light"}
           fitView
         >
           <Background />

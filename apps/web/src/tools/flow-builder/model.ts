@@ -39,7 +39,7 @@ export function toReactFlow(doc: FlowDoc): { nodes: RFNode[]; edges: RFEdge[] } 
     target: e.target,
     sourceHandle: e.sourceHandle,
     label: e.label,
-    type: "step", // 顯示用:零圓角直角折線(不存回 FlowDoc)
+    type: "adaptive", // 顯示用:對齊吸直線、大角度弧線(不存回 FlowDoc)
     ...(e.trigger !== undefined || e.condition !== undefined
       ? {
           data: {

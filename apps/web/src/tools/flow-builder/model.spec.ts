@@ -68,12 +68,12 @@ describe("flow model", () => {
     expect(back).toEqual(doc);
   });
 
-  it("toReactFlow renders edges as hard step lines (display-only, not persisted)", () => {
+  it("toReactFlow renders edges with the adaptive display type (not persisted)", () => {
     const doc = emptyFlow();
     doc.nodes.push({ id: "n2", type: "end", position: { x: 100, y: 0 } });
     doc.edges.push({ id: "e1", source: "start", target: "n2" });
     const { edges } = toReactFlow(doc);
-    expect(edges[0]!.type).toBe("step");
+    expect(edges[0]!.type).toBe("adaptive");
     // round-trip must not leak the display type into FlowDoc
     const back = toFlowDoc(toReactFlow(doc).nodes, edges);
     expect(back).toEqual(doc);
