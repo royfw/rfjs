@@ -14,6 +14,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
 
 import { Button } from "@rfjs/web-ui/components/button";
 import type { FilterTreeLabels } from "@rfjs/filter-builder-ui";
@@ -21,14 +22,13 @@ import type { FilterTreeLabels } from "@rfjs/filter-builder-ui";
 import { nodeTypes } from "./nodes";
 import { Inspector } from "./inspector";
 import { NodeSheet } from "./node-sheet";
-import { newNode, toFlowDoc, toReactFlow, type FlowNodeData } from "./model";
+import { findFreePosition, newNode, toFlowDoc, toReactFlow, type FlowNodeData } from "./model";
 import { flowToJson } from "./schema";
 import { sample } from "./sample";
 
-let pasteSeq = 0; // 避免新節點都疊在同一點
-
 function FlowBuilderInner() {
   const t = useTranslations("ToolUI");
+  const { resolvedTheme } = useTheme();
   const seeded = React.useMemo(() => toReactFlow(sample), []);
   const [nodes, setNodes, onNodesChange] = useNodesState(seeded.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(seeded.edges);
@@ -46,8 +46,8 @@ function FlowBuilderInner() {
   const onConnect = React.useCallback((c: Connection) => setEdges((eds) => addEdge(c, eds)), [setEdges]);
 
   const addNode = (type: Parameters<typeof newNode>[0]) => {
-    pasteSeq += 1;
-    setNodes((ns) => [...ns, newNode(type, { x: 120 + pasteSeq * 24, y: 260 + pasteSeq * 16 })]);
+    // 找一個不與既有節點重疊的空位再放。
+    setNodes((ns) => [...ns, newNode(type, findFreePosition(ns.map((n) => n.position)))]);
   };
 
   const onConfigChange = React.useCallback((id: string, config: unknown) => {
@@ -77,6 +77,8 @@ function FlowBuilderInner() {
           onConnect={onConnect}
           onNodeClick={(_e: React.MouseEvent, n: Node) => setSelectedId(n.id)}
           onPaneClick={() => setSelectedId(null)}
+          defaultEdgeOptions={{ type: "smoothstep" }}
+          colorMode={resolvedTheme === "dark" ? "dark" : "light"}
           fitView
         >
           <Background />

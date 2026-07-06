@@ -6,19 +6,40 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { FlowNodeData } from "./model";
 import type { FlowNodeType } from "./schema";
 
-const META: Record<FlowNodeType, { label: string; color: string; bg: string }> = {
-  start: { label: "Start", color: "#475569", bg: "#f1f5f9" },
-  end: { label: "End", color: "#047857", bg: "#ecfdf5" },
-  form: { label: "Form", color: "#1d4ed8", bg: "#eff6ff" },
-  condition: { label: "Condition", color: "#b45309", bg: "#fffbeb" },
-  action: { label: "Action", color: "#6d28d9", bg: "#f5f3ff" },
+// 邊框/表頭配色:light 用淡色底深字,dark 用深色底亮字(避免全暗看不清)。
+const META: Record<FlowNodeType, { label: string; border: string; head: string }> = {
+  start: {
+    label: "Start",
+    border: "border-slate-300 dark:border-slate-500",
+    head: "bg-slate-100 text-slate-600 dark:bg-slate-700/70 dark:text-slate-200",
+  },
+  end: {
+    label: "End",
+    border: "border-emerald-300 dark:border-emerald-600",
+    head: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300",
+  },
+  form: {
+    label: "Form",
+    border: "border-blue-300 dark:border-blue-600",
+    head: "bg-blue-50 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300",
+  },
+  condition: {
+    label: "Condition",
+    border: "border-amber-300 dark:border-amber-600",
+    head: "bg-amber-50 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300",
+  },
+  action: {
+    label: "Action",
+    border: "border-violet-300 dark:border-violet-600",
+    head: "bg-violet-50 text-violet-700 dark:bg-violet-900/60 dark:text-violet-300",
+  },
 };
 
 function Shell({ type, title, children }: { type: FlowNodeType; title: string; children?: React.ReactNode }) {
   const m = META[type];
   return (
-    <div className="min-w-[150px] rounded-lg border bg-card shadow-sm" style={{ borderColor: m.color + "55" }}>
-      <div className="flex items-center gap-2 rounded-t-lg px-2.5 py-1.5 text-xs font-semibold" style={{ background: m.bg, color: m.color }}>
+    <div className={`min-w-[150px] rounded-lg border bg-card shadow-sm ${m.border}`}>
+      <div className={`flex items-center gap-2 rounded-t-lg px-2.5 py-1.5 text-xs font-semibold ${m.head}`}>
         <span>{title}</span>
       </div>
       {children ? <div className="px-2.5 py-2 text-[11px] text-muted-foreground">{children}</div> : null}
