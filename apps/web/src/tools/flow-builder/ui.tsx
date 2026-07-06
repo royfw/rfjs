@@ -77,7 +77,7 @@ function FlowBuilderInner() {
           onConnect={onConnect}
           onNodeClick={(_e: React.MouseEvent, n: Node) => setSelectedId(n.id)}
           onPaneClick={() => setSelectedId(null)}
-          defaultEdgeOptions={{ type: "smoothstep" }}
+          defaultEdgeOptions={{ type: "step" }}
           colorMode={resolvedTheme === "dark" ? "dark" : "light"}
           fitView
         >

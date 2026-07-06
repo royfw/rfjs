@@ -68,12 +68,12 @@ describe("flow model", () => {
     expect(back).toEqual(doc);
   });
 
-  it("toReactFlow renders edges as smoothstep (display-only, not persisted)", () => {
+  it("toReactFlow renders edges as hard step lines (display-only, not persisted)", () => {
     const doc = emptyFlow();
     doc.nodes.push({ id: "n2", type: "end", position: { x: 100, y: 0 } });
     doc.edges.push({ id: "e1", source: "start", target: "n2" });
     const { edges } = toReactFlow(doc);
-    expect(edges[0]!.type).toBe("smoothstep");
+    expect(edges[0]!.type).toBe("step");
     // round-trip must not leak the display type into FlowDoc
     const back = toFlowDoc(toReactFlow(doc).nodes, edges);
     expect(back).toEqual(doc);
@@ -82,12 +82,12 @@ describe("flow model", () => {
   it("findFreePosition returns a spot that overlaps no existing node", () => {
     const existing = [
       { x: 60, y: 60 },
-      { x: 270, y: 60 },
-      { x: 60, y: 180 },
+      { x: 320, y: 60 },
+      { x: 60, y: 220 },
     ];
     const p = findFreePosition(existing);
     for (const q of existing) {
-      const clear = Math.abs(q.x - p.x) >= 210 || Math.abs(q.y - p.y) >= 120;
+      const clear = Math.abs(q.x - p.x) >= 260 || Math.abs(q.y - p.y) >= 160;
       expect(clear).toBe(true);
     }
   });

@@ -39,7 +39,7 @@ export function toReactFlow(doc: FlowDoc): { nodes: RFNode[]; edges: RFEdge[] } 
     target: e.target,
     sourceHandle: e.sourceHandle,
     label: e.label,
-    type: "smoothstep", // 顯示用:直角折線(不存回 FlowDoc)
+    type: "step", // 顯示用:零圓角直角折線(不存回 FlowDoc)
     ...(e.trigger !== undefined || e.condition !== undefined
       ? {
           data: {
@@ -81,9 +81,9 @@ export function toFlowDoc(nodes: RFNode[], edges: RFEdge[]): FlowDoc {
   };
 }
 
-// 節點的近似佔位(含間距),用於找不重疊的空位。
-const SLOT_W = 210;
-const SLOT_H = 120;
+// 節點的近似佔位(含明顯間距,避免新節點彼此貼太近),用於找空位。
+const SLOT_W = 260;
+const SLOT_H = 160;
 
 /** 回傳一個不與既有節點重疊的擺放位置(由左上往右、再往下掃)。 */
 export function findFreePosition(existing: { x: number; y: number }[]): { x: number; y: number } {
