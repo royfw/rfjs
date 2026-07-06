@@ -34,6 +34,7 @@ vi.mock("@xyflow/react", async () => {
     Controls: () => null,
     Handle: () => null,
     Position: { Left: "left", Right: "right", Top: "top", Bottom: "bottom" },
+    MarkerType: { Arrow: "arrow", ArrowClosed: "arrowclosed" },
     addEdge: (c: unknown, edges: unknown[]) => [...edges, c],
     useNodesState: (initial: unknown[]) => {
       const [n, setN] = (React2 as typeof import("react")).useState(initial);

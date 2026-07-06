@@ -1,4 +1,4 @@
-import type { Node as RFNode, Edge as RFEdge } from "@xyflow/react";
+import { MarkerType, type Node as RFNode, type Edge as RFEdge } from "@xyflow/react";
 
 import type { FlowDoc, FlowNodeType } from "./schema";
 
@@ -39,6 +39,8 @@ export function toReactFlow(doc: FlowDoc): { nodes: RFNode[]; edges: RFEdge[] } 
     target: e.target,
     sourceHandle: e.sourceHandle,
     label: e.label,
+    type: "adaptive", // 顯示用:對齊吸直線、大角度弧線(不存回 FlowDoc)
+    markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 }, // 方向箭頭(顯示用)
     ...(e.trigger !== undefined || e.condition !== undefined
       ? {
           data: {
@@ -78,6 +80,27 @@ export function toFlowDoc(nodes: RFNode[], edges: RFEdge[]): FlowDoc {
       };
     }),
   };
+}
+
+// 節點的近似佔位(含明顯間距,避免新節點彼此貼太近),用於找空位。
+const SLOT_W = 260;
+const SLOT_H = 160;
+
+/** 回傳一個不與既有節點重疊的擺放位置(由左上往右、再往下掃)。 */
+export function findFreePosition(existing: { x: number; y: number }[]): { x: number; y: number } {
+  const X0 = 60;
+  const Y0 = 60;
+  const COLS = 4;
+  const taken = (x: number, y: number) =>
+    existing.some((p) => Math.abs(p.x - x) < SLOT_W && Math.abs(p.y - y) < SLOT_H);
+  for (let row = 0; row < 100; row++) {
+    for (let col = 0; col < COLS; col++) {
+      const x = X0 + col * SLOT_W;
+      const y = Y0 + row * SLOT_H;
+      if (!taken(x, y)) return { x, y };
+    }
+  }
+  return { x: X0, y: Y0 };
 }
 
 let nodeSeq = 0;

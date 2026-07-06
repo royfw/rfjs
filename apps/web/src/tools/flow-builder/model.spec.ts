@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toReactFlow, toFlowDoc, newNode, defaultConfig } from "./model";
+import { toReactFlow, toFlowDoc, newNode, defaultConfig, findFreePosition } from "./model";
 import { emptyFlow, flowDocSchema, type FlowDoc } from "./schema";
 
 describe("flow model", () => {
@@ -66,5 +66,33 @@ describe("flow model", () => {
     const { nodes, edges } = toReactFlow(doc);
     const back = toFlowDoc(nodes, edges);
     expect(back).toEqual(doc);
+  });
+
+  it("toReactFlow renders edges with the adaptive display type (not persisted)", () => {
+    const doc = emptyFlow();
+    doc.nodes.push({ id: "n2", type: "end", position: { x: 100, y: 0 } });
+    doc.edges.push({ id: "e1", source: "start", target: "n2" });
+    const { edges } = toReactFlow(doc);
+    expect(edges[0]!.type).toBe("adaptive");
+    // round-trip must not leak the display type into FlowDoc
+    const back = toFlowDoc(toReactFlow(doc).nodes, edges);
+    expect(back).toEqual(doc);
+  });
+
+  it("findFreePosition returns a spot that overlaps no existing node", () => {
+    const existing = [
+      { x: 60, y: 60 },
+      { x: 320, y: 60 },
+      { x: 60, y: 220 },
+    ];
+    const p = findFreePosition(existing);
+    for (const q of existing) {
+      const clear = Math.abs(q.x - p.x) >= 260 || Math.abs(q.y - p.y) >= 160;
+      expect(clear).toBe(true);
+    }
+  });
+
+  it("findFreePosition on an empty canvas starts at the origin slot", () => {
+    expect(findFreePosition([])).toEqual({ x: 60, y: 60 });
   });
 });

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  MarkerType,
   ReactFlow,
   ReactFlowProvider,
   Background,
@@ -19,16 +20,34 @@ import { Button } from "@rfjs/web-ui/components/button";
 import type { FilterTreeLabels } from "@rfjs/filter-builder-ui";
 
 import { nodeTypes } from "./nodes";
+import { AdaptiveEdge } from "./edges";
 import { Inspector } from "./inspector";
 import { NodeSheet } from "./node-sheet";
-import { newNode, toFlowDoc, toReactFlow, type FlowNodeData } from "./model";
+import { findFreePosition, newNode, toFlowDoc, toReactFlow, type FlowNodeData } from "./model";
 import { flowToJson } from "./schema";
 import { sample } from "./sample";
 
-let pasteSeq = 0; // 避免新節點都疊在同一點
+// 直接觀察 <html> 的 class(next-themes attribute="class"):比 useTheme 的
+// resolvedTheme 可靠 —— 後者在 hydration 時序下可能停留在 undefined,導致
+// ReactFlow colorMode 卡在 light(Controls 等內建 UI 變白)。
+const edgeTypes = { adaptive: AdaptiveEdge };
+
+function useIsDark() {
+  const [dark, setDark] = React.useState(false);
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const update = () => setDark(root.classList.contains("dark"));
+    update();
+    const mo = new MutationObserver(update);
+    mo.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => mo.disconnect();
+  }, []);
+  return dark;
+}
 
 function FlowBuilderInner() {
   const t = useTranslations("ToolUI");
+  const isDark = useIsDark();
   const seeded = React.useMemo(() => toReactFlow(sample), []);
   const [nodes, setNodes, onNodesChange] = useNodesState(seeded.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(seeded.edges);
@@ -46,8 +65,8 @@ function FlowBuilderInner() {
   const onConnect = React.useCallback((c: Connection) => setEdges((eds) => addEdge(c, eds)), [setEdges]);
 
   const addNode = (type: Parameters<typeof newNode>[0]) => {
-    pasteSeq += 1;
-    setNodes((ns) => [...ns, newNode(type, { x: 120 + pasteSeq * 24, y: 260 + pasteSeq * 16 })]);
+    // 找一個不與既有節點重疊的空位再放。
+    setNodes((ns) => [...ns, newNode(type, findFreePosition(ns.map((n) => n.position)))]);
   };
 
   const onConfigChange = React.useCallback((id: string, config: unknown) => {
@@ -77,6 +96,11 @@ function FlowBuilderInner() {
           onConnect={onConnect}
           onNodeClick={(_e: React.MouseEvent, n: Node) => setSelectedId(n.id)}
           onPaneClick={() => setSelectedId(null)}
+          edgeTypes={edgeTypes}
+          defaultEdgeOptions={{ type: "adaptive", markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 } }}
+          snapToGrid
+          snapGrid={[10, 10]}
+          colorMode={isDark ? "dark" : "light"}
           fitView
         >
           <Background />
