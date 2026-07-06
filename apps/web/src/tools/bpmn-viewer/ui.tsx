@@ -118,11 +118,13 @@ export function BpmnViewerTool() {
         </p>
       )}
 
+      {/* dark 模式用 invert+hue-rotate 讓圖轉成「暗底亮線」,避免整塊白底刺眼;
+          dark:bg-[#e9e9e9] 反轉後 ≈ #161616(柔和深底,而非純黑)。 */}
       <BpmnViewer
         {...v.viewerProps}
         xml={xml}
         ariaLabel={t("bpmnDiagramLabel")}
-        className="h-[600px] w-full rounded-md border bg-white"
+        className="h-[600px] w-full rounded-md border bg-white dark:bg-[#e9e9e9] dark:invert dark:hue-rotate-180"
       />
 
       <div className="flex flex-col gap-2">
