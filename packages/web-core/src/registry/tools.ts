@@ -122,6 +122,14 @@ export const toolRegistry: ToolDefinition[] = [
     tags: ['diagram', 'bpmn', 'workflow', 'viewer'],
   },
   {
+    id: 'flow-builder',
+    category: 'generator',
+    surface: 'web',
+    status: 'preview',
+    relatedPackages: ['@rfjs/form-builder', '@rfjs/filter-builder'],
+    tags: ['flow', 'builder', 'canvas', 'no-code'],
+  },
+  {
     id: 'object-transformer',
     category: 'transform',
     surface: 'workbench',

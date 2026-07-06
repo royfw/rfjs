@@ -1,0 +1,92 @@
+import type { Node as RFNode, Edge as RFEdge } from "@xyflow/react";
+
+import type { FlowDoc, FlowNodeType } from "./schema";
+
+export interface FlowNodeData {
+  type: FlowNodeType;
+  config?: unknown;
+  label?: string;
+  [key: string]: unknown;
+}
+
+/** 各節點型別的預設 config(內嵌既有工具 JSON 的初值)。 */
+export function defaultConfig(type: FlowNodeType): unknown {
+  switch (type) {
+    case "form":
+      return { version: 1, fields: [] }; // FormConfig
+    case "action":
+      return { kind: "notify", params: {} };
+    default:
+      return undefined; // condition 由 inspector 以 emptyGroup 延遲種子;start/end 無 config
+  }
+}
+
+export function toReactFlow(doc: FlowDoc): { nodes: RFNode[]; edges: RFEdge[] } {
+  const nodes: RFNode[] = doc.nodes.map((n) => ({
+    id: n.id,
+    type: n.type,
+    position: n.position,
+    data: {
+      type: n.type,
+      config: n.config,
+      ...(n.inputs !== undefined ? { inputs: n.inputs } : {}),
+      ...(n.outputCollection !== undefined ? { outputCollection: n.outputCollection } : {}),
+    } satisfies FlowNodeData,
+  }));
+  const edges: RFEdge[] = doc.edges.map((e) => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    sourceHandle: e.sourceHandle,
+    label: e.label,
+    ...(e.trigger !== undefined || e.condition !== undefined
+      ? {
+          data: {
+            ...(e.trigger !== undefined ? { trigger: e.trigger } : {}),
+            ...(e.condition !== undefined ? { condition: e.condition } : {}),
+          },
+        }
+      : {}),
+  }));
+  return { nodes, edges };
+}
+
+export function toFlowDoc(nodes: RFNode[], edges: RFEdge[]): FlowDoc {
+  return {
+    version: 1,
+    nodes: nodes.map((n) => {
+      const data = n.data as FlowNodeData;
+      return {
+        id: n.id,
+        type: data.type,
+        position: n.position,
+        config: data.config,
+        ...(data.inputs !== undefined ? { inputs: data.inputs as string[] } : {}),
+        ...(data.outputCollection !== undefined ? { outputCollection: data.outputCollection as boolean } : {}),
+      };
+    }),
+    edges: edges.map((e) => {
+      const eData = e.data as { trigger?: string; condition?: unknown } | undefined;
+      return {
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.sourceHandle ?? undefined,
+        label: typeof e.label === "string" ? e.label : undefined,
+        ...(eData?.trigger !== undefined ? { trigger: eData.trigger } : {}),
+        ...(eData?.condition !== undefined ? { condition: eData.condition } : {}),
+      };
+    }),
+  };
+}
+
+let nodeSeq = 0;
+export function newNode(type: FlowNodeType, position: { x: number; y: number }): RFNode {
+  nodeSeq += 1;
+  return {
+    id: `${type}-${nodeSeq}`,
+    type,
+    position,
+    data: { type, config: defaultConfig(type) } satisfies FlowNodeData,
+  };
+}
