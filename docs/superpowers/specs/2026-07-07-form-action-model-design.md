@@ -134,5 +134,8 @@ metaProvider?: () => Record<string, unknown>;
 ## 6. 慣例
 
 - 獨立 worktree `feat-form-actions`;commit/PR 英文 conventional(subject 全小寫),結尾 `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`。
-- form-builder 系列為 private package → **無 changeset**。
+- **Changeset(本次修正的規則,取代先前「private 無 changeset」慣例)**:有異動的 package 就寫 changeset —
+  - `@rfjs/form-builder`:**minor**(新增 ButtonItem/action schema;可發布,npm metadata 已齊備,下次 release 會上 npm)。
+  - `@rfjs/form-builder-ui`:**minor**(`"private": true`,changesets 只 version 不 publish;留下版本軌跡)。
+  - `apps/web` 為 app 非 package,不寫。
 - PR 開好後 HOLD,使用者自行 merge。
