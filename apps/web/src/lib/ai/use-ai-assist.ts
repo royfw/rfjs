@@ -19,7 +19,7 @@ export function useAiAssist(): UseAiAssist {
   const [error, setError] = React.useState<AiError | null>(null);
   const ctlRef = React.useRef<AbortController | null>(null);
   // settings 每次呼叫時讀(設定 dialog 存檔後,下一次 run 即用新值)。
-  const ready = isConfigured(typeof window === 'undefined' ? null : loadAiSettings());
+  const ready = isConfigured(loadAiSettings());
 
   const cancel = React.useCallback(() => {
     ctlRef.current?.abort();
@@ -49,8 +49,11 @@ export function useAiAssist(): UseAiAssist {
       if (err.kind !== 'abort') setError(err); // 使用者取消不是錯誤
       return null;
     } finally {
-      if (ctlRef.current === ctl) ctlRef.current = null;
-      setLoading(false);
+      // 只有仍是「現任」的 run 才能結束 loading(被取代的舊 run 不得干擾新 run 的狀態)。
+      if (ctlRef.current === ctl) {
+        ctlRef.current = null;
+        setLoading(false);
+      }
     }
   }, []);
 

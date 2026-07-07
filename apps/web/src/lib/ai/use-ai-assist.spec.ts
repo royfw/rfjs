@@ -69,4 +69,38 @@ describe('useAiAssist', () => {
     expect(result.current.error).toBeNull();
     expect(result.current.loading).toBe(false);
   });
+
+  it('a superseded run does not clobber the surviving run loading state', async () => {
+    let resolveSecond!: (r: Response) => void;
+    const fetchMock = vi
+      .fn()
+      // 第一個 run:掛住直到被 abort
+      .mockImplementationOnce((_u, init) =>
+        new Promise((_res, rej) => {
+          (init as RequestInit).signal?.addEventListener('abort', () =>
+            rej(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+          );
+        }),
+      )
+      // 第二個 run:等我們手動放行
+      .mockImplementationOnce(() => new Promise((res) => (resolveSecond = res)));
+    vi.stubGlobal('fetch', fetchMock);
+    const { result } = renderHook(() => useAiAssist());
+    let p1: Promise<unknown>, p2: Promise<unknown>;
+    act(() => {
+      p1 = result.current.run({ system: 's', user: 'a' }, (r) => r);
+    });
+    act(() => {
+      p2 = result.current.run({ system: 's', user: 'b' }, (r) => r); // 取消 run1
+    });
+    await act(async () => {
+      expect(await p1!).toBeNull(); // run1 被取代
+    });
+    expect(result.current.loading).toBe(true); // ← 沒有 fix 時這裡會是 false
+    await act(async () => {
+      resolveSecond(okResponse('done'));
+      expect(await p2!).toBe('done');
+    });
+    expect(result.current.loading).toBe(false);
+  });
 });
