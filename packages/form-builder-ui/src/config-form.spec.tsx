@@ -1117,5 +1117,46 @@ describe('button items', () => {
       render(<ConfigForm config={apiCfg()} onSubmit={vi.fn()} />);
       expect(screen.getByRole('button', { name: 'Go' })).toHaveProperty('disabled', true);
     });
+
+    it('config change while in flight resets pending state and drops the late result', async () => {
+      let resolve!: (v: unknown) => void;
+      const fetcher = vi.fn().mockReturnValue(new Promise((r) => { resolve = r; }));
+      const onAction = vi.fn();
+      const cfg1 = apiCfg();
+      const { rerender } = render(
+        <ConfigForm config={cfg1} onSubmit={vi.fn()} onAction={onAction} fetcher={fetcher} />,
+      );
+      const button = screen.getByRole('button', { name: 'Go' });
+      fireEvent.click(button);
+      await waitFor(() => expect(button).toHaveProperty('disabled', true));
+
+      // Swap config mid-flight (different object identity, extra field) — simulates
+      // a parent re-render (e.g. wizard step change) while the api call is in flight.
+      const cfg2: FormConfig = {
+        ...cfg1,
+        sections: [{
+          ...cfg1.sections![0]!,
+          rows: [{
+            ...cfg1.sections![0]!.rows[0]!,
+            items: [
+              ...cfg1.sections![0]!.rows[0]!.items,
+              { id: 'f3', kind: 'field', key: 'extra', label: 'Extra', component: 'Input', dataType: 'string' },
+            ],
+          }],
+        }],
+      };
+      rerender(<ConfigForm config={cfg2} onSubmit={vi.fn()} onAction={onAction} fetcher={fetcher} />);
+
+      // pending state must be cleared by the config-change effect — button re-enabled.
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Go' })).toHaveProperty('disabled', false));
+
+      // Late resolution must be dropped: no onAction, no success message.
+      await act(async () => {
+        resolve({});
+        await new Promise((r) => setTimeout(r, 0));
+      });
+      expect(onAction).not.toHaveBeenCalled();
+      expect(screen.queryByText(/success/i)).toBeNull();
+    });
   });
 });

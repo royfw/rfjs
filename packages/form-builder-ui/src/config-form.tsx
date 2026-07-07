@@ -19,7 +19,6 @@ import {
   type SignatureTransport,
   type ButtonActionType,
   type ButtonItem,
-  type LocalizedLabel,
 } from '@rfjs/form-builder';
 import { useDataSource } from './use-data-source';
 import { useContainerBreakpoint } from './use-container-breakpoint';
@@ -213,6 +212,13 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   // api 動作狀態:同表單同時只允許一顆 in-flight。
   const [apiState, setApiState] = React.useState<{ itemId: string; status: 'pending' | 'success' | 'error' } | null>(null);
 
+  // Bumps whenever `config` changes or the component unmounts. `runAction`'s api branch
+  // captures the epoch before its `await fetcher(...)` and bails out (no setState/onAction)
+  // if the epoch has moved on by the time the promise settles — guards against a stale
+  // continuation acting after unmount or a config swap (same pattern as use-data-source's
+  // `active` flag, generalized to also cover config changes, not just unmount).
+  const runEpoch = React.useRef(0);
+
   const handleSignatureStatus = React.useCallback((fieldKey: string, status: string) => {
     setPendingCaptures((prev) => {
       const next = new Set(prev);
@@ -232,7 +238,18 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   React.useEffect(() => {
     reset(defaultValues ?? {});
     setPendingCaptures(new Set());
+    // A config swap invalidates any in-flight api action: clear its pending/success/error
+    // state (otherwise the button stays disabled forever) and bump the epoch so a late
+    // fetcher resolution can't resurrect it.
+    setApiState(null);
+    runEpoch.current += 1;
   }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Also bump the epoch on unmount so an in-flight api action's continuation never calls
+  // setState/onAction after the component is gone.
+  React.useEffect(() => () => {
+    runEpoch.current += 1;
+  }, []);
 
   // Subscribe to all form values to decide which items to RENDER (live show/hide).
   const values = watch();
@@ -346,9 +363,11 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       if (!fetcher || apiState?.status === 'pending') return;
       const sent = action.fields ? Object.fromEntries(Object.entries(data).filter(([k]) => action.fields!.includes(k))) : data;
       const meta = buildActionMeta({ config, data: sent, action: { type: 'api' }, metaProvider });
+      const epoch = runEpoch.current;
       setApiState({ itemId: item.id, status: 'pending' });
       try {
         const response = await fetcher({ url: action.url, method: action.method ?? 'POST', body: { data: sent, meta } });
+        if (epoch !== runEpoch.current) return;   // unmounted or config swapped mid-flight — drop the result
         for (const [path, targetKey] of Object.entries(action.responseMap ?? {})) {
           const v = getPath(response, path);
           if (v !== undefined) setValue(targetKey, v, { shouldDirty: true });
@@ -356,6 +375,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
         setApiState({ itemId: item.id, status: 'success' });
         onAction?.('api', { data: sent, meta, response });
       } catch (err) {
+        if (epoch !== runEpoch.current) return;   // unmounted or config swapped mid-flight — drop the result
         setApiState({ itemId: item.id, status: 'error' });
         onAction?.('api', { data: sent, meta: { ...meta, apiError: err instanceof Error ? err.message : String(err) }, response: undefined });
       }
@@ -399,9 +419,10 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       const mine = apiState?.itemId === item.id ? apiState : null;
       const pending = mine?.status === 'pending';
       const apiDisabled = isApi && (!fetcher || apiState?.status === 'pending');
+      const apiMessages = item.action.type === 'api' ? item.action.messages : undefined;
       const msg =
-        mine?.status === 'success' ? resolveLabel((item.action as { messages?: { success?: LocalizedLabel } }).messages?.success ?? 'Success', locale)
-        : mine?.status === 'error' ? resolveLabel((item.action as { messages?: { error?: LocalizedLabel } }).messages?.error ?? 'Request failed', locale)
+        mine?.status === 'success' ? resolveLabel(apiMessages?.success ?? 'Success', locale)
+        : mine?.status === 'error' ? resolveLabel(apiMessages?.error ?? 'Request failed', locale)
         : null;
       return (
         <div key={item.id} data-item={item.id} className="flex min-w-0 items-center gap-2" style={place ? placementStyle(place) : fieldSpanStyle(undefined, flow, cols)}>
