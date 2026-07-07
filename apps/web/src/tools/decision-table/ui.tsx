@@ -153,7 +153,7 @@ export function DecisionTableTool() {
             </Button>
           </div>
         </div>
-        <ul className="divide-y">
+        <ul className="divide-y" data-testid="dt-rules-list">
           {table.rules.map((rule, i) => (
             <li key={rule.id} className="flex items-center gap-2 px-3 py-2 text-sm">
               <span className="w-6 text-xs text-muted-foreground">{i + 1}</span>

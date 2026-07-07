@@ -5,7 +5,7 @@ if (typeof Element !== "undefined") {
   if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {};
 }
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 
@@ -27,11 +27,9 @@ function renderTool() {
 describe("DecisionTableTool", () => {
   it("renders the sample rules", () => {
     renderTool();
-    // Rule descriptions are intentionally mirrored into the always-visible "Table JSON"
-    // preview too, so both the rules list row and the JSON dump legitimately match —
-    // assert presence (getAllByText), not exclusivity (getByText).
-    expect(screen.getAllByText(/big spend goes to the cfo/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/finance requests/i).length).toBeGreaterThan(0);
+    const rulesList = screen.getByTestId("dt-rules-list");
+    expect(within(rulesList).getByText(/big spend goes to the cfo/i)).toBeTruthy();
+    expect(within(rulesList).getByText(/finance requests/i)).toBeTruthy();
   });
 
   it("single evaluation shows the routed approver", async () => {
