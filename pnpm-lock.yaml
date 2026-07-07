@@ -199,6 +199,9 @@ importers:
       '@rfjs/data-transform':
         specifier: workspace:*
         version: link:../../packages/data-transform
+      '@rfjs/decision-table':
+        specifier: workspace:*
+        version: link:../../packages/decision-table
       '@rfjs/es-client':
         specifier: workspace:*
         version: link:../../packages/es-client
