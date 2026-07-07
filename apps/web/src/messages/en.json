@@ -117,6 +117,7 @@
     "test": "Test connection",
     "testOk": "Connection OK",
     "testFail": "Connection failed",
+    "testFailDetail": "View details",
     "save": "Save",
     "saved": "Saved"
   }

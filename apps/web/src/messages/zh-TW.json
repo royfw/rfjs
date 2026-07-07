@@ -117,6 +117,7 @@
     "test": "測試連線",
     "testOk": "連線成功",
     "testFail": "連線失敗",
+    "testFailDetail": "檢視詳細",
     "save": "儲存",
     "saved": "已儲存"
   }

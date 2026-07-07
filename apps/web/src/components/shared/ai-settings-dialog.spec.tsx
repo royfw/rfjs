@@ -57,8 +57,11 @@ describe('AiSettingsDialog', () => {
     await waitFor(() => expect(screen.getByText(/connection ok/i)).toBeTruthy());
   });
 
-  it('test connection failure shows the error line', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('x', { status: 500 })));
+  it('test connection failure shows the named error with response detail', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('missing model', { status: 500 })),
+    );
     renderDialog();
     fireEvent.click(screen.getByRole('button', { name: /ai settings/i }));
     fireEvent.change(screen.getByLabelText(/base url/i), { target: { value: 'http://x/v1' } });
@@ -66,5 +69,10 @@ describe('AiSettingsDialog', () => {
     fireEvent.change(screen.getByLabelText(/model/i), { target: { value: 'm' } });
     fireEvent.click(screen.getByRole('button', { name: /test connection/i }));
     await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/connection failed/i));
+    // Named error kind, not a generic line.
+    expect(screen.getByRole('alert').textContent).toMatch(/\[http\]/);
+    // Response body surfaced behind the collapsible details.
+    expect(screen.getByText(/view details/i)).toBeTruthy();
+    expect(screen.getByText(/missing model/i)).toBeTruthy();
   });
 });

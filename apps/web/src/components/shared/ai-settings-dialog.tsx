@@ -19,6 +19,7 @@ import { Label } from '@rfjs/web-ui/components/label';
 
 import { createAiClient } from '@/lib/ai/client';
 import { loadAiSettings, saveAiSettings } from '@/lib/ai/settings';
+import { AiError } from '@/lib/ai/types';
 
 type TestState = 'idle' | 'testing' | 'ok' | 'fail';
 
@@ -29,12 +30,14 @@ export function AiSettingsDialog() {
   const [apiKey, setApiKey] = React.useState('');
   const [model, setModel] = React.useState('');
   const [test, setTest] = React.useState<TestState>('idle');
+  const [testError, setTestError] = React.useState<{ text: string; detail?: string } | null>(null);
   const [saved, setSaved] = React.useState(false);
 
   // 開啟時載入既有設定。
   const onOpenChange = (next: boolean) => {
     setOpen(next);
     setTest('idle');
+    setTestError(null);
     setSaved(false);
     if (next) {
       const s = loadAiSettings();
@@ -46,6 +49,7 @@ export function AiSettingsDialog() {
 
   const onTest = async () => {
     setTest('testing');
+    setTestError(null);
     try {
       await createAiClient({ baseUrl, apiKey, model }).complete({
         system: 'You are a connectivity check.',
@@ -53,8 +57,13 @@ export function AiSettingsDialog() {
         timeoutMs: 15_000,
       });
       setTest('ok');
-    } catch {
+    } catch (e) {
       setTest('fail');
+      setTestError(
+        e instanceof AiError
+          ? { text: `[${e.kind}] ${e.message}`, detail: e.detail }
+          : { text: String(e) },
+      );
     }
   };
 
@@ -100,9 +109,22 @@ export function AiSettingsDialog() {
           </div>
           {test === 'ok' ? <p className="text-sm text-emerald-600 dark:text-emerald-400">{t('testOk')}</p> : null}
           {test === 'fail' ? (
-            <p role="alert" className="text-sm text-fault">
-              {t('testFail')}
-            </p>
+            <div role="alert" className="flex flex-col gap-1 text-sm text-fault">
+              <p>
+                {t('testFail')}
+                {testError ? ` — ${testError.text}` : null}
+              </p>
+              {testError?.detail ? (
+                <details>
+                  <summary className="cursor-pointer text-xs text-muted-foreground">
+                    {t('testFailDetail')}
+                  </summary>
+                  <pre className="mt-1 max-h-40 overflow-auto rounded-md border bg-muted/40 p-2 font-mono text-xs whitespace-pre-wrap text-foreground">
+                    {testError.detail}
+                  </pre>
+                </details>
+              ) : null}
+            </div>
           ) : null}
           {saved ? <p className="text-sm text-muted-foreground">{t('saved')}</p> : null}
         </div>
