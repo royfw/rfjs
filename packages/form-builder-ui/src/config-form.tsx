@@ -19,12 +19,22 @@ import {
   type SignatureTransport,
   type ButtonActionType,
   type ButtonItem,
+  type LocalizedLabel,
 } from '@rfjs/form-builder';
 import { useDataSource } from './use-data-source';
 import { useContainerBreakpoint } from './use-container-breakpoint';
 import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
 import { FieldControl } from './field-control';
+import { Loader2 } from 'lucide-react';
+
+// ---------------------------------------------------------------------------
+// getPath — dot-path lookup into an arbitrary (typically API response) value.
+// Returns undefined as soon as it walks off the object graph.
+// ---------------------------------------------------------------------------
+function getPath(obj: unknown, path: string): unknown {
+  return path.split('.').reduce<unknown>((acc, key) => (acc != null && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined), obj);
+}
 
 // ---------------------------------------------------------------------------
 // SubmissionMeta — shape of the meta object emitted by onPayloadChange.
@@ -200,6 +210,9 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   // gate the submit button while a capture is pending.
   const [pendingCaptures, setPendingCaptures] = React.useState<Set<string>>(new Set());
 
+  // api 動作狀態:同表單同時只允許一顆 in-flight。
+  const [apiState, setApiState] = React.useState<{ itemId: string; status: 'pending' | 'success' | 'error' } | null>(null);
+
   const handleSignatureStatus = React.useCallback((fieldKey: string, status: string) => {
     setPendingCaptures((prev) => {
       const next = new Set(prev);
@@ -329,7 +342,24 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       });
       return;
     }
-    // action.type === 'api' — Task 4
+    if (action.type === 'api') {
+      if (!fetcher || apiState?.status === 'pending') return;
+      const sent = action.fields ? Object.fromEntries(Object.entries(data).filter(([k]) => action.fields!.includes(k))) : data;
+      const meta = buildActionMeta({ config, data: sent, action: { type: 'api' }, metaProvider });
+      setApiState({ itemId: item.id, status: 'pending' });
+      try {
+        const response = await fetcher({ url: action.url, method: action.method ?? 'POST', body: { data: sent, meta } });
+        for (const [path, targetKey] of Object.entries(action.responseMap ?? {})) {
+          const v = getPath(response, path);
+          if (v !== undefined) setValue(targetKey, v, { shouldDirty: true });
+        }
+        setApiState({ itemId: item.id, status: 'success' });
+        onAction?.('api', { data: sent, meta, response });
+      } catch (err) {
+        setApiState({ itemId: item.id, status: 'error' });
+        onAction?.('api', { data: sent, meta: { ...meta, apiError: err instanceof Error ? err.message : String(err) }, response: undefined });
+      }
+    }
   }
 
   function renderItem(item: FormItem, flow: 'v1' | 'section', cols: number, place?: { colStart: number; colSpan: number; row: number; rowSpan?: number }) {
@@ -365,11 +395,27 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
 
     if (item.kind === 'button') {
       const variant = BUTTON_VARIANT[item.variant ?? (item.action.type === 'submit' ? 'primary' : 'outline')];
+      const isApi = item.action.type === 'api';
+      const mine = apiState?.itemId === item.id ? apiState : null;
+      const pending = mine?.status === 'pending';
+      const apiDisabled = isApi && (!fetcher || apiState?.status === 'pending');
+      const msg =
+        mine?.status === 'success' ? resolveLabel((item.action as { messages?: { success?: LocalizedLabel } }).messages?.success ?? 'Success', locale)
+        : mine?.status === 'error' ? resolveLabel((item.action as { messages?: { error?: LocalizedLabel } }).messages?.error ?? 'Request failed', locale)
+        : null;
       return (
-        <div key={item.id} data-item={item.id} className="flex min-w-0 items-end" style={place ? placementStyle(place) : fieldSpanStyle(undefined, flow, cols)}>
-          <Button type="button" variant={variant} disabled={pendingCaptures.size > 0} onClick={() => void runAction(item)}>
+        <div key={item.id} data-item={item.id} className="flex min-w-0 items-center gap-2" style={place ? placementStyle(place) : fieldSpanStyle(undefined, flow, cols)}>
+          <Button
+            type="button"
+            variant={variant}
+            disabled={pendingCaptures.size > 0 || apiDisabled}
+            title={isApi && !fetcher ? 'No fetcher provided' : undefined}
+            onClick={() => void runAction(item)}
+          >
+            {pending && <Loader2 className="mr-1 size-4 animate-spin" />}
             {resolveLabel(item.label, locale)}
           </Button>
+          {msg && <span className={`text-xs ${mine?.status === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>{msg}</span>}
         </div>
       );
     }

@@ -1050,4 +1050,72 @@ describe('button items', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Go' }));
     await waitFor(() => expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('init'));
   });
+
+  describe('api action', () => {
+    const apiCfg = (over?: Partial<Extract<ButtonAction, { type: 'api' }>>) =>
+      btn({ type: 'api', url: '/api/echo', ...over });
+
+    it('sends { url, method, body: { data, meta } } through the injected fetcher', async () => {
+      const fetcher = vi.fn().mockResolvedValue({ ok: true });
+      render(<ConfigForm config={apiCfg()} onSubmit={vi.fn()} fetcher={fetcher} defaultValues={{ name: 'Roy', note: 'n' }} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+      await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+      const req = fetcher.mock.calls[0]![0];
+      expect(req.url).toBe('/api/echo');
+      expect(req.method).toBe('POST');
+      expect(req.body.data).toEqual({ name: 'Roy', note: 'n' });
+      expect(req.body.meta.action).toEqual({ type: 'api' });
+    });
+
+    it('fields narrows the sent data', async () => {
+      const fetcher = vi.fn().mockResolvedValue({});
+      render(<ConfigForm config={apiCfg({ fields: ['name'] })} onSubmit={vi.fn()} fetcher={fetcher} defaultValues={{ name: 'Roy', note: 'n' }} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+      await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+      expect(fetcher.mock.calls[0]![0].body.data).toEqual({ name: 'Roy' });
+    });
+
+    it('success: shows message, maps response into fields, reports via onAction', async () => {
+      const fetcher = vi.fn().mockResolvedValue({ result: { display: 'mapped!' } });
+      const onAction = vi.fn();
+      render(
+        <ConfigForm
+          config={apiCfg({ responseMap: { 'result.display': 'note', 'missing.path': 'name' } })}
+          onSubmit={vi.fn()} onAction={onAction} fetcher={fetcher} defaultValues={{ name: 'keep', note: '' }}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+      await waitFor(() => expect(screen.getByText(/success/i)).toBeTruthy());
+      expect((screen.getByLabelText('Note') as HTMLInputElement).value).toBe('mapped!');
+      expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('keep');   // 取不到 → 跳過
+      expect(onAction).toHaveBeenCalledWith('api', expect.objectContaining({ response: { result: { display: 'mapped!' } } }));
+    });
+
+    it('failure: shows error message and reports apiError via onAction', async () => {
+      const fetcher = vi.fn().mockRejectedValue(new Error('boom'));
+      const onAction = vi.fn();
+      render(<ConfigForm config={apiCfg()} onSubmit={vi.fn()} onAction={onAction} fetcher={fetcher} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+      await waitFor(() => expect(screen.getByText(/failed/i)).toBeTruthy());
+      const payload = onAction.mock.calls[0]![1];
+      expect(payload.meta.apiError).toBe('boom');
+      expect(payload.response).toBeUndefined();
+    });
+
+    it('pending: button disabled while in flight', async () => {
+      let resolve!: (v: unknown) => void;
+      const fetcher = vi.fn().mockReturnValue(new Promise((r) => { resolve = r; }));
+      render(<ConfigForm config={apiCfg()} onSubmit={vi.fn()} fetcher={fetcher} />);
+      const button = screen.getByRole('button', { name: 'Go' });
+      fireEvent.click(button);
+      await waitFor(() => expect(button).toHaveProperty('disabled', true));
+      resolve({});
+      await waitFor(() => expect(button).toHaveProperty('disabled', false));
+    });
+
+    it('no fetcher: api button renders disabled', () => {
+      render(<ConfigForm config={apiCfg()} onSubmit={vi.fn()} />);
+      expect(screen.getByRole('button', { name: 'Go' })).toHaveProperty('disabled', true);
+    });
+  });
 });
