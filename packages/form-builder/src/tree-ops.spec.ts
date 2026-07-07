@@ -87,6 +87,11 @@ describe('makeItem', () => {
     const item = makeItem('ai-note');
     expect(item).toMatchObject({ kind: 'ai-note' });
   });
+
+  it('makeItem(button) has kind button with a custom default action (not submit)', () => {
+    const item = makeItem('button');
+    expect(item).toMatchObject({ kind: 'button', label: 'Button', action: { type: 'custom', name: 'action-1' } });
+  });
 });
 
 // --- addItem ---
