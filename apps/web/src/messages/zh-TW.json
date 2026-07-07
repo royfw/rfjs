@@ -100,5 +100,19 @@
     "retry": { "description": "可設定延遲的重試工具。" },
     "bpmn-ui": { "description": "在 React 中從 XML 渲染唯讀的 BPMN 2.0 流程圖。" },
     "tpl-toolkit": { "description": "rfjs 專案範本的共用設定工廠。" }
+  },
+  "AiSettings": {
+    "trigger": "AI 設定",
+    "title": "AI 輔助",
+    "description": "自帶金鑰(BYOK)。請求由你的瀏覽器直接送往你設定的端點 —— 不經任何伺服器儲存。",
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "http://localhost:4000/v1",
+    "apiKey": "API 金鑰",
+    "model": "模型",
+    "test": "測試連線",
+    "testOk": "連線成功",
+    "testFail": "連線失敗",
+    "save": "儲存",
+    "saved": "已儲存"
   }
 }
