@@ -181,7 +181,11 @@ export function DecisionTableTool() {
             className="w-full rounded-md border bg-background p-2 font-mono text-xs" />
           <Button size="sm" onClick={runSingle}>{t("dtRun")}</Button>
           {singleError ? <p role="alert" className="text-xs text-destructive">{singleError}</p> : null}
-          {singleResult ? <ResultView result={singleResult} t={t} /> : null}
+          {singleResult ? (
+            <div data-testid="dt-single-result">
+              <ResultView result={singleResult} t={t} />
+            </div>
+          ) : null}
         </div>
 
         {/* 批次試算 */}
