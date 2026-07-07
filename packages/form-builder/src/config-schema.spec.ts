@@ -498,3 +498,45 @@ describe('FormConfig responsive', () => {
     expect(formConfigSchema.safeParse({ version: 1, sections: [{ id: 's', title: 'S', rows: [] }] }).success).toBe(true);
   });
 });
+
+describe('button items', () => {
+  const base = { version: 1, sections: [{ id: 's1', rows: [{ id: 'r1', items: [] as unknown[] }] }] };
+  const withItem = (item: unknown) => ({ ...base, sections: [{ id: 's1', rows: [{ id: 'r1', items: [item] }] }] });
+
+  it('accepts each action variant', () => {
+    const actions = [
+      { type: 'submit' },
+      { type: 'reset' },
+      { type: 'clear', fields: ['a'] },
+      { type: 'custom', name: 'save-draft' },
+      { type: 'api', url: '/x', method: 'PATCH', fields: ['a'], responseMap: { 'r.total': 'total' }, messages: { success: 'ok', error: { en: 'no', 'zh-TW': '失敗' } } },
+    ];
+    for (const action of actions) {
+      const r = formConfigSchema.safeParse(withItem({ id: 'b1', kind: 'button', label: 'Go', action }));
+      expect(r.success, JSON.stringify(action)).toBe(true);
+    }
+  });
+
+  it('rejects invalid buttons: clear w/o fields, custom empty name, api w/o url, unknown type', () => {
+    const bad = [
+      { type: 'clear', fields: [] },
+      { type: 'custom', name: '' },
+      { type: 'api' },
+      { type: 'nope' },
+    ];
+    for (const action of bad) {
+      const r = formConfigSchema.safeParse(withItem({ id: 'b1', kind: 'button', label: 'Go', action }));
+      expect(r.success, JSON.stringify(action)).toBe(false);
+    }
+  });
+
+  it('accepts optional variant/validate and top-level id/meta', () => {
+    const cfg = {
+      ...withItem({ id: 'b1', kind: 'button', label: 'Go', action: { type: 'submit' }, variant: 'outline', validate: false }),
+      id: 'leave-form',
+      meta: { source: 'web' },
+    };
+    const r = formConfigSchema.safeParse(cfg);
+    expect(r.success).toBe(true);
+  });
+});
