@@ -20,13 +20,14 @@ import {
   Mail,
   Upload,
   PenLine,
+  MousePointerClick,
 } from "lucide-react";
 
 import { ConfigForm } from "@rfjs/form-builder-ui";
-import type { SubmissionMeta } from "@rfjs/form-builder-ui";
+import type { ActionMeta, SubmissionMeta } from "@rfjs/form-builder-ui";
 import type { Card, Group, Kind, Component } from "./model";
 import { cardsToFormConfig, jsonToCards, cardLabel, componentDataType, formConfigToCards } from "./model";
-import { SAMPLE_CONFIG, sampleFetcher, sampleUploader } from "./sample";
+import { SAMPLE_CONFIG, sampleUploader, sampleFetcher } from "./sample";
 import { resolveCards, moveItem } from "./layout-grid";
 import { SettingsPanel } from "./inspector/settings-panel";
 import { Section } from "./inspector/section";
@@ -46,6 +47,23 @@ const GAP = 8;
 const DRAG_THRESHOLD = 4; // px the pointer must travel before a press becomes a drag (a click just selects)
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
+// Merged preview fetcher: echoes api-action requests (body shaped { data, meta }),
+// otherwise delegates to sampleFetcher for dataSource requests (e.g. /api/countries).
+// Detects api-action by checking if req.body has both 'data' and 'meta' properties.
+export async function createPreviewFetcher(req: { url: string; body?: unknown }) {
+  if (
+    req.body &&
+    typeof req.body === "object" &&
+    "data" in req.body &&
+    "meta" in req.body
+  ) {
+    // api-action request: echo it back with a timestamp
+    return { echoedAt: new Date().toISOString(), received: req.body };
+  }
+  // dataSource request: delegate to sampleFetcher
+  return sampleFetcher(req);
+}
+
 const KIND_META: Record<
   Kind,
   { color: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; field?: boolean }
@@ -55,17 +73,21 @@ const KIND_META: Record<
   "ai-note": { color: "#d9a441", icon: Sparkles, label: "AI Note" },
   divider: { color: "#6b7280", icon: Minus, label: "Divider" },
   spacer: { color: "#6b7280", icon: MoveVertical, label: "Spacer" },
+  button: { color: "#10b981", icon: MousePointerClick, label: "Button" },
 };
 
 const fieldSub = (c: Card) => (c.kind === "field" ? `${c.key ?? "field"} · ${c.component ?? "Input"}` : undefined);
 
 // Seed the canvas from SAMPLE_CONFIG and lay it out in COLUMNS:
 // short fields pack two-per-row; long/structural items
-// (textarea, content, ai-note, divider, spacer) take the full row.
+// (textarea, content, ai-note, divider, spacer) take the full row; buttons
+// pack narrow (three comfortably fit a row) so a row of action buttons
+// doesn't force one-per-row.
 const SEED = formConfigToCards(SAMPLE_CONFIG);
 const SEED_GROUPS: Group[] = SEED.groups;
 
 const seedSpan = (c: Card): number => {
+  if (c.kind === "button") return COLS / 4; // buttons → up to four per row
   if (c.kind !== "field") return COLS; // content / ai-note / divider / spacer → full row
   if (c.component === "Textarea") return COLS; // textareas read better full-width
   return COLS / 2; // ordinary fields → two per row (the column advantage)
@@ -124,7 +146,11 @@ export function FormBuilderTool() {
   const [mobileConfigOpen, setMobileConfigOpen] = React.useState(false);
   const [tab, setTab] = React.useState<"canvas" | "preview" | "json">("canvas");
   const [jsonError, setJsonError] = React.useState<string | null>(null);
-  const [payload, setPayload] = React.useState<{ data: Record<string, unknown>; meta: SubmissionMeta } | null>(null);
+  const [payload, setPayload] = React.useState<{ data: Record<string, unknown>; meta: SubmissionMeta | ActionMeta } | null>(null);
+  // Tracks whether a submit/custom/api action has fired at least once, so the
+  // (collapsed-by-default) Preview tab "Submission" section auto-opens to reveal
+  // the action payload instead of leaving the user to find the toggle themselves.
+  const [actionSeen, setActionSeen] = React.useState(false);
   const [previewW, setPreviewW] = React.useState(1100);
   const [canvasW, setCanvasW] = React.useState(390);
   const [copied, setCopied] = React.useState(false);
@@ -143,6 +169,21 @@ export function FormBuilderTool() {
   // Memoize to keep a stable reference: onPayloadChange fires on config changes,
   // so an unstable formConfig would create an infinite re-render loop.
   const formConfig = React.useMemo(() => cardsToFormConfig(groups, cards), [groups, cards]);
+
+  // Memoized wrapper of createPreviewFetcher for stable reference across renders
+  const previewFetcher = React.useCallback(createPreviewFetcher, []);
+  // Shared onSubmit/onAction handler for both Preview ConfigForm instances: writes the
+  // action's payload into the same `payload` state the SubmissionPanel(s) read (an action
+  // firing overwrites the live onPayloadChange value), and reveals the Preview tab's
+  // collapsed-by-default Submission section the first time an action fires.
+  const handleSubmit = (p: { data: Record<string, unknown>; meta: ActionMeta }) => {
+    setPayload(p);
+    setActionSeen(true);
+  };
+  const handleAction = (_name: string, p: { data: Record<string, unknown>; meta: ActionMeta; response?: unknown }) => {
+    setPayload({ data: p.data, meta: p.meta });
+    setActionSeen(true);
+  };
 
   // Apply a drag/resize patch to the dragged card, then resolve overlaps (push + compact up).
   const placeDragged = (id: string, p: Partial<Card>) =>
@@ -336,7 +377,7 @@ export function FormBuilderTool() {
     return () => window.removeEventListener("keydown", onKey);
   }, [selected]);
 
-  const PALETTE: Kind[] = ["field", "content", "divider", "spacer", "ai-note"];
+  const PALETTE: Kind[] = ["field", "content", "divider", "spacer", "ai-note", "button"];
   const TABS = [
     { id: "canvas", label: "Canvas" },
     { id: "preview", label: "Preview" },
@@ -490,10 +531,11 @@ export function FormBuilderTool() {
                 <ConfigForm
                   config={formConfig}
                   locale="en"
-                  fetcher={sampleFetcher}
+                  fetcher={previewFetcher}
                   uploadHandler={sampleUploader}
                   onPayloadChange={setPayload}
-                  onSubmit={() => {}}
+                  onSubmit={handleSubmit}
+                  onAction={handleAction}
                 />
               </ResponsivePreview>
               <SubmissionPanel compact payload={payload} />
@@ -506,13 +548,14 @@ export function FormBuilderTool() {
             <ConfigForm
               config={formConfig}
               locale="en"
-              fetcher={sampleFetcher}
+              fetcher={previewFetcher}
               uploadHandler={sampleUploader}
               onPayloadChange={setPayload}
-              onSubmit={() => {}}
+              onSubmit={handleSubmit}
+              onAction={handleAction}
             />
           </ResponsivePreview>
-          <Section title="Submission" defaultOpen={false}>
+          <Section key={actionSeen ? "submission-open" : "submission-closed"} title="Submission" defaultOpen={actionSeen}>
             <SubmissionPanel payload={payload} />
           </Section>
         </div>

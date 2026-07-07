@@ -154,3 +154,26 @@ describe("FileUpload / Signature round-trip", () => {
     expect((items[1] as { component?: string }).component).toBe("Signature");
   });
 });
+
+describe("button cards", () => {
+  it("round-trips a button card through FormConfig", () => {
+    const groups = [{ id: "g1", title: "G", collapsed: false }];
+    const cards = [{
+      id: "b1", groupId: "g1", kind: "button" as const, label: "Save draft",
+      action: { type: "custom" as const, name: "save-draft" }, buttonVariant: "outline" as const, validate: true,
+      col: 1, span: 3, row: 1,
+    }];
+    const config = cardsToFormConfig(groups, cards);
+    const item = config.sections![0]!.rows[0]!.items[0]!;
+    expect(item).toMatchObject({ kind: "button", label: "Save draft", action: { type: "custom", name: "save-draft" }, variant: "outline", validate: true });
+    const back = formConfigToCards(config);
+    expect(back.cards[0]).toMatchObject({ kind: "button", action: { type: "custom", name: "save-draft" }, buttonVariant: "outline", validate: true });
+  });
+
+  it("button card without explicit action defaults to custom", () => {
+    const groups = [{ id: "g1", title: "G", collapsed: false }];
+    const cards = [{ id: "b1", groupId: "g1", kind: "button" as const, label: "Button", col: 1, span: 3, row: 1 }];
+    const item = cardsToFormConfig(groups, cards).sections![0]!.rows[0]!.items[0]!;
+    expect(item).toMatchObject({ kind: "button", action: { type: "custom", name: "action-1" } });
+  });
+});

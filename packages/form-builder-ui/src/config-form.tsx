@@ -17,12 +17,23 @@ import {
   type DataSourceFetcher,
   type UploadHandler,
   type SignatureTransport,
+  type ButtonActionType,
+  type ButtonItem,
 } from '@rfjs/form-builder';
 import { useDataSource } from './use-data-source';
 import { useContainerBreakpoint } from './use-container-breakpoint';
 import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
 import { FieldControl } from './field-control';
+import { Loader2 } from 'lucide-react';
+
+// ---------------------------------------------------------------------------
+// getPath — dot-path lookup into an arbitrary (typically API response) value.
+// Returns undefined as soon as it walks off the object graph.
+// ---------------------------------------------------------------------------
+function getPath(obj: unknown, path: string): unknown {
+  return path.split('.').reduce<unknown>((acc, key) => (acc != null && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined), obj);
+}
 
 // ---------------------------------------------------------------------------
 // SubmissionMeta — shape of the meta object emitted by onPayloadChange.
@@ -32,6 +43,56 @@ export interface SubmissionMeta {
   errors: Record<string, string>;
   visibleKeys: string[];
   schemaVersion?: number;
+}
+
+// ---------------------------------------------------------------------------
+// ActionMeta — envelope emitted alongside `data` for onSubmit/onAction. Extends
+// SubmissionMeta with action provenance (which button fired), the form's
+// identity/custom metadata, and a timestamp.
+// ---------------------------------------------------------------------------
+export interface ActionMeta extends SubmissionMeta {
+  /** FormConfig.id (when set). */
+  formId?: string;
+  /** ISO timestamp at the moment the action fired. */
+  timestamp: string;
+  /** Which action fired (name only for `custom`). */
+  action: { type: ButtonActionType; name?: string };
+  /** FormConfig.meta, passed through verbatim. */
+  custom?: Record<string, unknown>;
+  /** Set when an `api` action's fetcher rejected. */
+  apiError?: string;
+  /** metaProvider-injected runtime keys. */
+  [key: string]: unknown;
+}
+
+/** Builds the meta envelope for an action. Reserved keys always win over metaProvider output. */
+export function buildActionMeta(opts: {
+  config: FormConfig;
+  data: Record<string, unknown>;
+  action: { type: ButtonActionType; name?: string };
+  metaProvider?: () => Record<string, unknown>;
+}): ActionMeta {
+  const { config, data, action, metaProvider } = opts;
+  const visibleFieldItems = collectFieldItems(config).filter((f) => evaluateConditional(f.conditional, data));
+  const parsed = configToZod({ version: config.version, fields: visibleFieldItems }).safeParse(data);
+  const errors: Record<string, string> = {};
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      const k = String(issue.path[0]);
+      if (k && !errors[k]) errors[k] = issue.message;
+    }
+  }
+  return {
+    ...(metaProvider ? metaProvider() : {}),
+    valid: parsed.success,
+    errors,
+    visibleKeys: Object.keys(data),
+    schemaVersion: config.version,
+    ...(config.id !== undefined ? { formId: config.id } : {}),
+    timestamp: new Date().toISOString(),
+    action,
+    ...(config.meta !== undefined ? { custom: config.meta } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -82,7 +143,7 @@ export interface ConfigFormProps {
    */
   config: FormConfig;
   defaultValues?: Record<string, unknown>;
-  onSubmit: (values: Record<string, unknown>) => void;
+  onSubmit: (payload: { data: Record<string, unknown>; meta: ActionMeta }) => void;
   submitLabel?: string;
   /** BCP-47 locale used to resolve `LocalizedLabel` field labels. Defaults to `'en'`. */
   locale?: string;
@@ -113,9 +174,13 @@ export interface ConfigFormProps {
    * Only wired up (and triggers an effect) when provided.
    */
   onPayloadChange?: (p: { data: Record<string, unknown>; meta: SubmissionMeta }) => void;
+  /** Supplies extra runtime keys (e.g. user/session info) merged into every `ActionMeta`. */
+  metaProvider?: () => Record<string, unknown>;
+  /** Called for `custom`/`api` button actions with the action name and its payload. */
+  onAction?: (name: string, payload: { data: Record<string, unknown>; meta: ActionMeta; response?: unknown }) => void;
 }
 
-export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher, uploadHandler, signatureTransport, onPayloadChange }: ConfigFormProps) {
+export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher, uploadHandler, signatureTransport, onPayloadChange, metaProvider, onAction }: ConfigFormProps) {
   // Container ref for ResizeObserver-driven responsive collapse.
   const rootRef = React.useRef<HTMLFormElement>(null);
   const stackBelow = config.responsive?.stackBelow ?? 640;
@@ -138,11 +203,21 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     return zodResolver(configToZod(visibleConfig))(values, ctx, opts);
   }, []);
 
-  const { control, handleSubmit, reset, watch, setError, formState: { errors } } = useForm({ resolver, defaultValues });
+  const { control, handleSubmit, reset, watch, setError, trigger, getValues, setValue, formState: { errors } } = useForm({ resolver, defaultValues });
 
   // Track which Signature fields have an active capture in progress — used to
   // gate the submit button while a capture is pending.
   const [pendingCaptures, setPendingCaptures] = React.useState<Set<string>>(new Set());
+
+  // api 動作狀態:同表單同時只允許一顆 in-flight。
+  const [apiState, setApiState] = React.useState<{ itemId: string; status: 'pending' | 'success' | 'error' } | null>(null);
+
+  // Bumps whenever `config` changes or the component unmounts. `runAction`'s api branch
+  // captures the epoch before its `await fetcher(...)` and bails out (no setState/onAction)
+  // if the epoch has moved on by the time the promise settles — guards against a stale
+  // continuation acting after unmount or a config swap (same pattern as use-data-source's
+  // `active` flag, generalized to also cover config changes, not just unmount).
+  const runEpoch = React.useRef(0);
 
   const handleSignatureStatus = React.useCallback((fieldKey: string, status: string) => {
     setPendingCaptures((prev) => {
@@ -163,7 +238,18 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   React.useEffect(() => {
     reset(defaultValues ?? {});
     setPendingCaptures(new Set());
+    // A config swap invalidates any in-flight api action: clear its pending/success/error
+    // state (otherwise the button stays disabled forever) and bump the epoch so a late
+    // fetcher resolution can't resurrect it.
+    setApiState(null);
+    runEpoch.current += 1;
   }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Also bump the epoch on unmount so an in-flight api action's continuation never calls
+  // setState/onAction after the component is gone.
+  React.useEffect(() => () => {
+    runEpoch.current += 1;
+  }, []);
 
   // Subscribe to all form values to decide which items to RENDER (live show/hide).
   const values = watch();
@@ -233,6 +319,69 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     return { gridColumn: `span ${span} / span ${span}`, minWidth: 0 };
   }
 
+  const BUTTON_VARIANT: Record<NonNullable<ButtonItem['variant']>, 'default' | 'outline' | 'ghost' | 'destructive'> = {
+    primary: 'default',
+    outline: 'outline',
+    ghost: 'ghost',
+    destructive: 'destructive',
+  };
+  // 文字類元件 clear 後給 ""，其餘 undefined（受控 input 需要字串空值）。
+  const TEXT_COMPONENTS = new Set(['Input', 'Textarea', 'Email']);
+
+  async function runAction(item: ButtonItem) {
+    const { action } = item;
+    if (action.type === 'reset') {
+      reset(defaultValues ?? {});
+      return;
+    }
+    if (action.type === 'clear') {
+      const byKey = new Map(collectFieldItems(config).map((f) => [f.key, f]));
+      for (const key of action.fields) {
+        const comp = byKey.get(key)?.component ?? 'Input';
+        setValue(key, TEXT_COMPONENTS.has(comp) ? '' : undefined, { shouldDirty: true });
+      }
+      return;
+    }
+    const doValidate = item.validate ?? (action.type === 'submit');
+    if (doValidate) {
+      const ok = await trigger();
+      if (!ok) return;   // RHF 顯示欄位錯誤，動作不發
+    }
+    const data = computePayload(getValues() as Record<string, unknown>, config);
+    if (action.type === 'submit') {
+      onSubmit({ data, meta: buildActionMeta({ config, data, action: { type: 'submit' }, metaProvider }) });
+      return;
+    }
+    if (action.type === 'custom') {
+      onAction?.(action.name, {
+        data,
+        meta: buildActionMeta({ config, data, action: { type: 'custom', name: action.name }, metaProvider }),
+      });
+      return;
+    }
+    if (action.type === 'api') {
+      if (!fetcher || apiState?.status === 'pending') return;
+      const sent = action.fields ? Object.fromEntries(Object.entries(data).filter(([k]) => action.fields!.includes(k))) : data;
+      const meta = buildActionMeta({ config, data: sent, action: { type: 'api' }, metaProvider });
+      const epoch = runEpoch.current;
+      setApiState({ itemId: item.id, status: 'pending' });
+      try {
+        const response = await fetcher({ url: action.url, method: action.method ?? 'POST', body: { data: sent, meta } });
+        if (epoch !== runEpoch.current) return;   // unmounted or config swapped mid-flight — drop the result
+        for (const [path, targetKey] of Object.entries(action.responseMap ?? {})) {
+          const v = getPath(response, path);
+          if (v !== undefined) setValue(targetKey, v, { shouldDirty: true });
+        }
+        setApiState({ itemId: item.id, status: 'success' });
+        onAction?.('api', { data: sent, meta, response });
+      } catch (err) {
+        if (epoch !== runEpoch.current) return;   // unmounted or config swapped mid-flight — drop the result
+        setApiState({ itemId: item.id, status: 'error' });
+        onAction?.('api', { data: sent, meta: { ...meta, apiError: err instanceof Error ? err.message : String(err) }, response: undefined });
+      }
+    }
+  }
+
   function renderItem(item: FormItem, flow: 'v1' | 'section', cols: number, place?: { colStart: number; colSpan: number; row: number; rowSpan?: number }) {
     const vals = values as Record<string, unknown>;
 
@@ -260,6 +409,34 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
           ) : (
             resolveLabel(item.text, locale)
           )}
+        </div>
+      );
+    }
+
+    if (item.kind === 'button') {
+      const variant = BUTTON_VARIANT[item.variant ?? (item.action.type === 'submit' ? 'primary' : 'outline')];
+      const isApi = item.action.type === 'api';
+      const mine = apiState?.itemId === item.id ? apiState : null;
+      const pending = mine?.status === 'pending';
+      const apiDisabled = isApi && (!fetcher || apiState?.status === 'pending');
+      const apiMessages = item.action.type === 'api' ? item.action.messages : undefined;
+      const msg =
+        mine?.status === 'success' ? resolveLabel(apiMessages?.success ?? 'Success', locale)
+        : mine?.status === 'error' ? resolveLabel(apiMessages?.error ?? 'Request failed', locale)
+        : null;
+      return (
+        <div key={item.id} data-item={item.id} className="flex min-w-0 items-center gap-2" style={place ? placementStyle(place) : fieldSpanStyle(undefined, flow, cols)}>
+          <Button
+            type="button"
+            variant={variant}
+            disabled={pendingCaptures.size > 0 || apiDisabled}
+            title={isApi && !fetcher ? 'No fetcher provided' : undefined}
+            onClick={() => void runAction(item)}
+          >
+            {pending && <Loader2 className="mr-1 size-4 animate-spin" />}
+            {resolveLabel(item.label, locale)}
+          </Button>
+          {msg && <span className={`text-xs ${mine?.status === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>{msg}</span>}
         </div>
       );
     }
@@ -305,6 +482,12 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   const sections = normalizeToSections(config);
   // v1 (fields[]) → flat grid (one field per implicit row); v2 (sections[]) → flex rows.
   const isV2 = config.sections !== undefined;
+  // When the config declares any button item, it owns the action affordances —
+  // the default gradient Submit button is suppressed in favor of configured buttons.
+  const hasButtons = React.useMemo(
+    () => normalizeToSections(config).some((s) => s.rows.some((r) => r.items.some((i) => i.kind === 'button'))),
+    [config],
+  );
   // Use the first section's columns for the overall form grid (v1 back-compat).
   const columns = config.columns ?? sections[0]?.columns ?? 1;
 
@@ -336,7 +519,8 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     <form
       ref={rootRef}
       onSubmit={handleSubmit((all) => {
-        onSubmit(computePayload(all as Record<string, unknown>, config));
+        const data = computePayload(all as Record<string, unknown>, config);
+        onSubmit({ data, meta: buildActionMeta({ config, data, action: { type: 'submit' }, metaProvider }) });
       })}
       className="grid gap-4"
       style={{
@@ -406,16 +590,18 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
           </React.Fragment>
         );
       })}
-      <div style={{ gridColumn: '1 / -1' }}>
-        <Button
-          type="submit"
-          disabled={pendingCaptures.size > 0}
-          className="self-start border-0 text-white"
-          style={{ background: 'linear-gradient(180deg,#5b8cff,#4a78ee)', boxShadow: '0 6px 16px rgba(74,120,238,.3)' }}
-        >
-          {submitLabel}
-        </Button>
-      </div>
+      {!hasButtons && (
+        <div style={{ gridColumn: '1 / -1' }}>
+          <Button
+            type="submit"
+            disabled={pendingCaptures.size > 0}
+            className="self-start border-0 text-white"
+            style={{ background: 'linear-gradient(180deg,#5b8cff,#4a78ee)', boxShadow: '0 6px 16px rgba(74,120,238,.3)' }}
+          >
+            {submitLabel}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

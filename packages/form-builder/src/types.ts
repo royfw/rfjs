@@ -6,7 +6,7 @@ export type ScalarType = 'string' | 'numeric' | 'date' | 'boolean';
 // --- DataSource types ---
 export interface DataSourceRequest {
   url: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: unknown;
 }
@@ -81,7 +81,7 @@ export interface FieldConfig {
   fileUpload?: { accept?: string; multiple?: boolean; maxSize?: number };
 }
 
-export type ItemKind = 'field' | 'content' | 'divider' | 'spacer' | 'ai-note';
+export type ItemKind = 'field' | 'content' | 'divider' | 'spacer' | 'ai-note' | 'button';
 export type SpacerSize = 'sm' | 'md' | 'lg';
 
 export interface FieldItem extends FieldConfig {
@@ -100,7 +100,33 @@ export interface ContentItem {
 export interface DividerItem { id: string; kind: 'divider'; conditional?: ConditionalRule; }
 export interface SpacerItem { id: string; kind: 'spacer'; size?: SpacerSize; conditional?: ConditionalRule; }
 export interface AiNoteItem { id: string; kind: 'ai-note'; text: string; }
-export type FormItem = FieldItem | ContentItem | DividerItem | SpacerItem | AiNoteItem;
+
+export type ButtonActionType = 'submit' | 'reset' | 'clear' | 'custom' | 'api';
+
+export type ButtonAction =
+  | { type: 'submit' }
+  | { type: 'reset' }
+  | { type: 'clear'; fields: string[] }
+  | { type: 'custom'; name: string }
+  | {
+      type: 'api';
+      url: string;
+      method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';   // default POST
+      fields?: string[];                                       // omit = all visible fields
+      responseMap?: Record<string, string>;                    // response dot-path → target field key
+      messages?: { success?: LocalizedLabel; error?: LocalizedLabel };
+    };
+
+export interface ButtonItem {
+  id: string;
+  kind: 'button';
+  label: LocalizedLabel;
+  action: ButtonAction;
+  variant?: 'primary' | 'outline' | 'ghost' | 'destructive';   // default: submit→primary, others→outline
+  validate?: boolean;   // default: submit→true, api/custom→false; ignored for reset/clear
+}
+
+export type FormItem = FieldItem | ContentItem | DividerItem | SpacerItem | AiNoteItem | ButtonItem;
 
 /** Explicit 12-column-grid placement of a single item (positioned by its `id`). */
 export interface GridPlacement {
@@ -124,6 +150,8 @@ export interface FormSection { id: string; title?: LocalizedLabel; rows: FormRow
 
 export interface FormConfig {
   version: number;
+  id?: string;                        // → ActionMeta.formId
+  meta?: Record<string, unknown>;     // → ActionMeta.custom
   fields?: FieldConfig[];          // v1 (back-compat)
   sections?: FormSection[];        // v2
   columns?: 1 | 2 | 3 | 4;        // v1 grid (back-compat)

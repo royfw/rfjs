@@ -2,6 +2,7 @@
 import * as React from "react";
 import { Trash2 } from "lucide-react";
 import { Section } from "./section";
+import { ActionSection } from "./action";
 import { OptionsSection } from "./options";
 import { ValidationSection } from "./validation";
 import { AiNoteSection, ContentSection, SpacerSection } from "./misc-sections";
@@ -40,6 +41,7 @@ export function SettingsPanel({
     );
   }
   const isField = card.kind === "field";
+  const isButton = card.kind === "button";
   const comp = card.component;
   return (
     <div className="flex flex-col gap-3">
@@ -95,6 +97,12 @@ export function SettingsPanel({
       </Section>
 
       {/* Common config: expanded by default. Advanced: collapsed with a "has content" badge. */}
+      {isButton ? (
+        <Section title="Action">
+          <ActionSection card={card} onChange={onChange} siblingFields={siblingFields} />
+        </Section>
+      ) : null}
+
       {isField ? (
         <Section title="Validation" badge={card.validation && Object.keys(card.validation).length ? <Count n={Object.keys(card.validation).length} /> : undefined}>
           <ValidationSection card={card} onChange={onChange} />
