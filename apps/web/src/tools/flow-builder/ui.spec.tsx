@@ -60,6 +60,9 @@ vi.mock("@rfjs/form-builder-ui", async () => {
   };
 });
 vi.mock("@rfjs/filter-builder-ui", () => ({ FilterTreeEditor: () => <div data-testid="fte" /> }));
+vi.mock("@rfjs/bpmn-ui", () => ({
+  BpmnViewer: ({ xml }: { xml: string }) => <div data-testid="bpmn-viewer">{xml}</div>,
+}));
 
 import { messages } from "./messages";
 import { FlowBuilderTool } from "./ui";
@@ -106,5 +109,33 @@ describe("FlowBuilderTool", () => {
     // Must show empty config — NOT form-1's stale field
     const cfg2 = JSON.parse(screen.getByTestId("cfb").getAttribute("data-cfg") ?? "{}") as { fields: unknown[] };
     expect(cfg2.fields).toHaveLength(0);
+  });
+
+  it("defaults to the edit tab (canvas + palette visible)", () => {
+    renderTool();
+    expect(screen.getByTestId("rf")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /\+ action/i })).toBeTruthy();
+    expect(screen.queryByTestId("bpmn-viewer")).toBeNull();
+  });
+
+  it("bpmn tab swaps the canvas for the viewer, hides the palette, keeps json", () => {
+    renderTool();
+    fireEvent.click(screen.getByRole("button", { name: /^bpmn$/i }));
+    const viewer = screen.getByTestId("bpmn-viewer");
+    expect(viewer.textContent).toContain("<bpmn:definitions");
+    expect(screen.queryByTestId("rf")).toBeNull();
+    expect(screen.queryByRole("button", { name: /\+ action/i })).toBeNull();
+    expect(screen.getByText(/"version": 1/)).toBeTruthy(); // Flow JSON 仍在
+    // 切回編輯
+    fireEvent.click(screen.getByRole("button", { name: /^edit$/i }));
+    expect(screen.getByTestId("rf")).toBeTruthy();
+  });
+
+  it("switching to bpmn clears the node selection (inspector closes)", () => {
+    renderTool();
+    fireEvent.click(screen.getByTestId("rfnode-form-1"));
+    expect(screen.getByTestId("cfb")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^bpmn$/i }));
+    expect(screen.queryByTestId("cfb")).toBeNull();
   });
 });
