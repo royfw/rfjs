@@ -18,6 +18,7 @@ import {
   type UploadHandler,
   type SignatureTransport,
   type ButtonActionType,
+  type ButtonItem,
 } from '@rfjs/form-builder';
 import { useDataSource } from './use-data-source';
 import { useContainerBreakpoint } from './use-container-breakpoint';
@@ -193,7 +194,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     return zodResolver(configToZod(visibleConfig))(values, ctx, opts);
   }, []);
 
-  const { control, handleSubmit, reset, watch, setError, formState: { errors } } = useForm({ resolver, defaultValues });
+  const { control, handleSubmit, reset, watch, setError, trigger, getValues, setValue, formState: { errors } } = useForm({ resolver, defaultValues });
 
   // Track which Signature fields have an active capture in progress — used to
   // gate the submit button while a capture is pending.
@@ -288,6 +289,49 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     return { gridColumn: `span ${span} / span ${span}`, minWidth: 0 };
   }
 
+  const BUTTON_VARIANT: Record<NonNullable<ButtonItem['variant']>, 'default' | 'outline' | 'ghost' | 'destructive'> = {
+    primary: 'default',
+    outline: 'outline',
+    ghost: 'ghost',
+    destructive: 'destructive',
+  };
+  // 文字類元件 clear 後給 ""，其餘 undefined（受控 input 需要字串空值）。
+  const TEXT_COMPONENTS = new Set(['Input', 'Textarea', 'Email']);
+
+  async function runAction(item: ButtonItem) {
+    const { action } = item;
+    if (action.type === 'reset') {
+      reset(defaultValues ?? {});
+      return;
+    }
+    if (action.type === 'clear') {
+      const byKey = new Map(collectFieldItems(config).map((f) => [f.key, f]));
+      for (const key of action.fields) {
+        const comp = byKey.get(key)?.component ?? 'Input';
+        setValue(key, TEXT_COMPONENTS.has(comp) ? '' : undefined, { shouldDirty: true });
+      }
+      return;
+    }
+    const doValidate = item.validate ?? (action.type === 'submit');
+    if (doValidate) {
+      const ok = await trigger();
+      if (!ok) return;   // RHF 顯示欄位錯誤，動作不發
+    }
+    const data = computePayload(getValues() as Record<string, unknown>, config);
+    if (action.type === 'submit') {
+      onSubmit({ data, meta: buildActionMeta({ config, data, action: { type: 'submit' }, metaProvider }) });
+      return;
+    }
+    if (action.type === 'custom') {
+      onAction?.(action.name, {
+        data,
+        meta: buildActionMeta({ config, data, action: { type: 'custom', name: action.name }, metaProvider }),
+      });
+      return;
+    }
+    // action.type === 'api' — Task 4
+  }
+
   function renderItem(item: FormItem, flow: 'v1' | 'section', cols: number, place?: { colStart: number; colSpan: number; row: number; rowSpan?: number }) {
     const vals = values as Record<string, unknown>;
 
@@ -315,6 +359,17 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
           ) : (
             resolveLabel(item.text, locale)
           )}
+        </div>
+      );
+    }
+
+    if (item.kind === 'button') {
+      const variant = BUTTON_VARIANT[item.variant ?? (item.action.type === 'submit' ? 'primary' : 'outline')];
+      return (
+        <div key={item.id} data-item={item.id} className="flex min-w-0 items-end" style={place ? placementStyle(place) : fieldSpanStyle(undefined, flow, cols)}>
+          <Button type="button" variant={variant} disabled={pendingCaptures.size > 0} onClick={() => void runAction(item)}>
+            {resolveLabel(item.label, locale)}
+          </Button>
         </div>
       );
     }
@@ -360,6 +415,12 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   const sections = normalizeToSections(config);
   // v1 (fields[]) → flat grid (one field per implicit row); v2 (sections[]) → flex rows.
   const isV2 = config.sections !== undefined;
+  // When the config declares any button item, it owns the action affordances —
+  // the default gradient Submit button is suppressed in favor of configured buttons.
+  const hasButtons = React.useMemo(
+    () => normalizeToSections(config).some((s) => s.rows.some((r) => r.items.some((i) => i.kind === 'button'))),
+    [config],
+  );
   // Use the first section's columns for the overall form grid (v1 back-compat).
   const columns = config.columns ?? sections[0]?.columns ?? 1;
 
@@ -462,16 +523,18 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
           </React.Fragment>
         );
       })}
-      <div style={{ gridColumn: '1 / -1' }}>
-        <Button
-          type="submit"
-          disabled={pendingCaptures.size > 0}
-          className="self-start border-0 text-white"
-          style={{ background: 'linear-gradient(180deg,#5b8cff,#4a78ee)', boxShadow: '0 6px 16px rgba(74,120,238,.3)' }}
-        >
-          {submitLabel}
-        </Button>
-      </div>
+      {!hasButtons && (
+        <div style={{ gridColumn: '1 / -1' }}>
+          <Button
+            type="submit"
+            disabled={pendingCaptures.size > 0}
+            className="self-start border-0 text-white"
+            style={{ background: 'linear-gradient(180deg,#5b8cff,#4a78ee)', boxShadow: '0 6px 16px rgba(74,120,238,.3)' }}
+          >
+            {submitLabel}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

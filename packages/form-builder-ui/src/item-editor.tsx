@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Trash2, ChevronRight, Type, AlignLeft, Minus, MoveVertical, Sparkles } from 'lucide-react';
+import { Trash2, ChevronRight, Type, AlignLeft, Minus, MoveVertical, Sparkles, MousePointerClick } from 'lucide-react';
 import type { FieldItem, ContentItem, DividerItem, SpacerItem, AiNoteItem, FormItem, ItemKind, SpacerSize } from '@rfjs/form-builder';
 import { Input } from '@rfjs/web-ui/components/input';
 import { Textarea } from '@rfjs/web-ui/components/textarea';
@@ -35,6 +35,7 @@ const KIND_META: Record<ItemKind, KindMeta> = {
   'ai-note': { label: 'AI Note', Icon: Sparkles, color: '#d9a441' },
   divider: { label: 'Divider', Icon: Minus, color: '#6b7280' },
   spacer: { label: 'Spacer', Icon: MoveVertical, color: '#6b7280' },
+  button: { label: 'Button', Icon: MousePointerClick, color: '#10b981' },
 };
 
 const PILL_COLORS: Record<string, string> = {

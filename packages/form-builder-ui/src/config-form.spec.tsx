@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { ConfigForm } from './config-form';
-import type { FormConfig, DataSource, UploadHandler, FileRef, SignatureTransport } from '@rfjs/form-builder';
+import type { FormConfig, DataSource, UploadHandler, FileRef, SignatureTransport, ButtonAction, ButtonItem } from '@rfjs/form-builder';
 
 // ---------------------------------------------------------------------------
 // Controllable ResizeObserver mock (used by responsive tests below).
@@ -976,5 +976,78 @@ describe('action meta envelope', () => {
     expect(meta.user).toBe('roy');
     expect(meta.action).toEqual({ type: 'submit' });   // 保留鍵未被覆蓋
     expect(meta.timestamp).not.toBe('HACKED');
+  });
+});
+
+describe('button items', () => {
+  const btn = (action: ButtonAction, extra?: Partial<ButtonItem>): FormConfig => ({
+    version: 1,
+    sections: [{
+      id: 's1',
+      rows: [{
+        id: 'r1',
+        items: [
+          { id: 'f1', kind: 'field', key: 'name', label: 'Name', component: 'Input', dataType: 'string', required: true },
+          { id: 'f2', kind: 'field', key: 'note', label: 'Note', component: 'Input', dataType: 'string', defaultValue: 'keep' },
+          { id: 'b1', kind: 'button', label: 'Go', action, ...extra },
+        ],
+      }],
+    }],
+  });
+
+  it('renders configured buttons and suppresses the default submit', () => {
+    render(<ConfigForm config={btn({ type: 'custom', name: 'x' })} onSubmit={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Go' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^submit$/i })).toBeNull();
+  });
+
+  it('submit button validates by default and blocks invalid submit', async () => {
+    const onSubmit = vi.fn();
+    render(<ConfigForm config={btn({ type: 'submit' })} onSubmit={onSubmit} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+    await waitFor(() => expect(screen.getByText(/required|expected|invalid/i)).toBeTruthy());
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('submit button with valid values emits the envelope with action.type submit', async () => {
+    const onSubmit = vi.fn();
+    render(<ConfigForm config={btn({ type: 'submit' })} onSubmit={onSubmit} />);
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Roy' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0]![0].meta.action).toEqual({ type: 'submit' });
+  });
+
+  it('custom button skips validation by default and calls onAction with the envelope', async () => {
+    const onAction = vi.fn();
+    render(<ConfigForm config={btn({ type: 'custom', name: 'save-draft' })} onSubmit={vi.fn()} onAction={onAction} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Go' }));   // name 空著也能發(不驗)
+    await waitFor(() => expect(onAction).toHaveBeenCalledTimes(1));
+    const [name, payload] = onAction.mock.calls[0]!;
+    expect(name).toBe('save-draft');
+    expect(payload.meta.action).toEqual({ type: 'custom', name: 'save-draft' });
+    expect(payload.meta.valid).toBe(false);   // meta 照實回報
+  });
+
+  it('custom button with validate: true blocks when invalid', async () => {
+    const onAction = vi.fn();
+    render(<ConfigForm config={btn({ type: 'custom', name: 'x' }, { validate: true })} onSubmit={vi.fn()} onAction={onAction} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+    await waitFor(() => expect(screen.getByText(/required|expected|invalid/i)).toBeTruthy());
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
+  it('clear resets only the listed fields', async () => {
+    render(<ConfigForm config={btn({ type: 'clear', fields: ['name'] })} onSubmit={vi.fn()} defaultValues={{ name: 'Roy', note: 'keep' }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+    await waitFor(() => expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe(''));
+    expect((screen.getByLabelText('Note') as HTMLInputElement).value).toBe('keep');
+  });
+
+  it('reset restores defaultValues', async () => {
+    render(<ConfigForm config={btn({ type: 'reset' })} onSubmit={vi.fn()} defaultValues={{ name: 'init', note: 'keep' }} />);
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'changed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Go' }));
+    await waitFor(() => expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('init'));
   });
 });
