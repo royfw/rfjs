@@ -1,0 +1,331 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { Badge } from "@rfjs/web-ui/components/badge";
+import { Button } from "@rfjs/web-ui/components/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@rfjs/web-ui/components/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@rfjs/web-ui/components/tooltip";
+import { ChevronDown, X } from "lucide-react";
+
+import { getEngine, addCondition, addGroup, removeNode, setLogic, updateNode } from "@rfjs/filter-builder";
+import type { EngineId, BuilderCondition, BuilderGroup, FieldSchema, LogicOp } from "@rfjs/filter-builder";
+
+import { logicBadge, dataTypeBadge, dataTypeShort } from "./colors";
+import { FieldCombobox } from "./field-combobox";
+import { ValueEditor } from "./value-editor";
+
+export interface FilterTreeLabels {
+  logic: Record<LogicOp, string>;
+  addCondition: string;
+  addGroup: string;
+  removeGroup: string;
+  removeCondition: string;
+  elemMatch: string;
+  /** Placeholder hint for multi-value (list) operators, e.g. "type, Enter to add". */
+  valueHint?: string;
+  /** aria-label for the collapse/expand chevron. Fallback: "toggle group". */
+  toggleGroup?: string;
+  /** collapsed summary — conditions unit word; the count is prepended by the
+   * component (e.g. "cond" → "2 cond"). Fallback: "cond". No "{count}" placeholder. */
+  collapsedConditions?: string;
+  /** collapsed summary — groups unit word; the count is prepended by the
+   * component (e.g. "grp" → "1 grp"). Fallback: "grp". No "{count}" placeholder. */
+  collapsedGroups?: string;
+  /** collapsed summary when the group has no children. Fallback: "empty". */
+  collapsedEmpty?: string;
+  /** Map of operator key -> localized label for the operator Select and the
+   * collapsed-group preview. Missing keys fall back to the raw op. */
+  operatorLabels?: Record<string, string>;
+}
+
+const id = () => crypto.randomUUID();
+
+// Condition row: a single aligned grid row on >=sm; on mobile it reflows to two
+// lines — [field · type] then [operator · value · remove] — instead of overflowing.
+const CROW_CSS = `
+.fbu-crow{display:grid;gap:.5rem;align-items:center;grid-template-columns:9rem 1fr auto;grid-template-areas:"field field type" "op value remove";}
+@media(min-width:640px){.fbu-crow{grid-template-columns:12rem 4.5rem 9.5rem minmax(9rem,1fr) auto;grid-template-areas:"field type op value remove";}}
+.fbu-field{grid-area:field;min-width:0}
+.fbu-type{grid-area:type;display:flex;align-items:center}
+@media(min-width:640px){.fbu-type{justify-content:center}}
+.fbu-op{grid-area:op;min-width:0}
+.fbu-value{grid-area:value;min-width:0}
+.fbu-remove{grid-area:remove;display:flex;justify-content:flex-end}
+`;
+
+function formatPreviewValue(v: unknown): string {
+  if (v === undefined || v === null || v === "") return "";
+  if (Array.isArray(v)) return " " + v.map((x) => String(x)).join(", ");
+  return " " + String(v);
+}
+
+// Indented, label-free preview of a collapsed subtree for the hover tooltip.
+function previewLines(group: BuilderGroup, labels: FilterTreeLabels, indent = ""): string[] {
+  const lines: string[] = [];
+  for (const child of group.children) {
+    if (child.kind === "group") {
+      lines.push(indent + (labels.logic[child.logic] ?? child.logic.toUpperCase()));
+      lines.push(...previewLines(child, labels, indent + "   "));
+    } else {
+      const op = labels.operatorLabels?.[child.operator] ?? child.operator;
+      lines.push(`${indent}${child.field || "—"} ${op || "?"}${formatPreviewValue(child.value)}`);
+    }
+  }
+  return lines;
+}
+
+export function FilterTreeEditor({
+  group,
+  engineId,
+  schema,
+  onChange,
+  onCreateField,
+  labels,
+  onRemove,
+  depth = 0,
+}: {
+  group: BuilderGroup;
+  engineId: EngineId;
+  schema: FieldSchema[];
+  onChange: (next: BuilderGroup) => void;
+  onCreateField: (path: string) => void;
+  labels: FilterTreeLabels;
+  onRemove?: () => void;
+  depth?: number;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+  const condCount = group.children.filter((c) => c.kind === "condition").length;
+  const groupCount = group.children.filter((c) => c.kind === "group").length;
+  const summaryParts: string[] = [];
+  if (condCount) summaryParts.push(`${condCount} ${labels.collapsedConditions ?? "cond"}`);
+  if (groupCount) summaryParts.push(`${groupCount} ${labels.collapsedGroups ?? "grp"}`);
+  const summary = summaryParts.join(" · ") || (labels.collapsedEmpty ?? "empty");
+  return (
+    <div className={depth > 0 ? "rounded-md border border-border p-2" : ""}>
+      {depth === 0 ? <style>{CROW_CSS}</style> : null}
+      <div className={`flex flex-wrap items-center gap-2 ${collapsed ? "" : "mb-3"}`}>
+        <button
+          type="button"
+          aria-label={labels.toggleGroup ?? "toggle group"}
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed((v) => !v)}
+          className="flex size-6 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent/60 hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <ChevronDown
+            className={`size-4 transition-transform motion-reduce:transition-none ${collapsed ? "-rotate-90" : ""}`}
+          />
+        </button>
+        <Select
+          value={group.logic}
+          onValueChange={(v) => onChange(setLogic(group, group.id, v as LogicOp))}
+        >
+          <SelectTrigger
+            size="sm"
+            aria-label="logic"
+            className={`h-7 w-auto gap-1.5 rounded-md border-0 px-2.5 text-xs font-bold tracking-wide shadow-none ${logicBadge(group.logic)}`}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(labels.logic) as LogicOp[]).map((l) => (
+              <SelectItem key={l} value={l}>
+                {labels.logic[l]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                tabIndex={0}
+                className="cursor-help rounded font-mono text-xs text-muted-foreground underline decoration-dotted underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                {summary}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[340px] whitespace-pre font-mono text-xs">
+              {previewLines(group, labels).join("\n") || (labels.collapsedEmpty ?? "empty")}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <>
+            <Button size="xs" variant="outline" onClick={() => onChange(addCondition(group, group.id, id))}>
+              {labels.addCondition}
+            </Button>
+            <Button size="xs" variant="outline" onClick={() => onChange(addGroup(group, group.id, id))}>
+              {labels.addGroup}
+            </Button>
+          </>
+        )}
+        {onRemove ? (
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            aria-label={labels.removeGroup}
+            onClick={onRemove}
+            className="ml-auto text-muted-foreground"
+          >
+            <X className="size-3.5" />
+          </Button>
+        ) : null}
+      </div>
+      {collapsed ? null : (
+        <div className="ml-1 flex flex-col gap-2 border-l border-slab-border pl-4">
+          {group.children.map((child) =>
+            child.kind === "group" ? (
+              <FilterTreeEditor
+                key={child.id}
+                group={child}
+                engineId={engineId}
+                schema={schema}
+                labels={labels}
+                depth={depth + 1}
+                onChange={(nextChild) =>
+                  onChange({ ...group, children: group.children.map((c) => (c.id === child.id ? nextChild : c)) })
+                }
+                onRemove={() => onChange(removeNode(group, child.id))}
+                onCreateField={onCreateField}
+              />
+            ) : (
+              <ConditionRow
+                key={child.id}
+                condition={child}
+                engineId={engineId}
+                schema={schema}
+                labels={labels}
+                onChange={(patch) => onChange(updateNode(group, child.id, patch))}
+                onRemove={() => onChange(removeNode(group, child.id))}
+                onCreateField={onCreateField}
+              />
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConditionRow({
+  condition,
+  engineId,
+  schema,
+  onChange,
+  onRemove,
+  onCreateField,
+  labels,
+}: {
+  condition: BuilderCondition;
+  engineId: EngineId;
+  schema: FieldSchema[];
+  onChange: (patch: Omit<Partial<BuilderCondition>, "kind" | "id">) => void;
+  onRemove: () => void;
+  onCreateField: (path: string) => void;
+  labels: FilterTreeLabels;
+}) {
+  const fields = schema.filter((f) => f.include);
+  const engine = getEngine(engineId);
+  const field = schema.find((s) => s.path === condition.field);
+  const dataType = field?.dataType ?? condition.dataType;
+  const elementType = field?.elementType ?? condition.elementType;
+  const fieldKind = field?.kind;
+  const ops = engine.operators(dataType, elementType, fieldKind);
+  const arity = ops.find((o) => o.op === condition.operator)?.arity ?? "one";
+  const operatorValid = ops.some((o) => o.op === condition.operator);
+
+  useEffect(() => {
+    const patch: Omit<Partial<BuilderCondition>, "kind" | "id"> = {};
+    if (field) {
+      if (field.dataType !== condition.dataType) patch.dataType = field.dataType;
+      if (field.elementType !== condition.elementType) patch.elementType = field.elementType;
+    }
+    if (condition.operator && !operatorValid) {
+      patch.operator = ops[0]?.op ?? "";
+      patch.value = "";
+    }
+    if (Object.keys(patch).length > 0) onChange(patch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engineId, field?.dataType, field?.elementType, field?.kind, operatorValid]);
+
+  function onField(path: string) {
+    const f = schema.find((s) => s.path === path);
+    const dataType = f?.dataType ?? "string";
+    const elementType = f?.elementType;
+    const kind = f?.kind ?? "jsonb";
+    const nextOps = engine.operators(dataType, elementType, kind);
+    onChange({ field: path, dataType, elementType, operator: nextOps[0]?.op ?? "", value: "" });
+  }
+
+  return (
+    <div className="fbu-crow">
+      <div className="fbu-field">
+        <FieldCombobox
+          ariaLabel="field"
+          value={condition.field}
+          options={fields.map((f) => f.path)}
+          onCommit={(path) => {
+            if (path && !schema.some((s) => s.path === path)) onCreateField(path);
+            onField(path);
+          }}
+        />
+      </div>
+      <div className="fbu-type">
+        {condition.field ? (
+          <Badge
+            variant="secondary"
+            className={`px-2 font-mono text-[11px] font-semibold ${dataTypeBadge(dataType)}`}
+          >
+            {dataTypeShort(dataType)}
+          </Badge>
+        ) : null}
+      </div>
+      <div className="fbu-op">
+        <Select
+          value={condition.operator}
+          onValueChange={(v) => onChange({ operator: v, value: "" })}
+        >
+          <SelectTrigger size="sm" aria-label="operator" className="w-full min-w-0 font-mono">
+            <SelectValue placeholder="—" />
+          </SelectTrigger>
+          <SelectContent>
+            {ops.map((o) => (
+              <SelectItem key={o.op} value={o.op} className="font-mono">
+                {labels.operatorLabels?.[o.op] ?? o.op}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="fbu-value">
+        {condition.operator === "elemmatch" ? (
+          <span className="truncate text-xs text-muted-foreground">{labels.elemMatch}</span>
+        ) : (
+          <ValueEditor
+            dataType={dataType === "array" ? (elementType ?? "string") : dataType}
+            arity={arity}
+            value={condition.value}
+            onChange={(v) => onChange({ value: v })}
+            hint={labels.valueHint}
+          />
+        )}
+      </div>
+      <div className="fbu-remove">
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          aria-label={labels.removeCondition}
+          onClick={onRemove}
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}

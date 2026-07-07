@@ -1,0 +1,36 @@
+{
+  "name": "@rfjs/db",
+  "version": "0.0.0",
+  "description": "Workbench Drizzle plumbing: connection, schema, migrations, seed",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "private": true,
+  "scripts": {
+    "clean": "pnpm exec rimraf ./dist ./types",
+    "build": "pnpm run clean && tsdown --config-loader unrun",
+    "typecheck": "tsc --noEmit",
+    "generate": "pnpm exec drizzle-kit generate",
+    "migrate": "pnpm exec tsx src/scripts/run-migrate.ts",
+    "seed": "pnpm exec tsx src/scripts/run-seed.ts",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest --passWithNoTests --run",
+    "vitest:run": "vitest --passWithNoTests --run"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.1",
+    "pg": "^8.16.3",
+    "pg-connection-string": "^2.7.0",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.16.0",
+    "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.8",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
+    "tsdown": "0.17.0-beta.6",
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.8"
+  }
+}

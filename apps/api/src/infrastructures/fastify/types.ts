@@ -15,4 +15,6 @@ export interface FastifyAppOptions {
   httpRouteModules?: HttpRouteModule[];
   middlewares?: Middleware[];
   isApiDocEnabled?: boolean;
+  /** Cleanup run on Fastify `onClose` (e.g. closing the DB pool) during graceful shutdown. */
+  onClose?: () => void | Promise<void>;
 }

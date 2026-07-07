@@ -1,0 +1,46 @@
+{
+  "name": "@rfjs/form-builder",
+  "version": "0.0.0",
+  "description": "Framework-agnostic config-driven form model: config types, zod schema, and configToZod data-schema derivation",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "clean": "pnpm exec rimraf ./dist ./types",
+    "build": "pnpm run clean && tsdown --config-loader unrun",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "pnpm run vitest:run",
+    "vitest:run": "vitest --passWithNoTests --run"
+  },
+  "keywords": ["form", "config-driven", "zod", "schema"],
+  "author": "Roy Chuang",
+  "license": "ISC",
+  "repository": { "type": "git", "url": "git+https://github.com/royfw/rfjs.git", "directory": "packages/form-builder" },
+  "files": ["dist", "README.md"],
+  "dependencies": {
+    "@rfjs/data-expr": "workspace:*",
+    "@rfjs/data-filter": "workspace:*",
+    "@rfjs/object-utils": "workspace:*",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "rimraf": "^6.0.1",
+    "tsdown": "0.17.0-beta.6",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vitest": "^3.2.3"
+  }
+}

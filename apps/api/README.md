@@ -1,38 +1,33 @@
-api
-===
+# api
 
-This project is a `royfw/starter-ts-fastify` template for creating a new project using the [start-ts-by](https://www.npmjs.com/package/start-ts-by) CLI.
+Fastify REST API (bundled with esbuild). It serves the `apps/workbench` dataset
+endpoints, wiring `@rfjs/core` use cases over `@rfjs/db` (PostgreSQL).
 
-## Getting Started
+## Architecture
+
+Layered Fastify app:
+
+- `src/delivery/` — HTTP layer (routes + handlers per module, e.g. `dataset/`)
+- `src/infrastructures/` — app/plugin/server bootstrap; `datasource/` wires
+  `createDb()` → `makeDatasetRepository(db)` → use cases
+- `src/helpers/` — route helpers, pino transport config
+- `src/utils/` — shared utilities
+
+See the root [`CLAUDE.md`](../../CLAUDE.md) ("Workbench Stack") for the full
+`workbench → api → @rfjs/core → @rfjs/db` data flow.
+
+## Develop
+
+Run from the repo root with a package filter (or omit `-F api` inside this dir):
 
 ```bash
-# 1. Install dependencies
-npm install
-## or pnpm
-pnpm install
-# 2. Run the project
-npm run dev
-# 3. Build the project
-npm run build
-# 4. Run tests
-npm run test
-# 5. Run lint
-npm run lint
+pnpm -F api dev        # watch build (esbuild) + typecheck
+pnpm -F api build      # production bundle to ./dist
+pnpm -F api test       # unit tests (vitest)
+pnpm -F api test:e2e   # e2e tests
+pnpm -F api lint
 ```
 
-## Release
-```bash
-# 1. Release the project
-npx standard-version
-## or
-npm run release
-# dry run
-npm run release -- --dry-run
-
-# 2. Release the project with version
-npm run release -- --version 1.0.0
-```
-
-## Reference
-- [Original README](./START_BY_README.md)
-  
+`PORT` defaults to `3000`; set it when running alongside `web` (also 3000).
+The dataset endpoints need a PostgreSQL connection — provide `DATABASE_URL`
+(see `src/configs.ts`).

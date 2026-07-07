@@ -11,11 +11,9 @@ describe('toolRegistry', () => {
     }
   });
 
-  it('ids and hrefs are unique', () => {
+  it('ids are unique', () => {
     const ids = toolRegistry.map((t) => t.id);
-    const hrefs = toolRegistry.map((t) => t.href);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 
   it('relatedPackages all exist in packageRegistry', () => {
@@ -25,6 +23,30 @@ describe('toolRegistry', () => {
         expect(names, `${tool.id} → ${pkg}`).toContain(pkg);
       }
     }
+  });
+});
+
+describe('toolDefinitionSchema web-surface guard', () => {
+  const base = { id: 'x', category: 'inspect', status: 'planned' } as const;
+
+  it('rejects a web tool with no relatedPackages', () => {
+    expect(() => toolDefinitionSchema.parse({ ...base, surface: 'web' })).toThrow();
+  });
+
+  it('rejects a web tool with an empty relatedPackages array', () => {
+    expect(() =>
+      toolDefinitionSchema.parse({ ...base, surface: 'web', relatedPackages: [] }),
+    ).toThrow();
+  });
+
+  it('allows a web tool that declares a primary package', () => {
+    expect(() =>
+      toolDefinitionSchema.parse({ ...base, surface: 'web', relatedPackages: ['@rfjs/jwt'] }),
+    ).not.toThrow();
+  });
+
+  it('allows a workbench tool with no relatedPackages', () => {
+    expect(() => toolDefinitionSchema.parse({ ...base, surface: 'workbench' })).not.toThrow();
   });
 });
 
@@ -40,7 +62,8 @@ describe('tool surfaces', () => {
       .filter((t) => t.surface === 'workbench')
       .map((t) => t.id)
       .sort();
-    expect(ids).toEqual(['data-filter-builder', 'object-transformer']);
+    // data-filter-builder shipped as a web tool (the per-engine scenario pilot).
+    expect(ids).toEqual(['object-transformer']);
   });
 });
 

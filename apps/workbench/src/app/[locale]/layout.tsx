@@ -25,6 +25,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "rfjs workbench",
   description: "Dataset-driven workbench composing the @rfjs packages.",
+  icons: { apple: "/icon-192.png" },
 };
 
 export function generateStaticParams() {

@@ -17,11 +17,12 @@ This Turborepo includes the following packages/apps:
 ### Apps and Packages
 
 - `web`: the rfjs web playground — a [Next.js](https://nextjs.org/) app
-- `api`: a Fastify REST API
-- `orm-app`: an ORM integration demo
-- `@rfjs/web-ui`: design tokens, Tailwind preset, and shadcn components for `web`
-- `@rfjs/web-core`: tool/package registry and zod schemas for `web`
-- `@rfjs/*`: published utility libraries (`data-filter`, `data-transform`, `object-utils`, …)
+- `workbench`: the rfjs admin app — a Next.js dataset explorer with a visual query builder
+- `api`: a Fastify REST API (serves the workbench dataset endpoints)
+- `@rfjs/web-ui` / `@rfjs/web-core`: shared UI (design tokens, Tailwind preset, shadcn) and the tool/package registry for `web` + `workbench`
+- `@rfjs/filter-builder` / `@rfjs/filter-builder-ui`: canonical filter-tree model + its React editor
+- `libs/core`, `libs/db`: workbench business logic and Drizzle/Postgres plumbing
+- `@rfjs/*`: published utility libraries (`data-filter`, `sql-filter`, `pg-filter`, `jsonb-query`, `data-transform`, `object-utils`, …)
 
 Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
 

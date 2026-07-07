@@ -4,6 +4,8 @@ import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
+import { Button } from "@rfjs/web-ui/components/button";
+
 import { usePathname } from "@/i18n/navigation";
 import { useSidebarStore } from "@/stores/sidebar-store";
 
@@ -53,7 +55,7 @@ export function ShellDrawer() {
     <div className="fixed inset-0 z-50 flex lg:hidden">
       <button
         aria-label={tCommon("closeMenu")}
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-foreground/40"
         onClick={() => setOpen(false)}
       />
       <div
@@ -63,22 +65,24 @@ export function ShellDrawer() {
         role="dialog"
         aria-modal="true"
         aria-label={tCommon("appName")}
-        className="relative z-10 flex h-full w-64 max-w-[80%] flex-col gap-1 overflow-y-auto border-r bg-card p-3 outline-none"
+        className="relative z-10 flex h-full w-64 max-w-[80%] flex-col overflow-y-auto border-r bg-card outline-none"
       >
-        <div className="mb-2 flex items-center justify-between">
-          <span className="px-2 font-mono text-xs uppercase tracking-wide text-muted-foreground">
+        <div className="flex h-14 shrink-0 items-center justify-between border-b px-4">
+          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
             {tCommon("appName")}
           </span>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon-sm"
             aria-label={tCommon("closeMenu")}
             onClick={() => setOpen(false)}
-            className="rounded-sm p-1.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-intake"
           >
             <X className="size-4" />
-          </button>
+          </Button>
         </div>
-        <SidebarNav />
+        <div className="flex flex-col gap-1 p-3">
+          <SidebarNav />
+        </div>
       </div>
     </div>
   );

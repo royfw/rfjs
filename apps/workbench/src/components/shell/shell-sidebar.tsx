@@ -11,12 +11,18 @@ export function ShellSidebar() {
   const collapsed = useSidebarStore((s) => s.collapsed);
   return (
     <aside
-      className={`hidden shrink-0 flex-col gap-1 border-r p-3 transition-[width] lg:flex ${collapsed ? "w-14" : "w-56"}`}
+      className={`hidden shrink-0 flex-col border-r transition-[width] lg:flex ${collapsed ? "w-14" : "w-56"}`}
     >
-      <span className="mb-3 px-2 font-mono text-xs uppercase tracking-wide text-muted-foreground">
-        {collapsed ? tCommon("appNameShort") : tCommon("appName")}
-      </span>
-      <SidebarNav collapsed={collapsed} />
+      <div
+        className={`flex h-14 shrink-0 items-center border-b ${collapsed ? "justify-center px-0" : "px-4"}`}
+      >
+        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+          {collapsed ? tCommon("appNameShort") : tCommon("appName")}
+        </span>
+      </div>
+      <div className="flex flex-col gap-1 p-3">
+        <SidebarNav collapsed={collapsed} />
+      </div>
     </aside>
   );
 }

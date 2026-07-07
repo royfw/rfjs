@@ -15,7 +15,7 @@
 | Build tool | Turbo(`turbo build`) |
 | 部署目標 | Kubernetes(GitLab + devops-toolkit `nodejs-monorepo.yml`) |
 | 版本 / npm 發佈 | Changesets,跑在 GitHub Actions(`cd-version-release*.yml` / `cd-publish-npmjs.yml`) |
-| 主要產出 | `packages/@rfjs/*` 發佈到 npm;`apps/api`、`apps/orm-app` 可部署到 K8s |
+| 主要產出 | `packages/@rfjs/*` 發佈到 npm;`apps/api` 可部署到 K8s |
 
 ---
 
@@ -107,7 +107,7 @@ merge → deploy/dev
 → GitLab detect_project + trigger_project(DEPLOY_ENV=royfw-dev, namespace=rfjs-dev)
 ```
 
-- ⚠️ **目前 `.deploy/` overlay 尚未建立**。`apps/api`、`apps/orm-app` 有 Dockerfile,會 build image 推 Harbor,但因為缺 `.deploy/env/royfw-dev/helm/{api,orm-app}.yaml`,部署階段會 `[skip-deploy]`(除非 devops-toolkit repo 的 `projects/royfw/apps/rfjs/` 有 fallback 設定)。
+- ⚠️ **目前 `.deploy/` overlay 尚未建立**。`apps/api` 有 Dockerfile,會 build image 推 Harbor,但因為缺 `.deploy/env/royfw-dev/helm/api.yaml`,部署階段會 `[skip-deploy]`(除非 devops-toolkit repo 的 `projects/royfw/apps/rfjs/` 有 fallback 設定)。
 - `deploy/prod` 目前**未接線**(routing 已收斂成只認 `deploy/dev`,避免誤部署到 dev namespace)。
 - `apps/web`(Next.js)無 Dockerfile,不在 monorepo build/deploy 範圍內。
 
@@ -151,8 +151,8 @@ merge → deploy/dev
 
 ## 9. 待辦 / Pending
 
-1. **建立 `.deploy/env/royfw-dev/helm/` overlay**:`api.yaml`、`orm-app.yaml`(`kind: Deployment` + `containerPort: 3000` + `secrets.existingSecretName`),deploy 才會真正生效。
-2. **Secrets**:`.deploy/env/royfw-dev/env_files/secret.env.files`;`orm-app` 連 4 種 DB,`.env.example` 需補 `DATABASE_URL` 等實際變數。
+1. **建立 `.deploy/env/royfw-dev/helm/` overlay**:`api.yaml`(`kind: Deployment` + `containerPort: 3000` + `secrets.existingSecretName`),deploy 才會真正生效。
+2. **Secrets**:`.deploy/env/royfw-dev/env_files/secret.env.files`;`api` 需要的 `DATABASE_URL` 等實際變數需補。
 3. **prod 環境**:要部署 prod 需新增 `.deploy/env/{prod-env}/`、prod kubeconfig/namespace,並在 `detect/trigger` rules 加 `deploy/prod` 路由。
 4. **jsonb-query**:Phase 2(object/array)完成後,從 `.changeset/config.json` 的 `ignore` 移除即可納入發佈。
 

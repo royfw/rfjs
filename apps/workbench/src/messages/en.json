@@ -10,6 +10,7 @@
   "Nav": {
     "dashboard": "Dashboard",
     "datasets": "Datasets",
+    "explore": "Explore",
     "apps": "Apps",
     "admin": "Admin",
     "adminLocked": "Sign-in required — coming soon",
@@ -18,8 +19,12 @@
   "Pages": {
     "dashboardTitle": "Dashboard",
     "dashboardDescription": "Datasets at a glance and shortcuts into the apps.",
+    "dashboardAppsCaption": "workbench apps",
+    "dashboardPackagesCaption": "published packages",
     "datasetsTitle": "Datasets",
     "datasetsDescription": "Built-in samples and imported JSON/CSV datasets. Management arrives in a later phase.",
+    "datasetsEmpty": "No datasets yet.",
+    "datasetsError": "Couldn't reach the datasets API.",
     "appsTitle": "Apps",
     "appsDescription": "Dataset-driven applications composing the @rfjs packages.",
     "adminTitle": "Admin",
@@ -32,5 +37,44 @@
   },
   "LocaleSwitcher": {
     "label": "Language"
+  },
+  "Operators": {
+    "eq": "equals", "neq": "not equals", "ieq": "equals (i)", "ineq": "not equals (i)",
+    "gt": "greater than", "gte": "greater or equal", "lt": "less than", "lte": "less or equal", "range": "between",
+    "contains": "contains", "icontains": "contains (i)", "startswith": "starts with", "istartswith": "starts with (i)", "endswith": "ends with", "iendswith": "ends with (i)",
+    "terms": "in", "nin": "not in", "containsall": "contains all",
+    "isnull": "is null", "isnotnull": "is not null", "isempty": "is empty", "isnotempty": "is not empty",
+    "haskey": "has key", "hasanykey": "has any key", "hasallkeys": "has all keys",
+    "elemmatch": "element matches"
+  },
+  "Explorer": {
+    "title": "Dataset Explorer",
+    "description": "Filter the datasets catalog with nested conditions.",
+    "run": "Run",
+    "running": "Running…",
+    "loading": "Running query…",
+    "empty": "No datasets match.",
+    "emptyDescription": "Build a filter and run it to see matching datasets.",
+    "error": "Query failed.",
+    "results": "results",
+    "columnName": "Name",
+    "columnDescription": "Description",
+    "columnCreated": "Created",
+    "columnUpdated": "Updated",
+    "tree": {
+      "and": "AND",
+      "or": "OR",
+      "nor": "NOR",
+      "not": "NOT",
+      "addCondition": "+ condition",
+      "addGroup": "+ group",
+      "removeCondition": "remove condition",
+      "removeGroup": "remove group",
+      "elemMatch": "elemmatch (nested)",
+      "toggleGroup": "Collapse / expand group",
+      "collapsedConditions": "cond",
+      "collapsedGroups": "grp",
+      "collapsedEmpty": "empty"
+    }
   }
 }

@@ -29,7 +29,7 @@ export default async function HomePage({
     <div className="flex flex-col gap-12">
       <section className="flex flex-col gap-8">
         <div className="flex flex-col gap-4">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
             <span className="text-intake">▸ {t("eyebrowLeft")}</span> {t("becomes")}{" "}
             <span className="text-yield">{t("eyebrowRight")} ◂</span>
           </span>
@@ -51,7 +51,7 @@ export default async function HomePage({
             <CopyButton
               text="pnpm add @rfjs/object-utils"
               label="pnpm add @rfjs/object-utils"
-              className="font-mono"
+              className="h-9 font-mono"
             />
           </div>
         </div>

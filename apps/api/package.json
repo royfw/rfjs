@@ -84,6 +84,12 @@
     "vitest": "^3.2.3"
   },
   "dependencies": {
+    "@rfjs/core": "workspace:*",
+    "@rfjs/db": "workspace:*",
+    "@rfjs/jsonb-query": "workspace:*",
+    "@rfjs/pg-filter": "workspace:*",
+    "@rfjs/sql-filter": "workspace:*",
+    "zod": "^4.0.0",
     "@fastify/cors": "^11.1.0",
     "@fastify/formbody": "^8.0.2",
     "@fastify/multipart": "^9.3.0",

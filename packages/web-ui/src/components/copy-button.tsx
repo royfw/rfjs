@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Check, Copy } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Check, Copy } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
-import { Button } from "./button";
+import { Button } from './button';
 
 export interface CopyButtonProps {
   text: string;
@@ -11,13 +11,16 @@ export interface CopyButtonProps {
   className?: string;
 }
 
-export function CopyButton({ text, label = "Copy", className }: CopyButtonProps) {
+export function CopyButton({ text, label = 'Copy', className }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
 
   async function onCopy() {
     try {
@@ -31,9 +34,15 @@ export function CopyButton({ text, label = "Copy", className }: CopyButtonProps)
   }
 
   return (
-    <Button variant="outline" size="sm" className={className} onClick={onCopy} aria-live="polite">
+    <Button
+      variant="outline"
+      size="sm"
+      className={className}
+      onClick={onCopy}
+      aria-live="polite"
+    >
       {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-      {copied ? "Copied" : label}
+      {copied ? 'Copied' : label}
     </Button>
   );
 }
