@@ -29,7 +29,9 @@ export interface EvaluateResult {
   /** first → Record | null;collect → Record[](default → 單元素陣列)。 */
   outputs: Record<string, unknown> | Record<string, unknown>[] | null;
   usedDefault: boolean;
-  /** 不得靜默:呼叫端/UI 必須呈現。 */
+  /** 不得靜默:呼叫端/UI 必須呈現。
+   * first 策略下評估短路於首次命中,故 ruleErrors 僅反映該時點前檢視的規則;
+   * 空陣列不保證整張表無誤。 */
   ruleErrors: RuleError[];
 }
 

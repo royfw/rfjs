@@ -108,6 +108,27 @@ describe('evaluateTable — uncoverable rules', () => {
   });
 });
 
+describe('evaluateTable — defaultOutputs expressions', () => {
+  it('resolves "=" expressions inside defaultOutputs against the context', async () => {
+    const t: DecisionTable = {
+      ...TABLE,
+      rules: [],
+      defaultOutputs: { approver: 'Direct Manager', note: '= "dept " & dept' },
+    };
+    const r = await evaluateTable(t, { dept: 'HR' });
+    expect(r.usedDefault).toBe(true);
+    expect(r.outputs).toEqual({ approver: 'Direct Manager', note: 'dept HR' });
+  });
+
+  it('expression failure inside defaultOutputs lands in ruleErrors with ruleId __default__', async () => {
+    const t: DecisionTable = { ...TABLE, rules: [], defaultOutputs: { approver: '= $notAFunction(' } };
+    const r = await evaluateTable(t, {});
+    expect((r.outputs as Record<string, unknown>).approver).toBeUndefined();
+    expect(r.ruleErrors).toHaveLength(1);
+    expect(r.ruleErrors[0]).toMatchObject({ ruleId: '__default__', kind: 'expression' });
+  });
+});
+
 describe('evaluateTable — boundaries', () => {
   it('validates the table at the boundary (invalid table throws)', async () => {
     await expect(evaluateTable({ version: 2 } as never, {})).rejects.toThrow();
