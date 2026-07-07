@@ -103,11 +103,23 @@ export function findFreePosition(existing: { x: number; y: number }[]): { x: num
   return { x: X0, y: Y0 };
 }
 
-let nodeSeq = 0;
-export function newNode(type: FlowNodeType, position: { x: number; y: number }): RFNode {
-  nodeSeq += 1;
+/** 由既有 id 推導下一個同型別編號(純函式;只跟 `type-N` 格式的同型別 id 比,必不撞名)。 */
+export function nextNodeId(type: FlowNodeType, existingIds: string[]): string {
+  const re = new RegExp(`^${type}-(\\d+)$`);
+  const max = existingIds.reduce((m, id) => {
+    const g = re.exec(id);
+    return g ? Math.max(m, Number(g[1])) : m;
+  }, 0);
+  return `${type}-${max + 1}`;
+}
+
+export function newNode(
+  type: FlowNodeType,
+  position: { x: number; y: number },
+  existingIds: string[] = [],
+): RFNode {
   return {
-    id: `${type}-${nodeSeq}`,
+    id: nextNodeId(type, existingIds),
     type,
     position,
     data: { type, config: defaultConfig(type) } satisfies FlowNodeData,
