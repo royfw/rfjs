@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import {
   evaluateTable,
@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from "@rfjs/web-ui/components/select";
 
+import { useAiAssist } from "@/lib/ai/use-ai-assist";
+import { buildCheckPrompt, parseCheckResponse, type AiFinding } from "./ai-check";
 import { RuleSheet } from "./rule-sheet";
 import { sampleTable, sampleBatch } from "./sample";
 
@@ -71,9 +73,12 @@ function ResultView({ result, t }: { result: EvaluateResult; t: ReturnType<typeo
 export function DecisionTableTool() {
   const t = useTranslations("ToolUI");
   const filterLabels = useFilterLabels();
+  const locale = useLocale();
+  const ai = useAiAssist();
 
   const [table, setTable] = React.useState<DecisionTable>(sampleTable);
   const [editingRuleId, setEditingRuleId] = React.useState<string | null>(null);
+  const [findings, setFindings] = React.useState<AiFinding[] | null>(null);
 
   // 單筆試算
   const [contextText, setContextText] = React.useState('{"amount": 60000, "dept": "Engineering"}');
@@ -125,6 +130,17 @@ export function DecisionTableTool() {
     setTable((tb) => ({ ...tb, rules: tb.rules.map((r) => (r.id === id ? { ...r, ...patch } : r)) }));
   };
 
+  const onAiCheck = async () => {
+    const prompt = buildCheckPrompt(tableToJson(table), locale);
+    const out = await ai.run({ ...prompt, json: true }, (raw) =>
+      parseCheckResponse(
+        raw,
+        table.rules.map((r) => r.id),
+      ),
+    );
+    if (out !== null) setFindings(out);
+  };
+
   const editingRule = table.rules.find((r) => r.id === editingRuleId) ?? null;
   const schema = (table.inputs ?? []) as FieldSchema[];
 
@@ -151,6 +167,15 @@ export function DecisionTableTool() {
             <Button size="sm" variant="outline" onClick={() => setTable((tb) => ({ ...tb, rules: [...tb.rules, newRule(uuid)] }))}>
               {t("dtAddRule")}
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void onAiCheck()}
+              disabled={!ai.ready || ai.loading}
+            >
+              {ai.loading ? t("dtAiChecking") : t("dtAiCheck")}
+            </Button>
+            {!ai.ready ? <span className="text-xs text-muted-foreground">{t("dtAiNotConfigured")}</span> : null}
           </div>
         </div>
         <ul className="divide-y" data-testid="dt-rules-list">
@@ -170,6 +195,31 @@ export function DecisionTableTool() {
             </li>
           ))}
         </ul>
+        {ai.error ? (
+          <p role="alert" className="px-3 py-2 text-xs text-fault">
+            [{ai.error.kind}] {ai.error.message}
+          </p>
+        ) : null}
+        {findings !== null ? (
+          <div data-testid="dt-ai-findings" className="border-t px-3 py-2 text-sm">
+            <p className="mb-1 text-xs font-semibold text-muted-foreground">
+              {t("dtAiFindings")} · {t("dtAiDisclaimer")}
+            </p>
+            {findings.length === 0 ? (
+              <p className="text-xs text-muted-foreground">{t("dtAiNoFindings")}</p>
+            ) : (
+              <ul className="space-y-1 text-xs">
+                {findings.map((f, i) => (
+                  <li key={i}>
+                    <span className="font-mono">[{f.kind}]</span>{" "}
+                    {f.ruleIds.length > 0 ? <span className="font-mono">({f.ruleIds.join(", ")})</span> : null}{" "}
+                    {f.message}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {/* 單筆試算 */}
