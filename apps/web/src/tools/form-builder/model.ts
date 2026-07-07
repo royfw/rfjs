@@ -3,9 +3,10 @@ import {
   type FieldComponent, type FieldType,
   type FormConfig, type FormItem, type FormSection,
   type LocalizedLabel, type FieldOption, type FieldValidation, type ConditionalRule, type DataSource,
+  type ButtonAction,
 } from "@rfjs/form-builder";
 
-export type Kind = "field" | "content" | "divider" | "spacer" | "ai-note";
+export type Kind = "field" | "content" | "divider" | "spacer" | "ai-note" | "button";
 // Canvas Component = full engine FieldComponent union.
 export type Component = FieldComponent;
 
@@ -31,6 +32,9 @@ export interface Card {
   fileUpload?: { accept?: string; multiple?: boolean; maxSize?: number };
   locked?: boolean; // content
   size?: "sm" | "md" | "lg"; // spacer
+  action?: ButtonAction; // button
+  buttonVariant?: "primary" | "outline" | "ghost" | "destructive"; // button
+  validate?: boolean; // button
   col: number;
   span: number;
   row: number;
@@ -99,6 +103,13 @@ function cardToItem(c: Card): FormItem {
       return { id: c.id, kind: "divider" };
     case "spacer":
       return { id: c.id, kind: "spacer", ...(c.size ? { size: c.size } : {}) };
+    case "button":
+      return {
+        id: c.id, kind: "button", label: c.label,
+        action: c.action ?? { type: "custom", name: "action-1" },
+        ...(c.buttonVariant ? { variant: c.buttonVariant } : {}),
+        ...(c.validate !== undefined ? { validate: c.validate } : {}),
+      };
   }
 }
 
@@ -147,6 +158,8 @@ export function formConfigToCards(config: FormConfig): { groups: Group[]; cards:
         });
       } else if (item.kind === "content") {
         cards.push({ ...base, kind: "content", label: item.text, locked: item.locked });
+      } else if (item.kind === "button") {
+        cards.push({ ...base, kind: "button", label: item.label, action: item.action, buttonVariant: item.variant, validate: item.validate });
       } else if (item.kind === "ai-note") {
         cards.push({ ...base, kind: "ai-note", label: item.text });
       } else {

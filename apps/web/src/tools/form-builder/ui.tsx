@@ -20,6 +20,7 @@ import {
   Mail,
   Upload,
   PenLine,
+  MousePointerClick,
 } from "lucide-react";
 
 import { ConfigForm } from "@rfjs/form-builder-ui";
@@ -55,6 +56,7 @@ const KIND_META: Record<
   "ai-note": { color: "#d9a441", icon: Sparkles, label: "AI Note" },
   divider: { color: "#6b7280", icon: Minus, label: "Divider" },
   spacer: { color: "#6b7280", icon: MoveVertical, label: "Spacer" },
+  button: { color: "#10b981", icon: MousePointerClick, label: "Button" },
 };
 
 const fieldSub = (c: Card) => (c.kind === "field" ? `${c.key ?? "field"} · ${c.component ?? "Input"}` : undefined);
@@ -336,7 +338,7 @@ export function FormBuilderTool() {
     return () => window.removeEventListener("keydown", onKey);
   }, [selected]);
 
-  const PALETTE: Kind[] = ["field", "content", "divider", "spacer", "ai-note"];
+  const PALETTE: Kind[] = ["field", "content", "divider", "spacer", "ai-note", "button"];
   const TABS = [
     { id: "canvas", label: "Canvas" },
     { id: "preview", label: "Preview" },
