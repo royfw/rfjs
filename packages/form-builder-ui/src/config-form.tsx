@@ -17,6 +17,7 @@ import {
   type DataSourceFetcher,
   type UploadHandler,
   type SignatureTransport,
+  type ButtonActionType,
 } from '@rfjs/form-builder';
 import { useDataSource } from './use-data-source';
 import { useContainerBreakpoint } from './use-container-breakpoint';
@@ -32,6 +33,56 @@ export interface SubmissionMeta {
   errors: Record<string, string>;
   visibleKeys: string[];
   schemaVersion?: number;
+}
+
+// ---------------------------------------------------------------------------
+// ActionMeta — envelope emitted alongside `data` for onSubmit/onAction. Extends
+// SubmissionMeta with action provenance (which button fired), the form's
+// identity/custom metadata, and a timestamp.
+// ---------------------------------------------------------------------------
+export interface ActionMeta extends SubmissionMeta {
+  /** FormConfig.id (when set). */
+  formId?: string;
+  /** ISO timestamp at the moment the action fired. */
+  timestamp: string;
+  /** Which action fired (name only for `custom`). */
+  action: { type: ButtonActionType; name?: string };
+  /** FormConfig.meta, passed through verbatim. */
+  custom?: Record<string, unknown>;
+  /** Set when an `api` action's fetcher rejected. */
+  apiError?: string;
+  /** metaProvider-injected runtime keys. */
+  [key: string]: unknown;
+}
+
+/** Builds the meta envelope for an action. Reserved keys always win over metaProvider output. */
+export function buildActionMeta(opts: {
+  config: FormConfig;
+  data: Record<string, unknown>;
+  action: { type: ButtonActionType; name?: string };
+  metaProvider?: () => Record<string, unknown>;
+}): ActionMeta {
+  const { config, data, action, metaProvider } = opts;
+  const visibleFieldItems = collectFieldItems(config).filter((f) => evaluateConditional(f.conditional, data));
+  const parsed = configToZod({ version: config.version, fields: visibleFieldItems }).safeParse(data);
+  const errors: Record<string, string> = {};
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      const k = String(issue.path[0]);
+      if (k && !errors[k]) errors[k] = issue.message;
+    }
+  }
+  return {
+    ...(metaProvider ? metaProvider() : {}),
+    valid: parsed.success,
+    errors,
+    visibleKeys: Object.keys(data),
+    schemaVersion: config.version,
+    ...(config.id !== undefined ? { formId: config.id } : {}),
+    timestamp: new Date().toISOString(),
+    action,
+    ...(config.meta !== undefined ? { custom: config.meta } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -82,7 +133,7 @@ export interface ConfigFormProps {
    */
   config: FormConfig;
   defaultValues?: Record<string, unknown>;
-  onSubmit: (values: Record<string, unknown>) => void;
+  onSubmit: (payload: { data: Record<string, unknown>; meta: ActionMeta }) => void;
   submitLabel?: string;
   /** BCP-47 locale used to resolve `LocalizedLabel` field labels. Defaults to `'en'`. */
   locale?: string;
@@ -113,9 +164,13 @@ export interface ConfigFormProps {
    * Only wired up (and triggers an effect) when provided.
    */
   onPayloadChange?: (p: { data: Record<string, unknown>; meta: SubmissionMeta }) => void;
+  /** Supplies extra runtime keys (e.g. user/session info) merged into every `ActionMeta`. */
+  metaProvider?: () => Record<string, unknown>;
+  /** Called for `custom`/`api` button actions with the action name and its payload. */
+  onAction?: (name: string, payload: { data: Record<string, unknown>; meta: ActionMeta; response?: unknown }) => void;
 }
 
-export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher, uploadHandler, signatureTransport, onPayloadChange }: ConfigFormProps) {
+export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Submit', locale = 'en', fetcher, uploadHandler, signatureTransport, onPayloadChange, metaProvider, onAction }: ConfigFormProps) {
   // Container ref for ResizeObserver-driven responsive collapse.
   const rootRef = React.useRef<HTMLFormElement>(null);
   const stackBelow = config.responsive?.stackBelow ?? 640;
@@ -336,7 +391,8 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     <form
       ref={rootRef}
       onSubmit={handleSubmit((all) => {
-        onSubmit(computePayload(all as Record<string, unknown>, config));
+        const data = computePayload(all as Record<string, unknown>, config);
+        onSubmit({ data, meta: buildActionMeta({ config, data, action: { type: 'submit' }, metaProvider }) });
       })}
       className="grid gap-4"
       style={{

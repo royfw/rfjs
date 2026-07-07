@@ -59,7 +59,9 @@ describe('ConfigForm', () => {
     render(<ConfigForm config={config} onSubmit={onSubmit} />);
     fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Ada' } });
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ name: 'Ada', bio: undefined }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    const payload = onSubmit.mock.calls[0]![0] as { data: Record<string, unknown> };
+    expect(payload.data).toEqual({ name: 'Ada', bio: undefined });
   });
 });
 
@@ -302,11 +304,9 @@ describe('conditional show/hide', () => {
     await waitFor(() => expect(screen.queryByLabelText('Admin Code')).toBeNull());
     // Submit → payload should NOT contain adminCode
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-    await waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith(
-        expect.not.objectContaining({ adminCode: expect.anything() }),
-      ),
-    );
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    const payload = onSubmit.mock.calls[0]![0] as { data: Record<string, unknown> };
+    expect(payload.data).not.toHaveProperty('adminCode');
   });
 });
 
@@ -548,9 +548,9 @@ describe('FileUpload field', () => {
     await waitFor(() => expect(uploadHandler).toHaveBeenCalledOnce());
 
     fireEvent.click(screen.getByRole('button', { name: /submit/i }));
-    await waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({ doc: fileRef }),
-    );
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    const payload = onSubmit.mock.calls[0]![0] as { data: Record<string, unknown> };
+    expect(payload.data).toEqual({ doc: fileRef });
   });
 
   it('calls onFileError when uploadHandler rejects', async () => {
@@ -930,5 +930,51 @@ describe('responsive container collapse', () => {
     // placed item (row 1) must appear before orphan (MAX_SAFE_INTEGER fallback)
     expect(items[0]!.getAttribute('data-item')).toBe('placed');
     expect(items[1]!.getAttribute('data-item')).toBe('orphan');
+  });
+});
+
+describe('action meta envelope', () => {
+  const cfg: FormConfig = {
+    version: 1,
+    id: 'leave-form',
+    meta: { source: 'web' },
+    fields: [{ key: 'name', label: 'Name', component: 'Input', dataType: 'string' }],
+  };
+
+  it('default submit emits { data, meta } with formId/timestamp/action/custom', async () => {
+    const onSubmit = vi.fn();
+    render(<ConfigForm config={cfg} onSubmit={onSubmit} />);
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Roy' } });
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const payload = onSubmit.mock.calls[0]![0] as { data: Record<string, unknown>; meta: Record<string, unknown> };
+    expect(payload.data).toEqual({ name: 'Roy' });
+    expect(payload.meta).toMatchObject({
+      formId: 'leave-form',
+      action: { type: 'submit' },
+      custom: { source: 'web' },
+      valid: true,
+      schemaVersion: 1,
+    });
+    expect(typeof payload.meta.timestamp).toBe('string');
+    expect(Number.isNaN(Date.parse(payload.meta.timestamp as string))).toBe(false);
+  });
+
+  it('metaProvider values merge in but cannot override reserved keys', async () => {
+    const onSubmit = vi.fn();
+    render(
+      <ConfigForm
+        config={cfg}
+        onSubmit={onSubmit}
+        metaProvider={() => ({ user: 'roy', action: 'HACKED', timestamp: 'HACKED' })}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'x' } });
+    fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const meta = onSubmit.mock.calls[0]![0].meta as Record<string, unknown>;
+    expect(meta.user).toBe('roy');
+    expect(meta.action).toEqual({ type: 'submit' });   // 保留鍵未被覆蓋
+    expect(meta.timestamp).not.toBe('HACKED');
   });
 });
