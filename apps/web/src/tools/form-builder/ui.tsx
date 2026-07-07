@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import {
   Type,
   AlignLeft,
@@ -33,6 +34,8 @@ import { SettingsPanel } from "./inspector/settings-panel";
 import { Section } from "./inspector/section";
 import { ResponsivePreview } from "./responsive-preview";
 import { SubmissionPanel } from "./submission-panel";
+import { useAiAssist } from "@/lib/ai/use-ai-assist";
+import { buildNlFormPrompt, parseNlFormResponse } from "./ai-nl-form";
 
 // ---------------------------------------------------------------------------
 // Direction C (hybrid) — "A structure + C drag freedom", now with a builder
@@ -135,6 +138,9 @@ let gseq = 10;
 
 
 export function FormBuilderTool() {
+  const t = useTranslations("ToolUI");
+  const ai = useAiAssist();
+  const [aiNl, setAiNl] = React.useState("");
   const [groups, setGroups] = React.useState<Group[]>(SEED_GROUPS);
   const [cards, setCards] = React.useState<Card[]>(SEED_CARDS);
   const [selected, setSelected] = React.useState<string | null>(null);
@@ -350,6 +356,19 @@ export function FormBuilderTool() {
     }
   }
 
+  // AI assist: NL description → FormConfig, gated by the same jsonToCards/parseFormConfig
+  // validation as manual JSON import. Success replaces the canvas via the same setters
+  // as applyJson; failure (parse gate throws, surfaced via ai.error) leaves it unchanged.
+  async function onAiGenerate() {
+    if (!aiNl.trim()) return;
+    const out = await ai.run({ ...buildNlFormPrompt(aiNl), json: true }, parseNlFormResponse);
+    if (out !== null) {
+      const { groups: g, cards: c } = jsonToCards(out);
+      setGroups(g);
+      setCards(c);
+    }
+  }
+
   async function copyJson() {
     try {
       await navigator.clipboard?.writeText(JSON.stringify(formConfig, null, 2));
@@ -387,19 +406,58 @@ export function FormBuilderTool() {
   return (
     <div className="flex flex-col gap-4">
       <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
-        {TABS.map((t) => (
+        {TABS.map((tabItem) => (
           <button
-            key={t.id}
+            key={tabItem.id}
             type="button"
-            onClick={() => setTab(t.id)}
-            aria-selected={tab === t.id}
+            onClick={() => setTab(tabItem.id)}
+            aria-selected={tab === tabItem.id}
             className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-              tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              tab === tabItem.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t.label}
+            {tabItem.label}
           </button>
         ))}
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <Sparkles className="size-4 shrink-0 text-muted-foreground" />
+          <input
+            value={aiNl}
+            placeholder={t("fbAiPlaceholder")}
+            onChange={(e) => setAiNl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void onAiGenerate();
+            }}
+            className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+          />
+          {ai.loading ? (
+            <button
+              type="button"
+              onClick={ai.cancel}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+            >
+              {t("fbAiCancel")}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void onAiGenerate()}
+              disabled={!ai.ready}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("fbAiGenerate")}
+            </button>
+          )}
+        </div>
+        {!ai.ready ? <p className="text-xs text-muted-foreground">{t("fbAiNotConfigured")}</p> : null}
+        {ai.error ? (
+          <p role="alert" className="text-xs text-destructive">
+            [{ai.error.kind}] {ai.error.message}
+          </p>
+        ) : null}
       </div>
 
       {tab === "canvas" ? (
