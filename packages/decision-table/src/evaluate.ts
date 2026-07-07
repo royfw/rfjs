@@ -56,7 +56,7 @@ export async function evaluateTable(
       fail({
         ruleId: rule.id,
         kind: 'uncoverable',
-        message: 'condition uses operators data-filter cannot evaluate in memory',
+        message: 'condition could not be evaluated in memory',
       });
       continue;
     }

@@ -43,6 +43,7 @@ describe('evaluateTable — hit policies', () => {
     expect(r.matched).toEqual(['big', 'eng']);
     expect(Array.isArray(r.outputs)).toBe(true);
     expect((r.outputs as Record<string, unknown>[])[0]).toEqual({ approver: 'CFO' });
+    expect((r.outputs as Record<string, unknown>[])[1]).toEqual({ approver: 'VP Engineering', note: 'routed for Engineering' });
   });
 
   it('no match + defaultOutputs → usedDefault (first: record; collect: single-element array)', async () => {
@@ -64,10 +65,21 @@ describe('evaluateTable — hit policies', () => {
 });
 
 describe('evaluateTable — "=" expressions', () => {
-  it('resolves expression outputs against the context (nested paths work)', async () => {
+  it('resolves expression outputs against the context', async () => {
     const r = await evaluateTable(TABLE, { amount: 60000, dept: 'Engineering' });
     expect(r.matched).toEqual(['eng']);
     expect(r.outputs).toEqual({ approver: 'VP Engineering', note: 'routed for Engineering' });
+  });
+
+  it('expressions can read nested context paths', async () => {
+    const t: DecisionTable = {
+      version: 1,
+      outputs: [{ key: 'assignee' }],
+      hitPolicy: 'first',
+      rules: [{ id: 'r1', when: cond('r1', 'amount', 'gt', 0), outputs: { assignee: '= user.name' } }],
+    };
+    const r = await evaluateTable(t, { amount: 1, user: { name: 'Amy' } });
+    expect(r.outputs).toEqual({ assignee: 'Amy' });
   });
 
   it('expression failure → key undefined + ruleErrors (non-strict), throws in strict', async () => {

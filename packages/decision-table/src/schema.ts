@@ -33,6 +33,8 @@ const ruleSchema = z.object({
   outputs: z.record(z.string(), z.unknown()),
 });
 
+// v1 looseness (deliberate): only validates "array or undefined" — structural, not deep;
+// elements are not checked against FieldSchema.
 const inputsSchema = z.custom<DecisionTable['inputs']>(
   (v) => v === undefined || Array.isArray(v),
   'inputs must be undefined or an array'
