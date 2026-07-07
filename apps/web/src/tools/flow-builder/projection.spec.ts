@@ -91,6 +91,30 @@ describe("projectFlow", () => {
     expect(out.edges[0]).toMatchObject({ source: "s", target: "e" });
   });
 
+  it("preserves an original kept→kept edge over a contracted duplicate with the same (source, target, label)", () => {
+    const withDirect: FlowDoc = {
+      version: 1,
+      nodes: [
+        { id: "start", type: "start", position: { x: 0, y: 0 } },
+        { id: "cond", type: "condition", position: { x: 200, y: 0 } },
+        { id: "act1", type: "action", position: { x: 400, y: 0 } },
+        { id: "end", type: "end", position: { x: 600, y: 0 } },
+      ],
+      edges: [
+        { id: "e1", source: "start", target: "cond" },
+        { id: "e3", source: "cond", target: "act1", sourceHandle: "yes", label: "yes" },
+        { id: "e5", source: "act1", target: "end" },
+        // 直接原始邊放在最後,確保收縮邊會先佔用同一 key
+        { id: "direct", source: "cond", target: "end", label: "yes", trigger: "onX" },
+      ],
+    };
+    const out = projectFlow(withDirect, { keep: ["condition"] });
+    const condToEnd = out.edges.filter((e) => e.source === "cond" && e.target === "end" && e.label === "yes");
+    expect(condToEnd).toHaveLength(1); // 不應同時保留原始邊與收縮邊的重複
+    expect(condToEnd[0]?.id).toBe("direct");
+    expect(condToEnd[0]?.trigger).toBe("onX");
+  });
+
   it("does not mutate the input doc", () => {
     const snapshot = JSON.stringify(doc);
     projectFlow(doc, { keep: [] });

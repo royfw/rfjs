@@ -29,9 +29,18 @@ export function projectFlow(doc: FlowDoc, options: ProjectOptions): FlowDoc {
   const edges: FlowEdge[] = [];
   const seen = new Set<string>(); // (source, target, label) 去重
 
-  // 只從「保留節點的出邊」出發,沿被移除節點 DFS,收所有可達的保留節點。
+  // 第一輪:保留節點→保留節點的原始邊一律原樣保留,並登記 key,優先於任何縮線邊。
+  for (const e of doc.edges) {
+    if (!isKept(e.source) || !isKept(e.target)) continue;
+    const key = `${e.source}|${e.target}|${e.label ?? ""}`;
+    seen.add(key);
+    edges.push({ ...e }); // 原樣保留(含 trigger/condition)
+  }
+
+  // 第二輪:只從「以被移除節點為目標的保留節點出邊」出發,沿被移除節點 DFS,收所有可達的保留節點,
+  // 產生縮線邊;對已存在的 key(不論來自原始邊或先前縮線邊)去重。
   for (const first of doc.edges) {
-    if (!isKept(first.source)) continue;
+    if (!isKept(first.source) || isKept(first.target)) continue;
     const stack: FlowEdge[] = [first];
     const visited = new Set<string>(); // 防被移除節點間的環
     while (stack.length > 0) {
@@ -41,17 +50,13 @@ export function projectFlow(doc: FlowDoc, options: ProjectOptions): FlowDoc {
         const key = `${first.source}|${edge.target}|${first.label ?? ""}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        if (edge === first) {
-          edges.push({ ...first }); // 未經縮線:原樣保留(含 trigger/condition)
-        } else {
-          edges.push({
-            id: contractedId(first.source, edge.target, first.label),
-            source: first.source,
-            target: edge.target,
-            ...(first.sourceHandle !== undefined ? { sourceHandle: first.sourceHandle } : {}),
-            ...(first.label !== undefined ? { label: first.label } : {}),
-          });
-        }
+        edges.push({
+          id: contractedId(first.source, edge.target, first.label),
+          source: first.source,
+          target: edge.target,
+          ...(first.sourceHandle !== undefined ? { sourceHandle: first.sourceHandle } : {}),
+          ...(first.label !== undefined ? { label: first.label } : {}),
+        });
       } else if (!visited.has(edge.target)) {
         visited.add(edge.target);
         for (const next of outgoing.get(edge.target) ?? []) stack.push(next);
