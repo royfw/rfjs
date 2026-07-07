@@ -68,6 +68,14 @@ export const packageRegistry: PackageDefinition[] = [
     ],
   },
   {
+    name: '@rfjs/decision-table',
+    status: 'preview',
+    href: '/packages/decision-table',
+    github: GITHUB,
+    tags: ['decision', 'rules', 'dmn'],
+    relatedTools: ['decision-table'],
+  },
+  {
     name: '@rfjs/es-query',
     status: 'preview',
     href: '/packages/es-query',
