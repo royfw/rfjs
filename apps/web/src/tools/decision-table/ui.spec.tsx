@@ -59,7 +59,7 @@ describe("DecisionTableTool", () => {
 
   it("json import rejects an invalid table", async () => {
     renderTool();
-    const ta = screen.getByLabelText(/table json/i) as HTMLTextAreaElement;
+    const ta = screen.getByLabelText(/^import$/i) as HTMLTextAreaElement;
     fireEvent.change(ta, { target: { value: '{"version": 2}' } });
     fireEvent.click(screen.getByRole("button", { name: /^import$/i }));
     await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());

@@ -14,7 +14,7 @@ import {
   type EvaluateResult,
 } from "@rfjs/decision-table";
 import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui";
-import type { BuilderGroup, FieldSchema } from "@rfjs/filter-builder";
+import { addInferredField, type BuilderGroup, type FieldSchema } from "@rfjs/filter-builder";
 import { Button } from "@rfjs/web-ui/components/button";
 import {
   Select,
@@ -218,7 +218,7 @@ export function DecisionTableTool() {
         <pre className="max-h-56 overflow-auto rounded-md border bg-muted/30 p-2 text-[11px]">{tableToJson(table)}</pre>
         <label htmlFor="dt-import" className="text-xs text-muted-foreground">{t("dtImport")}</label>
         <textarea id="dt-import" rows={3} value={importText} onChange={(e) => setImportText(e.target.value)}
-          className="w-full rounded-md border bg-background p-2 font-mono text-xs" aria-label={t("dtJson")} />
+          className="w-full rounded-md border bg-background p-2 font-mono text-xs" />
         <Button size="sm" variant="outline" onClick={() => {
           try {
             setTable(parseTable(importText));
@@ -251,7 +251,7 @@ export function DecisionTableTool() {
                 onCreateField={(path) =>
                   setTable((tb) => ({
                     ...tb,
-                    inputs: [...(tb.inputs ?? []), { path, dataType: "string", include: true, kind: "jsonb" }],
+                    inputs: addInferredField((tb.inputs ?? []) as FieldSchema[], path),
                   }))
                 }
               />
@@ -261,6 +261,8 @@ export function DecisionTableTool() {
               {table.outputs.map((def) => (
                 <div key={def.key} className="mb-2">
                   <label htmlFor={`dt-out-${def.key}`} className="mb-0.5 block text-xs">{def.label ?? def.key}</label>
+                  {/* v1 limitation: output values are `unknown`; editing here always coerces to a string
+                      (a plain constant or an "=" expression), since string is the primary authoring path. */}
                   <input
                     id={`dt-out-${def.key}`}
                     value={String(editingRule.outputs[def.key] ?? "")}
