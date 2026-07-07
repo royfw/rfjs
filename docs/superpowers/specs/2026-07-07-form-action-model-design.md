@@ -118,7 +118,7 @@ metaProvider?: () => Record<string, unknown>;
   - clear:multi-select 現有 field keys;custom:name 輸入框;api:url、method select、fields multi-select、responseMap key-value 列表編輯、success/error 訊息文字。
 - Preview 分頁 `SubmissionPanel`:顯示最後一次動作的完整 `{ data, meta }`(含 `meta.action` 標示哪顆按鈕);api 在 preview 用內建 echo fetcher(回傳收到的 body,加 `{ echoedAt }`)讓 responseMap 可示範。
 - `SAMPLE_CONFIG` 加示範:主送出(submit)+ 存草稿(custom "save-draft")+ 搜尋列 inline 清除(clear)。
-- i18n:tool messages 加 palette/inspector 新鍵(en + zh-TW);engine 內建訊息(api 成功/失敗預設文案)走 LocalizedLabel 預設值。
+- i18n:palette/inspector 文案**沿用既有慣例(硬編英文)** —— 現有 settings-panel 與 KIND_META 全是英文,只為新面板 i18n 會不一致(整個 inspector 的 i18n 化留待日後一次做)。範例按鈕的 label 用 LocalizedLabel(en + zh-TW);api 成功/失敗訊息可配置 LocalizedLabel,缺省用英文預設文案。
 
 ## 5. 測試策略
 
