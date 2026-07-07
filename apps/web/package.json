@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@rfjs/bpmn-ui": "workspace:*",
+    "@rfjs/decision-table": "workspace:*",
     "@rfjs/filter-builder": "workspace:*",
     "@rfjs/filter-builder-ui": "workspace:*",
     "@rfjs/form-builder": "workspace:*",

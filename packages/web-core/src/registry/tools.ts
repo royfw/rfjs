@@ -130,6 +130,14 @@ export const toolRegistry: ToolDefinition[] = [
     tags: ['flow', 'builder', 'canvas', 'no-code'],
   },
   {
+    id: 'decision-table',
+    category: 'transform',
+    surface: 'web',
+    status: 'preview',
+    relatedPackages: ['@rfjs/decision-table', '@rfjs/filter-builder'],
+    tags: ['decision', 'rules', 'routing', 'dmn'],
+  },
+  {
     id: 'object-transformer',
     category: 'transform',
     surface: 'workbench',
