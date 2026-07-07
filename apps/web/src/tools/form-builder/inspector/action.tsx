@@ -92,7 +92,7 @@ export function ActionSection({
               );
             })}
           </fieldset>
-          <ResponseMapEditor action={action} patch={patch} siblingFields={siblingFields} />
+          <ResponseMapEditor key={card.id} action={action} patch={patch} siblingFields={siblingFields} />
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Success message
             <input className={INPUT_CLS} value={typeof action.messages?.success === "string" ? action.messages.success : ""} onChange={(e) => patch({ ...action, messages: { ...action.messages, success: e.target.value || undefined } })} />
@@ -126,30 +126,65 @@ export function ActionSection({
   );
 }
 
-/** responseMap 的 key-value 列表編輯(path → field key)。 */
+type ResponseMapRow = { id: number; path: string; target: string };
+
+/**
+ * responseMap 的 key-value 列表編輯(path → field key)。
+ *
+ * Rows are kept in local state with a stable synthetic `id` so duplicate/empty
+ * `path` values don't collapse into each other while typing (Object.fromEntries
+ * would silently drop earlier rows sharing a path). Only entries with a
+ * non-empty, de-duplicated path are serialized outward via `patch`; rows with
+ * empty or duplicate paths simply stay local (unsaved) until resolved.
+ */
 function ResponseMapEditor({
   action, patch, siblingFields,
 }: { action: Extract<ButtonAction, { type: "api" }>; patch: (a: ButtonAction) => void; siblingFields: { key: string; dataType: string }[] }) {
-  const entries = Object.entries(action.responseMap ?? {});
-  const write = (next: [string, string][]) =>
-    patch({ ...action, responseMap: next.length ? Object.fromEntries(next) : undefined });
+  const nextId = React.useRef(0);
+  const makeId = () => nextId.current++;
+  const [rows, setRows] = React.useState<ResponseMapRow[]>(() =>
+    Object.entries(action.responseMap ?? {}).map(([path, target]) => ({ id: makeId(), path, target })),
+  );
+
+  const commit = (next: ResponseMapRow[]) => {
+    setRows(next);
+    const seen = new Set<string>();
+    const entries: [string, string][] = [];
+    for (const { path, target } of next) {
+      if (!path || seen.has(path)) continue;
+      seen.add(path);
+      entries.push([path, target]);
+    }
+    patch({ ...action, responseMap: entries.length ? Object.fromEntries(entries) : undefined });
+  };
+
   return (
     <fieldset className="flex flex-col gap-1 text-xs text-muted-foreground">
       <legend>Response map (path → field)</legend>
-      {entries.map(([path, target], i) => (
-        <div key={i} className="flex items-center gap-1">
-          <input className={`${INPUT_CLS} min-w-0 flex-1 font-mono`} aria-label={`response path ${i}`} value={path} onChange={(e) => write(entries.map((en, j) => (j === i ? [e.target.value, en[1]] : en)) as [string, string][])} />
+      {rows.map((row, i) => (
+        <div key={row.id} className="flex items-center gap-1">
+          <input
+            className={`${INPUT_CLS} min-w-0 flex-1 font-mono`}
+            aria-label={`response path ${i}`}
+            value={row.path}
+            onChange={(e) => commit(rows.map((r) => (r.id === row.id ? { ...r, path: e.target.value } : r)))}
+          />
           <span>→</span>
-          <select className={`${INPUT_CLS} min-w-0 flex-1`} aria-label={`target field ${i}`} value={target} onChange={(e) => write(entries.map((en, j) => (j === i ? [en[0], e.target.value] : en)) as [string, string][])}>
+          <select
+            className={`${INPUT_CLS} min-w-0 flex-1`}
+            aria-label={`target field ${i}`}
+            value={row.target}
+            onChange={(e) => commit(rows.map((r) => (r.id === row.id ? { ...r, target: e.target.value } : r)))}
+          >
             {siblingFields.map((f) => <option key={f.key} value={f.key}>{f.key}</option>)}
           </select>
-          <button type="button" aria-label={`remove mapping ${i}`} className="text-muted-foreground hover:text-foreground" onClick={() => write(entries.filter((_, j) => j !== i) as [string, string][])}>×</button>
+          <button type="button" aria-label={`remove mapping ${i}`} className="text-muted-foreground hover:text-foreground" onClick={() => commit(rows.filter((r) => r.id !== row.id))}>×</button>
         </div>
       ))}
       <button
         type="button"
         className="self-start rounded-md border border-input px-2 py-1 hover:bg-accent"
-        onClick={() => write([...entries, ["", siblingFields[0]?.key ?? ""]] as [string, string][])}
+        onClick={() => commit([...rows, { id: makeId(), path: "", target: siblingFields[0]?.key ?? "" }])}
         disabled={siblingFields.length === 0}
       >
         + mapping

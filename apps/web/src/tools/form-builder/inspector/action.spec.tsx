@@ -48,4 +48,12 @@ describe("ActionSection", () => {
     fireEvent.click(screen.getByLabelText(/validate before run/i));
     expect(onChange).toHaveBeenCalledWith({ validate: true });
   });
+
+  it("responseMap: clicking + mapping twice keeps both rows editable (no silent collapse on duplicate empty paths)", () => {
+    const onChange = vi.fn();
+    render(<ActionSection card={btnCard({ action: { type: "api", url: "/x" } })} onChange={onChange} siblingFields={fields} />);
+    fireEvent.click(screen.getByText("+ mapping"));
+    fireEvent.click(screen.getByText("+ mapping"));
+    expect(screen.getAllByLabelText(/response path/i)).toHaveLength(2);
+  });
 });
