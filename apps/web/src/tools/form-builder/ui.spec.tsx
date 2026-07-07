@@ -23,8 +23,30 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
 
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { FormBuilderTool } from "./ui";
+import { FormBuilderTool, createPreviewFetcher } from "./ui";
 import { resolveCards, collides, type PlacedCard } from "./layout-grid";
+
+describe("createPreviewFetcher", () => {
+  it("echoes an api-action request (body shaped { data, meta }) instead of delegating to sampleFetcher", async () => {
+    const body = { data: { name: "Ada" }, meta: { name: "save-draft" } };
+    const result = await createPreviewFetcher({ url: "/api/actions/save-draft", body });
+    expect(typeof (result as { echoedAt: string }).echoedAt).toBe("string");
+    expect((result as { received: unknown }).received).toEqual(body);
+    // Not sampleFetcher's canned dataSource shape (an array under `data`).
+    expect(Array.isArray((result as { data?: unknown }).data)).toBe(false);
+  });
+
+  it("delegates a dataSource request (no data/meta body) to sampleFetcher's canned response", async () => {
+    const result = await createPreviewFetcher({ url: "/api/countries" });
+    expect(result).toEqual({
+      data: [
+        { code: "tw", name: "Taiwan" },
+        { code: "jp", name: "Japan" },
+        { code: "us", name: "United States" },
+      ],
+    });
+  });
+});
 
 describe("FormBuilderTool preview", () => {
   it("Preview tab renders the real ConfigForm with a labelled control", () => {
