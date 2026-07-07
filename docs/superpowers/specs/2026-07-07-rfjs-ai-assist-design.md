@@ -39,9 +39,14 @@ apps/web/src/lib/ai/                    ← seam(未來抽 @rfjs/ai-assist 的�
   use-ai-assist.ts  hook:{ ready, loading, error, cancel, run<T>(req, parse:(raw)=>T) }
                    run = complete → parse(驗證閘門)→ 回 T;任何錯誤落 error 狀態
 
+packages/web-ui/src/components/dialog.tsx   ← 新增(shadcn/radix Dialog 標準件)
+  repo 已兩度手刻 overlay(flow 的 node-sheet、decision-table 的 rule-sheet),
+  第三次需求(置中 modal)正式進設計系統;@rfjs/web-ui 為 private 套件,
+  依 changeset 政策仍附 changeset(version-only 描述即可)。
+
 apps/web/src/components/shared/ai-settings-dialog.tsx
-  topbar(app-header.tsx)✨ 按鈕 → dialog:baseUrl / apiKey / model + 「測試連線」
-  (打一個最小 completion 驗證可用)
+  topbar(app-header.tsx)✨ 按鈕 → Dialog(web-ui):baseUrl / apiKey / model
+  + 「測試連線」(打一個最小 completion 驗證可用)
 
 各工具的 prompt 組裝 + 驗證接線(永遠留在 app,不進未來套件):
   apps/web/src/tools/_filter-builder/ai-nl-filter.ts(+ scaffold UI 接入)
@@ -107,4 +112,6 @@ apps/web/src/components/shared/ai-settings-dialog.tsx
 
 ## 9. 慣例
 
-spec/plan 繁中;commit/PR 英文 conventional(subject 全小寫開頭,結尾 `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`,trailer 前空行);worktree 內開發;**HOLD PR**;純 app-local 變更**無 changeset**。
+spec/plan 繁中;commit/PR 英文 conventional(subject 全小寫開頭,結尾 `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`,trailer 前空行);worktree 內開發;**HOLD PR**。
+
+**Changeset 政策(依 repo 既有規範)**:`packages/*` 有任何變更就附 changeset —— **private 套件也一樣**(描述可精簡,version-only 亦可);`apps/*` 變更不需要。本案預期:`@rfjs/web-ui`(新增 Dialog)→ **要附**;`apps/web` 其餘(lib/ai、tools 接線、dialog UI)→ 不需要。若實作過程另有 `packages/*` 被動到,一律補 changeset。
