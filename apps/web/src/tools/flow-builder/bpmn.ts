@@ -100,10 +100,32 @@ export function compileToBpmn(doc: FlowDoc): string {
     return `<bpmndi:BPMNShape id="${nodeId(n.id)}_di" bpmnElement="${nodeId(n.id)}"${marker}><dc:Bounds x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" /></bpmndi:BPMNShape>`;
   });
 
+  // 平行邊(相同 source→target,例:condition 的 yes/no 投影後同接 end)分組,
+  // 讓群組內每條邊各自散開一個中點,避免疊線導致 name 標籤重疊。
+  const parallelIndex = new Map<string, number>();
+  const parallelCount = new Map<string, number>();
+  for (const e of edges) {
+    const key = `${e.source}→${e.target}`;
+    parallelCount.set(key, (parallelCount.get(key) ?? 0) + 1);
+  }
+
   const diEdges = edges.map((e) => {
     const s = nodeBounds(nodeById.get(e.source)!);
     const t = nodeBounds(nodeById.get(e.target)!);
-    return `<bpmndi:BPMNEdge id="${flowId(e.id)}_di" bpmnElement="${flowId(e.id)}"><di:waypoint x="${s.x + s.w}" y="${Math.round(s.y + s.h / 2)}" /><di:waypoint x="${t.x}" y="${Math.round(t.y + t.h / 2)}" /></bpmndi:BPMNEdge>`;
+    const sx = s.x + s.w;
+    const sy = Math.round(s.y + s.h / 2);
+    const tx = t.x;
+    const ty = Math.round(t.y + t.h / 2);
+    const key = `${e.source}→${e.target}`;
+    const n = parallelCount.get(key)!;
+    if (n === 1) {
+      return `<bpmndi:BPMNEdge id="${flowId(e.id)}_di" bpmnElement="${flowId(e.id)}"><di:waypoint x="${sx}" y="${sy}" /><di:waypoint x="${tx}" y="${ty}" /></bpmndi:BPMNEdge>`;
+    }
+    const i = parallelIndex.get(key) ?? 0;
+    parallelIndex.set(key, i + 1);
+    const mx = Math.round((sx + tx) / 2);
+    const my = Math.round((sy + ty) / 2 + (i - (n - 1) / 2) * 36);
+    return `<bpmndi:BPMNEdge id="${flowId(e.id)}_di" bpmnElement="${flowId(e.id)}"><di:waypoint x="${sx}" y="${sy}" /><di:waypoint x="${mx}" y="${my}" /><di:waypoint x="${tx}" y="${ty}" /></bpmndi:BPMNEdge>`;
   });
 
   return [

@@ -83,6 +83,37 @@ describe("compileToBpmn", () => {
     expect(xml).toContain('<di:waypoint x="133" y="150" /><di:waypoint x="250" y="150" />');
   });
 
+  it("fans out parallel edges sharing the same source/target with a middle waypoint", () => {
+    // s(start@0,0): cx=75,cy=23,36x36 → bounds x=57,y=5 → right-center (93,23)
+    // c(condition@200,0): cx=275,cy=23,50x50 → bounds x=250,y=-2 → left-center (250,23), right-center (300,23)
+    // e(end@400,0): cx=475,cy=23,36x36 → bounds x=457,y=5 → left-center (457,23)
+    const parallel: FlowDoc = {
+      version: 1,
+      nodes: [
+        { id: "s", type: "start", position: { x: 0, y: 0 } },
+        { id: "c", type: "condition", position: { x: 200, y: 0 } },
+        { id: "e", type: "end", position: { x: 400, y: 0 } },
+      ],
+      edges: [
+        { id: "sc", source: "s", target: "c" },
+        { id: "yes", source: "c", target: "e", label: "yes" },
+        { id: "no", source: "c", target: "e", label: "no" },
+      ],
+    };
+    const out = compileToBpmn(parallel);
+    // single edge (s->c) unaffected: exactly 2 waypoints, unchanged output.
+    expect(out).toContain('<di:waypoint x="93" y="23" /><di:waypoint x="250" y="23" />');
+    // parallel edges (c->e ×2): 3 waypoints each, middle waypoints share x, y differ by 36.
+    expect(out).toContain('<di:waypoint x="300" y="23" /><di:waypoint x="379" y="5" /><di:waypoint x="457" y="23" />');
+    expect(out).toContain('<di:waypoint x="300" y="23" /><di:waypoint x="379" y="41" /><di:waypoint x="457" y="23" />');
+    const scEdge = out.match(/<bpmndi:BPMNEdge id="Flow_sc_di"[^]*?<\/bpmndi:BPMNEdge>/)![0];
+    expect([...scEdge.matchAll(/<di:waypoint/g)]).toHaveLength(2);
+    const yesEdge = out.match(/<bpmndi:BPMNEdge id="Flow_yes_di"[^]*?<\/bpmndi:BPMNEdge>/)![0];
+    expect([...yesEdge.matchAll(/<di:waypoint/g)]).toHaveLength(3);
+    const noEdge = out.match(/<bpmndi:BPMNEdge id="Flow_no_di"[^]*?<\/bpmndi:BPMNEdge>/)![0];
+    expect([...noEdge.matchAll(/<di:waypoint/g)]).toHaveLength(3);
+  });
+
   it("condition yes/no outgoing flows carry names", () => {
     expect(xml).toMatch(/<bpmn:sequenceFlow [^>]*name="yes"/);
     expect(xml).toMatch(/<bpmn:sequenceFlow [^>]*name="no"/);
