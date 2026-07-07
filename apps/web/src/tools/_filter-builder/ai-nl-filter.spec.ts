@@ -29,13 +29,16 @@ describe("parseNlFilterResponse (validation gate)", () => {
     expect(out).toContain("\n"); // pretty-printed
   });
 
-  it("rejects non-json and structurally invalid groups", () => {
-    expect(() => parseNlFilterResponse("not json")).toThrow();
-    expect(() => parseNlFilterResponse('{"nope":true}')).toThrow();
+  it("rejects non-json input with a friendly message", () => {
+    expect(() => parseNlFilterResponse("not json")).toThrow(SyntaxError);
   });
 
-  it("rejects a group whose leaf is missing dataType", () => {
+  it("rejects a structurally invalid group with a friendly message", () => {
+    expect(() => parseNlFilterResponse('{"nope":true}')).toThrow("the AI response is not a valid filter group");
+  });
+
+  it("rejects a group whose leaf is missing dataType with a friendly message", () => {
     const raw = JSON.stringify({ logic: "and", filters: [{ field: "amount", operator: "gt", value: 100 }] });
-    expect(() => parseNlFilterResponse(raw)).toThrow();
+    expect(() => parseNlFilterResponse(raw)).toThrow("the AI response is not a valid filter group");
   });
 });

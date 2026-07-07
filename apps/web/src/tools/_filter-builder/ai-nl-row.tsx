@@ -47,9 +47,17 @@ export function AiNlRow({ schema, onApply }: { schema: FieldSchema[]; onApply: (
       </div>
       {!ai.ready ? <p className="text-xs text-muted-foreground">{t("aiNotConfigured")}</p> : null}
       {ai.error ? (
-        <p role="alert" className="text-xs text-fault">
-          [{ai.error.kind}] {ai.error.message}
-        </p>
+        <div role="alert" className="text-xs text-fault">
+          <p>
+            [{ai.error.kind}] {ai.error.message}
+          </p>
+          {ai.error.kind === "parse" && ai.error.detail ? (
+            <details>
+              <summary>{t("aiViewRaw")}</summary>
+              <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs">{ai.error.detail}</pre>
+            </details>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

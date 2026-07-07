@@ -48,6 +48,7 @@ export const messages: LocaleMessages = {
       dtAiNoFindings: "No findings — the table looks consistent.",
       dtAiDisclaimer: "AI suggestions — not an engine verdict.",
       dtAiNotConfigured: "Set up an AI connection first (top-right ✨).",
+      dtAiViewRaw: "View raw output",
     },
   },
   "zh-TW": {
@@ -97,6 +98,7 @@ export const messages: LocaleMessages = {
       dtAiNoFindings: "沒有發現問題 —— 表格看起來一致。",
       dtAiDisclaimer: "AI 建議,非引擎判定。",
       dtAiNotConfigured: "請先設定 AI 連線(右上 ✨)。",
+      dtAiViewRaw: "檢視原始輸出",
     },
   },
 };

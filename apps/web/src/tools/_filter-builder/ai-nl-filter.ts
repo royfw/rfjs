@@ -25,6 +25,10 @@ export function parseNlFilterResponse(raw: string): string {
   const parsed: unknown = JSON.parse(raw); // SyntaxError 自然上拋
   const text = JSON.stringify(parsed, null, 2);
   const r = parseFilterGroup(text);
-  if (!r.ok) throw new Error(`invalid filter group: ${r.error}`);
+  if (!r.ok) {
+    const reason =
+      r.error === "invalidJson" ? "the AI response is not valid JSON" : "the AI response is not a valid filter group";
+    throw new Error(reason);
+  }
   return text;
 }

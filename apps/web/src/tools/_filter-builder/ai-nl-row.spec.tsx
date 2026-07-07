@@ -5,8 +5,9 @@ import { describe, expect, it, vi } from "vitest";
 import en from "@/messages/en.json";
 
 const mockRun = vi.fn();
+let mockError: { kind: string; message: string; detail?: string } | null = null;
 vi.mock("@/lib/ai/use-ai-assist", () => ({
-  useAiAssist: () => ({ ready: true, loading: false, error: null, cancel: vi.fn(), run: mockRun }),
+  useAiAssist: () => ({ ready: true, loading: false, error: mockError, cancel: vi.fn(), run: mockRun }),
 }));
 
 import { AiNlRow } from "./ai-nl-row";
@@ -36,5 +37,22 @@ describe("AiNlRow", () => {
     fireEvent.click(screen.getByRole("button", { name: /ai generate/i }));
     await waitFor(() => expect(mockRun).toHaveBeenCalled());
     expect(onApply).not.toHaveBeenCalled();
+  });
+
+  it("shows a collapsible raw-output view for parse errors with detail", () => {
+    mockError = { kind: "parse", message: "the AI response is not valid JSON", detail: "not json at all" };
+    renderRow();
+    expect(screen.getByRole("alert").textContent).toContain("[parse] the AI response is not valid JSON");
+    expect(screen.getByText("View raw output")).toBeTruthy();
+    expect(screen.getByText("not json at all")).toBeTruthy();
+    mockError = null;
+  });
+
+  it("does not show a raw-output view for non-parse errors", () => {
+    mockError = { kind: "http", message: "request failed" };
+    renderRow();
+    expect(screen.getByRole("alert").textContent).toContain("[http] request failed");
+    expect(screen.queryByText("View raw output")).toBeNull();
+    mockError = null;
   });
 });

@@ -57,6 +57,7 @@
     "aiGenerate": "AI Generate",
     "aiCancel": "Cancel",
     "aiNotConfigured": "Set up an AI connection first (top-right ✨).",
+    "aiViewRaw": "View raw output",
     "types": {
       "string": "String",
       "number": "Number",

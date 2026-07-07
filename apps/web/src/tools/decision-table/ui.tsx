@@ -196,9 +196,17 @@ export function DecisionTableTool() {
           ))}
         </ul>
         {ai.error ? (
-          <p role="alert" className="px-3 py-2 text-xs text-fault">
-            [{ai.error.kind}] {ai.error.message}
-          </p>
+          <div role="alert" className="px-3 py-2 text-xs text-fault">
+            <p>
+              [{ai.error.kind}] {ai.error.message}
+            </p>
+            {ai.error.kind === "parse" && ai.error.detail ? (
+              <details>
+                <summary>{t("dtAiViewRaw")}</summary>
+                <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs">{ai.error.detail}</pre>
+              </details>
+            ) : null}
+          </div>
         ) : null}
         {findings !== null ? (
           <div data-testid="dt-ai-findings" className="border-t px-3 py-2 text-sm">
