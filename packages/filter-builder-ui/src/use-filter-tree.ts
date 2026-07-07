@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 
 import { addInferredField, emptyGroup } from "@rfjs/filter-builder";
