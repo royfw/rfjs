@@ -27,7 +27,7 @@ import { ConfigForm } from "@rfjs/form-builder-ui";
 import type { ActionMeta, SubmissionMeta } from "@rfjs/form-builder-ui";
 import type { Card, Group, Kind, Component } from "./model";
 import { cardsToFormConfig, jsonToCards, cardLabel, componentDataType, formConfigToCards } from "./model";
-import { SAMPLE_CONFIG, sampleUploader } from "./sample";
+import { SAMPLE_CONFIG, sampleUploader, sampleFetcher } from "./sample";
 import { resolveCards, moveItem } from "./layout-grid";
 import { SettingsPanel } from "./inspector/settings-panel";
 import { Section } from "./inspector/section";
@@ -46,6 +46,23 @@ const ROW_H = 84;
 const GAP = 8;
 const DRAG_THRESHOLD = 4; // px the pointer must travel before a press becomes a drag (a click just selects)
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+// Merged preview fetcher: echoes api-action requests (body shaped { data, meta }),
+// otherwise delegates to sampleFetcher for dataSource requests (e.g. /api/countries).
+// Detects api-action by checking if req.body has both 'data' and 'meta' properties.
+export async function createPreviewFetcher(req: { url: string; body?: unknown }) {
+  if (
+    req.body &&
+    typeof req.body === "object" &&
+    "data" in req.body &&
+    "meta" in req.body
+  ) {
+    // api-action request: echo it back with a timestamp
+    return { echoedAt: new Date().toISOString(), received: req.body };
+  }
+  // dataSource request: delegate to sampleFetcher
+  return sampleFetcher(req);
+}
 
 const KIND_META: Record<
   Kind,
@@ -153,12 +170,8 @@ export function FormBuilderTool() {
   // so an unstable formConfig would create an infinite re-render loop.
   const formConfig = React.useMemo(() => cardsToFormConfig(groups, cards), [groups, cards]);
 
-  // Preview-only echo fetcher: no network, just returns the request body back with a
-  // timestamp — lets an `api` button's `responseMap` be demoed without a real backend.
-  const echoFetcher = React.useCallback(
-    async (req: { url: string; body?: unknown }) => ({ echoedAt: new Date().toISOString(), received: req.body }),
-    [],
-  );
+  // Memoized wrapper of createPreviewFetcher for stable reference across renders
+  const previewFetcher = React.useCallback(createPreviewFetcher, []);
   // Shared onSubmit/onAction handler for both Preview ConfigForm instances: writes the
   // action's payload into the same `payload` state the SubmissionPanel(s) read (an action
   // firing overwrites the live onPayloadChange value), and reveals the Preview tab's
@@ -518,7 +531,7 @@ export function FormBuilderTool() {
                 <ConfigForm
                   config={formConfig}
                   locale="en"
-                  fetcher={echoFetcher}
+                  fetcher={previewFetcher}
                   uploadHandler={sampleUploader}
                   onPayloadChange={setPayload}
                   onSubmit={handleSubmit}
@@ -535,7 +548,7 @@ export function FormBuilderTool() {
             <ConfigForm
               config={formConfig}
               locale="en"
-              fetcher={echoFetcher}
+              fetcher={previewFetcher}
               uploadHandler={sampleUploader}
               onPayloadChange={setPayload}
               onSubmit={handleSubmit}
