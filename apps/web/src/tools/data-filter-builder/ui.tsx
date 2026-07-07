@@ -5,7 +5,14 @@ import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
-import { MetadataStrip, RISE, SampleCard, useFilterBuilder, useOperatorLabels } from "@/tools/_filter-builder";
+import {
+  AiNlRow,
+  MetadataStrip,
+  RISE,
+  SampleCard,
+  useFilterBuilder,
+  useOperatorLabels,
+} from "@/tools/_filter-builder";
 
 import { DataPanel } from "./ui/data-panel";
 
@@ -127,6 +134,7 @@ export function DataFilterBuilder() {
           matched={live.matched}
           canonicalJson={fb.canonicalJson}
           onCanonicalChange={fb.onCanonicalChange}
+          aiRow={<AiNlRow schema={fb.schema} onApply={fb.onCanonicalChange} />}
           error={reverseText}
           labels={{
             data: t("dfbData"),

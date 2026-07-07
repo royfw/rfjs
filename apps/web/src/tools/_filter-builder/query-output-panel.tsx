@@ -3,7 +3,7 @@
 import { Button } from "@rfjs/web-ui/components/button";
 import { CopyButton } from "@rfjs/web-ui/components/copy-button";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { CanonicalEditor } from "@/tools/_filter-builder";
 
@@ -23,12 +23,15 @@ export function QueryOutputPanel({
   secondary,
   canonicalJson,
   onCanonicalChange,
+  aiRow,
   labels,
 }: {
   primary: string | null;
   secondary: string | null;
   canonicalJson: string;
   onCanonicalChange: (text: string) => void;
+  /** Optional row rendered directly above the canonical editor (e.g. <AiNlRow>). */
+  aiRow?: ReactNode;
   labels: QueryOutputLabels;
 }) {
   const [open, setOpen] = useState(true);
@@ -105,12 +108,15 @@ export function QueryOutputPanel({
           ) : null}
 
           {tab === "canonical" ? (
-            <CanonicalEditor
-              value={canonicalJson}
-              onChange={onCanonicalChange}
-              error={labels.reverseError}
-              labels={{ canonicalHint: labels.canonicalHint, copy: labels.copy }}
-            />
+            <div className="flex flex-col gap-3">
+              {aiRow}
+              <CanonicalEditor
+                value={canonicalJson}
+                onChange={onCanonicalChange}
+                error={labels.reverseError}
+                labels={{ canonicalHint: labels.canonicalHint, copy: labels.copy }}
+              />
+            </div>
           ) : null}
         </div>
       ) : null}

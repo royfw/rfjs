@@ -53,6 +53,10 @@
     "data": "資料",
     "filter": "篩選條件",
     "matched": "命中 {count} 筆",
+    "aiNlPlaceholder": "用白話描述你要的過濾條件…",
+    "aiGenerate": "AI 產生",
+    "aiCancel": "取消",
+    "aiNotConfigured": "請先設定 AI 連線(右上 ✨)。",
     "types": {
       "string": "字串",
       "number": "數字",

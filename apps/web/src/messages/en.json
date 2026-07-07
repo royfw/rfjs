@@ -53,6 +53,10 @@
     "data": "Data",
     "filter": "Filter",
     "matched": "{count} matched",
+    "aiNlPlaceholder": "Describe the filter in plain language…",
+    "aiGenerate": "AI Generate",
+    "aiCancel": "Cancel",
+    "aiNotConfigured": "Set up an AI connection first (top-right ✨).",
     "types": {
       "string": "String",
       "number": "Number",
