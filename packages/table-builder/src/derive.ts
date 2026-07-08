@@ -9,11 +9,16 @@ export function deriveTableConfig(meta: DataResourceMeta): TableConfig {
   const columns: TableColumnConfig[] = meta.fields.map((field) => {
     const column: TableColumnConfig = {
       key: field.key,
-      label: field.label,
+      label: typeof field.label === 'object' ? { ...field.label } : field.label,
       dataType: field.dataType,
     };
     if (field.format !== undefined) column.format = field.format;
-    if (field.options !== undefined) column.options = field.options;
+    if (field.options !== undefined) {
+      column.options = field.options.map((o) => ({
+        ...o,
+        ...(typeof o.label === 'object' ? { label: { ...o.label } } : {}),
+      }));
+    }
     if (field.sortable !== undefined) column.sortable = field.sortable;
     // `filterable` is intentionally not carried over (v1 table has no filter consumer).
     return column;
