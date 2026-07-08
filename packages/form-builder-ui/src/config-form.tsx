@@ -19,7 +19,6 @@ import {
   type SignatureTransport,
   type ButtonActionType,
   type ButtonItem,
-  type ResultItem,
 } from '@rfjs/form-builder';
 import { useDataSource } from './use-data-source';
 import { useContainerBreakpoint } from './use-container-breakpoint';
