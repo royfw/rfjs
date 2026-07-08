@@ -78,7 +78,7 @@ describe("AiAssistBlock — ask / explain", () => {
     expect(screen.getByText("能挑出活躍嗎?")).toBeTruthy();
     expect(onApply).not.toHaveBeenCalled();
     // ask 走非 JSON 模式
-    expect(mockRun.mock.calls[0][0].json).toBeUndefined();
+    expect(mockRun.mock.calls[0]![0].json).toBeUndefined();
   });
 
   it("解釋:免輸入可按、堆疊出現回答", async () => {
@@ -107,7 +107,7 @@ describe("AiAssistBlock — 持久化 / 清除 / 狀態", () => {
     );
     renderBlock();
     const answers = await screen.findAllByText(/第[一二]則/);
-    expect(answers[0].textContent).toBe("第二則"); // 最新在上
+    expect(answers[0]!.textContent).toBe("第二則"); // 最新在上
   });
 
   it("清除:堆疊清空且 localStorage 移除", async () => {

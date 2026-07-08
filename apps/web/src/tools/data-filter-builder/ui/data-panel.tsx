@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@rfjs/web-ui/components/table";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
 import { CanonicalEditor } from "@/tools/_filter-builder";
 
@@ -75,7 +75,6 @@ export function DataPanel({
   matched,
   canonicalJson,
   onCanonicalChange,
-  aiRow,
   error,
   labels,
 }: {
@@ -83,8 +82,6 @@ export function DataPanel({
   matched: unknown[];
   canonicalJson: string;
   onCanonicalChange: (text: string) => void;
-  /** Optional row rendered directly above the canonical editor (e.g. <AiNlRow>). */
-  aiRow?: ReactNode;
   error: string | null;
   labels: DataPanelLabels;
 }) {
@@ -144,7 +141,6 @@ export function DataPanel({
           {tab === "raw" ? <RowsTable rows={asRows(rows)} empty={labels.empty} /> : null}
           {tab === "json" ? (
             <div className="flex flex-col gap-3">
-              {aiRow}
               <CanonicalEditor
                 value={canonicalJson}
                 onChange={onCanonicalChange}

@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import {
-  AiNlRow,
+  AiAssistBlock,
   MetadataStrip,
   RISE,
   SampleCard,
@@ -116,6 +116,16 @@ export function DataFilterBuilder() {
           </span>
         </div>
         <div className="overflow-x-auto p-5 sm:p-6">
+          <div className="mb-4">
+            <AiAssistBlock
+              schema={fb.schema}
+              canonicalJson={fb.canonicalJson}
+              compiled={null}
+              engineId="data-filter"
+              onApply={fb.onCanonicalChange}
+              logKey="rfjs.ai.log.data-filter-builder"
+            />
+          </div>
           <FilterTreeEditor
             group={fb.tree}
             engineId="data-filter"
@@ -134,7 +144,6 @@ export function DataFilterBuilder() {
           matched={live.matched}
           canonicalJson={fb.canonicalJson}
           onCanonicalChange={fb.onCanonicalChange}
-          aiRow={<AiNlRow schema={fb.schema} onApply={fb.onCanonicalChange} />}
           error={reverseText}
           labels={{
             data: t("dfbData"),

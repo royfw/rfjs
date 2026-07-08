@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import {
-  AiNlRow,
+  AiAssistBlock,
   MetadataStrip,
   QueryOutputPanel,
   RISE,
@@ -107,6 +107,16 @@ export function JsonbQueryBuilder() {
           </span>
         </div>
         <div className="overflow-x-auto p-5 sm:p-6">
+          <div className="mb-4">
+            <AiAssistBlock
+              schema={fb.schema}
+              canonicalJson={fb.canonicalJson}
+              compiled={compiled.ok ? compiled.primary : null}
+              engineId="jsonb"
+              onApply={fb.onCanonicalChange}
+              logKey="rfjs.ai.log.jsonb-query-builder"
+            />
+          </div>
           <FilterTreeEditor
             group={fb.tree}
             engineId="jsonb"
@@ -124,7 +134,6 @@ export function JsonbQueryBuilder() {
           secondary={compiled.ok ? (compiled.secondary ?? null) : null}
           canonicalJson={fb.canonicalJson}
           onCanonicalChange={fb.onCanonicalChange}
-          aiRow={<AiNlRow schema={fb.schema} onApply={fb.onCanonicalChange} />}
           labels={{
             output: t("jqbOutput"),
             primaryLabel: t("jqbWhere"),
