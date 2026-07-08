@@ -16,6 +16,7 @@ form-builder 系列新增 **`result` item kind**:表單內的 api 回應展示�
 
 - **table 模式不實作渲染** —— schema 預留 `{ mode: 'table', table?: unknown }` 透傳(另一個並行 session 正在做 `@rfjs/data-schema` + `@rfjs/table-builder`;其 `TableConfig` 落地後由後續 PR 接上)。v1 遇 `mode: 'table'` 渲染占位卡(「Table view — pending table-builder」)。
 - 不做 inline 編輯、不做分頁控制(屬 table-builder 範疇)。
+- **card 永遠保持零配置**(與 table-builder 的分工紀律,2026-07-08 與使用者確認):card 只有 `maxItems` 一個旋鈕 —— 資料有什麼 key 就畫什麼。任何「選欄位/改順序/格式化/欄寬」需求一律屬 `mode: 'table'`(TableConfig 的事),不得往 card 加。mockup:`docs/mockups/2026-07-08-form-result-item.html`,實作以它為驗收基準。
 - 不動 Submission 面板(它管 payload,result 管畫面)。
 - **並行紅線**:不碰 `packages/web-core/**`、`apps/web/src/tools/{index,messages}.ts`、`apps/web/src/tools/index.spec.ts`、`apps/web/next.config.js`、`apps/web/package.json`(歸 table-builder session);本 session 只動 `packages/form-builder*` + `apps/web/src/tools/form-builder/**` + `apps/web/e2e/form-builder.e2e.ts`。
 
