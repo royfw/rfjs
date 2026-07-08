@@ -127,6 +127,7 @@ export function PgFilterBuilder() {
               compiled={compiled.ok ? compiled.primary : null}
               engineId="pg-filter"
               onApply={fb.onCanonicalChange}
+              sampleRows={fb.rows}
               logKey="rfjs.ai.log.pg-filter-builder"
             />
           </div>

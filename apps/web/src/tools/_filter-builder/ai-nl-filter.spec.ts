@@ -23,6 +23,12 @@ describe("buildNlFilterPrompt", () => {
     expect(empty.system).not.toContain("Current filter tree");
   });
 
+  it("with sample rows, embeds the sample section for value formats", () => {
+    const p = buildNlFilterPrompt("engineering dept", SCHEMA, undefined, [{ dept: "Engineering" }]);
+    expect(p.system).toContain("Sample data (first 1 of 1 rows):");
+    expect(p.system).toContain('"dept":"Engineering"');
+  });
+
   it("with a current tree, embeds it and instructs returning the complete merged group", () => {
     const current = '{"logic":"and","filters":[{"field":"amount","dataType":"numeric","operator":"gt","value":100}]}';
     const p = buildNlFilterPrompt("且 dept 是 Engineering", SCHEMA, current);

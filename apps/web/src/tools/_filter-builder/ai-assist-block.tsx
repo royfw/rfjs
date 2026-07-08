@@ -38,6 +38,7 @@ export function AiAssistBlock({
   engineId,
   onApply,
   logKey,
+  sampleRows,
 }: {
   schema: FieldSchema[];
   canonicalJson: string;
@@ -45,6 +46,8 @@ export function AiAssistBlock({
   engineId: string;
   onApply: (canonicalJson: string) => void;
   logKey: string;
+  /** 工具頁目前的樣本資料;prompt 只帶前 AI_SAMPLE_LIMIT 筆(見 ai-explain.ts)。 */
+  sampleRows?: unknown[];
 }) {
   const t = useTranslations("ToolUI");
   const locale = useLocale();
@@ -56,7 +59,7 @@ export function AiAssistBlock({
   // 掛載時還原(避免 SSR/hydration 差異,list() 只在 client 跑)。
   React.useEffect(() => setEntries(log.list()), [log]);
 
-  const ctx: ExplainContext = { canonicalJson, schema, compiled, engineId, locale };
+  const ctx: ExplainContext = { canonicalJson, schema, compiled, engineId, locale, sampleRows };
 
   const push = (partial: Omit<AiAssistEntry, "id" | "at">) => {
     const entry: AiAssistEntry = { ...partial, id: crypto.randomUUID(), at: new Date().toISOString() };
@@ -65,7 +68,7 @@ export function AiAssistBlock({
 
   const onGenerate = async () => {
     if (!nl.trim()) return;
-    const prompt = buildNlFilterPrompt(nl, schema, canonicalJson);
+    const prompt = buildNlFilterPrompt(nl, schema, canonicalJson, sampleRows);
     const out = await ai.run({ ...prompt, json: true }, parseNlFilterResponse);
     if (out !== null) {
       onApply(out);

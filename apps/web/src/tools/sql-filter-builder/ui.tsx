@@ -114,6 +114,7 @@ export function SqlFilterBuilder() {
               compiled={compiled.ok ? compiled.primary : null}
               engineId="sql-filter"
               onApply={fb.onCanonicalChange}
+              sampleRows={fb.rows}
               logKey="rfjs.ai.log.sql-filter-builder"
             />
           </div>

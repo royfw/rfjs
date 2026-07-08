@@ -114,6 +114,7 @@ export function EsQueryBuilder() {
               compiled={compiled.ok ? compiled.primary : null}
               engineId="es-query"
               onApply={fb.onCanonicalChange}
+              sampleRows={fb.rows}
               logKey="rfjs.ai.log.es-query-builder"
             />
           </div>

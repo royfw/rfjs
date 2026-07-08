@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FieldSchema } from '@rfjs/filter-builder';
 
-import { buildAskPrompt, buildExplainPrompt, type ExplainContext } from './ai-explain';
+import { AI_SAMPLE_LIMIT, buildAskPrompt, buildExplainPrompt, sampleSection, type ExplainContext } from './ai-explain';
 
 const SCHEMA: FieldSchema[] = [
   { path: 'age', dataType: 'numeric', include: true, kind: 'jsonb' },
@@ -39,5 +39,28 @@ describe('buildAskPrompt', () => {
     const p = buildAskPrompt(CTX, '能挑出 30 歲以上的活躍使用者嗎?');
     expect(p.user).toBe('能挑出 30 歲以上的活躍使用者嗎?');
     expect(p.system).toContain(CTX.canonicalJson);
+  });
+});
+
+describe('sampleRows context', () => {
+  it('帶入樣本:嵌入前 N 筆與總筆數', () => {
+    const rows = [{ age: 42, active: true }, { age: 18, active: false }];
+    const p = buildAskPrompt({ ...CTX, sampleRows: rows }, '有幾筆活躍?');
+    expect(p.system).toContain('Sample data (first 2 of 2 rows):');
+    expect(p.system).toContain('"age":42');
+  });
+
+  it(`超過 AI_SAMPLE_LIMIT(${AI_SAMPLE_LIMIT})只帶前 ${AI_SAMPLE_LIMIT} 筆`, () => {
+    const rows = Array.from({ length: AI_SAMPLE_LIMIT + 4 }, (_, i) => ({ n: i }));
+    const [head, json] = sampleSection(rows);
+    expect(head).toBe(`Sample data (first ${AI_SAMPLE_LIMIT} of ${AI_SAMPLE_LIMIT + 4} rows):`);
+    expect(JSON.parse(json as string)).toHaveLength(AI_SAMPLE_LIMIT);
+  });
+
+  it('無樣本 / 空樣本:不加段落', () => {
+    expect(sampleSection(undefined)).toEqual([]);
+    expect(sampleSection([])).toEqual([]);
+    const p = buildExplainPrompt(CTX);
+    expect(p.system).not.toContain('Sample data');
   });
 });

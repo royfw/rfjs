@@ -123,6 +123,7 @@ export function DataFilterBuilder() {
               compiled={null}
               engineId="data-filter"
               onApply={fb.onCanonicalChange}
+              sampleRows={fb.rows}
               logKey="rfjs.ai.log.data-filter-builder"
             />
           </div>

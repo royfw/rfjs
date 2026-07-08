@@ -114,6 +114,7 @@ export function MongoQueryBuilder() {
               compiled={compiled.ok ? compiled.primary : null}
               engineId="mongo"
               onApply={fb.onCanonicalChange}
+              sampleRows={fb.rows}
               logKey="rfjs.ai.log.mongo-query-builder"
             />
           </div>

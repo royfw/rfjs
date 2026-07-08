@@ -114,6 +114,7 @@ export function JsonbQueryBuilder() {
               compiled={compiled.ok ? compiled.primary : null}
               engineId="jsonb"
               onApply={fb.onCanonicalChange}
+              sampleRows={fb.rows}
               logKey="rfjs.ai.log.jsonb-query-builder"
             />
           </div>

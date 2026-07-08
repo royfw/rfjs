@@ -1,11 +1,15 @@
 import { parseFilterGroup, type FieldSchema } from "@rfjs/filter-builder";
 
+import { sampleSection } from "./ai-explain";
+
 /** NL→條件樹的 prompt。輸出目標是 canonical FilterGroup JSON(不含 id 的簡單形狀)。
- * 帶入 currentJson 時,描述可以是「接續/修改」既有條件 —— AI 一律回傳合併後的完整樹。 */
+ * 帶入 currentJson 時,描述可以是「接續/修改」既有條件 —— AI 一律回傳合併後的完整樹。
+ * 帶入 sampleRows 時,樣本(前 N 筆)供 AI 對齊實際值的格式與大小寫。 */
 export function buildNlFilterPrompt(
   nl: string,
   schema: FieldSchema[],
   currentJson?: string,
+  sampleRows?: unknown[],
 ): { system: string; user: string } {
   const fields = schema
     .map((f) => `- ${f.path} (${f.dataType}${f.elementType ? `<${f.elementType}>` : ""})`)
@@ -19,6 +23,7 @@ export function buildNlFilterPrompt(
     "Common operators: eq, ne, gt, gte, lt, lte, in, nin, like, exists, elemmatch.",
     "Use ONLY these fields:",
     fields,
+    ...sampleSection(sampleRows),
     ...(hasCurrent
       ? [
           "Current filter tree (canonical JSON):",
