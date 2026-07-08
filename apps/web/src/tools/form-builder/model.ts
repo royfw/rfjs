@@ -7,7 +7,7 @@ import {
   type ButtonAction,
 } from "@rfjs/form-builder";
 
-export type Kind = "field" | "content" | "divider" | "spacer" | "ai-note" | "button";
+export type Kind = "field" | "content" | "divider" | "spacer" | "ai-note" | "button" | "result";
 // Canvas Component = full engine FieldComponent union.
 export type Component = FieldComponent;
 
@@ -36,6 +36,12 @@ export interface Card {
   action?: ButtonAction; // button
   buttonVariant?: "primary" | "outline" | "ghost" | "destructive"; // button
   validate?: boolean; // button
+  mode?: "card" | "json" | "table"; // result
+  sourceId?: string; // result
+  dataPath?: string; // result
+  maxItems?: number; // result
+  resultTable?: unknown; // result
+  emptyText?: string; // result
   col: number;
   span: number;
   row: number;
@@ -111,6 +117,15 @@ function cardToItem(c: Card): FormItem {
         ...(c.buttonVariant ? { variant: c.buttonVariant } : {}),
         ...(c.validate !== undefined ? { validate: c.validate } : {}),
       };
+    case "result":
+      return {
+        id: c.id, kind: "result", mode: c.mode ?? "json",
+        ...(c.sourceId ? { sourceId: c.sourceId } : {}),
+        ...(c.dataPath ? { dataPath: c.dataPath } : {}),
+        ...(c.maxItems !== undefined ? { maxItems: c.maxItems } : {}),
+        ...(c.resultTable !== undefined ? { table: c.resultTable } : {}),
+        ...(c.emptyText ? { emptyText: c.emptyText } : {}),
+      };
   }
 }
 
@@ -163,6 +178,13 @@ export function formConfigToCards(config: FormConfig): { groups: Group[]; cards:
         cards.push({ ...base, kind: "content", label: item.text, locked: item.locked });
       } else if (item.kind === "button") {
         cards.push({ ...base, kind: "button", label: item.label, action: item.action, buttonVariant: item.variant, validate: item.validate });
+      } else if (item.kind === "result") {
+        cards.push({
+          ...base, kind: "result", label: "Result",
+          mode: item.mode, sourceId: item.sourceId, dataPath: item.dataPath,
+          maxItems: item.maxItems, resultTable: item.table,
+          emptyText: typeof item.emptyText === "string" ? item.emptyText : undefined,
+        });
       } else if (item.kind === "ai-note") {
         cards.push({ ...base, kind: "ai-note", label: item.text });
       } else {

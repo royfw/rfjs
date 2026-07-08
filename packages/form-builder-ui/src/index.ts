@@ -4,6 +4,7 @@ export * from './config-form-builder';
 export * from './field-control';
 export * from './field-row';
 export * from './item-editor';
+export * from './result-view';
 export * from './section-arranger';
 export * from './use-config-builder';
 export * from './use-container-breakpoint';

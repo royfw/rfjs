@@ -3,6 +3,7 @@ import * as React from "react";
 import { Trash2 } from "lucide-react";
 import { Section } from "./section";
 import { ActionSection } from "./action";
+import { ResultSection } from "./result";
 import { OptionsSection } from "./options";
 import { ValidationSection } from "./validation";
 import { AiNoteSection, ContentSection, SpacerSection } from "./misc-sections";
@@ -31,8 +32,8 @@ const Count = ({ n }: { n: number }) => (
 );
 
 export function SettingsPanel({
-  card, groups, onChange, onRemove, siblingFields = [],
-}: { card: Card | null; groups: Group[]; onChange: (p: Partial<Card>) => void; onRemove: () => void; siblingFields?: { key: string; dataType: string }[] }) {
+  card, groups, onChange, onRemove, siblingFields = [], apiButtons = [],
+}: { card: Card | null; groups: Group[]; onChange: (p: Partial<Card>) => void; onRemove: () => void; siblingFields?: { key: string; dataType: string }[]; apiButtons?: { id: string; label: string }[] }) {
   if (!card) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-card/20 p-6 text-center text-sm text-muted-foreground">
@@ -42,6 +43,7 @@ export function SettingsPanel({
   }
   const isField = card.kind === "field";
   const isButton = card.kind === "button";
+  const isResult = card.kind === "result";
   const comp = card.component;
   return (
     <div className="flex flex-col gap-3">
@@ -100,6 +102,12 @@ export function SettingsPanel({
       {isButton ? (
         <Section title="Action">
           <ActionSection card={card} onChange={onChange} siblingFields={siblingFields} />
+        </Section>
+      ) : null}
+
+      {isResult ? (
+        <Section title="Result">
+          <ResultSection card={card} onChange={onChange} apiButtons={apiButtons} />
         </Section>
       ) : null}
 

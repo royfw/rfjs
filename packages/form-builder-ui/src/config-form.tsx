@@ -25,6 +25,7 @@ import { useContainerBreakpoint } from './use-container-breakpoint';
 import { Label } from '@rfjs/web-ui/components/label';
 import { Button } from '@rfjs/web-ui/components/button';
 import { FieldControl } from './field-control';
+import { ResultView, type ResultViewState } from './result-view';
 import { Loader2 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -212,6 +213,12 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   // api 動作狀態:同表單同時只允許一顆 in-flight。
   const [apiState, setApiState] = React.useState<{ itemId: string; status: 'pending' | 'success' | 'error' } | null>(null);
 
+  // result item 的資料來源:各 api 按鈕的最新成功回應 + 全域最後一次。
+  const [apiResults, setApiResults] = React.useState<{
+    byButtonId: Record<string, unknown>;
+    last?: { buttonId: string; response: unknown };
+  }>({ byButtonId: {} });
+
   // Bumps whenever `config` changes or the component unmounts. `runAction`'s api branch
   // captures the epoch before its `await fetcher(...)` and bails out (no setState/onAction)
   // if the epoch has moved on by the time the promise settles — guards against a stale
@@ -242,6 +249,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
     // state (otherwise the button stays disabled forever) and bump the epoch so a late
     // fetcher resolution can't resurrect it.
     setApiState(null);
+    setApiResults({ byButtonId: {} });
     runEpoch.current += 1;
   }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -373,6 +381,10 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
           if (v !== undefined) setValue(targetKey, v, { shouldDirty: true });
         }
         setApiState({ itemId: item.id, status: 'success' });
+        setApiResults((prev) => ({
+          byButtonId: { ...prev.byButtonId, [item.id]: response },
+          last: { buttonId: item.id, response },
+        }));
         onAction?.('api', { data: sent, meta, response });
       } catch (err) {
         if (epoch !== runEpoch.current) return;   // unmounted or config swapped mid-flight — drop the result
@@ -381,6 +393,21 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       }
     }
   }
+
+  // Button ids that own a dedicated (sourceId-bound) result item — their inline success/error
+  // message would otherwise visually/DOM-duplicate the ResultView's own state text. See the
+  // `bound`/`hasStoredResponse` logic below for exactly when the inline message still shows.
+  const resultBoundButtonIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    for (const section of normalizeToSections(config)) {
+      for (const row of section.rows) {
+        for (const item of row.items) {
+          if (item.kind === 'result' && item.sourceId !== undefined) ids.add(item.sourceId);
+        }
+      }
+    }
+    return ids;
+  }, [config]);
 
   function renderItem(item: FormItem, flow: 'v1' | 'section', cols: number, place?: { colStart: number; colSpan: number; row: number; rowSpan?: number }) {
     const vals = values as Record<string, unknown>;
@@ -420,9 +447,17 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       const pending = mine?.status === 'pending';
       const apiDisabled = isApi && (!fetcher || apiState?.status === 'pending');
       const apiMessages = item.action.type === 'api' ? item.action.messages : undefined;
+      // A result item bound to this button (resultBoundButtonIds) renders its own state text,
+      // so the inline message is redundant — but ONLY in the cases ResultView actually covers:
+      // success is always shown by the rendered data, but ResultView's error state only fires
+      // while there's no stored response yet (`!hasResponse`); once a success has been stored,
+      // ResultView falls through to 'ready' (stale data) on a later failure, so the button must
+      // surface its own error again or the failure would be silent.
+      const bound = resultBoundButtonIds.has(item.id);
+      const hasStoredResponse = item.id in apiResults.byButtonId;
       const msg =
-        mine?.status === 'success' ? resolveLabel(apiMessages?.success ?? 'Success', locale)
-        : mine?.status === 'error' ? resolveLabel(apiMessages?.error ?? 'Request failed', locale)
+        mine?.status === 'success' ? (bound ? null : resolveLabel(apiMessages?.success ?? 'Success', locale))
+        : mine?.status === 'error' ? (bound && !hasStoredResponse ? null : resolveLabel(apiMessages?.error ?? 'Request failed', locale))
         : null;
       return (
         <div key={item.id} data-item={item.id} className="flex min-w-0 items-center gap-2" style={place ? placementStyle(place) : fieldSpanStyle(undefined, flow, cols)}>
@@ -437,6 +472,24 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
             {resolveLabel(item.label, locale)}
           </Button>
           {msg && <span className={`text-xs ${mine?.status === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>{msg}</span>}
+        </div>
+      );
+    }
+
+    if (item.kind === 'result') {
+      const raw = item.sourceId !== undefined ? apiResults.byButtonId[item.sourceId] : apiResults.last?.response;
+      const hasResponse = item.sourceId !== undefined ? item.sourceId in apiResults.byButtonId : apiResults.last !== undefined;
+      const value = hasResponse && item.dataPath ? getPath(raw, item.dataPath) : raw;
+      // 綁定時只理會來源按鈕的進行中/失敗;未綁定時理會任一 api 按鈕。
+      const watching = item.sourceId === undefined || apiState?.itemId === item.sourceId;
+      const state: ResultViewState =
+        watching && apiState?.status === 'pending' ? 'loading'
+        : watching && apiState?.status === 'error' && !hasResponse ? 'error'
+        : !hasResponse || value === undefined ? 'empty'
+        : 'ready';
+      return (
+        <div key={item.id} data-item={item.id} style={place ? placementStyle(place) : fieldSpanStyle(undefined, flow, cols)}>
+          <ResultView mode={item.mode} state={state} value={value} maxItems={item.maxItems} emptyText={item.emptyText} locale={locale} />
         </div>
       );
     }

@@ -81,7 +81,7 @@ export interface FieldConfig {
   fileUpload?: { accept?: string; multiple?: boolean; maxSize?: number };
 }
 
-export type ItemKind = 'field' | 'content' | 'divider' | 'spacer' | 'ai-note' | 'button';
+export type ItemKind = 'field' | 'content' | 'divider' | 'spacer' | 'ai-note' | 'button' | 'result';
 export type SpacerSize = 'sm' | 'md' | 'lg';
 
 export interface FieldItem extends FieldConfig {
@@ -126,7 +126,23 @@ export interface ButtonItem {
   validate?: boolean;   // default: submit→true, api/custom→false; ignored for reset/clear
 }
 
-export type FormItem = FieldItem | ContentItem | DividerItem | SpacerItem | AiNoteItem | ButtonItem;
+export interface ResultItem {
+  id: string;
+  kind: 'result';
+  mode: 'card' | 'json' | 'table';
+  /** 綁定的 api 按鈕 item id;缺省 = 顯示全域最後一次 api 成功回應。 */
+  sourceId?: string;
+  /** dot path 先取子節點再渲染(同 responseMap 語法);缺省渲染整包回應。 */
+  dataPath?: string;
+  /** card 模式陣列上限,預設 10。 */
+  maxItems?: number;
+  /** mode:'table' 預留:未來放 @rfjs/table-builder 的 TableConfig;v1 透傳不解讀。 */
+  table?: unknown;
+  /** 空狀態文案;缺省內建 'No result yet'。 */
+  emptyText?: LocalizedLabel;
+}
+
+export type FormItem = FieldItem | ContentItem | DividerItem | SpacerItem | AiNoteItem | ButtonItem | ResultItem;
 
 /** Explicit 12-column-grid placement of a single item (positioned by its `id`). */
 export interface GridPlacement {

@@ -22,6 +22,7 @@ import {
   Upload,
   PenLine,
   MousePointerClick,
+  PanelBottom,
 } from "lucide-react";
 
 import { ConfigForm } from "@rfjs/form-builder-ui";
@@ -77,6 +78,7 @@ const KIND_META: Record<
   divider: { color: "#6b7280", icon: Minus, label: "Divider" },
   spacer: { color: "#6b7280", icon: MoveVertical, label: "Spacer" },
   button: { color: "#10b981", icon: MousePointerClick, label: "Button" },
+  result: { color: "#0ea5e9", icon: PanelBottom, label: "Result" },
 };
 
 const fieldSub = (c: Card) => (c.kind === "field" ? `${c.key ?? "field"} · ${c.component ?? "Input"}` : undefined);
@@ -396,7 +398,7 @@ export function FormBuilderTool() {
     return () => window.removeEventListener("keydown", onKey);
   }, [selected]);
 
-  const PALETTE: Kind[] = ["field", "content", "divider", "spacer", "ai-note", "button"];
+  const PALETTE: Kind[] = ["field", "content", "divider", "spacer", "ai-note", "button", "result"];
   const TABS = [
     { id: "canvas", label: "Canvas" },
     { id: "preview", label: "Preview" },
@@ -577,6 +579,7 @@ export function FormBuilderTool() {
                     card={selectedCard}
                     groups={groups}
                     siblingFields={siblingFields}
+                    apiButtons={cards.filter((c) => c.kind === "button" && c.action?.type === "api").map((c) => ({ id: c.id, label: cardLabel(c.label) }))}
                     onChange={(p) => selectedCard && updateCard(selectedCard.id, p)}
                     onRemove={() => {
                       if (!selectedCard) return;

@@ -164,6 +164,17 @@ const buttonItemSchema = z.object({
   validate: z.boolean().optional(),
 });
 
+const resultItemSchema = z.object({
+  id: z.string().min(1),
+  kind: z.literal('result'),
+  mode: z.enum(['card', 'json', 'table']),
+  sourceId: z.string().min(1).optional(),
+  dataPath: z.string().min(1).optional(),
+  maxItems: z.number().int().positive().optional(),
+  table: z.unknown().optional(),
+  emptyText: localizedLabelSchema.optional(),
+});
+
 const formItemSchema = z.discriminatedUnion('kind', [
   fieldItemSchema,
   contentItemSchema,
@@ -171,6 +182,7 @@ const formItemSchema = z.discriminatedUnion('kind', [
   spacerItemSchema,
   aiNoteItemSchema,
   buttonItemSchema,
+  resultItemSchema,
 ]);
 const gridPlacementSchema = z.object({
   itemId: z.string().min(1),
