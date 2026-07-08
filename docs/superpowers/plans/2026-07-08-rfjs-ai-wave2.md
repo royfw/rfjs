@@ -222,12 +222,24 @@ describe("AiPanel — 動作與輸入", () => {
 });
 
 describe("AiPanel — 收合 / 持久化 / 重新套用", () => {
-  it("收合:點標題隱藏內容並存偏好;偏好 0 時掛載即收合", async () => {
+  it("收合:點標題隱藏內容並存偏好;再點展開存 1", async () => {
     renderPanel();
     const toggle = screen.getByRole("button", { name: /ai assist/i });
     fireEvent.click(toggle);
     expect(screen.queryByPlaceholderText("type here…")).toBeNull();
     expect(localStorage.getItem("rfjs.ai.block.open")).toBe("0");
+    fireEvent.click(toggle);
+    expect(screen.getByPlaceholderText("type here…")).toBeTruthy();
+    expect(localStorage.getItem("rfjs.ai.block.open")).toBe("1");
+  });
+
+  it("偏好 0 時掛載即收合(effect 還原,需 waitFor)", async () => {
+    localStorage.setItem("rfjs.ai.block.open", "0");
+    renderPanel();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /ai assist/i }).getAttribute("aria-expanded")).toBe("false"),
+    );
+    expect(screen.queryByPlaceholderText("type here…")).toBeNull();
   });
 
   it("掛載還原堆疊(最新在上);清除清空 localStorage", async () => {
@@ -349,8 +361,6 @@ export function AiPanel({
   };
 
   const enterAction = actions.find((a) => a.needsInput);
-  const inputActions = actions.filter((a) => a.needsInput);
-  const freeActions = actions.filter((a) => !a.needsInput);
   const busyOrOff = !ai.ready || ai.loading;
   const kindLabel: Record<string, string> = {
     generate: t("aiKindGenerate"),
@@ -361,7 +371,6 @@ export function AiPanel({
 
   const renderAction = (a: AiPanelAction) => (
     <Button
-      key={a.key}
       size="sm"
       variant={a.primary ? "default" : "outline"}
       onClick={() => void exec(a)}
@@ -402,11 +411,15 @@ export function AiPanel({
               }}
               className="max-h-28 min-h-9 min-w-48 flex-1 resize-none py-1.5"
             />
-            {inputActions.map(renderAction)}
-            {inputActions.length > 0 && freeActions.length > 0 ? (
-              <span className="h-5 w-px bg-border" aria-hidden />
-            ) : null}
-            {freeActions.map(renderAction)}
+            {/* 依陣列順序渲染(順序=mockup 順序);分隔線插在「需輸入 → 免輸入」的交界。 */}
+            {actions.map((a, i) => (
+              <React.Fragment key={a.key}>
+                {renderAction(a)}
+                {a.needsInput && actions[i + 1] && !actions[i + 1]!.needsInput ? (
+                  <span className="h-5 w-px bg-border" aria-hidden />
+                ) : null}
+              </React.Fragment>
+            ))}
             {ai.loading ? (
               <Button size="sm" variant="outline" onClick={ai.cancel}>
                 {t("aiCancel")}
@@ -510,10 +523,12 @@ git commit -m "feat(web): add reusable ai panel shell with pluggable actions"
 - Produces:對外 props **完全不變**(6 工具 ui.tsx 零改動):`{ schema, canonicalJson, compiled, engineId, onApply, logKey, sampleRows? }`。
 
 - [ ] **Step 1: 改寫測試**(收合/IME/持久化/清除案例刪除 —— 已在 ai-panel.spec;保留並改寫這些 filter 特有案例,mock 手法不變):
-  - generate 成功:`onApply` 收到 parse 後結果、堆疊 generate 項、寫 localStorage、`mockRun` 的 system 含 canonicalJson 與樣本(既有斷言保留)。
+  - generate 成功:`onApply` 收到 parse 後結果、堆疊 generate 項、寫 localStorage、`mockRun` 的 system 含 canonicalJson(既有斷言,spec 現行第 59 行;fixture 未傳 `sampleRows`,**不要**加樣本斷言 —— 樣本邏輯已由 `ai-nl-filter.spec` 覆蓋)。
   - generate 失敗(run 回 null):`onApply` 不呼叫、不落地。
   - ask/explain:display-only(既有斷言保留;ask 非 JSON 模式)。
-  - **新增:重新套用** — 預置 localStorage 一筆 `{ kind: "generate", prompt: "p", appliedJson: '{"logic":"and","filters":[]}' }` → 點「Re-apply」→ `onApply` 收到該 JSON。
+  - **新增:重新套用** — 預置 localStorage 一筆**完整 entry**(`isEntry` 要求 `id`/`at` 必為 string,缺了會被 `list()` 過濾、按鈕永不出現):
+    `{ id: "g1", kind: "generate", prompt: "p", appliedJson: '{"logic":"and","filters":[]}', at: "2026-07-08T00:00:00.000Z" }`
+    → 點「Re-apply」→ `onApply` 收到該 JSON。
   - **新增:已套用摘要** — generate 項顯示 `applied (0 conditions)`(`aiApplied` + `countConditions`)。
 - [ ] **Step 2: 跑測試確認失敗** — `pnpm exec vitest run src/tools/_filter-builder/ai-assist-block.spec.tsx`(重新套用案例 FAIL)。
 - [ ] **Step 3: 實作** — `ai-assist-block.tsx` 重寫(`countConditions` 留此檔;`AI_BLOCK_OPEN_KEY` 匯出移除 —— 改由 ai-panel 匯出,先 `grep -rn AI_BLOCK_OPEN_KEY apps/web/src` 確認無其他 import):
@@ -746,7 +761,12 @@ export function buildTableAskPrompt(ctx: TableExplainContext, question: string):
   - 改:`dtAiCheck` → en `"Check table"` / zh `"檢查表格"`。
   - 加:`dtAiPlaceholder`(en `"Describe or ask a question…"` / zh `"描述或提出問題…"`)、`dtAiExplain`(en `"Explain this table"` / zh `"解釋這張表"`)。
   - 刪:`dtAiChecking`、`dtAiFindings`、`dtAiDisclaimer`、`dtAiNotConfigured`、`dtAiViewRaw`(中央取代)。`dtAiNoFindings` 保留(check 空結果文案)。
-- [ ] **Step 5: ui.spec.tsx 更新** — 舊「AI Check 按鈕在 Rules header」「findings 面板」相關斷言改為:panel 存在(placeholder 可見)、check 動作成功 → 堆疊出現 `[gap]` 行(mock `useAiAssist` 回 findings JSON…沿用該檔既有 mock 手法;若該檔目前無 AI 案例則新增最小一例)、Rules header 不再有 Check 鈕。既有非 AI 案例不動。
+- [ ] **Step 5: ui.spec.tsx 更新** — 該檔**目前沒有** `useAiAssist` 的 mock;新增(手法照抄 `_filter-builder/ai-assist-block.spec.tsx` 的 `vi.mock("@/lib/ai/use-ai-assist", ...)`)。關鍵:mock 的 `run` 會**繞過**真的 parse — 要讓 parse callback 實際執行,用:
+  `mockRun.mockImplementation((_req, parse) => Promise.resolve(parse('{"findings":[{"kind":"gap","ruleIds":[],"message":"m"}]}')));`
+  (**不要** `mockResolvedValue(rawJsonString)` — check 的 run 期望拿到 `AiFinding[]`,拿到字串會在格式化時炸)。案例:
+  - panel 存在(`dtAiPlaceholder` 可見)、Rules header 不再有 Check 鈕(`queryByRole` null)。
+  - check 成功 → 堆疊出現 `[gap] m` 行。
+  既有非 AI 案例不動;舊 findings 面板/`dt-ai-findings` 相關斷言(若有)刪除。
 - [ ] **Step 6: 驗證** — `pnpm exec vitest run src/tools/decision-table/` + `check-types` + `lint` 全綠;`pnpm exec vitest run src/tools/index.spec.ts`(鍵集合/衝突)綠。
 - [ ] **Step 7: Commit**
 
@@ -862,7 +882,7 @@ export function buildFormAskPrompt(ctx: FormExplainContext, question: string): {
   - 改:`fbAiPlaceholder` → en `"Describe a form or ask a question…"` / zh `"描述表單或提出問題…"`;`fbAiGenerate` → en `"Generate form"` / zh `"產生表單"`。
   - 加:`fbAiExplain`(en `"Explain form"` / zh `"解釋表單"`)、`fbAiApplied`(en `"Applied ({count} fields)"` / zh `"已套用({count} 個欄位)"`)。
   - 刪:`fbAiCancel`、`fbAiNotConfigured`、`fbAiViewRaw`(中央取代)。
-- [ ] **Step 5: ui.spec.tsx 更新** — 舊 ✨ 列相關斷言(若有)改 panel;既有 AI generate 測試(如有)遷移為 panel 動作;非 AI 案例不動。
+- [ ] **Step 5: ui.spec.tsx 更新** — 舊 ✨ 列相關斷言(若有)改 panel;既有 AI generate 測試(如有)遷移為 panel 動作;非 AI 案例不動。**新增:重新套用** — 預置 `rfjs.ai.log.form-builder` 一筆**完整 entry**(含 `id`/`at`,`appliedJson` = 合法 v1 fields[] FormConfig JSON,例 `'{"version":1,"fields":[{"key":"name","label":"Name","component":"Input","dataType":"string"}]}'`)→ 點 `/^re-apply$/i` → 畫布出現該欄位(斷言 `screen.getByText("Name")` 或既有畫布斷言手法)。
 - [ ] **Step 6: 驗證** — `pnpm exec vitest run src/tools/form-builder/ src/tools/index.spec.ts` + `check-types` + `lint` 全綠。
 - [ ] **Step 7: Commit**
 
