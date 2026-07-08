@@ -52,4 +52,15 @@ describe('createAiLog', () => {
     );
     expect(createAiLog(KEY).list().map((e) => e.id)).toEqual(['id-1', 'c1']);
   });
+
+  it('被竄改的非 string 選填欄位在讀取時被剔除(不流入重新套用)', () => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify([{ id: 'g1', kind: 'generate', prompt: 42, appliedJson: { evil: true }, at: '2026-07-08T00:00:00.000Z' }]),
+    );
+    const [e] = createAiLog(KEY).list();
+    expect(e!.id).toBe('g1');
+    expect(e!.prompt).toBeUndefined();
+    expect(e!.appliedJson).toBeUndefined();
+  });
 });

@@ -24,6 +24,12 @@ function isEntry(v: unknown): v is AiAssistEntry {
   return typeof e.id === 'string' && typeof e.kind === 'string' && KINDS.has(e.kind) && typeof e.at === 'string';
 }
 
+/** 只保留 string 的選填欄位——防止被竄改的紀錄(如 appliedJson 為數字)流入重新套用 / 畫面。 */
+function normalize(e: AiAssistEntry): AiAssistEntry {
+  const str = (v: unknown) => (typeof v === 'string' ? v : undefined);
+  return { id: e.id, kind: e.kind, at: e.at, prompt: str(e.prompt), answer: str(e.answer), appliedJson: str(e.appliedJson) };
+}
+
 export function createAiLog(storageKey: string): AiLogStore {
   const list = (): AiAssistEntry[] => {
     if (typeof window === 'undefined') return [];
@@ -31,7 +37,7 @@ export function createAiLog(storageKey: string): AiLogStore {
     if (!raw) return [];
     try {
       const v: unknown = JSON.parse(raw);
-      return Array.isArray(v) ? v.filter(isEntry) : [];
+      return Array.isArray(v) ? v.filter(isEntry).map(normalize) : [];
     } catch {
       return [];
     }
