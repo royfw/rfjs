@@ -10,6 +10,11 @@ import { useConfigTable } from './use-config-table';
 import { DEFAULT_LABELS } from './labels';
 import type { TableLabels, TableSource } from './types';
 
+// Next.js server-renders client components on the first pass — useLayoutEffect there
+// only produces a console warning. Fall back to useEffect off-DOM; behavior is
+// identical because the measured offsets start empty on both passes anyway.
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
+
 export interface ConfigTableProps {
   config: TableConfig;
   /**
@@ -66,7 +71,7 @@ export function ConfigTable({ config, source, labels, locale = 'en' }: ConfigTab
   const [leftOffsets, setLeftOffsets] = React.useState<number[]>([]);
   const [rightOffsets, setRightOffsets] = React.useState<number[]>([]);
 
-  React.useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const root = containerRef.current;
     if (!root) return;
     const headCells = root.querySelectorAll('thead th');
