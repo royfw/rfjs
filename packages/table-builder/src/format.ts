@@ -15,6 +15,7 @@ function formatNumeric(value: unknown, format: 'integer' | 'decimal' | 'percent'
     case 'decimal':
       return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
     case 'percent':
+      // percent expects a normalized 0–1 fraction (0.15 → '15%'); raw 15 would render '1,500%'.
       return new Intl.NumberFormat(locale, { style: 'percent' }).format(n);
     case 'currency':
       // Currency is fixed to USD for now; parameterizing the currency code is future work (spec §8.4).

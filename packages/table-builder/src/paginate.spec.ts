@@ -49,6 +49,10 @@ describe('hasNextCursor', () => {
     expect(hasNextCursor(undefined)).toBe(false);
   });
 
+  it('returns false when cursor is an empty string', () => {
+    expect(hasNextCursor('')).toBe(false);
+  });
+
   it('returns true when cursor has a value', () => {
     expect(hasNextCursor('abc123')).toBe(true);
   });

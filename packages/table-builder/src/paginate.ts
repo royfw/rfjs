@@ -14,6 +14,7 @@ export function offsetToPage(offset: number, pageSize: number, firstPage: 0 | 1 
 }
 
 // Cursor-mode "has next page" check: any non-empty cursor value means there is a next page.
+// An empty-string cursor counts as "no next page" — it cannot be sent as a meaningful cursor param.
 export function hasNextCursor(cursor: string | undefined): boolean {
   return cursor !== undefined && cursor !== '';
 }
