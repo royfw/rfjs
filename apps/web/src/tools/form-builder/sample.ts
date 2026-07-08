@@ -173,6 +173,18 @@ export const SAMPLE_CONFIG: FormConfig = {
             { id: "btn_clear", kind: "button", label: { en: "Clear", "zh-TW": "清除" }, action: { type: "clear", fields: ["name", "email"] }, variant: "ghost" },
           ],
         },
+        {
+          id: "r_query",
+          items: [
+            { id: "btn_query", kind: "button", label: { en: "Query", "zh-TW": "查詢" }, action: { type: "api", url: "/api/search", fields: ["name", "email"] } },
+          ],
+        },
+        {
+          id: "r_result",
+          items: [
+            { id: "res_query", kind: "result", mode: "card", sourceId: "btn_query", dataPath: "received.data", emptyText: { en: "Run a query to see results", "zh-TW": "按查詢看結果" } },
+          ],
+        },
       ],
     },
   ],
