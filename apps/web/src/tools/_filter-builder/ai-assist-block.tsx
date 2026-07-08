@@ -65,7 +65,7 @@ export function AiAssistBlock({
 
   const onGenerate = async () => {
     if (!nl.trim()) return;
-    const prompt = buildNlFilterPrompt(nl, schema);
+    const prompt = buildNlFilterPrompt(nl, schema, canonicalJson);
     const out = await ai.run({ ...prompt, json: true }, parseNlFilterResponse);
     if (out !== null) {
       onApply(out);

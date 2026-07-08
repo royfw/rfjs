@@ -55,6 +55,8 @@ describe("AiAssistBlock — generate(既有行為遷移)", () => {
     await waitFor(() => expect(onApply).toHaveBeenCalledWith(json));
     expect(screen.getByText(/applied \(0 conditions\)/i)).toBeTruthy();
     expect(JSON.parse(localStorage.getItem(LOG_KEY)!)).toHaveLength(1);
+    // 產生 prompt 帶入目前樹(接續組合:「且…」描述會合併而非整棵重建)
+    expect(mockRun.mock.calls[0]![0].system).toContain('{"logic":"and","filters":[]}');
   });
 
   it("失敗(run 回 null):onApply 不被呼叫、堆疊不變", async () => {
