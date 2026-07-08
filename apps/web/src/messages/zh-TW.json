@@ -118,6 +118,8 @@
     "testOk": "連線成功",
     "testFail": "連線失敗",
     "testFailDetail": "檢視詳細",
+    "loadModels": "載入模型",
+    "modelsLoaded": "共 {count} 個可用模型",
     "save": "儲存",
     "saved": "已儲存"
   }

@@ -2,6 +2,51 @@ import { AiError, type AiClient, type AiSettings, type CompleteRequest } from '.
 import { isConfigured } from './settings';
 
 const DEFAULT_TIMEOUT_MS = 60_000;
+const MODELS_TIMEOUT_MS = 15_000;
+
+/** 列出端點可用模型(GET {baseUrl}/models,OpenAI-compatible)。
+ * 只要求 baseUrl —— apiKey 可留空(如 Ollama),有值才帶 Bearer。 */
+export async function listAiModels(
+  settings: Pick<AiSettings, 'baseUrl' | 'apiKey'>,
+): Promise<string[]> {
+  if (settings.baseUrl.trim() === '') {
+    throw new AiError('config', 'base URL is required');
+  }
+  const ctl = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    ctl.abort();
+  }, MODELS_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${settings.baseUrl.replace(/\/+$/, '')}/models`, {
+      headers: settings.apiKey.trim() ? { Authorization: `Bearer ${settings.apiKey}` } : {},
+      signal: ctl.signal,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new AiError('http', `models request returned ${res.status}`, text.slice(0, 500));
+    }
+    const data = (await res.json().catch(() => null)) as { data?: { id?: unknown }[] } | null;
+    if (!data || !Array.isArray(data.data)) {
+      throw new AiError('parse', 'unexpected models payload shape');
+    }
+    return data.data
+      .map((m) => m?.id)
+      .filter((id): id is string => typeof id === 'string')
+      .sort();
+  } catch (e) {
+    if (e instanceof AiError) throw e;
+    if (e instanceof Error && e.name === 'AbortError') {
+      throw timedOut
+        ? new AiError('timeout', 'models request timed out')
+        : new AiError('abort', 'models request cancelled');
+    }
+    throw new AiError('http', e instanceof Error ? e.message : String(e));
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /** OpenAI-compatible 單發 chat completion(litellm / Ollama / OpenAI 通用)。 */
 export function createAiClient(settings: AiSettings): AiClient {

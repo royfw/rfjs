@@ -17,7 +17,7 @@ import {
 import { Input } from '@rfjs/web-ui/components/input';
 import { Label } from '@rfjs/web-ui/components/label';
 
-import { createAiClient } from '@/lib/ai/client';
+import { createAiClient, listAiModels } from '@/lib/ai/client';
 import { loadAiSettings, saveAiSettings } from '@/lib/ai/settings';
 import { AiError } from '@/lib/ai/types';
 
@@ -32,6 +32,11 @@ export function AiSettingsDialog() {
   const [test, setTest] = React.useState<TestState>('idle');
   const [testError, setTestError] = React.useState<{ text: string; detail?: string } | null>(null);
   const [saved, setSaved] = React.useState(false);
+  const [models, setModels] = React.useState<string[]>([]);
+  const [modelsLoading, setModelsLoading] = React.useState(false);
+  const [modelsError, setModelsError] = React.useState<{ text: string; detail?: string } | null>(
+    null,
+  );
 
   // 開啟時載入既有設定。
   const onOpenChange = (next: boolean) => {
@@ -39,6 +44,9 @@ export function AiSettingsDialog() {
     setTest('idle');
     setTestError(null);
     setSaved(false);
+    setModels([]);
+    setModelsLoading(false);
+    setModelsError(null);
     if (next) {
       const s = loadAiSettings();
       setBaseUrl(s?.baseUrl ?? '');
@@ -64,6 +72,23 @@ export function AiSettingsDialog() {
           ? { text: `[${e.kind}] ${e.message}`, detail: e.detail }
           : { text: String(e) },
       );
+    }
+  };
+
+  const onLoadModels = async () => {
+    setModelsLoading(true);
+    setModelsError(null);
+    try {
+      setModels(await listAiModels({ baseUrl, apiKey }));
+    } catch (e) {
+      setModels([]);
+      setModelsError(
+        e instanceof AiError
+          ? { text: `[${e.kind}] ${e.message}`, detail: e.detail }
+          : { text: String(e) },
+      );
+    } finally {
+      setModelsLoading(false);
     }
   };
 
@@ -104,8 +129,49 @@ export function AiSettingsDialog() {
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="ai-model">{t('model')}</Label>
-            <Input id="ai-model" value={model} onChange={(e) => setModel(e.target.value)} />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="ai-model">{t('model')}</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={onLoadModels}
+                disabled={modelsLoading}
+              >
+                {t('loadModels')}
+              </Button>
+            </div>
+            <Input
+              id="ai-model"
+              list="ai-model-list"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+            />
+            <datalist id="ai-model-list">
+              {models.map((id) => (
+                <option key={id} value={id} />
+              ))}
+            </datalist>
+            {models.length > 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {t('modelsLoaded', { count: models.length })}
+              </p>
+            ) : null}
+            {modelsError ? (
+              <div role="alert" className="flex flex-col gap-1 text-sm text-fault">
+                <p>{modelsError.text}</p>
+                {modelsError.detail ? (
+                  <details>
+                    <summary className="cursor-pointer text-xs text-muted-foreground">
+                      {t('testFailDetail')}
+                    </summary>
+                    <pre className="mt-1 max-h-40 overflow-auto rounded-md border bg-muted/40 p-2 font-mono text-xs whitespace-pre-wrap text-foreground">
+                      {modelsError.detail}
+                    </pre>
+                  </details>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           {test === 'ok' ? <p className="text-sm text-emerald-600 dark:text-emerald-400">{t('testOk')}</p> : null}
           {test === 'fail' ? (

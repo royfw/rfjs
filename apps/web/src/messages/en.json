@@ -118,6 +118,8 @@
     "testOk": "Connection OK",
     "testFail": "Connection failed",
     "testFailDetail": "View details",
+    "loadModels": "Load models",
+    "modelsLoaded": "{count} models available",
     "save": "Save",
     "saved": "Saved"
   }
