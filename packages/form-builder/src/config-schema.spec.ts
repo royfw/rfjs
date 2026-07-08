@@ -540,3 +540,35 @@ describe('button items', () => {
     expect(r.success).toBe(true);
   });
 });
+
+describe('result items', () => {
+  const withItem = (item: unknown) => ({
+    version: 1,
+    sections: [{ id: 's1', rows: [{ id: 'r1', items: [item] }] }],
+  });
+
+  it('accepts minimal and full result items', () => {
+    const minimal = { id: 'res1', kind: 'result', mode: 'json' };
+    const full = {
+      id: 'res2', kind: 'result', mode: 'card',
+      sourceId: 'btn1', dataPath: 'data.items', maxItems: 5,
+      table: { anything: true }, emptyText: { en: 'Nothing', 'zh-TW': '沒有資料' },
+    };
+    for (const item of [minimal, full]) {
+      const r = formConfigSchema.safeParse(withItem(item));
+      expect(r.success, JSON.stringify(item)).toBe(true);
+    }
+  });
+
+  it('rejects invalid result items: missing mode, unknown mode, non-positive maxItems', () => {
+    const bad = [
+      { id: 'x', kind: 'result' },
+      { id: 'x', kind: 'result', mode: 'grid' },
+      { id: 'x', kind: 'result', mode: 'card', maxItems: 0 },
+    ];
+    for (const item of bad) {
+      const r = formConfigSchema.safeParse(withItem(item));
+      expect(r.success, JSON.stringify(item)).toBe(false);
+    }
+  });
+});

@@ -92,6 +92,11 @@ describe('makeItem', () => {
     const item = makeItem('button');
     expect(item).toMatchObject({ kind: 'button', label: 'Button', action: { type: 'custom', name: 'action-1' } });
   });
+
+  it("makeItem('result') gives a json-mode result item", () => {
+    const item = makeItem('result');
+    expect(item).toMatchObject({ id: item.id, kind: 'result', mode: 'json' });
+  });
 });
 
 // --- addItem ---
