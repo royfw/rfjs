@@ -4,8 +4,8 @@ import type { FieldSchema } from '@rfjs/filter-builder';
 import { buildAskPrompt, buildExplainPrompt, type ExplainContext } from './ai-explain';
 
 const SCHEMA: FieldSchema[] = [
-  { path: 'age', dataType: 'numeric', kind: 'jsonb' },
-  { path: 'active', dataType: 'boolean', kind: 'jsonb' },
+  { path: 'age', dataType: 'numeric', include: true, kind: 'jsonb' },
+  { path: 'active', dataType: 'boolean', include: true, kind: 'jsonb' },
 ];
 
 const CTX: ExplainContext = {
