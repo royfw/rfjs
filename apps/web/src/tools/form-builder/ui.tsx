@@ -579,6 +579,7 @@ export function FormBuilderTool() {
                     card={selectedCard}
                     groups={groups}
                     siblingFields={siblingFields}
+                    apiButtons={cards.filter((c) => c.kind === "button" && c.action?.type === "api").map((c) => ({ id: c.id, label: cardLabel(c.label) }))}
                     onChange={(p) => selectedCard && updateCard(selectedCard.id, p)}
                     onRemove={() => {
                       if (!selectedCard) return;
