@@ -151,6 +151,28 @@ describe("AiAssistBlock — 持久化 / 清除 / 狀態", () => {
     expect(mockCancel).toHaveBeenCalled();
   });
 
+  it("收合:點標題隱藏內容並存偏好;預設依 localStorage 還原", async () => {
+    renderBlock();
+    const toggle = screen.getByRole("button", { name: /ai assist/i });
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByPlaceholderText(/describe a filter/i)).toBeTruthy();
+    fireEvent.click(toggle);
+    expect(screen.queryByPlaceholderText(/describe a filter/i)).toBeNull();
+    expect(localStorage.getItem("rfjs.ai.block.open")).toBe("0");
+    fireEvent.click(toggle);
+    expect(screen.getByPlaceholderText(/describe a filter/i)).toBeTruthy();
+    expect(localStorage.getItem("rfjs.ai.block.open")).toBe("1");
+  });
+
+  it("收合偏好為 0 時,掛載即收合", async () => {
+    localStorage.setItem("rfjs.ai.block.open", "0");
+    renderBlock();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /ai assist/i }).getAttribute("aria-expanded")).toBe("false"),
+    );
+    expect(screen.queryByPlaceholderText(/describe a filter/i)).toBeNull();
+  });
+
   it("parse 錯誤:alert 顯示 [parse] 且附原始輸出摺疊", () => {
     mockError = { kind: "parse", message: "bad", detail: '{"raw":1}' };
     renderBlock();

@@ -53,6 +53,7 @@
     "data": "Data",
     "filter": "Filter",
     "matched": "{count} matched",
+    "aiBlockTitle": "AI assist",
     "aiBlockPlaceholder": "Describe a filter or ask a question…",
     "aiGenerate": "Generate",
     "aiAsk": "Ask",

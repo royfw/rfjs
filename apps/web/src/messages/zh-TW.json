@@ -53,6 +53,7 @@
     "data": "資料",
     "filter": "篩選條件",
     "matched": "命中 {count} 筆",
+    "aiBlockTitle": "AI 助理",
     "aiBlockPlaceholder": "描述條件或提出問題…",
     "aiGenerate": "產生",
     "aiAsk": "提問",
