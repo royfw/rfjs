@@ -28,7 +28,7 @@ describe('createAiLog', () => {
     for (let i = 0; i < AI_LOG_LIMIT + 3; i++) log.append(entry(i));
     const list = log.list();
     expect(list).toHaveLength(AI_LOG_LIMIT);
-    expect(list[0].id).toBe('id-3'); // 0,1,2 被裁
+    expect(list[0]?.id).toBe('id-3'); // 0,1,2 被裁
   });
 
   it('損毀 JSON → 空陣列;非陣列 → 空陣列', () => {
