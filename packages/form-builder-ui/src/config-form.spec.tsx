@@ -1160,3 +1160,93 @@ describe('button items', () => {
     });
   });
 });
+
+describe('result items', () => {
+  const resultCfg = (result: Partial<import('@rfjs/form-builder').ResultItem>, apiOver?: object): FormConfig => ({
+    version: 1,
+    sections: [{
+      id: 's1',
+      rows: [{
+        id: 'r1',
+        items: [
+          { id: 'f1', kind: 'field', key: 'name', label: 'Name', component: 'Input', dataType: 'string' },
+          { id: 'b1', kind: 'button', label: 'Query', action: { type: 'api', url: '/x', ...apiOver } },
+          { id: 'b2', kind: 'button', label: 'Other', action: { type: 'api', url: '/y' } },
+          { id: 'res1', kind: 'result', mode: 'json', ...result },
+        ],
+      }],
+    }],
+  });
+
+  it('starts empty, renders the bound response after the api button succeeds', async () => {
+    const fetcher = vi.fn().mockResolvedValue({ hello: 'world' });
+    render(<ConfigForm config={resultCfg({ sourceId: 'b1' })} onSubmit={vi.fn()} fetcher={fetcher} />);
+    expect(screen.getByText('No result yet')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+    await waitFor(() => expect(screen.getByText(/"hello": "world"/)).toBeTruthy());
+  });
+
+  it('bound result ignores other buttons; unbound shows the last response', async () => {
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce({ from: 'other' });
+    render(
+      <ConfigForm
+        config={{
+          ...resultCfg({ sourceId: 'b1' }),
+          sections: [{
+            id: 's1',
+            rows: [{
+              id: 'r1',
+              items: [
+                { id: 'b1', kind: 'button', label: 'Query', action: { type: 'api', url: '/x' } },
+                { id: 'b2', kind: 'button', label: 'Other', action: { type: 'api', url: '/y' } },
+                { id: 'res1', kind: 'result', mode: 'json', sourceId: 'b1' },
+                { id: 'res2', kind: 'result', mode: 'json' },
+              ],
+            }],
+          }],
+        }}
+        onSubmit={vi.fn()}
+        fetcher={fetcher}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Other' }));
+    // 綁定 b1 的 res1 不顯示 b2 的回應;未綁定的 res2 顯示
+    await waitFor(() => expect(screen.getByText(/"from": "other"/)).toBeTruthy());
+    expect(screen.getByText('No result yet')).toBeTruthy(); // res1 仍空
+  });
+
+  it('dataPath extracts a sub-node; missing path falls back to empty', async () => {
+    const fetcher = vi.fn().mockResolvedValue({ data: { items: [{ id: 1 }] } });
+    const { rerender } = render(
+      <ConfigForm config={resultCfg({ sourceId: 'b1', mode: 'card', dataPath: 'data.items' })} onSubmit={vi.fn()} fetcher={fetcher} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+    await waitFor(() => expect(screen.getByText('id')).toBeTruthy());
+    // 換一個取不到的 path,重新查詢:hasResponse 為真但 getPath undefined → 空狀態,不炸
+    rerender(<ConfigForm config={resultCfg({ sourceId: 'b1', mode: 'card', dataPath: 'no.such' })} onSubmit={vi.fn()} fetcher={fetcher} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getByText('No result yet')).toBeTruthy());
+  });
+
+  it('shows loading while the bound button is pending and error on failure', async () => {
+    let reject!: (e: Error) => void;
+    const fetcher = vi.fn().mockReturnValue(new Promise((_r, rej) => { reject = rej; }));
+    render(<ConfigForm config={resultCfg({ sourceId: 'b1' })} onSubmit={vi.fn()} fetcher={fetcher} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+    await waitFor(() => expect(screen.getByText(/loading/i)).toBeTruthy());
+    reject(new Error('boom'));
+    await waitFor(() => expect(screen.getByText(/request failed/i)).toBeTruthy());
+  });
+
+  it('config change clears stored responses', async () => {
+    const fetcher = vi.fn().mockResolvedValue({ a: 1 });
+    const cfg = resultCfg({ sourceId: 'b1' });
+    const { rerender } = render(<ConfigForm config={cfg} onSubmit={vi.fn()} fetcher={fetcher} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+    await waitFor(() => expect(screen.getByText(/"a": 1/)).toBeTruthy());
+    rerender(<ConfigForm config={{ ...cfg }} onSubmit={vi.fn()} fetcher={fetcher} />);
+    await waitFor(() => expect(screen.getByText('No result yet')).toBeTruthy());
+  });
+});
