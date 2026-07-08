@@ -12,7 +12,7 @@
 | ④ | **重新擺位** | AI 從 `{ }` 分頁**搬家**(非複製)到 FILTER LOGIC 區塊頂部,成為 `AiAssistBlock` |
 | ①a | **解釋** | 單鍵「解釋目前條件」:tree + schema + 編譯輸出 → 白話說明(當前語系) |
 | ①b | **問答** | 輸入問題(例:「這組條件能不能挑出 30 歲以上的活躍使用者?」)→ 帶完整 context 的單發回答 |
-| — | **回答堆疊** | 產生/解釋/問答的成功結果在區塊內堆疊(最新在上,session 內),為 Wave 2 紀錄與 Wave 3 聊天歷史鋪路 |
+| — | **回答堆疊 + 持久化** | 產生/解釋/問答的成功結果在區塊內堆疊(最新在上),**存 localStorage(每工具一個 key,上限 50 筆)**,附「清除紀錄」;紀錄介面 `AiLogStore` 開在 seam 層,為 Wave 2 重新套用與 Wave 3 聊天歷史鋪路 |
 
 **範圍**:6 個 filter 工具(data-filter-builder、jsonb-query-builder、sql-filter-builder、mongo-query-builder、pg-filter-builder、es-query-builder),全部經 `_filter-builder` scaffold 一次改。**只動 `apps/web`**;`packages/*` 零改動(不需 changeset);decision-table / form-builder 不在本案。
 
@@ -72,6 +72,7 @@ interface AiAssistBlockProps {
   compiled: string | null;          // 編譯輸出 primary(失敗時 null)
   engineId: string;                 // 'pg-filter' | 'jsonb' | ...(給 prompt 說明目標引擎)
   onApply: (text: string) => void;  // fb.onCanonicalChange(閘門不變)
+  logKey: string;                   // 'rfjs.ai.log.<toolId>'(持久化 key)
 }
 ```
 
@@ -84,10 +85,25 @@ interface AiAssistEntry {
   prompt?: string;                   // generate=NL 描述;ask=問題;explain=無
   answer?: string;                   // ask/explain=回答;generate=無
   appliedJson?: string;              // generate=套用的 canonical JSON(Wave 2 重新套用用)
+  at: string;                        // ISO 時間戳
 }
 ```
 
-State 放 `AiAssistBlock` 內(`useState<AiAssistEntry[]>`),session 內、不持久化(Wave 2 再決定持久化與重新套用)。
+**持久化介面(seam 層,`apps/web/src/lib/ai/log.ts`,新增)**:
+
+```ts
+interface AiLogStore {
+  list(): AiAssistEntry[];           // 損毀 JSON / SSR → []
+  append(entry: AiAssistEntry): AiAssistEntry[];  // 寫入並回傳新列表;超過上限裁掉最舊
+  clear(): void;
+}
+export const AI_LOG_LIMIT = 50;
+export function createAiLog(storageKey: string): AiLogStore;  // localStorage 後端
+```
+
+- key 慣例:`rfjs.ai.log.<toolId>`(每工具獨立;由各工具 ui.tsx 傳入 `AiAssistBlock` 的 `logKey` prop)。
+- `AiAssistBlock` 掛載時 `list()` 還原堆疊、成功時 `append()`、「清除紀錄」= `clear()` + 清 UI state。
+- 放 `lib/ai/`(而非 scaffold)的理由:這是未來 `@rfjs/ai-assist` 的一部分 —— Wave 2 重新套用讀 `appliedJson`,Wave 3 聊天歷史可換後端而呼叫端不變。decision-table / form-builder 後續接紀錄時直接重用。
 
 **Prompt 內容**(`ai-explain.ts`;皆為單發、`json: false`,回覆為純文字):
 - system:「你是 {engineId} 篩選條件的助理。使用者的欄位定義:{schema 摘要}。目前條件樹(canonical JSON):{canonicalJson}。編譯結果:{compiled ?? '(無)'}。用 {locale} 語言、純文字(不要 Markdown)回答,簡潔。」
@@ -118,13 +134,14 @@ State 放 `AiAssistBlock` 內(`useState<AiAssistEntry[]>`),session 內、不持�
 
 ## 6. 測試策略
 
+- **`lib/ai/log.ts` 單元**:list/append/clear 往返;超過 `AI_LOG_LIMIT` 裁掉最舊;損毀 JSON → `[]`;SSR(無 window)安全;不同 key 互不干擾。
 - **`ai-explain.ts` 單元**:explain/ask prompt 含 schema 欄位、canonical JSON、compiled、locale、問題原文;`json` 未設(非 JSON 模式)。
 - **`AiAssistBlock` 元件**(mock `useAiAssist`):
   - 產生:成功 → `onApply` 收到回應原文、堆疊出現 generate 項(v1 `ai-nl-row.spec` 的案例遷移過來);失敗 → 錯誤列、堆疊不變。
   - 提問:成功 → 堆疊出現問題+回答;空輸入 → 按鈕 disabled。
   - 解釋:成功 → 堆疊出現回答;免輸入可按。
   - 未設定:三顆按鈕 disabled + 引導文案。
-  - 清除:堆疊清空。
+  - 持久化:掛載時從 `AiLogStore.list()` 還原堆疊;成功後 `append`(以 mock storage 斷言);清除 → 堆疊清空且 `clear()` 被呼叫。
   - parse 錯誤:`aiViewRaw` 摺疊區出現。
 - **6 工具接線**:各 ui.tsx 傳入正確 engineId/compiled(以 pg-filter-builder 為代表做一個整合斷言;其餘靠 typecheck)。
 - **既有測試遷移**:`query-output-panel.spec` 移除 aiRow 相關斷言;`ai-nl-row.spec.tsx` 刪除。
@@ -133,7 +150,7 @@ State 放 `AiAssistBlock` 內(`useState<AiAssistEntry[]>`),session 內、不持�
 
 ## 7. 非目標與 Wave 對齊
 
-**非目標(本案)**:重新套用歷史(Wave 2)、持久化紀錄(Wave 2)、聊天面板/多輪對話/tab sessions/`stream()`(Wave 3)、decision-table 與 form-builder 的解釋問答(後續)、`@rfjs/ai-assist` 抽離(Wave 3 觸發)。
+**非目標(本案)**:重新套用歷史(Wave 2;`appliedJson` 已存好)、聊天面板/多輪對話/tab sessions/`stream()`(Wave 3)、decision-table 與 form-builder 的解釋問答與紀錄(後續;`AiLogStore` 可直接重用)、`@rfjs/ai-assist` 抽離(Wave 3 觸發)。
 
 **Wave 對齊**:`AiAssistEntry` 的形狀就是 Wave 2 紀錄的資料模型(`appliedJson` 預留給重新套用);Wave 3 聊天層的 context provider 將重用 `ai-explain.ts` 的 context 組裝(schema 摘要 + canonical + compiled)。
 
