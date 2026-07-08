@@ -23,8 +23,11 @@ export function TableBuilderTool() {
       retry: t("tbRetry"),
       prev: t("tbPrev"),
       next: t("tbNext"),
-      pageOf: t("tbPageOf"),
-      total: t("tbTotalRows"),
+      // template labels carry literal {page}/{count}/{total} for ConfigTable's own
+      // substitution -- t() would ICU-parse and throw (see the next-intl placeholder trap);
+      // t.raw() bypasses ICU.
+      pageOf: t.raw("tbPageOf") as string,
+      total: t.raw("tbTotalRows") as string,
       pageSize: t("tbPageSizeLabel"),
     }),
     [t],
