@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Type,
   AlignLeft,
@@ -36,7 +36,9 @@ import { Section } from "./inspector/section";
 import { ResponsivePreview } from "./responsive-preview";
 import { SubmissionPanel } from "./submission-panel";
 import { useAiAssist } from "@/lib/ai/use-ai-assist";
+import { AiPanel } from "@/components/shared/ai-panel";
 import { buildNlFormPrompt, parseNlFormResponse } from "./ai-nl-form";
+import { buildFormAskPrompt, buildFormExplainPrompt } from "./ai-explain-form";
 
 // ---------------------------------------------------------------------------
 // Direction C (hybrid) — "A structure + C drag freedom", now with a builder
@@ -141,8 +143,8 @@ let gseq = 10;
 
 export function FormBuilderTool() {
   const t = useTranslations("ToolUI");
+  const locale = useLocale();
   const ai = useAiAssist();
-  const [aiNl, setAiNl] = React.useState("");
   const [groups, setGroups] = React.useState<Group[]>(SEED_GROUPS);
   const [cards, setCards] = React.useState<Card[]>(SEED_CARDS);
   const [selected, setSelected] = React.useState<string | null>(null);
@@ -358,19 +360,6 @@ export function FormBuilderTool() {
     }
   }
 
-  // AI assist: NL description → FormConfig, gated by the same jsonToCards/parseFormConfig
-  // validation as manual JSON import. Success replaces the canvas via the same setters
-  // as applyJson; failure (parse gate throws, surfaced via ai.error) leaves it unchanged.
-  async function onAiGenerate() {
-    if (!aiNl.trim()) return;
-    const out = await ai.run({ ...buildNlFormPrompt(aiNl), json: true }, parseNlFormResponse);
-    if (out !== null) {
-      const { groups: g, cards: c } = jsonToCards(out);
-      setGroups(g);
-      setCards(c);
-    }
-  }
-
   async function copyJson() {
     try {
       await navigator.clipboard?.writeText(JSON.stringify(formConfig, null, 2));
@@ -423,53 +412,62 @@ export function FormBuilderTool() {
         ))}
       </div>
 
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <Sparkles className="size-4 shrink-0 text-muted-foreground" />
-          <input
-            value={aiNl}
-            placeholder={t("fbAiPlaceholder")}
-            onChange={(e) => setAiNl(e.target.value)}
-            onKeyDown={(e) => {
-              // IME 組字確認的 Enter(isComposing)不觸發;請求進行中也不重送。
-              if (e.key === "Enter" && !e.nativeEvent.isComposing && !ai.loading) void onAiGenerate();
-            }}
-            className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
-          />
-          {ai.loading ? (
-            <button
-              type="button"
-              onClick={ai.cancel}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-            >
-              {t("fbAiCancel")}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => void onAiGenerate()}
-              disabled={!ai.ready}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {t("fbAiGenerate")}
-            </button>
-          )}
-        </div>
-        {!ai.ready ? <p className="text-xs text-muted-foreground">{t("fbAiNotConfigured")}</p> : null}
-        {ai.error ? (
-          <div role="alert" className="text-xs text-fault">
-            <p>
-              [{ai.error.kind}] {ai.error.message}
-            </p>
-            {ai.error.kind === "parse" && ai.error.detail ? (
-              <details>
-                <summary>{t("fbAiViewRaw")}</summary>
-                <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs">{ai.error.detail}</pre>
-              </details>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
+      <AiPanel
+        title={t("aiBlockTitle")}
+        placeholder={t("fbAiPlaceholder")}
+        logKey="rfjs.ai.log.form-builder"
+        ai={ai}
+        onReapply={(e) => applyJson(e.appliedJson ?? "")}
+        appliedSummary={(e) => {
+          let n = 0;
+          try {
+            const parsed = JSON.parse(e.appliedJson ?? "") as { fields?: unknown[] };
+            n = Array.isArray(parsed.fields) ? parsed.fields.length : 0;
+          } catch {
+            n = 0;
+          }
+          return t("fbAiApplied", { count: n });
+        }}
+        actions={[
+          {
+            key: "generate",
+            label: t("fbAiGenerate"),
+            needsInput: true,
+            primary: true,
+            run: async (input) => {
+              const out = await ai.run({ ...buildNlFormPrompt(input), json: true }, parseNlFormResponse);
+              if (out === null) return null;
+              const { groups: g, cards: c } = jsonToCards(out);
+              setGroups(g);
+              setCards(c);
+              return { kind: "generate", prompt: input, appliedJson: out };
+            },
+          },
+          {
+            key: "ask",
+            label: t("aiAsk"),
+            needsInput: true,
+            run: async (input) => {
+              const out = await ai.run(
+                buildFormAskPrompt({ configJson: JSON.stringify(formConfig, null, 2), locale }, input),
+                (raw) => raw.trim(),
+              );
+              return out === null ? null : { kind: "ask", prompt: input, answer: out };
+            },
+          },
+          {
+            key: "explain",
+            label: t("fbAiExplain"),
+            run: async () => {
+              const out = await ai.run(
+                buildFormExplainPrompt({ configJson: JSON.stringify(formConfig, null, 2), locale }),
+                (raw) => raw.trim(),
+              );
+              return out === null ? null : { kind: "explain", answer: out };
+            },
+          },
+        ]}
+      />
 
       {tab === "canvas" ? (
         <>
