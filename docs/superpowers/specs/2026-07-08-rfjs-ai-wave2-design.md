@@ -9,7 +9,7 @@
 
 | # | 項目 | 說明 |
 | --- | --- | --- |
-| ① | **`AiPanel` 通用外殼** | 從 `AiAssistBlock` 抽出:收合標題列(沿用全站偏好 `rfjs.ai.block.open`)、自動長高輸入(Enter=主動作、Shift+Enter 換行、IME 防護)、**動作插槽**、取消、錯誤慣例、`AiLogStore` 紀錄堆疊 + 清除 + advisory |
+| ① | **`AiPanel` 通用外殼** | 從 `AiAssistBlock` 抽出:收合標題列(沿用全站偏好 `rfjs.ai.block.open`)、自動長高輸入(**Enter=第一個需輸入的動作**、Shift+Enter 換行、IME 防護)、**動作插槽**、取消、錯誤慣例、`AiLogStore` 紀錄堆疊 + 清除 + advisory |
 | ② | **重新套用** | 有 `appliedJson` 的紀錄項顯示「重新套用」:走該工具的套用閘門(filter=`onCanonicalChange`、fb=`jsonToCards` 同路徑),**整份取代**(存的是完整快照) |
 | ③ | **decision-table 接入** | 頁面新增同款 AI ASSIST section,動作 = 檢查表格(免輸入)/ 提問 / 解釋這張表;**移除** Rules 表頭的 AI Check 按鈕、舊 findings 面板與卡片內錯誤列 |
 | ④ | **form-builder 接入** | 動作 = 產生表單(主)/ 提問 / 解釋表單;**移除** tabs 下方的舊 ✨ 產生列 |
