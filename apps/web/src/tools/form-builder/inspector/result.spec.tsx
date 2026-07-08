@@ -40,4 +40,21 @@ describe("ResultSection", () => {
     fireEvent.change(screen.getByLabelText(/empty text/i), { target: { value: "Nothing" } });
     expect(onChange).toHaveBeenCalledWith({ emptyText: "Nothing" });
   });
+
+  it("dangling sourceId renders a visible missing option", () => {
+    const onChange = vi.fn();
+    render(<ResultSection card={resCard({ sourceId: "ghost" })} onChange={onChange} apiButtons={apiButtons} />);
+    const select = screen.getByLabelText(/source/i) as HTMLSelectElement;
+    expect(select.value).toBe("ghost");
+    expect(screen.getByText("missing: ghost")).toBeTruthy();
+    fireEvent.change(select, { target: { value: "" } });
+    expect(onChange).toHaveBeenCalledWith({ sourceId: undefined });
+  });
+
+  it("maxItems rejects non-integers", () => {
+    const onChange = vi.fn();
+    render(<ResultSection card={resCard({ mode: "card" })} onChange={onChange} apiButtons={apiButtons} />);
+    fireEvent.change(screen.getByLabelText(/max items/i), { target: { value: "5.5" } });
+    expect(onChange).toHaveBeenCalledWith({ maxItems: undefined });
+  });
 });

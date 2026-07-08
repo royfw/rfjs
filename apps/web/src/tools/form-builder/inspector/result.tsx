@@ -32,6 +32,9 @@ export function ResultSection({
           {apiButtons.map((b) => (
             <option key={b.id} value={b.id}>{b.label}</option>
           ))}
+          {card.sourceId && !apiButtons.some((b) => b.id === card.sourceId) && (
+            <option value={card.sourceId}>{`missing: ${card.sourceId}`}</option>
+          )}
         </select>
       </label>
 
@@ -46,7 +49,7 @@ export function ResultSection({
           <input
             className={INPUT_CLS} type="number" min={1}
             value={card.maxItems ?? 10}
-            onChange={(e) => { const n = Number(e.target.value); onChange({ maxItems: Number.isFinite(n) && n >= 1 ? n : undefined }); }}
+            onChange={(e) => { const n = Number(e.target.value); onChange({ maxItems: Number.isInteger(n) && n >= 1 ? n : undefined }); }}
           />
         </label>
       )}
