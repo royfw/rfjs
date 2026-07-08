@@ -151,26 +151,26 @@ export function AiAssistBlock({
   } as const;
 
   return (
-    <div className="flex flex-col rounded-md border bg-muted/30">
+    <section className="flex flex-col rounded-lg border bg-card">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex items-center gap-1.5 px-3 py-2 text-muted-foreground transition-colors hover:text-foreground"
+        className="flex items-center gap-2 px-5 py-3 text-muted-foreground transition-colors hover:text-foreground"
       >
         {open ? (
-          <ChevronDown className="size-3.5" />
+          <ChevronDown className="size-4" />
         ) : (
-          <ChevronRight className="size-3.5" />
+          <ChevronRight className="size-4" />
         )}
-        <Sparkles className="size-3.5" />
-        <span className="font-mono text-[10px] uppercase tracking-wide">
+        <Sparkles className="size-4" />
+        <span className="font-mono text-xs uppercase tracking-wide">
           {t("aiBlockTitle")}
         </span>
       </button>
 
       {open ? (
-        <div className="flex flex-col gap-2 px-3 pb-3">
+        <div className="flex flex-col gap-2 border-t p-4">
           <div className="flex flex-wrap items-start gap-2">
             <Textarea
               rows={1}
@@ -294,6 +294,6 @@ export function AiAssistBlock({
           ) : null}
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }

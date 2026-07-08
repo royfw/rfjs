@@ -1,7 +1,10 @@
 "use client";
 
 import { getEngine, treeToFilterGroup } from "@rfjs/filter-builder";
-import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui";
+import {
+  FilterTreeEditor,
+  type FilterTreeLabels,
+} from "@rfjs/filter-builder-ui";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
@@ -51,7 +54,11 @@ export function SqlFilterBuilder() {
   };
 
   const compiled = useMemo(
-    () => getEngine("sql-filter").compile(treeToFilterGroup(fb.tree), toCompileContext(fb.schema)),
+    () =>
+      getEngine("sql-filter").compile(
+        treeToFilterGroup(fb.tree),
+        toCompileContext(fb.schema),
+      ),
     [fb.tree, fb.schema],
   );
 
@@ -82,7 +89,10 @@ export function SqlFilterBuilder() {
         style={{ animationDelay: "0ms" }}
       />
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "70ms" }}>
+      <section
+        className="fb-rise rounded-lg border bg-card"
+        style={{ animationDelay: "70ms" }}
+      >
         <div className="border-b px-5 py-3">
           <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
             {t("sfbFields")}
@@ -100,24 +110,28 @@ export function SqlFilterBuilder() {
         </div>
       </section>
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "140ms" }}>
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={compiled.ok ? compiled.primary : null}
+          engineId="sql-filter"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.sql-filter-builder"
+        />
+      </div>
+
+      <section
+        className="fb-rise rounded-lg border bg-card"
+        style={{ animationDelay: "140ms" }}
+      >
         <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
           <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
             {t("sfbFilterLogic")}
           </span>
         </div>
         <div className="overflow-x-auto p-5 sm:p-6">
-          <div className="mb-4">
-            <AiAssistBlock
-              schema={fb.schema}
-              canonicalJson={fb.canonicalJson}
-              compiled={compiled.ok ? compiled.primary : null}
-              engineId="sql-filter"
-              onApply={fb.onCanonicalChange}
-              sampleRows={fb.rows}
-              logKey="rfjs.ai.log.sql-filter-builder"
-            />
-          </div>
           <FilterTreeEditor
             group={fb.tree}
             engineId="sql-filter"
@@ -142,7 +156,9 @@ export function SqlFilterBuilder() {
             canonical: t("sfbCanonical"),
             canonicalHint: t("sfbCanonicalHint"),
             reverseError: reverseText,
-            compileError: compiled.ok ? null : t("sfbCompileError", { error: compiled.error }),
+            compileError: compiled.ok
+              ? null
+              : t("sfbCompileError", { error: compiled.error }),
             copy: t("sfbCopy"),
           }}
         />
