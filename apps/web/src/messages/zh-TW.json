@@ -65,6 +65,8 @@
     "aiKindGenerate": "產生",
     "aiKindAsk": "提問",
     "aiKindExplain": "解釋",
+    "aiKindCheck": "檢查",
+    "aiReapply": "重新套用",
     "aiCancel": "取消",
     "aiNotConfigured": "請先設定 AI 連線(右上 ✨)。",
     "aiViewRaw": "檢視原始輸出",

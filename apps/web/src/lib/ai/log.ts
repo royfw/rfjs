@@ -1,7 +1,7 @@
 /** AI 互動紀錄的持久化接口 —— Wave 2 重新套用 / Wave 3 聊天歷史共用;後端可換。 */
 export interface AiAssistEntry {
   id: string;
-  kind: 'generate' | 'ask' | 'explain';
+  kind: 'generate' | 'ask' | 'explain' | 'check';
   prompt?: string;
   answer?: string;
   appliedJson?: string;
@@ -16,7 +16,7 @@ export interface AiLogStore {
   clear(): void;
 }
 
-const KINDS = new Set(['generate', 'ask', 'explain']);
+const KINDS = new Set(['generate', 'ask', 'explain', 'check']);
 
 function isEntry(v: unknown): v is AiAssistEntry {
   if (typeof v !== 'object' || v === null) return false;
