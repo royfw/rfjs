@@ -36,7 +36,7 @@ interface RemoteState {
 }
 
 // Design spec §5.2: ONE implementation for both source kinds, so the hook call sequence
-// (useState x4, useRef, useMemo x2, useEffect, useCallback x6) is identical every render --
+// (useState x5, useRef, useMemo x2, useEffect, useCallback x6) is identical every render --
 // even if a consumer toggles `source.kind` between 'rows' and 'remote'. All source-kind
 // branching happens INSIDE this body (plain values/conditionals, effect/callback bodies),
 // never as an early return from the hook itself -- see Task 5 review for why that broke
