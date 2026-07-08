@@ -1,8 +1,9 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
 
 import { messages } from "./messages";
+import { SAMPLE_CONFIG } from "./sample";
 import { TableBuilderTool } from "./ui";
 
 function renderTool() {
@@ -28,5 +29,34 @@ describe("TableBuilderTool", () => {
 
     await screen.findByText(/Page 1 of 2/);
     expect(screen.getByText(/18 rows/)).toBeTruthy();
+  });
+
+  it("renders SAMPLE_CONFIG's pageSize rows by default (static source)", () => {
+    renderTool();
+
+    // one <tr> for the header + one per visible data row.
+    const rows = screen.getAllByRole("row");
+    expect(rows.length).toBe(1 + SAMPLE_CONFIG.pagination.pageSize);
+  });
+
+  it("switching the data source to the fake fetcher (offset mode) still renders rows", async () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("button", { name: "Fake fetcher" }));
+
+    await waitFor(() => {
+      const rows = screen.getAllByRole("row");
+      expect(rows.length).toBe(1 + SAMPLE_CONFIG.pagination.pageSize);
+    });
+  });
+
+  it("editing page size in the pagination panel immediately changes the rendered row count", () => {
+    renderTool();
+
+    const pageSizeInput = screen.getByLabelText("Default page size") as HTMLInputElement;
+    fireEvent.change(pageSizeInput, { target: { value: "3" } });
+
+    const rows = screen.getAllByRole("row");
+    expect(rows.length).toBe(1 + 3);
   });
 });

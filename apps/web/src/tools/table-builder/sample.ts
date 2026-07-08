@@ -1,6 +1,10 @@
 import { deriveTableConfig } from "@rfjs/table-builder";
-import type { DataResourceMeta } from "@rfjs/data-schema";
+import type { DataResourceMeta, PaginationMeta } from "@rfjs/data-schema";
 import type { TableConfig } from "@rfjs/table-builder";
+
+/** Editor source-panel state (Task 9, design spec §6.1): 'rows' is the static in-memory source;
+ * the other three select the fake-fetcher remote source under a given `PaginationMeta` strategy. */
+export type SourceMode = "rows" | "offset" | "page" | "cursor";
 
 /**
  * Sample resource metadata (design spec §6.1/§6.2): one column per scalar kind the contract
@@ -69,3 +73,20 @@ export const SAMPLE_CONFIG: TableConfig = (() => {
   config.pagination = { pageSize: 5, pageSizeOptions: [5, 10, 20] };
   return config;
 })();
+
+/**
+ * Derives the `PaginationMeta` for a fetcher `SourceMode` (design spec §6.2): all three strategies
+ * share `SAMPLE_META.request`'s `endpoint`/`sort`, only `pagination` differs. Param names match what
+ * `./fake-fetcher.ts#paginate` already discriminates strategies by (offset+limit / page+pageSize /
+ * cursor+limit).
+ */
+export function samplePaginationMeta(strategy: Exclude<SourceMode, "rows">): PaginationMeta {
+  switch (strategy) {
+    case "offset":
+      return { strategy: "offset", limitParam: "limit", offsetParam: "offset" };
+    case "page":
+      return { strategy: "page", pageParam: "page", pageSizeParam: "pageSize" };
+    case "cursor":
+      return { strategy: "cursor", cursorParam: "cursor", limitParam: "limit" };
+  }
+}
