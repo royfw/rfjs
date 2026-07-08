@@ -1,12 +1,15 @@
 "use client";
 
 import { getEngine, treeToFilterGroup } from "@rfjs/filter-builder";
-import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui";
+import {
+  FilterTreeEditor,
+  type FilterTreeLabels,
+} from "@rfjs/filter-builder-ui";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import {
-  AiNlRow,
+  AiAssistBlock,
   MetadataStrip,
   QueryOutputPanel,
   RISE,
@@ -51,7 +54,11 @@ export function MongoQueryBuilder() {
   };
 
   const compiled = useMemo(
-    () => getEngine("mongo").compile(treeToFilterGroup(fb.tree), toCompileContext(fb.schema)),
+    () =>
+      getEngine("mongo").compile(
+        treeToFilterGroup(fb.tree),
+        toCompileContext(fb.schema),
+      ),
     [fb.tree, fb.schema],
   );
 
@@ -82,7 +89,10 @@ export function MongoQueryBuilder() {
         style={{ animationDelay: "0ms" }}
       />
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "70ms" }}>
+      <section
+        className="fb-rise rounded-lg border bg-card"
+        style={{ animationDelay: "70ms" }}
+      >
         <div className="border-b px-5 py-3">
           <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
             {t("mqbFields")}
@@ -100,7 +110,22 @@ export function MongoQueryBuilder() {
         </div>
       </section>
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "140ms" }}>
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={compiled.ok ? compiled.primary : null}
+          engineId="mongo"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.mongo-query-builder"
+        />
+      </div>
+
+      <section
+        className="fb-rise rounded-lg border bg-card"
+        style={{ animationDelay: "140ms" }}
+      >
         <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
           <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
             {t("mqbFilterLogic")}
@@ -124,7 +149,6 @@ export function MongoQueryBuilder() {
           secondary={compiled.ok ? (compiled.secondary ?? null) : null}
           canonicalJson={fb.canonicalJson}
           onCanonicalChange={fb.onCanonicalChange}
-          aiRow={<AiNlRow schema={fb.schema} onApply={fb.onCanonicalChange} />}
           labels={{
             output: t("mqbOutput"),
             primaryLabel: t("mqbQuery"),

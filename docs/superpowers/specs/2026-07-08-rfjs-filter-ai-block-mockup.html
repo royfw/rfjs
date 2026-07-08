@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Filter AI 助理區塊 — mockup</title>
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --card: #0f1524;
+    --card2: #131b2e;
+    --border: #232c42;
+    --fg: #e6e9f0;
+    --muted: #8b93a7;
+    --accent: #e8b44a;
+    --accent-fg: #1a1405;
+    --fault: #e5766b;
+    --ok: #58b98a;
+    --chip: #1a2338;
+  }
+  html.light {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --card2: #f2f4f8;
+    --border: #dde1ea;
+    --fg: #1d2433;
+    --muted: #667085;
+    --accent: #b97f16;
+    --accent-fg: #ffffff;
+    --fault: #c2453a;
+    --ok: #257a55;
+    --chip: #eef1f6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 20px 80px;
+    background: var(--bg); color: var(--fg);
+    font: 14px/1.55 system-ui, "Noto Sans TC", sans-serif;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  .controls {
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted);
+  }
+  .controls label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .frame { width: min(960px, 100%); }
+
+  /* ── FILTER LOGIC section(現有樣式的近似)────────── */
+  section.panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border); padding: 10px 20px;
+  }
+  .panel-title {
+    font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .panel-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── AI 助理區塊 ───────────────────────────── */
+  .ai-block {
+    border: 1px solid var(--border); border-radius: 8px; background: var(--card2);
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .ai-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .spark { color: var(--accent); flex: none; width: 18px; text-align: center; }
+  .ai-input {
+    flex: 1 1 260px; min-width: 200px;
+    background: var(--card); color: var(--fg);
+    border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px;
+  }
+  .ai-input::placeholder { color: var(--muted); }
+  .btn {
+    border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px;
+    background: transparent; color: var(--fg); font-size: 12.5px; cursor: pointer; white-space: nowrap;
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+  .btn.ghost { border-color: transparent; color: var(--muted); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .divider-v { width: 1px; align-self: stretch; background: var(--border); margin: 0 2px; }
+  .hint { font-size: 12px; color: var(--muted); }
+  .hint .spark { width: auto; }
+
+  /* 回答堆疊 */
+  .answers {
+    border: 1px solid var(--border); border-radius: 8px; background: var(--card);
+    display: flex; flex-direction: column;
+  }
+  .answers-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+  }
+  .answers-title {
+    font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .advisory { font-size: 11px; color: var(--muted); }
+  .entry { display: flex; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .entry:last-child { border-bottom: 0; }
+  .entry .icon { flex: none; width: 20px; text-align: center; }
+  .entry .body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .entry .q { color: var(--muted); font-size: 12.5px; }
+  .entry .a { white-space: pre-wrap; }
+  .tag {
+    display: inline-block; font-family: ui-monospace, monospace; font-size: 10px;
+    background: var(--chip); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 6px; color: var(--muted); margin-right: 6px; vertical-align: 1px;
+  }
+  .applied { color: var(--ok); font-size: 12.5px; }
+
+  /* 錯誤列 */
+  .error { color: var(--fault); font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+  .error details summary { cursor: pointer; font-size: 11.5px; color: var(--muted); }
+  .error pre {
+    margin: 4px 0 0; max-height: 130px; overflow: auto; white-space: pre-wrap;
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px; font-size: 11.5px; color: var(--fg);
+  }
+
+  /* 樹編輯器 placeholder */
+  .tree {
+    border: 1px dashed var(--border); border-radius: 8px; padding: 14px;
+    color: var(--muted); font-family: ui-monospace, monospace; font-size: 12.5px;
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  .tree .pill { border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; background: var(--card2); }
+  .state { display: none; }
+  .state.on { display: flex; flex-direction: column; gap: 16px; }
+</style>
+</head>
+<body>
+  <div class="controls">
+    <label><input type="checkbox" id="theme" /> light 模式</label>
+    <span>|</span>
+    <label><input type="radio" name="st" value="s1" checked /> A. 未設定 AI</label>
+    <label><input type="radio" name="st" value="s2" /> B. 已設定・初始</label>
+    <label><input type="radio" name="st" value="s3" /> C. 有回答堆疊</label>
+    <label><input type="radio" name="st" value="s4" /> D. parse 錯誤</label>
+  </div>
+
+  <div class="frame">
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">Filter Logic</span></div>
+      <div class="panel-body">
+
+        <!-- A. 未設定 -->
+        <div class="state s1 on">
+          <div class="ai-block">
+            <div class="ai-row">
+              <span class="spark">✨</span>
+              <input class="ai-input" placeholder="描述條件或提出問題…" disabled />
+              <button class="btn primary" disabled>產生條件</button>
+              <button class="btn" disabled>提問</button>
+              <span class="divider-v"></span>
+              <button class="btn" disabled>解釋目前條件</button>
+            </div>
+            <div class="hint">請先設定 AI 連線(右上 <span class="spark">✨</span>)。</div>
+          </div>
+        </div>
+
+        <!-- B. 已設定・初始 -->
+        <div class="state s2">
+          <div class="ai-block">
+            <div class="ai-row">
+              <span class="spark">✨</span>
+              <input class="ai-input" placeholder="描述條件或提出問題…" />
+              <button class="btn primary">產生條件</button>
+              <button class="btn">提問</button>
+              <span class="divider-v"></span>
+              <button class="btn">解釋目前條件</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- C. 有回答堆疊 -->
+        <div class="state s3">
+          <div class="ai-block">
+            <div class="ai-row">
+              <span class="spark">✨</span>
+              <input class="ai-input" placeholder="描述條件或提出問題…" />
+              <button class="btn primary">產生條件</button>
+              <button class="btn">提問</button>
+              <span class="divider-v"></span>
+              <button class="btn">解釋目前條件</button>
+            </div>
+            <div class="answers">
+              <div class="answers-head">
+                <span class="answers-title">AI 回答</span>
+                <span class="advisory">AI 建議,非引擎判定 · <button class="btn ghost" style="padding:2px 6px">清除紀錄</button></span>
+              </div>
+              <div class="entry">
+                <span class="icon">❓</span>
+                <div class="body">
+                  <span class="q"><span class="tag">提問</span>這組條件能挑出 30 歲以上的活躍使用者嗎?</span>
+                  <span class="a">可以。目前條件為 age > 30 且 active = true,兩者以 AND 結合,會選出同時滿足「年齡大於 30」與「啟用中」的資料列。注意 age = 30 不會被包含(使用的是「大於」而非「大於等於」)。</span>
+                </div>
+              </div>
+              <div class="entry">
+                <span class="icon">📝</span>
+                <div class="body">
+                  <span class="q"><span class="tag">解釋</span></span>
+                  <span class="a">這組條件會選出:年齡大於 30、且帳號為啟用狀態的使用者。編譯後為 WHERE age > $1 AND active = $2。</span>
+                </div>
+              </div>
+              <div class="entry">
+                <span class="icon">⚡</span>
+                <div class="body">
+                  <span class="q"><span class="tag">產生</span>30 歲以上的活躍使用者</span>
+                  <span class="applied">已套用(2 個條件)— 可在 { } 分頁檢視 JSON</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- D. parse 錯誤 -->
+        <div class="state s4">
+          <div class="ai-block">
+            <div class="ai-row">
+              <span class="spark">✨</span>
+              <input class="ai-input" value="幫我找活躍的" />
+              <button class="btn primary">產生條件</button>
+              <button class="btn">提問</button>
+              <span class="divider-v"></span>
+              <button class="btn">解釋目前條件</button>
+            </div>
+            <div class="error" role="alert">
+              <span>[parse] the AI response is not a valid filter group</span>
+              <details open>
+                <summary>檢視原始輸出</summary>
+                <pre>{"logic":"and","filters":[{"field":"active","operator":"eq"}]}</pre>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        <!-- FilterTreeEditor placeholder(所有狀態共用) -->
+        <div class="tree">
+          <span class="pill">ALL · all match ▾</span>
+          <span class="pill">+ condition</span>
+          <span class="pill">+ group</span>
+          <span>…(FilterTreeEditor,不變)</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+  document.getElementById('theme').addEventListener('change', (e) =>
+    document.documentElement.classList.toggle('light', e.target.checked));
+  document.querySelectorAll('input[name=st]').forEach((r) =>
+    r.addEventListener('change', () => {
+      document.querySelectorAll('.state').forEach((s) => s.classList.remove('on'));
+      document.querySelector('.state.' + r.value).classList.add('on');
+    }));
+</script>
+</body>
+</html>

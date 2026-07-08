@@ -15,6 +15,29 @@ describe("buildNlFilterPrompt", () => {
     expect(p.system).toContain("logic");
     expect(p.user).toBe("amount over 100");
   });
+
+  it("without a current tree, no incremental instructions are added", () => {
+    const p = buildNlFilterPrompt("amount over 100", SCHEMA);
+    expect(p.system).not.toContain("Current filter tree");
+    const empty = buildNlFilterPrompt("amount over 100", SCHEMA, "  ");
+    expect(empty.system).not.toContain("Current filter tree");
+  });
+
+  it("with sample rows, embeds the sample section for value formats", () => {
+    const p = buildNlFilterPrompt("engineering dept", SCHEMA, undefined, [{ dept: "Engineering" }]);
+    expect(p.system).toContain("Sample data (first 1 of 1 rows):");
+    expect(p.system).toContain('"dept":"Engineering"');
+  });
+
+  it("with a current tree, embeds it and instructs returning the complete merged group", () => {
+    const current = '{"logic":"and","filters":[{"field":"amount","dataType":"numeric","operator":"gt","value":100}]}';
+    const p = buildNlFilterPrompt("且 dept 是 Engineering", SCHEMA, current);
+    expect(p.system).toContain("Current filter tree");
+    expect(p.system).toContain(current);
+    expect(p.system).toContain("ADDITION");
+    expect(p.system).toContain("COMPLETE resulting filter group");
+    expect(p.user).toBe("且 dept 是 Engineering");
+  });
 });
 
 describe("parseNlFilterResponse (validation gate)", () => {

@@ -1,12 +1,15 @@
 "use client";
 
 import { runLiveMatch } from "@rfjs/filter-builder";
-import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui";
+import {
+  FilterTreeEditor,
+  type FilterTreeLabels,
+} from "@rfjs/filter-builder-ui";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import {
-  AiNlRow,
+  AiAssistBlock,
   MetadataStrip,
   RISE,
   SampleCard,
@@ -52,7 +55,10 @@ export function DataFilterBuilder() {
   const fb = useFilterBuilder({ sample: SAMPLE });
 
   // Live in-memory match is data-filter's unique output; it stays in this tool.
-  const live = useMemo(() => runLiveMatch(fb.rows, fb.tree), [fb.rows, fb.tree]);
+  const live = useMemo(
+    () => runLiveMatch(fb.rows, fb.tree),
+    [fb.rows, fb.tree],
+  );
 
   const reverseText =
     fb.reverseError === "invalidJson"
@@ -83,7 +89,10 @@ export function DataFilterBuilder() {
       />
 
       {/* Metadata converter — framed like the hero card */}
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "70ms" }}>
+      <section
+        className="fb-rise rounded-lg border bg-card"
+        style={{ animationDelay: "70ms" }}
+      >
         <div className="border-b px-5 py-3">
           <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
             {t("dfbFields")}
@@ -102,14 +111,33 @@ export function DataFilterBuilder() {
       </section>
 
       {/* Hero — the filter-logic canvas, with a live match stat */}
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "140ms" }}>
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={null}
+          engineId="data-filter"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.data-filter-builder"
+        />
+      </div>
+
+      <section
+        className="fb-rise rounded-lg border bg-card"
+        style={{ animationDelay: "140ms" }}
+      >
         <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
           <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
             {t("dfbFilterLogic")}
           </span>
           <span className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="font-mono text-2xl font-semibold text-intake">{live.count}</span>
-            <span className="font-mono text-sm text-muted-foreground">/ {fb.rows.length}</span>
+            <span className="font-mono text-2xl font-semibold text-intake">
+              {live.count}
+            </span>
+            <span className="font-mono text-sm text-muted-foreground">
+              / {fb.rows.length}
+            </span>
             <span className="ml-1 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
               {t("dfbStatLabel")}
             </span>
@@ -134,7 +162,6 @@ export function DataFilterBuilder() {
           matched={live.matched}
           canonicalJson={fb.canonicalJson}
           onCanonicalChange={fb.onCanonicalChange}
-          aiRow={<AiNlRow schema={fb.schema} onApply={fb.onCanonicalChange} />}
           error={reverseText}
           labels={{
             data: t("dfbData"),
