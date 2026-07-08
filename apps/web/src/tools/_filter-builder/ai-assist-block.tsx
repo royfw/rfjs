@@ -5,7 +5,7 @@ import { FileText, HelpCircle, Sparkles, Zap } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@rfjs/web-ui/components/button";
-import { Input } from "@rfjs/web-ui/components/input";
+import { Textarea } from "@rfjs/web-ui/components/textarea";
 import type { FieldSchema } from "@rfjs/filter-builder";
 
 import { useAiAssist } from "@/lib/ai/use-ai-assist";
@@ -101,18 +101,22 @@ export function AiAssistBlock({
 
   return (
     <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <Sparkles className="size-4 shrink-0 text-muted-foreground" />
-        <Input
+      <div className="flex flex-wrap items-start gap-2">
+        <Sparkles className="mt-2.5 size-4 shrink-0 text-muted-foreground" />
+        <Textarea
+          rows={1}
           value={nl}
           placeholder={t("aiBlockPlaceholder")}
           disabled={!ai.ready}
           onChange={(e) => setNl(e.target.value)}
           onKeyDown={(e) => {
-            // IME 組字確認的 Enter(isComposing)不觸發;請求進行中也不重送。
-            if (e.key === "Enter" && !e.nativeEvent.isComposing && !ai.loading) void onGenerate();
+            // Enter 送出、Shift+Enter 換行;IME 組字確認的 Enter(isComposing)不觸發;請求進行中不重送。
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && !ai.loading) {
+              e.preventDefault();
+              void onGenerate();
+            }
           }}
-          className="min-w-48 flex-1"
+          className="max-h-28 min-h-9 min-w-48 flex-1 resize-none py-1.5"
         />
         <Button size="sm" onClick={() => void onGenerate()} disabled={busyOrOff || !nl.trim()}>
           {t("aiGenerate")}
@@ -158,7 +162,7 @@ export function AiAssistBlock({
               </Button>
             </span>
           </div>
-          <ul className="flex flex-col">
+          <ul className="flex max-h-64 flex-col overflow-y-auto">
             {[...entries].reverse().map((e) => {
               const Icon = KIND_ICON[e.kind];
               return (

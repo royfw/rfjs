@@ -67,6 +67,9 @@ describe("AiAssistBlock — generate(既有行為遷移)", () => {
     // 組字確認的 Enter:不得觸發
     fireEvent.keyDown(input, { key: "Enter", isComposing: true });
     expect(mockRun).not.toHaveBeenCalled();
+    // Shift+Enter = 換行:不得觸發
+    fireEvent.keyDown(input, { key: "Enter", shiftKey: true });
+    expect(mockRun).not.toHaveBeenCalled();
     // 一般 Enter:觸發
     fireEvent.keyDown(input, { key: "Enter" });
     await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(1));
