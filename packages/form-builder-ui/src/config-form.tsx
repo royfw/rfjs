@@ -396,8 +396,8 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
   }
 
   // Button ids that own a dedicated (sourceId-bound) result item — their inline success/error
-  // message is redundant with (and would visually/DOM-duplicate) the ResultView's own state text,
-  // so it's suppressed in favor of the result item.
+  // message would otherwise visually/DOM-duplicate the ResultView's own state text. See the
+  // `bound`/`hasStoredResponse` logic below for exactly when the inline message still shows.
   const resultBoundButtonIds = React.useMemo(() => {
     const ids = new Set<string>();
     for (const section of normalizeToSections(config)) {
@@ -448,10 +448,17 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
       const pending = mine?.status === 'pending';
       const apiDisabled = isApi && (!fetcher || apiState?.status === 'pending');
       const apiMessages = item.action.type === 'api' ? item.action.messages : undefined;
+      // A result item bound to this button (resultBoundButtonIds) renders its own state text,
+      // so the inline message is redundant — but ONLY in the cases ResultView actually covers:
+      // success is always shown by the rendered data, but ResultView's error state only fires
+      // while there's no stored response yet (`!hasResponse`); once a success has been stored,
+      // ResultView falls through to 'ready' (stale data) on a later failure, so the button must
+      // surface its own error again or the failure would be silent.
+      const bound = resultBoundButtonIds.has(item.id);
+      const hasStoredResponse = item.id in apiResults.byButtonId;
       const msg =
-        resultBoundButtonIds.has(item.id) ? null
-        : mine?.status === 'success' ? resolveLabel(apiMessages?.success ?? 'Success', locale)
-        : mine?.status === 'error' ? resolveLabel(apiMessages?.error ?? 'Request failed', locale)
+        mine?.status === 'success' ? (bound ? null : resolveLabel(apiMessages?.success ?? 'Success', locale))
+        : mine?.status === 'error' ? (bound && !hasStoredResponse ? null : resolveLabel(apiMessages?.error ?? 'Request failed', locale))
         : null;
       return (
         <div key={item.id} data-item={item.id} className="flex min-w-0 items-center gap-2" style={place ? placementStyle(place) : fieldSpanStyle(undefined, flow, cols)}>

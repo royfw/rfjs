@@ -1240,6 +1240,22 @@ describe('result items', () => {
     await waitFor(() => expect(screen.getByText(/request failed/i)).toBeTruthy());
   });
 
+  it('surfaces the bound button\'s own error after a prior success, without hiding the stale result', async () => {
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce({ ok: 1 })
+      .mockRejectedValueOnce(new Error('boom'));
+    render(<ConfigForm config={resultCfg({ sourceId: 'b1' })} onSubmit={vi.fn()} fetcher={fetcher} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+    await waitFor(() => expect(screen.getByText(/"ok": 1/)).toBeTruthy());
+    expect(screen.queryByText(/request failed/i)).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Query' }));
+    await waitFor(() => expect(screen.getAllByText(/request failed/i)).toHaveLength(1));
+    // Result still shows the stale success data — not overwritten/cleared by the failure.
+    expect(screen.getByText(/"ok": 1/)).toBeTruthy();
+  });
+
   it('config change clears stored responses', async () => {
     const fetcher = vi.fn().mockResolvedValue({ a: 1 });
     const cfg = resultCfg({ sourceId: 'b1' });
