@@ -190,3 +190,26 @@ describe("button cards", () => {
     expect(item).toMatchObject({ kind: "button", action: { type: "custom", name: "action-1" } });
   });
 });
+
+describe('result cards', () => {
+  it('round-trips a result card through FormConfig', () => {
+    const groups = [{ id: 'g1', title: 'G', collapsed: false }];
+    const cards = [{
+      id: 'res1', groupId: 'g1', kind: 'result' as const, label: 'Result',
+      mode: 'card' as const, sourceId: 'btn1', dataPath: 'data.items', maxItems: 5, emptyText: 'Nothing',
+      col: 1, span: 12, row: 1,
+    }];
+    const config = cardsToFormConfig(groups, cards);
+    const item = config.sections![0]!.rows[0]!.items[0]!;
+    expect(item).toMatchObject({ kind: 'result', mode: 'card', sourceId: 'btn1', dataPath: 'data.items', maxItems: 5, emptyText: 'Nothing' });
+    const back = formConfigToCards(config);
+    expect(back.cards[0]).toMatchObject({ kind: 'result', mode: 'card', sourceId: 'btn1', dataPath: 'data.items', maxItems: 5, emptyText: 'Nothing' });
+  });
+
+  it('result card without mode defaults to json', () => {
+    const groups = [{ id: 'g1', title: 'G', collapsed: false }];
+    const cards = [{ id: 'res1', groupId: 'g1', kind: 'result' as const, label: 'Result', col: 1, span: 12, row: 1 }];
+    const item = cardsToFormConfig(groups, cards).sections![0]!.rows[0]!.items[0]!;
+    expect(item).toMatchObject({ kind: 'result', mode: 'json' });
+  });
+});
