@@ -140,6 +140,19 @@ describe("full-config round-trip", () => {
   });
 });
 
+describe("formConfigToCards — flat fields[] config (AI nl-assist output shape)", () => {
+  it("normalizes a top-level fields[] config into a single default section", () => {
+    const config: FormConfig = {
+      version: 1,
+      fields: [{ key: "name", label: "Name", component: "Input", dataType: "string" }],
+    };
+    const { groups: g, cards: cs } = formConfigToCards(config);
+    expect(g).toHaveLength(1);
+    expect(cs).toHaveLength(1);
+    expect(cs[0]).toMatchObject({ groupId: g[0]!.id, key: "name", component: "Input" });
+  });
+});
+
 describe("FileUpload / Signature round-trip", () => {
   it("round-trips FileUpload config (accept/multiple/maxSize) and Signature", () => {
     const cfg = { sections: [{ id: "s", title: "S", rows: [{ id: "r", items: [

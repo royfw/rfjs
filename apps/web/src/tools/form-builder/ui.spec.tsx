@@ -23,8 +23,18 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
 
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { FormBuilderTool, createPreviewFetcher } from "./ui";
+import { messages } from "./messages";
 import { resolveCards, collides, type PlacedCard } from "./layout-grid";
+
+function renderTool() {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages.en as Record<string, unknown>}>
+      <FormBuilderTool />
+    </NextIntlClientProvider>,
+  );
+}
 
 describe("createPreviewFetcher", () => {
   it("echoes an api-action request (body shaped { data, meta }) instead of delegating to sampleFetcher", async () => {
@@ -50,7 +60,7 @@ describe("createPreviewFetcher", () => {
 
 describe("FormBuilderTool preview", () => {
   it("Preview tab renders the real ConfigForm with a labelled control", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // The seed has a "Name" field → real <Label> + a real input render.
     expect(screen.getByText("Name")).toBeTruthy();
@@ -58,7 +68,7 @@ describe("FormBuilderTool preview", () => {
   });
 
   it("JSON tab shows a FormConfig (version + sections)", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^json$/i }));
     const ta = screen.getByLabelText(/config json/i) as HTMLTextAreaElement;
     const parsed = JSON.parse(ta.value);
@@ -84,7 +94,7 @@ describe("canvas no-overlap invariant", () => {
 
 describe("FormBuilderTool drag threshold", () => {
   it("a sub-threshold pointer move (a click) does not move the card", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
     const before = card.style.gridColumn;
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
@@ -96,14 +106,14 @@ describe("FormBuilderTool drag threshold", () => {
 
 describe("FormBuilderTool group reorder", () => {
   it("each group has a reorder handle", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     expect(screen.getAllByRole("button", { name: /reorder group/i }).length).toBeGreaterThanOrEqual(2);
   });
 });
 
 describe("FormBuilderTool canvas collapsible sections", () => {
   it("Canvas tab has two independent collapsible sections: Editor and Live Preview", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     // Canvas is the default tab — both section headers should be present
     expect(screen.getByRole("button", { name: /editor/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /live preview/i })).toBeTruthy();
@@ -114,7 +124,7 @@ describe("FormBuilderTool canvas collapsible sections", () => {
 
 describe("FormBuilderTool preview tab integration", () => {
   it("Preview tab renders ResponsivePreview with device controls + a submission panel", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // Device preset buttons from ResponsivePreview
     expect(screen.getByRole("button", { name: /^mobile$/i })).toBeTruthy();
@@ -126,7 +136,7 @@ describe("FormBuilderTool preview tab integration", () => {
   });
 
   it("Preview tab uses vertical stack layout (no lg:flex-row)", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // The preview tab wrapper must NOT have lg:flex-row — find the rp-frame and walk up
     const frame = screen.getByTestId("rp-frame");
@@ -144,7 +154,7 @@ describe("FormBuilderTool preview tab integration", () => {
   });
 
   it("Preview tab wraps SubmissionPanel in a collapsible Submission section (collapsed by default)", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // "Submission" section header should be present
     expect(screen.getByRole("button", { name: /submission/i })).toBeTruthy();
@@ -153,7 +163,7 @@ describe("FormBuilderTool preview tab integration", () => {
   });
 
   it("preview: clicking a custom button surfaces the action in the submission panel", async () => {
-    render(<FormBuilderTool />);
+    renderTool();
     // Anchored (as the rest of this file does) — an unanchored /preview/i also matches
     // the Canvas tab's "Live Preview" section toggle button.
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
@@ -168,7 +178,7 @@ describe("FormBuilderTool mobile config overlay (does not block canvas drag)", (
   const isOverlayOpen = () => screen.getByTestId("card-inspector").className.includes("fixed");
 
   it("a tap (press-release without moving) opens the mobile config overlay", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
     expect(isOverlayOpen()).toBe(false);
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
@@ -178,7 +188,7 @@ describe("FormBuilderTool mobile config overlay (does not block canvas drag)", (
   });
 
   it("a press-drag (past the threshold) does NOT open the overlay, so the canvas stays draggable", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
     fireEvent.pointerMove(window, { clientX: 140, clientY: 140 }); // ~57px, past the 4px threshold → a drag

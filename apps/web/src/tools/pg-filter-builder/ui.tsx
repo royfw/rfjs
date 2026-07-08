@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import {
+  AiNlRow,
   MetadataStrip,
   QueryOutputPanel,
   RISE,
@@ -136,6 +137,7 @@ export function PgFilterBuilder() {
           secondary={compiled.ok ? (compiled.secondary ?? null) : null}
           canonicalJson={fb.canonicalJson}
           onCanonicalChange={fb.onCanonicalChange}
+          aiRow={<AiNlRow schema={fb.schema} onApply={fb.onCanonicalChange} />}
           labels={{
             output: t("pfbOutput"),
             primaryLabel: t("pfbWhere"),

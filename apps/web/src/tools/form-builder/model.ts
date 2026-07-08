@@ -1,5 +1,6 @@
 import {
   parseFormConfig,
+  normalizeToSections,
   type FieldComponent, type FieldType,
   type FormConfig, type FormItem, type FormSection,
   type LocalizedLabel, type FieldOption, type FieldValidation, type ConditionalRule, type DataSource,
@@ -140,7 +141,9 @@ function labelToString(label: unknown): string {
 export function formConfigToCards(config: FormConfig): { groups: Group[]; cards: Card[] } {
   const groups: Group[] = [];
   const cards: Card[] = [];
-  for (const section of config.sections ?? []) {
+  // normalizeToSections also accepts a flat top-level fields[] config (the AI assist's
+  // simplified output shape) by wrapping it into a single default section.
+  for (const section of normalizeToSections(config)) {
     groups.push({ id: section.id, title: labelToString(section.title) || "Section", collapsed: false });
     const byId = new Map((section.layout?.placements ?? []).map((p) => [p.itemId, p]));
     for (const [i, item] of section.rows.flatMap((r) => r.items).entries()) {

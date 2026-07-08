@@ -53,6 +53,11 @@
     "data": "Data",
     "filter": "Filter",
     "matched": "{count} matched",
+    "aiNlPlaceholder": "Describe the filter in plain language…",
+    "aiGenerate": "AI Generate",
+    "aiCancel": "Cancel",
+    "aiNotConfigured": "Set up an AI connection first (top-right ✨).",
+    "aiViewRaw": "View raw output",
     "types": {
       "string": "String",
       "number": "Number",
@@ -100,5 +105,22 @@
     "retry": { "description": "Retry helper with configurable delay." },
     "bpmn-ui": { "description": "Render read-only BPMN 2.0 process diagrams from XML in React." },
     "tpl-toolkit": { "description": "Shared config factories for rfjs project templates." }
+  },
+  "AiSettings": {
+    "trigger": "AI settings",
+    "title": "AI Assist",
+    "description": "Bring your own key. Requests go directly from your browser to the endpoint you configure — nothing is stored server-side.",
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "http://localhost:4000/v1",
+    "apiKey": "API key",
+    "model": "Model",
+    "test": "Test connection",
+    "testOk": "Connection OK",
+    "testFail": "Connection failed",
+    "testFailDetail": "View details",
+    "loadModels": "Load models",
+    "modelsLoaded": "{count} models available",
+    "save": "Save",
+    "saved": "Saved"
   }
 }

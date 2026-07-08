@@ -53,6 +53,11 @@
     "data": "資料",
     "filter": "篩選條件",
     "matched": "命中 {count} 筆",
+    "aiNlPlaceholder": "用白話描述你要的過濾條件…",
+    "aiGenerate": "AI 產生",
+    "aiCancel": "取消",
+    "aiNotConfigured": "請先設定 AI 連線(右上 ✨)。",
+    "aiViewRaw": "檢視原始輸出",
     "types": {
       "string": "字串",
       "number": "數字",
@@ -100,5 +105,22 @@
     "retry": { "description": "可設定延遲的重試工具。" },
     "bpmn-ui": { "description": "在 React 中從 XML 渲染唯讀的 BPMN 2.0 流程圖。" },
     "tpl-toolkit": { "description": "rfjs 專案範本的共用設定工廠。" }
+  },
+  "AiSettings": {
+    "trigger": "AI 設定",
+    "title": "AI 輔助",
+    "description": "自帶金鑰(BYOK)。請求由你的瀏覽器直接送往你設定的端點 —— 不經任何伺服器儲存。",
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "http://localhost:4000/v1",
+    "apiKey": "API 金鑰",
+    "model": "模型",
+    "test": "測試連線",
+    "testOk": "連線成功",
+    "testFail": "連線失敗",
+    "testFailDetail": "檢視詳細",
+    "loadModels": "載入模型",
+    "modelsLoaded": "共 {count} 個可用模型",
+    "save": "儲存",
+    "saved": "已儲存"
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { DayPicker } from 'react-day-picker';
+import { DayPicker, type ChevronProps } from 'react-day-picker';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { cn } from '../lib/utils';
@@ -54,7 +54,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Chevron: ({ orientation, ...rest }) => {
+        Chevron: ({ orientation, ...rest }: ChevronProps) => {
           if (orientation === 'left') {
             return <ChevronLeft className="size-4" {...rest} />;
           }

@@ -10,7 +10,6 @@ describe('Calendar', () => {
   });
 
   it('renders the current month name in the caption', () => {
-    const now = new Date();
     render(<Calendar mode="single" />);
     // Month name appears in the caption label (e.g. "June 2026")
     const caption = document.querySelector('[class*="caption"]') ?? document.querySelector('nav');

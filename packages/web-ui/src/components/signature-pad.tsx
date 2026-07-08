@@ -64,6 +64,9 @@ export function SignaturePad({
       resizeObserver.disconnect();
       pad.off();
     };
+    // penColor intentionally omitted: this effect only initialises the pad once;
+    // the effect below syncs penColor changes without recreating it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync penColor changes without recreating the pad.
