@@ -429,7 +429,8 @@ export function FormBuilderTool() {
             placeholder={t("fbAiPlaceholder")}
             onChange={(e) => setAiNl(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") void onAiGenerate();
+              // IME 組字確認的 Enter(isComposing)不觸發;請求進行中也不重送。
+              if (e.key === "Enter" && !e.nativeEvent.isComposing && !ai.loading) void onAiGenerate();
             }}
             className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
           />

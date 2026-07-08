@@ -106,7 +106,8 @@ export function AiAssistBlock({
           disabled={!ai.ready}
           onChange={(e) => setNl(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") void onGenerate();
+            // IME 組字確認的 Enter(isComposing)不觸發;請求進行中也不重送。
+            if (e.key === "Enter" && !e.nativeEvent.isComposing && !ai.loading) void onGenerate();
           }}
           className="min-w-48 flex-1"
         />

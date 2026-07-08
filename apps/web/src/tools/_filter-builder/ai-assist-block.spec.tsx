@@ -59,6 +59,19 @@ describe("AiAssistBlock — generate(既有行為遷移)", () => {
     expect(mockRun.mock.calls[0]![0].system).toContain('{"logic":"and","filters":[]}');
   });
 
+  it("Enter 觸發產生;IME 組字中的 Enter(isComposing)不觸發", async () => {
+    mockRun.mockResolvedValue('{"logic":"and","filters":[]}');
+    renderBlock();
+    const input = screen.getByPlaceholderText(/describe a filter/i);
+    fireEvent.change(input, { target: { value: "篩出成年人" } });
+    // 組字確認的 Enter:不得觸發
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    expect(mockRun).not.toHaveBeenCalled();
+    // 一般 Enter:觸發
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() => expect(mockRun).toHaveBeenCalledTimes(1));
+  });
+
   it("失敗(run 回 null):onApply 不被呼叫、堆疊不變", async () => {
     mockRun.mockResolvedValue(null);
     const onApply = renderBlock();
