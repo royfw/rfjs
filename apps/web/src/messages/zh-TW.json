@@ -114,7 +114,9 @@
     "pg-toolkit": { "description": "PostgreSQL 管理工具(seed 歷史、建立 DB/schema)。" },
     "retry": { "description": "可設定延遲的重試工具。" },
     "bpmn-ui": { "description": "在 React 中從 XML 渲染唯讀的 BPMN 2.0 流程圖。" },
-    "tpl-toolkit": { "description": "rfjs 專案範本的共用設定工廠。" }
+    "tpl-toolkit": { "description": "rfjs 專案範本的共用設定工廠。" },
+    "data-schema": { "description": "資料來源 metadata 契約 —— 欄位、分頁、排序,供 table/form/filter 等消費者共用。" },
+    "table-builder": { "description": "從資料來源 metadata 衍生設定驅動的資料表:欄位、格式化、排序與分頁。" }
   },
   "AiSettings": {
     "trigger": "AI 設定",

@@ -114,7 +114,9 @@
     "pg-toolkit": { "description": "PostgreSQL admin utilities (seed history, DB/schema creation)." },
     "retry": { "description": "Retry helper with configurable delay." },
     "bpmn-ui": { "description": "Render read-only BPMN 2.0 process diagrams from XML in React." },
-    "tpl-toolkit": { "description": "Shared config factories for rfjs project templates." }
+    "tpl-toolkit": { "description": "Shared config factories for rfjs project templates." },
+    "data-schema": { "description": "Data resource metadata contract — fields, pagination, and sort, shared across table/form/filter consumers." },
+    "table-builder": { "description": "Derive a config-driven data table from resource metadata: columns, formatting, sorting, and pagination." }
   },
   "AiSettings": {
     "trigger": "AI settings",

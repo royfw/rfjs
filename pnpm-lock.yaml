@@ -196,6 +196,9 @@ importers:
       '@rfjs/data-filter':
         specifier: workspace:*
         version: link:../../packages/data-filter
+      '@rfjs/data-schema':
+        specifier: workspace:*
+        version: link:../../packages/data-schema
       '@rfjs/data-transform':
         specifier: workspace:*
         version: link:../../packages/data-transform
@@ -235,6 +238,12 @@ importers:
       '@rfjs/pg-filter':
         specifier: workspace:*
         version: link:../../packages/pg-filter
+      '@rfjs/table-builder':
+        specifier: workspace:*
+        version: link:../../packages/table-builder
+      '@rfjs/table-builder-ui':
+        specifier: workspace:*
+        version: link:../../packages/table-builder-ui
       '@rfjs/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
