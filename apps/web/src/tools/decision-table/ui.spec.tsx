@@ -7,10 +7,20 @@ if (typeof Element !== "undefined") {
 
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@rfjs/filter-builder-ui", () => ({
   FilterTreeEditor: () => <div data-testid="fte" />,
+}));
+
+const mockRun = vi.fn();
+const mockCancel = vi.fn();
+let mockReady = true;
+let mockLoading = false;
+let mockError: { kind: string; message: string; detail?: string } | null = null;
+
+vi.mock("@/lib/ai/use-ai-assist", () => ({
+  useAiAssist: () => ({ ready: mockReady, loading: mockLoading, error: mockError, cancel: mockCancel, run: mockRun, runStream: mockRun, streamText: "", streamReasoning: "" }),
 }));
 
 import { messages } from "./messages";
@@ -23,6 +33,15 @@ function renderTool() {
     </NextIntlClientProvider>,
   );
 }
+
+beforeEach(() => {
+  localStorage.clear();
+  mockRun.mockReset();
+  mockCancel.mockReset();
+  mockReady = true;
+  mockLoading = false;
+  mockError = null;
+});
 
 describe("DecisionTableTool", () => {
   it("renders the sample rules", () => {
@@ -63,5 +82,23 @@ describe("DecisionTableTool", () => {
     fireEvent.change(ta, { target: { value: '{"version": 2}' } });
     fireEvent.click(screen.getByRole("button", { name: /^import$/i }));
     await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+  });
+});
+
+describe("DecisionTableTool — AI panel", () => {
+  it("shows the shared AI panel and drops the old Rules-header Check button", () => {
+    renderTool();
+    expect(screen.getByPlaceholderText(/describe or ask a question/i)).toBeTruthy();
+    const header = screen.getByText(/^Rules$/).closest("div")!;
+    expect(within(header).queryByRole("button", { name: /check/i })).toBeNull();
+  });
+
+  it("check succeeds → the answer stack shows the formatted finding", async () => {
+    mockRun.mockImplementation((_req, parse) =>
+      Promise.resolve(parse('{"findings":[{"kind":"gap","ruleIds":[],"message":"m"}]}')),
+    );
+    renderTool();
+    fireEvent.click(screen.getByRole("button", { name: /^check table$/i }));
+    await waitFor(() => expect(screen.getByText("[gap] m")).toBeTruthy());
   });
 });

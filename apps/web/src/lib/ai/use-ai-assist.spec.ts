@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { saveAiSettings } from './settings';
+import { clearAiSettings, saveAiSettings } from './settings';
 import { useAiAssist } from './use-ai-assist';
 
 function okResponse(content: string) {
@@ -21,6 +21,16 @@ describe('useAiAssist', () => {
     expect(result.current.ready).toBe(false);
   });
 
+  it('ready flips live when settings are saved/cleared without a remount', async () => {
+    localStorage.clear();
+    const { result } = renderHook(() => useAiAssist());
+    expect(result.current.ready).toBe(false);
+    act(() => saveAiSettings({ baseUrl: 'http://ai.local/v1', apiKey: 'k', model: 'm' }));
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    act(() => clearAiSettings());
+    await waitFor(() => expect(result.current.ready).toBe(false));
+  });
+
   it('run: completes, parses, returns T, clears error', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okResponse('{"a":1}')));
     const { result } = renderHook(() => useAiAssist());
@@ -30,6 +40,37 @@ describe('useAiAssist', () => {
     });
     expect(out).toEqual({ a: 1 });
     expect(result.current.error).toBeNull();
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('runStream: streams deltas into streamText and returns the full parsed text', async () => {
+    const enc = new TextEncoder();
+    const chunks = [
+      'data: {"choices":[{"delta":{"content":"Hel"}}]}\n',
+      'data: {"choices":[{"delta":{"content":"lo"}}]}\n',
+      'data: [DONE]\n',
+    ];
+    let i = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: async () =>
+              i < chunks.length ? { done: false, value: enc.encode(chunks[i++]) } : { done: true, value: undefined },
+          }),
+        },
+      }),
+    );
+    const { result } = renderHook(() => useAiAssist());
+    let out: unknown;
+    await act(async () => {
+      out = await result.current.runStream({ system: 's', user: 'u' }, (raw) => raw.trim());
+    });
+    expect(out).toBe('Hello');
+    // 完成後 streamText 清空(內容已落入呼叫端的紀錄堆疊)
+    expect(result.current.streamText).toBe('');
     expect(result.current.loading).toBe(false);
   });
 

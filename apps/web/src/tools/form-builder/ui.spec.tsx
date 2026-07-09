@@ -21,12 +21,33 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
   };
 }
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+
+const mockRun = vi.fn();
+const mockCancel = vi.fn();
+let mockReady = true;
+let mockLoading = false;
+let mockError: { kind: string; message: string; detail?: string } | null = null;
+
+vi.mock("@/lib/ai/use-ai-assist", () => ({
+  useAiAssist: () => ({ ready: mockReady, loading: mockLoading, error: mockError, cancel: mockCancel, run: mockRun, runStream: mockRun, streamText: "", streamReasoning: "" }),
+}));
+
 import { FormBuilderTool, createPreviewFetcher } from "./ui";
 import { messages } from "./messages";
 import { resolveCards, collides, type PlacedCard } from "./layout-grid";
+import { assembleMessages } from "@/i18n/messages";
+
+beforeEach(() => {
+  localStorage.clear();
+  mockRun.mockReset();
+  mockCancel.mockReset();
+  mockReady = true;
+  mockLoading = false;
+  mockError = null;
+});
 
 function renderTool() {
   return render(
@@ -203,5 +224,44 @@ describe("FormBuilderTool mobile config overlay (does not block canvas drag)", (
     fireEvent.pointerMove(window, { clientX: 140, clientY: 140 }); // ~57px, past the 4px threshold → a drag
     fireEvent.pointerUp(window, { clientX: 140, clientY: 140 });
     expect(isOverlayOpen()).toBe(false);
+  });
+});
+
+// Central ToolUI keys (aiReapply, aiAsk, …) live in src/messages/*.json and are merged with
+// each tool's local fragment at runtime via assembleMessages — renderTool() above only passes
+// the tool-local slice, so a button whose label comes from a central-only key (e.g. "Re-apply")
+// would render as the raw "ToolUI.<key>" fallback. Use the assembled messages here instead.
+function renderToolWithCentralMessages() {
+  return render(
+    <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
+      <FormBuilderTool />
+    </NextIntlClientProvider>,
+  );
+}
+
+describe("FormBuilderTool — AI panel", () => {
+  it("shows the shared AI panel instead of the old ✨ generate row", () => {
+    renderTool();
+    expect(screen.getByPlaceholderText(/describe a form or ask a question/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^generate form$/i })).toBeTruthy();
+  });
+
+  it("re-apply: a preloaded entry's appliedJson rebuilds the canvas via applyJson", async () => {
+    localStorage.setItem(
+      "rfjs.ai.log.form-builder",
+      JSON.stringify([
+        {
+          id: "e1",
+          kind: "generate",
+          prompt: "a form with a name field",
+          appliedJson: '{"version":1,"fields":[{"key":"name","label":"Name","component":"Input","dataType":"string"}]}',
+          at: "2026-07-08T00:00:00.000Z",
+        },
+      ]),
+    );
+    renderToolWithCentralMessages();
+    const btn = await screen.findByRole("button", { name: /^re-apply$/i });
+    fireEvent.click(btn);
+    await waitFor(() => expect(screen.getByText("Name")).toBeTruthy());
   });
 });

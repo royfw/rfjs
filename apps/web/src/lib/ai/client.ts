@@ -1,4 +1,4 @@
-import { AiError, type AiClient, type AiSettings, type CompleteRequest } from './types';
+import { AiError, type AiClient, type AiSettings, type CompleteRequest, type StreamDelta } from './types';
 import { isConfigured } from './settings';
 
 const DEFAULT_TIMEOUT_MS = 60_000;
@@ -93,6 +93,94 @@ export function createAiClient(settings: AiSettings): AiClient {
           throw new AiError('parse', 'unexpected completion payload shape');
         }
         return content;
+      } catch (e) {
+        if (e instanceof AiError) throw e;
+        if (e instanceof Error && e.name === 'AbortError') {
+          throw timedOut
+            ? new AiError('timeout', 'AI request timed out')
+            : new AiError('abort', 'AI request cancelled');
+        }
+        throw new AiError('http', e instanceof Error ? e.message : String(e));
+      } finally {
+        clearTimeout(timer);
+        req.signal?.removeEventListener('abort', onExternalAbort);
+      }
+    },
+
+    async stream(req: CompleteRequest, onDelta: (d: StreamDelta) => void): Promise<string> {
+      if (!isConfigured(settings)) {
+        throw new AiError('config', 'AI connection is not configured');
+      }
+      const ctl = new AbortController();
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        ctl.abort();
+      }, req.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+      const onExternalAbort = () => ctl.abort();
+      req.signal?.addEventListener('abort', onExternalAbort, { once: true });
+
+      try {
+        const res = await fetch(`${settings.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${settings.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: settings.model,
+            messages: [
+              { role: 'system', content: req.system },
+              { role: 'user', content: req.user },
+            ],
+            stream: true,
+            ...(req.json ? { response_format: { type: 'json_object' } } : {}),
+          }),
+          signal: ctl.signal,
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          throw new AiError('http', `AI endpoint returned ${res.status}`, text.slice(0, 500));
+        }
+        if (!res.body) {
+          throw new AiError('parse', 'response has no stream body');
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let full = '';
+        // SSE:每筆事件為 `data: {...}` 行,以 [DONE] 收尾;逐行解析 delta。
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let nl: number;
+          while ((nl = buffer.indexOf('\n')) >= 0) {
+            const line = buffer.slice(0, nl).trim();
+            buffer = buffer.slice(nl + 1);
+            if (!line.startsWith('data:')) continue;
+            const data = line.slice(5).trim();
+            if (data === '' || data === '[DONE]') continue;
+            try {
+              const json = JSON.parse(data) as {
+                choices?: { delta?: { content?: unknown; reasoning_content?: unknown; reasoning?: unknown } }[];
+              };
+              const delta = json.choices?.[0]?.delta;
+              const content = typeof delta?.content === 'string' ? delta.content : undefined;
+              const reasoning =
+                typeof delta?.reasoning_content === 'string'
+                  ? delta.reasoning_content
+                  : typeof delta?.reasoning === 'string'
+                    ? delta.reasoning
+                    : undefined;
+              if (content) full += content;
+              if (content || reasoning) onDelta({ content, reasoning });
+            } catch {
+              /* 忽略單筆壞掉的 chunk,續讀 */
+            }
+          }
+        }
+        return full;
       } catch (e) {
         if (e instanceof AiError) throw e;
         if (e instanceof Error && e.name === 'AbortError') {

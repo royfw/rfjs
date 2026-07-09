@@ -25,7 +25,9 @@ import {
 } from "@rfjs/web-ui/components/select";
 
 import { useAiAssist } from "@/lib/ai/use-ai-assist";
-import { buildCheckPrompt, parseCheckResponse, type AiFinding } from "./ai-check";
+import { AiPanel } from "@/components/shared/ai-panel";
+import { buildCheckPrompt, parseCheckResponse } from "./ai-check";
+import { buildTableAskPrompt, buildTableExplainPrompt } from "./ai-explain-table";
 import { RuleSheet } from "./rule-sheet";
 import { sampleTable, sampleBatch } from "./sample";
 
@@ -78,7 +80,6 @@ export function DecisionTableTool() {
 
   const [table, setTable] = React.useState<DecisionTable>(sampleTable);
   const [editingRuleId, setEditingRuleId] = React.useState<string | null>(null);
-  const [findings, setFindings] = React.useState<AiFinding[] | null>(null);
 
   // 單筆試算
   const [contextText, setContextText] = React.useState('{"amount": 60000, "dept": "Engineering"}');
@@ -130,23 +131,56 @@ export function DecisionTableTool() {
     setTable((tb) => ({ ...tb, rules: tb.rules.map((r) => (r.id === id ? { ...r, ...patch } : r)) }));
   };
 
-  const onAiCheck = async () => {
-    const prompt = buildCheckPrompt(tableToJson(table), locale);
-    const out = await ai.run({ ...prompt, json: true }, (raw) =>
-      parseCheckResponse(
-        raw,
-        table.rules.map((r) => r.id),
-      ),
-    );
-    if (out !== null) setFindings(out);
-  };
-
   const editingRule = table.rules.find((r) => r.id === editingRuleId) ?? null;
   const schema = (table.inputs ?? []) as FieldSchema[];
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t("dtEyebrow")}</p>
+
+      <AiPanel
+        title={t("aiBlockTitle")}
+        placeholder={t("dtAiPlaceholder")}
+        logKey="rfjs.ai.log.decision-table"
+        ai={ai}
+        actions={[
+          {
+            key: "check",
+            label: t("dtAiCheck"),
+            primary: true,
+            run: async () => {
+              const prompt = buildCheckPrompt(tableToJson(table), locale);
+              const validIds = table.rules.map((r) => r.id);
+              const findings = await ai.run({ ...prompt, json: true }, (raw) => parseCheckResponse(raw, validIds));
+              if (findings === null) return null;
+              const text =
+                findings.length === 0
+                  ? t("dtAiNoFindings")
+                  : findings
+                      .map((f) => `[${f.kind}]${f.ruleIds.length > 0 ? ` (${f.ruleIds.join(", ")})` : ""} ${f.message}`)
+                      .join("\n");
+              return { kind: "check", answer: text };
+            },
+          },
+          {
+            key: "ask",
+            label: t("aiAsk"),
+            needsInput: true,
+            run: async (input) => {
+              const out = await ai.runStream(buildTableAskPrompt({ tableJson: tableToJson(table), locale }, input), (raw) => raw.trim());
+              return out === null ? null : { kind: "ask", prompt: input, answer: out };
+            },
+          },
+          {
+            key: "explain",
+            label: t("dtAiExplain"),
+            run: async () => {
+              const out = await ai.runStream(buildTableExplainPrompt({ tableJson: tableToJson(table), locale }), (raw) => raw.trim());
+              return out === null ? null : { kind: "explain", answer: out };
+            },
+          },
+        ]}
+      />
 
       {/* 規則表 */}
       <div className="rounded-md border">
@@ -167,15 +201,6 @@ export function DecisionTableTool() {
             <Button size="sm" variant="outline" onClick={() => setTable((tb) => ({ ...tb, rules: [...tb.rules, newRule(uuid)] }))}>
               {t("dtAddRule")}
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => void onAiCheck()}
-              disabled={!ai.ready || ai.loading}
-            >
-              {ai.loading ? t("dtAiChecking") : t("dtAiCheck")}
-            </Button>
-            {!ai.ready ? <span className="text-xs text-muted-foreground">{t("dtAiNotConfigured")}</span> : null}
           </div>
         </div>
         <ul className="divide-y" data-testid="dt-rules-list">
@@ -195,39 +220,6 @@ export function DecisionTableTool() {
             </li>
           ))}
         </ul>
-        {ai.error ? (
-          <div role="alert" className="px-3 py-2 text-xs text-fault">
-            <p>
-              [{ai.error.kind}] {ai.error.message}
-            </p>
-            {ai.error.kind === "parse" && ai.error.detail ? (
-              <details>
-                <summary>{t("dtAiViewRaw")}</summary>
-                <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs">{ai.error.detail}</pre>
-              </details>
-            ) : null}
-          </div>
-        ) : null}
-        {findings !== null ? (
-          <div data-testid="dt-ai-findings" className="border-t px-3 py-2 text-sm">
-            <p className="mb-1 text-xs font-semibold text-muted-foreground">
-              {t("dtAiFindings")} · {t("dtAiDisclaimer")}
-            </p>
-            {findings.length === 0 ? (
-              <p className="text-xs text-muted-foreground">{t("dtAiNoFindings")}</p>
-            ) : (
-              <ul className="space-y-1 text-xs">
-                {findings.map((f, i) => (
-                  <li key={i}>
-                    <span className="font-mono">[{f.kind}]</span>{" "}
-                    {f.ruleIds.length > 0 ? <span className="font-mono">({f.ruleIds.join(", ")})</span> : null}{" "}
-                    {f.message}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ) : null}
       </div>
 
       {/* 單筆試算 */}

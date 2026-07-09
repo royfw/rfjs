@@ -10,11 +10,10 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
-      fbAiPlaceholder: "Describe the form you want…",
-      fbAiGenerate: "AI Generate",
-      fbAiCancel: "Cancel",
-      fbAiNotConfigured: "Set up an AI connection first (top-right ✨).",
-      fbAiViewRaw: "View raw output",
+      fbAiPlaceholder: "Describe a form or ask a question…",
+      fbAiGenerate: "Generate form",
+      fbAiExplain: "Explain form",
+      fbAiApplied: "Applied ({count} fields)",
     },
   },
   "zh-TW": {
@@ -25,11 +24,10 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
-      fbAiPlaceholder: "用白話描述你要的表單…",
-      fbAiGenerate: "AI 產生",
-      fbAiCancel: "取消",
-      fbAiNotConfigured: "請先設定 AI 連線(右上 ✨)。",
-      fbAiViewRaw: "檢視原始輸出",
+      fbAiPlaceholder: "描述表單或提出問題…",
+      fbAiGenerate: "產生表單",
+      fbAiExplain: "解釋表單",
+      fbAiApplied: "已套用({count} 個欄位)",
     },
   },
 };

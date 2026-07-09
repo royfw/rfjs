@@ -28,7 +28,15 @@ export interface CompleteRequest {
   timeoutMs?: number;
 }
 
-/** 單發完成介面;未來長文場景再加 stream()(刻意不先宣告)。 */
+/** 串流增量:content=回覆 token;reasoning=推理 token(r1 類模型經 litellm 透傳 reasoning_content)。 */
+export interface StreamDelta {
+  content?: string;
+  reasoning?: string;
+}
+
+/** 單發完成 + 串流。串流僅用於 display-only 純文字(問答/解釋);產生類仍走 complete(需完整 JSON 過閘門)。 */
 export interface AiClient {
   complete(req: CompleteRequest): Promise<string>;
+  /** SSE 串流;每個增量呼叫 onDelta,回傳累積的完整 content(與 complete 等價)。 */
+  stream(req: CompleteRequest, onDelta: (d: StreamDelta) => void): Promise<string>;
 }
