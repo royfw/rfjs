@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { TableConfig } from '@rfjs/table-builder';
 import type { BuiltRequest, RequestMeta, ResponseMeta } from '@rfjs/data-schema';
+import { emptyGroup } from '@rfjs/filter-builder';
 import { useConfigTable } from './use-config-table';
 import type { TableSource } from './types';
 
@@ -413,5 +414,66 @@ describe('useConfigTable (remote mode -- cursor strategy)', () => {
 
     act(() => result.current.nextPage()); // guarded no-op: canNext is already false
     expect(result.current.page).toBe(3);
+  });
+});
+
+// --- static in-memory filtering ---------------------------------------------------------------
+
+const FILTER_ROWS = Array.from({ length: 8 }, (_, i) => ({ id: i + 1, price: (i + 1) * 10 }));
+const FILTER_CONFIG: TableConfig = {
+  columns: [
+    { key: 'id', label: 'ID', dataType: 'numeric', filterable: true },
+    { key: 'price', label: 'Price', dataType: 'numeric', filterable: true },
+  ],
+  pagination: { pageSize: 5 },
+};
+
+function priceGteTree(v: number) {
+  // 一棵 AND group,單一 condition price >= v(用 emptyGroup 起手,填一條 condition)。
+  const g = emptyGroup(() => Math.random().toString(36).slice(2));
+  return {
+    ...g,
+    children: [
+      { kind: 'condition' as const, id: 'c1', field: 'price', dataType: 'numeric' as const, operator: 'gte', value: v },
+    ],
+  };
+}
+
+describe('useConfigTable static filtering', () => {
+  it('exposes filterSchema from filterable columns and filterEnabled for rows source', () => {
+    const { result } = renderHook(() => useConfigTable(FILTER_CONFIG, { kind: 'rows', rows: FILTER_ROWS }));
+    expect(result.current.filterSchema.map((s) => s.path)).toEqual(['id', 'price']);
+    expect(result.current.filterEnabled).toBe(true);
+  });
+
+  it('empty filter tree shows all rows', () => {
+    const { result } = renderHook(() => useConfigTable(FILTER_CONFIG, { kind: 'rows', rows: FILTER_ROWS }));
+    expect(result.current.total).toBe(8);
+  });
+
+  it('setFilterTree filters rows, updates total, resets to page 1', () => {
+    const { result } = renderHook(() => useConfigTable(FILTER_CONFIG, { kind: 'rows', rows: FILTER_ROWS }));
+    act(() => result.current.nextPage()); // go to page 2 first
+    expect(result.current.page).toBe(2);
+    act(() => result.current.setFilterTree(priceGteTree(50))); // price >= 50 -> ids 5..8 (4 rows)
+    expect(result.current.total).toBe(4);
+    expect(result.current.page).toBe(1);
+    expect(result.current.rows.map((r) => r.id)).toEqual([5, 6, 7, 8]);
+  });
+
+  it('remote source disables filtering', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({ data: { items: [], total: 0 } });
+    // source is hoisted to a stable reference (not an inline literal in the renderHook callback):
+    // the remote fetch effect depends on `source` by identity, and a fresh literal on every render
+    // would make the effect re-fire every render (setRemote -> re-render -> new literal -> re-fire...).
+    const remoteFilterSource: TableSource = {
+      kind: 'remote',
+      request: { endpoint: '/x', pagination: { strategy: 'offset', limitParam: 'l', offsetParam: 'o' } },
+      response: { rowsPath: 'data.items', totalPath: 'data.total' },
+      fetch: fetchFn,
+    };
+    const { result } = renderHook(() => useConfigTable(FILTER_CONFIG, remoteFilterSource));
+    expect(result.current.filterEnabled).toBe(false);
+    await waitFor(() => expect(result.current.loading).toBe(false));
   });
 });
