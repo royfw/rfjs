@@ -20,7 +20,7 @@ export function deriveTableConfig(meta: DataResourceMeta): TableConfig {
       }));
     }
     if (field.sortable !== undefined) column.sortable = field.sortable;
-    // `filterable` is intentionally not carried over (v1 table has no filter consumer).
+    if (field.filterable !== undefined) column.filterable = field.filterable;
     return column;
   });
 

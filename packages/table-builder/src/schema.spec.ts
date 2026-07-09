@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseTableConfig } from './schema';
+import { parseTableConfig, tableConfigSchema } from './schema';
 
 const column = (over: object = {}) => ({ key: 'name', label: 'Name', dataType: 'string', ...over });
 
@@ -49,5 +49,13 @@ describe('parseTableConfig', () => {
         defaultSort: { key: 'name', direction: 'up' },
       }),
     ).toThrow();
+  });
+
+  it('retains a column filterable flag', () => {
+    const r = tableConfigSchema.safeParse({
+      columns: [{ key: 'a', label: 'A', dataType: 'string', filterable: true }],
+      pagination: { pageSize: 10 },
+    });
+    expect(r.success && r.data.columns[0]!.filterable).toBe(true);
   });
 });
