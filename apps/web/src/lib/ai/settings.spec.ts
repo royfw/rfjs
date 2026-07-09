@@ -1,6 +1,13 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AI_SETTINGS_KEY, clearAiSettings, isConfigured, loadAiSettings, saveAiSettings } from './settings';
+import {
+  AI_SETTINGS_KEY,
+  clearAiSettings,
+  isConfigured,
+  loadAiSettings,
+  saveAiSettings,
+  subscribeAiSettings,
+} from './settings';
 
 describe('ai settings storage', () => {
   beforeEach(() => localStorage.clear());
@@ -23,5 +30,17 @@ describe('ai settings storage', () => {
   it('tolerates corrupted stored json', () => {
     localStorage.setItem(AI_SETTINGS_KEY, 'not json');
     expect(loadAiSettings()).toBeNull();
+  });
+
+  it('notifies same-tab subscribers on save and clear', () => {
+    const cb = vi.fn();
+    const unsub = subscribeAiSettings(cb);
+    saveAiSettings({ baseUrl: 'u', apiKey: 'k', model: 'm' });
+    expect(cb).toHaveBeenCalledTimes(1);
+    clearAiSettings();
+    expect(cb).toHaveBeenCalledTimes(2);
+    unsub();
+    saveAiSettings({ baseUrl: 'u', apiKey: 'k', model: 'm' });
+    expect(cb).toHaveBeenCalledTimes(2); // 取消訂閱後不再收到
   });
 });

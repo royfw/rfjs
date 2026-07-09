@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { saveAiSettings } from './settings';
+import { clearAiSettings, saveAiSettings } from './settings';
 import { useAiAssist } from './use-ai-assist';
 
 function okResponse(content: string) {
@@ -19,6 +19,16 @@ describe('useAiAssist', () => {
     localStorage.clear();
     const { result } = renderHook(() => useAiAssist());
     expect(result.current.ready).toBe(false);
+  });
+
+  it('ready flips live when settings are saved/cleared without a remount', async () => {
+    localStorage.clear();
+    const { result } = renderHook(() => useAiAssist());
+    expect(result.current.ready).toBe(false);
+    act(() => saveAiSettings({ baseUrl: 'http://ai.local/v1', apiKey: 'k', model: 'm' }));
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    act(() => clearAiSettings());
+    await waitFor(() => expect(result.current.ready).toBe(false));
   });
 
   it('run: completes, parses, returns T, clears error', async () => {

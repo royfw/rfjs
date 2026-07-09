@@ -3,7 +3,7 @@
 import * as React from 'react';
 
 import { createAiClient } from './client';
-import { isConfigured, loadAiSettings } from './settings';
+import { isConfigured, loadAiSettings, subscribeAiSettings } from './settings';
 import { AiError, type CompleteRequest } from './types';
 
 export interface UseAiAssist {
@@ -18,8 +18,12 @@ export function useAiAssist(): UseAiAssist {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<AiError | null>(null);
   const ctlRef = React.useRef<AbortController | null>(null);
-  // settings 每次呼叫時讀(設定 dialog 存檔後,下一次 run 即用新值)。
-  const ready = isConfigured(loadAiSettings());
+  // 訂閱設定變更 —— 設定 dialog 存檔後同分頁即時重繪(不必重新整理);SSR 回傳 false。
+  const ready = React.useSyncExternalStore(
+    subscribeAiSettings,
+    () => isConfigured(loadAiSettings()),
+    () => false,
+  );
 
   const cancel = React.useCallback(() => {
     ctlRef.current?.abort();
