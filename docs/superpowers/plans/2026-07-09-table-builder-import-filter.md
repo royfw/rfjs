@@ -53,17 +53,19 @@ it('carries filterable from field metadata (and omits it when unset)', () => {
 });
 ```
 
-`schema.spec.ts` 追加(合法 filterable):
+`schema.spec.ts` 追加(**斷言 filterable 被保留**,而非只 `success` —— zod object 預設會 strip 未知鍵,只驗 `success` 的話加欄位前後都綠、測不到東西):
 
 ```ts
-it('accepts a column with filterable', () => {
+it('retains a column filterable flag', () => {
   const r = tableConfigSchema.safeParse({
     columns: [{ key: 'a', label: 'A', dataType: 'string', filterable: true }],
     pagination: { pageSize: 10 },
   });
-  expect(r.success).toBe(true);
+  expect(r.success && r.data.columns[0]!.filterable).toBe(true);
 });
 ```
+
+**⚠ 同時要改既有測試(verifier blocker):** `derive.spec.ts` 既有的「maps fields to columns and defaults pageSize to 10」測試已經餵 `filterable: true` 進某個 field 且用 `toEqual` 斷言輸出**不含** filterable(還有一句「filterable is not carried over」註解)。Task 1 一旦讓 derive 帶 filterable,那個 `toEqual` 會爆 —— **Step 3 必須同步更新該既有斷言**(把預期輸出對應 column 加上 `filterable: true`,並改掉那句過時註解)。
 
 - [ ] **Step 2: 跑測試確認失敗**
 
@@ -81,11 +83,13 @@ Expected: FAIL —— column 無 filterable(型別/斷言)。
 
 `schema.ts` 的 column object schema 加 `filterable: z.boolean().optional(),`(放在 `sortable` 旁)。
 
-`derive.ts` 的欄位映射條件展開加(比照 `if (field.sortable !== undefined) column.sortable = field.sortable;`):
+`derive.ts` 的欄位映射條件展開加(比照 `if (field.sortable !== undefined) column.sortable = field.sortable;`)。**注意 `derive.ts` 目前那個位置有一句過時註解 `// filterable is intentionally not carried over (v1 table has no filter consumer).` —— 一併刪掉/改寫**:
 
 ```ts
     if (field.filterable !== undefined) column.filterable = field.filterable;
 ```
+
+並更新既有 `derive.spec.ts` 的「maps fields to columns…」`toEqual` 期望(對應 column 加 `filterable: true`,改掉過時註解)。
 
 `.changeset/table-builder-filterable.md`:
 
@@ -293,7 +297,7 @@ function priceGteTree(v: number) {
   const g = emptyGroup(() => Math.random().toString(36).slice(2));
   return {
     ...g,
-    children: [{ kind: 'condition' as const, id: 'c1', field: 'price', operator: 'gte', value: v }],
+    children: [{ kind: 'condition' as const, id: 'c1', field: 'price', dataType: 'numeric' as const, operator: 'gte', value: v }],
   };
 }
 
@@ -334,7 +338,7 @@ describe('useConfigTable static filtering', () => {
 });
 ```
 
-（`operator: 'gte'` 若 data-filter 用不同鍵名,以 `DATA_FILTER_OPS`/現有 filter 測試的鍵為準調整 —— 實作 Step 3 前先跑一個 `runLiveMatch` 小驗證確認 operator 字串,再定測試值,不得放寬斷言。）
+（**每個 fixture condition 都必須帶 `dataType`(verifier blocker):`BuilderCondition` 型別要求它,且 `runLiveMatch` 少了它會走 uncoverable/throw → matched 為空**。`operator: 'gte'` 若 data-filter 用不同鍵名,以 `DATA_FILTER_OPS`/現有 filter 測試的鍵為準調整 —— 實作 Step 3 前先跑一個 `runLiveMatch` 小驗證確認 operator 字串 + dataType 必要,再定測試值,不得放寬斷言。）
 
 - [ ] **Step 2: 跑測試確認失敗**
 
@@ -703,7 +707,7 @@ function handleImport(nextRows: Record<string, unknown>[]) {
 }
 ```
 
-（import `inferFieldsFromRows` from `@rfjs/data-schema`、`deriveTableConfig` from `@rfjs/table-builder`。）source memo 的 `rows` 分支改用 state `rows`(取代 `SAMPLE_ROWS`);`<ConfigTable key>` 改為 `` `${sourceMode}:${config.pagination.pageSize}:${dataVersion}` ``(re-import → 換 key → 重掛 → filter tree 清空)。`SourcePanel` 傳 `onImport={handleImport}` + importLabels。
+（import `inferFieldsFromRows` from `@rfjs/data-schema`、`deriveTableConfig` from `@rfjs/table-builder`。）source memo 的 `rows` 分支改用 state `rows`(取代 `SAMPLE_ROWS`)—— **`rows` 現在是 reactive state,必須加進 source memo 的 deps:`}, [sourceMode, config.columns, rows]);`(verifier warn:apps/web 的 `eslint . --max-warnings 0` 會因 exhaustive-deps 漏 dep 而擋掉)**。`<ConfigTable key>` 改為 `` `${sourceMode}:${config.pagination.pageSize}:${dataVersion}` ``(re-import → 換 key → 重掛 → filter tree 清空)。`SourcePanel` 傳 `onImport={handleImport}` + importLabels。
 
 `messages.ts`:加 `tbImportPaste`/`tbImportUpload`/`tbImportLoad`/`tbImportJson`/`tbImportCsv`/`tbImportError*`(en+zh-TW;錯誤文案走 t() 或直接用 parseImport 回的英文訊息 —— parseImport 回英文,UI 直接顯示即可,不需 i18n 該字串)。
 
@@ -737,14 +741,16 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - [ ] **Step 1: 寫失敗測試** — `ui.spec.tsx` 追加:
 
 ```ts
-it('preview: filtering the sample reduces the rows', async () => {
+it('preview: renders the ConfigTable filter section', () => {
   renderTool();
-  // 展開 Filter → 加一條 condition → 表格列數變少(以實際 DOM 操作為準;可先斷言 Filter 區存在)
-  expect(screen.getByText(/filter/i)).toBeTruthy();
+  // ⚠ verifier warn:Task 5 後每個欄位列都有 "Filter" 文字 + 此處 ConfigTable 的 Filter 標題 →
+  // bare getByText(/filter/i) 會 "Found multiple elements" 而 throw。改用 ConfigTable 的收合按鈕
+  // (Task 4 的 <button aria-expanded>),它的可及名稱是 "Filter"(+命中數),用 role 定位單一元素。
+  expect(screen.getByRole('button', { name: /filter/i })).toBeTruthy();
 });
 ```
 
-（此為 smoke;真正「加條件→列數變少」由 e2e(Task 8)驗,單元只確認 Filter 區在工具預覽渲染 + 標籤有代換。）
+（此為 smoke;真正「加條件→列數變少」由 e2e(Task 8)驗,單元只確認 Filter 區在工具預覽渲染 + 標籤有代換。)
 
 - [ ] **Step 2: 跑測試確認失敗 / 通過** — 若既有 ConfigTable 已渲染 Filter 區(Task 4),此測試可能已綠;確認 `t.raw` 不需用於 filterMatched(它含 `{count}` 但由 ConfigTable 內部 replacePlaceholders 代換,工具用 `t.raw("tbFilterMatched")` 傳入)。
 
@@ -808,12 +814,16 @@ test("importing json then filtering shrinks the rows", async ({ page }) => {
   await page.goto(URL);
   // 匯入一份小 JSON
   await page.getByRole("textbox").first().fill('[{"id":1,"price":10},{"id":2,"price":90}]');
-  await page.getByRole("button", { name: /load/i }).click();
+  // ⚠ verifier warn:/load/i 會子字串命中 "Upload" → strict-mode 撞兩個。用 exact + 且讓 Upload
+  // 保持成 <input type="file">(label-wrapped,非 role=button),不與 Load 競爭。
+  await page.getByRole("button", { name: "Load", exact: true }).click();
   await expect(page.locator("table tbody tr")).toHaveCount(2, { timeout: 15_000 });
   // 勾 price 為 filterable(Columns 面板)→ 展開 Filter → 加一條 price >= 50 → 剩 1 列
   // (selector 依實際 DOM;若操作太脆,退一步驗「匯入後列數 = 2」為主斷言,篩選互動放單元層)
 });
 ```
+
+（連帶約束 Task 6:Upload 控制項用 label 包 `<input type="file">`,**不要**做成 `<button>`,避免 Playwright 與 Load 撞名。）
 
 - [ ] **Step 2: 跑 e2e**
 
