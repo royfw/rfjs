@@ -38,6 +38,10 @@ export function TableBuilderTool() {
       pageOf: t.raw("tbPageOf") as string,
       total: t.raw("tbTotalRows") as string,
       pageSize: t("tbPageSizeLabel"),
+      filterTitle: t("tbFilterTitle"),
+      filterMatched: t.raw("tbFilterMatched") as string,
+      filterUncoverable: t("tbFilterUncoverable"),
+      filterDisabled: t("tbFilterDisabled"),
     }),
     [t],
   );
@@ -62,6 +66,7 @@ export function TableBuilderTool() {
       format: t("tbColumnFormat"),
       formatNone: t("tbColumnFormatNone"),
       sortable: t("tbColumnSortable"),
+      filter: t("tbColumnFilter"),
       pin: t("tbColumnPin"),
       pinNone: t("tbPinNone"),
       pinLeft: t("tbPinLeft"),
