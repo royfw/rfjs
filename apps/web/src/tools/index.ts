@@ -8,6 +8,7 @@ import { tool as formBuilder } from "./form-builder";
 import { tool as bpmnViewer } from "./bpmn-viewer";
 import { tool as flowBuilder } from "./flow-builder";
 import { tool as decisionTable } from "./decision-table";
+import { tool as tableBuilder } from "./table-builder";
 import { tool as esClientDemo } from "./es-client-demo";
 import { tool as esQueryBuilder } from "./es-query-builder";
 import { tool as jsonbQueryBuilder } from "./jsonb-query-builder";
@@ -39,6 +40,7 @@ export const toolModules: ToolModule[] = [
   bpmnViewer,
   flowBuilder,
   decisionTable,
+  tableBuilder,
 ];
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = Object.fromEntries(

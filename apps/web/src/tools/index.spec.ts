@@ -25,6 +25,7 @@ const EXPECTED_WEB_TOOL_IDS = [
   "bpmn-viewer",
   "flow-builder",
   "decision-table",
+  "table-builder",
 ].sort();
 
 describe("implementation registry", () => {
