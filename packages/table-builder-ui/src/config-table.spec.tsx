@@ -155,3 +155,51 @@ describe('ConfigTable (cursor mode)', () => {
     expect(screen.queryByText(/rows$/)).toBeNull();
   });
 });
+
+// --- filter section ---------------------------------------------------------------------------
+
+const FILT_CFG: TableConfig = {
+  columns: [
+    { key: 'id', label: 'ID', dataType: 'numeric', filterable: true },
+    { key: 'name', label: 'Name', dataType: 'string' },
+  ] satisfies TableColumnConfig[],
+  pagination: { pageSize: 5 },
+};
+const FILT_ROWS = [
+  { id: 1, name: 'a' },
+  { id: 2, name: 'b' },
+];
+
+// Hoisted + stable (module scope): the remote fetch effect keys off `source` identity, so an
+// inline object literal passed straight into JSX would be a fresh reference on every render and
+// re-trigger the fetch effect in a loop -- see the offsetRequest/offsetResponse pattern above.
+const filtRemoteRequest: RequestMeta = {
+  endpoint: '/x',
+  pagination: { strategy: 'offset', limitParam: 'l', offsetParam: 'o' },
+};
+const filtRemoteResponse: ResponseMeta = { rowsPath: 'data.items', totalPath: 'data.total' };
+
+describe('ConfigTable (filter section)', () => {
+  it('renders a collapsible Filter section for a static source (collapsed by default)', () => {
+    render(<ConfigTable config={FILT_CFG} source={{ kind: 'rows', rows: FILT_ROWS }} />);
+    // Collapsed row (title) is visible, expander exists; collapsed by default -> the tree
+    // editor's "+ condition" button isn't mounted yet.
+    expect(screen.getByText('Filter')).toBeTruthy();
+    expect(screen.queryByText('+ condition')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /filter/i }));
+    expect(screen.getByText('+ condition')).toBeTruthy();
+  });
+
+  it('disables the filter for a remote source with a note', () => {
+    const fetchFn = vi.fn().mockResolvedValue({ data: { items: [], total: 0 } });
+    const source: TableSource = {
+      kind: 'remote',
+      request: filtRemoteRequest,
+      response: filtRemoteResponse,
+      fetch: fetchFn,
+    };
+    render(<ConfigTable config={FILT_CFG} source={source} />);
+    expect(screen.getByText(/api filter coming later/i)).toBeTruthy();
+    expect(screen.queryByText('+ condition')).toBeNull();
+  });
+});
