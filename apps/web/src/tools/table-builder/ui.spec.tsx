@@ -59,4 +59,14 @@ describe("TableBuilderTool", () => {
     const rows = screen.getAllByRole("row");
     expect(rows.length).toBe(1 + 3);
   });
+
+  // Smoke test only: real "add condition -> row count shrinks" behavior is covered by the e2e
+  // suite (Task 8). Each column row also carries a "Filter" checkbox label (Task 5), so a bare
+  // `getByText(/filter/i)` would match multiple nodes and throw -- scope to ConfigTable's own
+  // collapsible filter-section toggle button (Task 4), whose accessible name is "Filter" (+
+  // matched-count text).
+  it("preview: renders the ConfigTable filter section", () => {
+    renderTool();
+    expect(screen.getByRole("button", { name: /filter/i })).toBeTruthy();
+  });
 });

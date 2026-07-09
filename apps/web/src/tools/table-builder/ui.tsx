@@ -50,6 +50,22 @@ export function TableBuilderTool() {
     [t],
   );
 
+  // Filter-TREE editor labels (Task 4's `<ConfigTable filterLabels?>`, a `Partial<FilterTreeLabels>`):
+  // the AND/OR/+condition/+group/remove strings shown *inside* `FilterTreeEditor`, distinct from
+  // the top-level filter chrome (title/matched/uncoverable/disabled) in `labels` above.
+  // `operatorLabels` is omitted for v1 -- ConfigTable falls back to raw operator ids.
+  const filterLabels = React.useMemo(
+    () => ({
+      logic: { and: t("tbFilterAnd"), or: t("tbFilterOr"), nor: t("tbFilterNor"), not: t("tbFilterNot") },
+      addCondition: t("tbFilterAddCond"),
+      addGroup: t("tbFilterAddGroup"),
+      removeGroup: t("tbFilterRemoveGroup"),
+      removeCondition: t("tbFilterRemoveCond"),
+      elemMatch: t("tbFilterElemMatch"),
+    }),
+    [t],
+  );
+
   const sourcePanelLabels = React.useMemo(
     () => ({
       title: t("tbSourcePanelTitle"),
@@ -169,6 +185,7 @@ export function TableBuilderTool() {
           config={config}
           source={source}
           labels={labels}
+          filterLabels={filterLabels}
         />
       </div>
     </div>
