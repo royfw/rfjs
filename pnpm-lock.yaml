@@ -1600,6 +1600,12 @@ importers:
       '@rfjs/data-schema':
         specifier: workspace:*
         version: link:../data-schema
+      '@rfjs/filter-builder':
+        specifier: workspace:*
+        version: link:../filter-builder
+      '@rfjs/filter-builder-ui':
+        specifier: workspace:*
+        version: link:../filter-builder-ui
       '@rfjs/table-builder':
         specifier: workspace:*
         version: link:../table-builder
