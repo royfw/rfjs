@@ -38,6 +38,20 @@ describe("SourcePanel", () => {
     expect(screen.queryByRole("button", { name: LABELS.cursor })).toBeNull();
   });
 
+  it("pre-fills the paste box with defaultText", () => {
+    render(
+      <SourcePanel
+        mode="rows"
+        onModeChange={vi.fn()}
+        labels={LABELS}
+        importLabels={IMPORT_LABELS}
+        onImport={vi.fn()}
+        defaultText='[{"a":1}]'
+      />,
+    );
+    expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe('[{"a":1}]');
+  });
+
   it("shows the strategy switch in fetcher mode and reports the selected strategy", () => {
     const onModeChange = vi.fn();
     render(<SourcePanel mode="offset" onModeChange={onModeChange} labels={LABELS} />);

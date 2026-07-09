@@ -20,6 +20,11 @@ import { PaginationPanel } from "./pagination-panel";
 // Task 9 (design spec §6.1) adds the editor panels + live preview on top of Task 8's static
 // render: top row is three side-by-side edit panels (source / columns / pagination), bottom is
 // a full-width `<ConfigTable>` preview that reflects every edit immediately.
+
+// Pre-fill the Source panel's paste box with the default rows as pretty JSON, so the box is a
+// usable, editable example of the data driving the initial table (module-scope: stable identity).
+const SAMPLE_JSON = JSON.stringify(SAMPLE_ROWS, null, 2);
+
 export function TableBuilderTool() {
   const t = useTranslations("ToolUI");
 
@@ -160,6 +165,7 @@ export function TableBuilderTool() {
           labels={sourcePanelLabels}
           onImport={handleImport}
           importLabels={importLabels}
+          defaultText={SAMPLE_JSON}
         />
         <ColumnsPanel columns={config.columns} onChange={handleColumnsChange} labels={columnsPanelLabels} />
         <PaginationPanel

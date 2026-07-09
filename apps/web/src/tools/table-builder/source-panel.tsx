@@ -29,6 +29,8 @@ export interface SourcePanelProps {
   labels: SourcePanelLabels;
   onImport?: (rows: Record<string, unknown>[]) => void;
   importLabels?: SourcePanelImportLabels;
+  /** Initial paste-box contents (e.g. the sample rows as JSON) so the box is a usable, editable example. */
+  defaultText?: string;
 }
 
 // Fetcher strategies shown once 'rows' is switched off (design spec §6.1: "靜態 rows ↔ 假
@@ -43,10 +45,10 @@ function segmentClass(active: boolean): string {
   ].join(" ");
 }
 
-export function SourcePanel({ mode, onModeChange, labels, onImport, importLabels }: SourcePanelProps) {
+export function SourcePanel({ mode, onModeChange, labels, onImport, importLabels, defaultText }: SourcePanelProps) {
   const isRemote = mode !== "rows";
   const [format, setFormat] = React.useState<ImportFormat>("json");
-  const [text, setText] = React.useState("");
+  const [text, setText] = React.useState(defaultText ?? "");
   const [error, setError] = React.useState<string | null>(null);
 
   function runImport(nextText: string) {
