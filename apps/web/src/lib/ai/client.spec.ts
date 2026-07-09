@@ -157,3 +157,53 @@ describe('listAiModels', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+/** 造一個假的 SSE Response:body.getReader() 逐塊吐出 UTF-8 bytes。 */
+function sseResponse(chunks: string[]) {
+  const enc = new TextEncoder();
+  let i = 0;
+  return {
+    ok: true,
+    body: {
+      getReader: () => ({
+        read: async () =>
+          i < chunks.length ? { done: false, value: enc.encode(chunks[i++]) } : { done: true, value: undefined },
+      }),
+    },
+  } as unknown as Response;
+}
+
+describe('createAiClient.stream', () => {
+  it('parses SSE content deltas, forwards reasoning, returns the full text', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      sseResponse([
+        'data: {"choices":[{"delta":{"reasoning_content":"think"}}]}\n',
+        'data: {"choices":[{"delta":{"content":"Hel"}}]}\n',
+        'data: {"choices":[{"delta":{"content":"lo"}}]}\n\n',
+        'data: [DONE]\n',
+      ]),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const deltas: { content?: string; reasoning?: string }[] = [];
+    const full = await createAiClient(SETTINGS).stream({ system: 's', user: 'u' }, (d) => deltas.push(d));
+    expect(full).toBe('Hello');
+    expect(deltas).toEqual([{ content: undefined, reasoning: 'think' }, { content: 'Hel', reasoning: undefined }, { content: 'lo', reasoning: undefined }]);
+    // 請求體帶 stream:true
+    const body = JSON.parse((fetchMock.mock.calls[0]![1] as RequestInit).body as string);
+    expect(body.stream).toBe(true);
+  });
+
+  it('tolerates a malformed chunk and keeps reading', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(sseResponse(['data: {bad json\n', 'data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n'])),
+    );
+    const full = await createAiClient(SETTINGS).stream({ system: 's', user: 'u' }, () => {});
+    expect(full).toBe('ok');
+  });
+
+  it('http error → AiError kind http', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('nope', { status: 500 })));
+    await expect(createAiClient(SETTINGS).stream({ system: 's', user: 'u' }, () => {})).rejects.toMatchObject({ kind: 'http' });
+  });
+});

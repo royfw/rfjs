@@ -43,6 +43,37 @@ describe('useAiAssist', () => {
     expect(result.current.loading).toBe(false);
   });
 
+  it('runStream: streams deltas into streamText and returns the full parsed text', async () => {
+    const enc = new TextEncoder();
+    const chunks = [
+      'data: {"choices":[{"delta":{"content":"Hel"}}]}\n',
+      'data: {"choices":[{"delta":{"content":"lo"}}]}\n',
+      'data: [DONE]\n',
+    ];
+    let i = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: async () =>
+              i < chunks.length ? { done: false, value: enc.encode(chunks[i++]) } : { done: true, value: undefined },
+          }),
+        },
+      }),
+    );
+    const { result } = renderHook(() => useAiAssist());
+    let out: unknown;
+    await act(async () => {
+      out = await result.current.runStream({ system: 's', user: 'u' }, (raw) => raw.trim());
+    });
+    expect(out).toBe('Hello');
+    // 完成後 streamText 清空(內容已落入呼叫端的紀錄堆疊)
+    expect(result.current.streamText).toBe('');
+    expect(result.current.loading).toBe(false);
+  });
+
   it('run: parse gate rejection lands in error and returns null', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okResponse('garbage')));
     const { result } = renderHook(() => useAiAssist());

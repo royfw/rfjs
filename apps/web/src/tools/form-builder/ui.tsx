@@ -448,7 +448,7 @@ export function FormBuilderTool() {
             label: t("aiAsk"),
             needsInput: true,
             run: async (input) => {
-              const out = await ai.run(
+              const out = await ai.runStream(
                 buildFormAskPrompt({ configJson: JSON.stringify(formConfig, null, 2), locale }, input),
                 (raw) => raw.trim(),
               );
@@ -459,7 +459,7 @@ export function FormBuilderTool() {
             key: "explain",
             label: t("fbAiExplain"),
             run: async () => {
-              const out = await ai.run(
+              const out = await ai.runStream(
                 buildFormExplainPrompt({ configJson: JSON.stringify(formConfig, null, 2), locale }),
                 (raw) => raw.trim(),
               );

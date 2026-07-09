@@ -20,7 +20,7 @@ let mockLoading = false;
 let mockError: { kind: string; message: string; detail?: string } | null = null;
 
 vi.mock("@/lib/ai/use-ai-assist", () => ({
-  useAiAssist: () => ({ ready: mockReady, loading: mockLoading, error: mockError, cancel: mockCancel, run: mockRun }),
+  useAiAssist: () => ({ ready: mockReady, loading: mockLoading, error: mockError, cancel: mockCancel, run: mockRun, runStream: mockRun, streamText: "", streamReasoning: "" }),
 }));
 
 import { messages } from "./messages";

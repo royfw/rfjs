@@ -10,8 +10,10 @@ const mockCancel = vi.fn();
 let mockReady = true;
 let mockLoading = false;
 let mockError: { kind: string; message: string; detail?: string } | null = null;
+let mockStreamText = "";
+let mockStreamReasoning = "";
 const fakeAi = () =>
-  ({ ready: mockReady, loading: mockLoading, error: mockError, cancel: mockCancel, run: vi.fn() }) as never;
+  ({ ready: mockReady, loading: mockLoading, error: mockError, cancel: mockCancel, run: vi.fn(), runStream: vi.fn(), streamText: mockStreamText, streamReasoning: mockStreamReasoning }) as never;
 
 const LOG_KEY = "rfjs.ai.log.panel-spec";
 const askRun = vi.fn<(input: string) => Promise<Omit<AiAssistEntry, "id" | "at"> | null>>();
@@ -40,6 +42,8 @@ beforeEach(() => {
   mockReady = true;
   mockLoading = false;
   mockError = null;
+  mockStreamText = "";
+  mockStreamReasoning = "";
 });
 
 describe("AiPanel — 動作與輸入", () => {
@@ -98,6 +102,25 @@ describe("AiPanel — 動作與輸入", () => {
     expect(screen.getByRole("alert").textContent).toMatch(/\[parse\] bad/);
     expect(screen.getByText(/view raw output/i)).toBeTruthy();
     expect(screen.getByText('{"raw":1}')).toBeTruthy();
+  });
+
+  it("串流中:顯示即時回覆與可摺疊的思考區;非串流(streamText 空)不顯示", () => {
+    mockLoading = true;
+    mockStreamText = "streaming answer…";
+    mockStreamReasoning = "step 1";
+    const { rerender } = renderPanel();
+    expect(screen.getByText("streaming answer…")).toBeTruthy();
+    expect(screen.getByText(/thinking/i)).toBeTruthy();
+    expect(screen.getByText("step 1")).toBeTruthy();
+    // loading 但無 stream 文字 → 不顯示即時框
+    mockStreamText = "";
+    mockStreamReasoning = "";
+    rerender(
+      <NextIntlClientProvider locale="en" messages={en as Record<string, unknown>}>
+        <AiPanel title="AI assist" placeholder="type here…" actions={actions()} logKey={LOG_KEY} ai={fakeAi()} />
+      </NextIntlClientProvider>,
+    );
+    expect(screen.queryByText(/thinking/i)).toBeNull();
   });
 });
 

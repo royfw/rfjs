@@ -70,6 +70,7 @@
     "aiCancel": "Cancel",
     "aiNotConfigured": "Set up an AI connection first (top-right ✨).",
     "aiViewRaw": "View raw output",
+    "aiThinking": "Thinking…",
     "types": {
       "string": "String",
       "number": "Number",

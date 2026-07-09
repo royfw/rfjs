@@ -70,6 +70,7 @@
     "aiCancel": "取消",
     "aiNotConfigured": "請先設定 AI 連線(右上 ✨)。",
     "aiViewRaw": "檢視原始輸出",
+    "aiThinking": "思考中…",
     "types": {
       "string": "字串",
       "number": "數字",

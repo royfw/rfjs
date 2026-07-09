@@ -68,7 +68,7 @@ export function AiAssistBlock({
       label: t("aiAsk"),
       needsInput: true,
       run: async (input) => {
-        const out = await ai.run(buildAskPrompt(ctx, input), (raw) => raw.trim());
+        const out = await ai.runStream(buildAskPrompt(ctx, input), (raw) => raw.trim());
         return out === null ? null : { kind: "ask", prompt: input, answer: out };
       },
     },
@@ -76,7 +76,7 @@ export function AiAssistBlock({
       key: "explain",
       label: t("aiExplain"),
       run: async () => {
-        const out = await ai.run(buildExplainPrompt(ctx), (raw) => raw.trim());
+        const out = await ai.runStream(buildExplainPrompt(ctx), (raw) => raw.trim());
         return out === null ? null : { kind: "explain", answer: out };
       },
     },

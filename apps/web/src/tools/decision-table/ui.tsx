@@ -167,7 +167,7 @@ export function DecisionTableTool() {
             label: t("aiAsk"),
             needsInput: true,
             run: async (input) => {
-              const out = await ai.run(buildTableAskPrompt({ tableJson: tableToJson(table), locale }, input), (raw) => raw.trim());
+              const out = await ai.runStream(buildTableAskPrompt({ tableJson: tableToJson(table), locale }, input), (raw) => raw.trim());
               return out === null ? null : { kind: "ask", prompt: input, answer: out };
             },
           },
@@ -175,7 +175,7 @@ export function DecisionTableTool() {
             key: "explain",
             label: t("dtAiExplain"),
             run: async () => {
-              const out = await ai.run(buildTableExplainPrompt({ tableJson: tableToJson(table), locale }), (raw) => raw.trim());
+              const out = await ai.runStream(buildTableExplainPrompt({ tableJson: tableToJson(table), locale }), (raw) => raw.trim());
               return out === null ? null : { kind: "explain", answer: out };
             },
           },

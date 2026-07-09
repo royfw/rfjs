@@ -151,6 +151,20 @@ export function AiPanel({
             </div>
           ) : null}
 
+          {ai.loading && (ai.streamText || ai.streamReasoning) ? (
+            <div className="rounded-md border bg-card px-3 py-2 text-sm">
+              {ai.streamReasoning ? (
+                <details open className="mb-1">
+                  <summary className="cursor-pointer text-xs text-muted-foreground">{t("aiThinking")}</summary>
+                  <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs text-muted-foreground">
+                    {ai.streamReasoning}
+                  </pre>
+                </details>
+              ) : null}
+              <span className="whitespace-pre-wrap">{ai.streamText}</span>
+            </div>
+          ) : null}
+
           {entries.length > 0 ? (
             <div className="rounded-md border bg-card">
               <div className="flex items-baseline justify-between gap-3 border-b px-3 py-1.5">
