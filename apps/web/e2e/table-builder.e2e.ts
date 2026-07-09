@@ -12,3 +12,29 @@ test("renders the sample table and paginates", async ({ page }) => {
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(rows.first()).not.toHaveText(firstCell ?? "", { timeout: 15_000 });
 });
+
+test("importing json then filtering shrinks the rows", async ({ page }) => {
+  await page.goto(URL);
+  // Import a small JSON array via the Source panel's paste textbox + Load button.
+  // NOTE: match "Load" with exact:true -- /load/i substring-matches "Upload" too, which
+  // trips Playwright's strict-mode "resolved to 2 elements" error. Upload stays a
+  // label-wrapped <input type="file"> (not a <button>) so it never competes with Load.
+  await page.getByRole("textbox").first().fill('[{"id":1,"price":10},{"id":2,"price":90}]');
+  await page.getByRole("button", { name: "Load", exact: true }).click();
+  await expect(page.locator("table tbody tr")).toHaveCount(2, { timeout: 15_000 });
+
+  // Mark "price" filterable in the Columns panel, then open the Filter section and add a
+  // price >= 50 condition -- should shrink the table to the one row that satisfies it.
+  // The filter toggle's accessible name is "Filter" plus a live "N matched" suffix (or the
+  // disabled hint), so match by substring rather than exact. The operator select has no
+  // `operatorLabels` override in this tool, so it falls back to the raw op id ("gte").
+  await page.getByRole("checkbox", { name: "Filter price" }).check();
+  await page.getByRole("button", { name: "Filter" }).click();
+  await page.getByRole("button", { name: "+ condition" }).click();
+  await page.getByRole("combobox", { name: "field" }).click();
+  await page.getByRole("option", { name: "price" }).click();
+  await page.getByRole("combobox", { name: "operator" }).click();
+  await page.getByRole("option", { name: "gte", exact: true }).click();
+  await page.getByRole("textbox", { name: "value" }).fill("50");
+  await expect(page.locator("table tbody tr")).toHaveCount(1, { timeout: 15_000 });
+});
