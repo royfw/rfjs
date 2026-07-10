@@ -1,14 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { ConfigTable } from "@rfjs/table-builder-ui";
 import type { TableLabels, TableSource } from "@rfjs/table-builder-ui";
-import { deriveTableConfig } from "@rfjs/table-builder";
+import { deriveTableConfig, parseTableConfig } from "@rfjs/table-builder";
 import type { TableConfig, TableColumnConfig, TablePaginationConfig } from "@rfjs/table-builder";
 import { inferFieldsFromRows } from "@rfjs/data-schema";
 import type { RequestMeta, ResponseMeta } from "@rfjs/data-schema";
+
+import { AiPanel } from "@/components/shared/ai-panel";
+import { useAiAssist } from "@/lib/ai/use-ai-assist";
 
 import { SAMPLE_CONFIG, SAMPLE_META, SAMPLE_ROWS, samplePaginationMeta } from "./sample";
 import type { SourceMode } from "./sample";
@@ -18,6 +21,7 @@ import { ColumnsPanel } from "./columns-panel";
 import { PaginationPanel } from "./pagination-panel";
 import { MetadataPanel } from "./metadata-panel";
 import type { MetadataPanelLabels } from "./metadata-panel";
+import { buildNlTablePrompt, buildTableAskPrompt, parseNlTableResponse } from "./ai-nl-table";
 
 // Task 9 (design spec §6.1) adds the editor panels + live preview on top of Task 8's static
 // render: the editor area is tabbed (source / columns / pagination / metadata), and a
@@ -30,6 +34,8 @@ const SAMPLE_JSON = JSON.stringify(SAMPLE_ROWS, null, 2);
 
 export function TableBuilderTool() {
   const t = useTranslations("ToolUI");
+  const locale = useLocale();
+  const ai = useAiAssist();
 
   const [config, setConfig] = React.useState<TableConfig>(SAMPLE_CONFIG);
   const [sourceMode, setSourceMode] = React.useState<SourceMode>("rows");
@@ -176,9 +182,61 @@ export function TableBuilderTool() {
     setDataVersion((v) => v + 1);
   }
 
+  function applyGeneratedConfig(json: string) {
+    try {
+      setConfig(parseTableConfig(JSON.parse(json)));
+    } catch {
+      // stale/foreign log entry — leave the current config untouched
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t("tbEyebrow")}</p>
+
+      <AiPanel
+        title={t("aiBlockTitle")}
+        placeholder={t("tbAiPlaceholder")}
+        logKey="rfjs.ai.log.table-builder"
+        ai={ai}
+        onReapply={(e) => applyGeneratedConfig(e.appliedJson ?? "")}
+        appliedSummary={(e) => {
+          let n = 0;
+          try {
+            const parsed = JSON.parse(e.appliedJson ?? "") as { columns?: unknown[] };
+            n = Array.isArray(parsed.columns) ? parsed.columns.length : 0;
+          } catch {
+            n = 0;
+          }
+          return t("tbAiApplied", { count: n });
+        }}
+        actions={[
+          {
+            key: "generate",
+            label: t("tbAiGenerate"),
+            needsInput: true,
+            primary: true,
+            run: async (input) => {
+              const out = await ai.run({ ...buildNlTablePrompt(input, config), json: true }, parseNlTableResponse);
+              if (out === null) return null;
+              applyGeneratedConfig(out);
+              return { kind: "generate", prompt: input, appliedJson: out };
+            },
+          },
+          {
+            key: "ask",
+            label: t("aiAsk"),
+            needsInput: true,
+            run: async (input) => {
+              const out = await ai.runStream(
+                buildTableAskPrompt({ configJson: JSON.stringify(config, null, 2), locale }, input),
+                (raw) => raw.trim(),
+              );
+              return out === null ? null : { kind: "ask", prompt: input, answer: out };
+            },
+          },
+        ]}
+      />
 
       {/* B-layout (design spec §2.1): editor panels are tabs, full width each; the ConfigTable
           preview below stays mounted no matter which tab is active. Panels are conditionally

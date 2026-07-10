@@ -72,6 +72,9 @@ export const messages: LocaleMessages = {
       tbMetaCopy: "Copy",
       tbMetaCopied: "Copied",
       tbMetaDownload: "Download meta.json",
+      tbAiPlaceholder: "Describe a table change or ask a question…",
+      tbAiGenerate: "Generate config",
+      tbAiApplied: "Applied ({count} columns)",
     },
   },
   "zh-TW": {
@@ -140,6 +143,9 @@ export const messages: LocaleMessages = {
       tbMetaCopy: "複製",
       tbMetaCopied: "已複製",
       tbMetaDownload: "下載 meta.json",
+      tbAiPlaceholder: "描述表格調整或提出問題…",
+      tbAiGenerate: "產生表格設定",
+      tbAiApplied: "已套用({count} 個欄位)",
     },
   },
 };
