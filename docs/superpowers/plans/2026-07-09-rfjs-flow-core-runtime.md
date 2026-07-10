@@ -69,7 +69,7 @@
   "license": "ISC",
   "repository": { "type": "git", "url": "git+https://github.com/royfw/rfjs.git", "directory": "packages/flow-core" },
   "files": ["dist", "README.md", "README.zh-TW.md"],
-  "dependencies": { "zod": "^3.24.1" },
+  "dependencies": { "zod": "^4.0.0" },
   "devDependencies": {
     "@eslint/js": "^9.20.0", "@types/node": "^25.9.1", "@vitest/coverage-istanbul": "^3.2.3",
     "eslint": "^9.20.1", "eslint-config-prettier": "^10.0.1", "npm-run-all": "^4.1.5",
@@ -78,7 +78,7 @@
   }
 }
 ```
-`tsdown.config.ts` / `vitest.config.mts` / `tsconfig.json` / `tsconfig.build.json` / `eslint.config.mjs` 逐字沿用 retry 版(zod 版本以 monorepo 現行為準:先 `grep '"zod"' packages/data-filter/package.json` 對齊)。
+五個設定檔逐字沿用 retry 版:`eslint.config.mjs` / `tsdown.config.ts` / `vitest.config.mts` / `tsconfig.json` / `tsconfig.build.json`(已確認 retry 這五個都有)。zod **固定 `^4.0.0`**(整個 monorepo + lockfile 4.4.3 都是 zod 4;retry 無 zod 不能當 zod 範本,form-builder 是 zod 4 例子,已確認 `"zod": "^4.0.0"`)。
 
 - [ ] **Step 2: 搬 schema** — `git mv apps/web/src/tools/flow-builder/schema.ts packages/flow-core/src/schema.ts` 與 `schema.spec.ts` 同理。內容**不改**。
 - [ ] **Step 3: barrel** — `packages/flow-core/src/index.ts`:
@@ -180,7 +180,17 @@ git commit -m "feat(web): consume @rfjs/flow-core for flowdoc schema and project
 ```ts
 import { describe, expect, it } from "vitest";
 import type { FlowDoc } from "./schema";
-import { startFlow, advance, FlowError } from "./runtime";
+import { startFlow, advance, FlowError, type FlowErrorKind } from "./runtime";
+
+/** 保證「有丟 + kind 正確」—— 先 toThrow 確保真的丟(不丟則 fail),再取 kind 斷言。 */
+function expectFlowError(fn: () => unknown, kind: FlowErrorKind): void {
+  expect(fn).toThrow(FlowError);
+  try {
+    fn();
+  } catch (e) {
+    expect((e as FlowError).kind).toBe(kind);
+  }
+}
 
 // 請假流:start → form → condition(yes/no)→ action → end;approver form 另有 timeout 邊 → esc(condition)
 const doc: FlowDoc = {
@@ -212,14 +222,13 @@ describe("startFlow", () => {
     expect(s).toMatchObject({ at: "form1", status: "running", awaiting: "submit" });
     expect(s.context).toEqual({});
   });
-  it("start 無出邊 → FlowError no-edge", () => {
+  it("start 無出邊 → FlowError no-path(spec §5)", () => {
     const bad: FlowDoc = { version: 1, nodes: [{ id: "start", type: "start", position: { x: 0, y: 0 } }], edges: [] };
-    expect(() => startFlow(bad)).toThrow(FlowError);
-    try { startFlow(bad); } catch (e) { expect((e as FlowError).kind).toBe("no-edge"); }
+    expectFlowError(() => startFlow(bad), "no-path");
   });
   it("無 start 節點 → FlowError no-path", () => {
     const bad: FlowDoc = { version: 1, nodes: [{ id: "end", type: "end", position: { x: 0, y: 0 } }], edges: [] };
-    try { startFlow(bad); } catch (e) { expect((e as FlowError).kind).toBe("no-path"); }
+    expectFlowError(() => startFlow(bad), "no-path");
   });
 });
 
@@ -258,23 +267,31 @@ describe("advance —— timeout(含條件式)", () => {
   });
   it("節點無 timeout 邊 → FlowError no-edge", () => {
     // act1 無 timeout 邊
-    try { advance(doc, { at: "act1", status: "running", awaiting: "action", context: {} }, { type: "timeout" }); }
-    catch (e) { expect((e as FlowError).kind).toBe("no-edge"); }
+    expectFlowError(
+      () => advance(doc, { at: "act1", status: "running", awaiting: "action", context: {} }, { type: "timeout" }),
+      "no-edge",
+    );
   });
 });
 
 describe("advance —— 錯誤", () => {
   it("wrong-event:awaiting decision 卻餵 submit", () => {
-    try { advance(doc, { at: "cond1", status: "running", awaiting: "decision", context: {} }, { type: "submit", data: {} }); }
-    catch (e) { expect((e as FlowError).kind).toBe("wrong-event"); }
+    expectFlowError(
+      () => advance(doc, { at: "cond1", status: "running", awaiting: "decision", context: {} }, { type: "submit", data: {} }),
+      "wrong-event",
+    );
   });
   it("unknown-handle:decide 給不存在的 handle", () => {
-    try { advance(doc, { at: "cond1", status: "running", awaiting: "decision", context: {} }, { type: "decide", handle: "maybe" }); }
-    catch (e) { expect((e as FlowError).kind).toBe("unknown-handle"); }
+    expectFlowError(
+      () => advance(doc, { at: "cond1", status: "running", awaiting: "decision", context: {} }, { type: "decide", handle: "maybe" }),
+      "unknown-handle",
+    );
   });
   it("已結束的流程再 advance → wrong-event", () => {
-    try { advance(doc, { at: "end", status: "done", awaiting: null, context: {} }, { type: "submit", data: {} }); }
-    catch (e) { expect((e as FlowError).kind).toBe("wrong-event"); }
+    expectFlowError(
+      () => advance(doc, { at: "end", status: "done", awaiting: null, context: {} }, { type: "submit", data: {} }),
+      "wrong-event",
+    );
   });
 });
 ```
@@ -359,10 +376,14 @@ function timeoutTarget(doc: FlowDoc, id: string): string {
   return edge.target;
 }
 
-/** 進入流程:定位 start,沿其正常出邊推進到第一個 block 節點。 */
+/** 進入流程:定位 start,沿其正常出邊推進到第一個 block 節點。
+ * 依 spec §5:start 無出邊 → no-path(不是 no-edge —— no-edge 保留給一般節點缺出邊)。 */
 export function startFlow(doc: FlowDoc): FlowState {
   const start = doc.nodes.find((n) => n.type === "start");
   if (!start) throw new FlowError("no-path", "no start node");
+  if (outEdges(doc, start.id).filter((e) => e.trigger !== "timeout").length === 0) {
+    throw new FlowError("no-path", "start node has no out-edge");
+  }
   return land(doc, normalTarget(doc, start.id), {});
 }
 

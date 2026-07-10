@@ -55,8 +55,9 @@ function startFlow(doc: FlowDoc): FlowState;
 /** 走一步:事件須配得上目前 awaiting,否則丟 FlowError。 */
 function advance(doc: FlowDoc, state: FlowState, event: FlowEvent): FlowState;
 
-/** 選配:用 @rfjs/data-filter 對 context 評估 edge.condition,回傳該 edge 是否成立(供消費端算 handle)。 */
-function resolveCondition(edge: FlowEdge, context: Record<string, unknown>): boolean;
+/** 選配:用 @rfjs/data-filter 對 context 評估 edge.condition,回傳該 edge 是否成立(供消費端算 handle)。
+ * async —— data-filter 的 matchQueryAsync 是 async(compile-once 契約)。 */
+function resolveCondition(edge: FlowEdge, context: Record<string, unknown>): Promise<boolean>;
 ```
 
 **推進規則**:
