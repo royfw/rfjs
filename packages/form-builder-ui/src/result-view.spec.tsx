@@ -56,8 +56,43 @@ describe('ResultView json / table modes', () => {
     expect(screen.getByText(/"a": 1/)).toBeTruthy();
   });
 
-  it('table: renders the pending placeholder', () => {
+  it('table: empty array falls back to the empty box', () => {
     render(<ResultView mode="table" state="ready" value={[]} />);
-    expect(screen.getByText(/pending .*table-builder/i)).toBeTruthy();
+    expect(screen.getByText('No result yet')).toBeTruthy();
+  });
+});
+
+describe('ResultView table mode', () => {
+  const rows = [
+    { id: 1, name: 'Ada' },
+    { id: 2, name: 'Alan' },
+  ];
+
+  it('derives columns from rows when no table config is given', () => {
+    render(<ResultView mode="table" state="ready" value={rows} />);
+    expect(screen.getByText('id')).toBeTruthy();
+    expect(screen.getByText('name')).toBeTruthy();
+    expect(screen.getByText('Ada')).toBeTruthy();
+  });
+
+  it('honors a carried TableConfig (column label overrides the key)', () => {
+    render(
+      <ResultView
+        mode="table"
+        state="ready"
+        value={rows}
+        table={{
+          columns: [{ key: 'name', label: 'Full Name', dataType: 'string' }],
+          pagination: { pageSize: 10 },
+        }}
+      />,
+    );
+    expect(screen.getByText('Full Name')).toBeTruthy();
+    expect(screen.queryByText('id')).toBeNull();
+  });
+
+  it('falls back to the empty box when the value is not an object array', () => {
+    render(<ResultView mode="table" state="ready" value={{ notAnArray: true }} emptyText={{ en: 'No rows' }} />);
+    expect(screen.getByText('No rows')).toBeTruthy();
   });
 });

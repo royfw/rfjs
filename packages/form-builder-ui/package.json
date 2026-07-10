@@ -12,7 +12,10 @@
     "vitest:run": "vitest --passWithNoTests --run"
   },
   "dependencies": {
+    "@rfjs/data-schema": "workspace:*",
     "@rfjs/form-builder": "workspace:*",
+    "@rfjs/table-builder": "workspace:*",
+    "@rfjs/table-builder-ui": "workspace:*",
     "@rfjs/web-ui": "workspace:*",
     "@dnd-kit/core": "^6.3.1",
     "lucide-react": "^1.17.0",
