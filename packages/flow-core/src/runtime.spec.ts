@@ -60,9 +60,19 @@ describe("advance —— 正常路徑", () => {
     expect(s.options).toEqual(["yes", "no"]);
     expect(s.context).toEqual({ days: 5 });
   });
-  it("decide 走對應 handle 到 action", () => {
-    let s = advance(doc, { at: "cond1", status: "running", awaiting: "decision", context: { days: 5 } }, { type: "decide", handle: "no" });
+  it("decide 'no' → act2", () => {
+    const s = advance(doc, { at: "cond1", status: "running", awaiting: "decision", context: { days: 5 } }, { type: "decide", handle: "no" });
     expect(s).toMatchObject({ at: "act2", awaiting: "action" });
+  });
+  it("decide 'yes' → act1(兩條分支都測)", () => {
+    const s = advance(doc, { at: "cond1", status: "running", awaiting: "decision", context: { days: 2 } }, { type: "decide", handle: "yes" });
+    expect(s).toMatchObject({ at: "act1", awaiting: "action" });
+  });
+  it("decide 回傳的 context 不與輸入 state 共享物件", () => {
+    const input = { days: 5 };
+    const s = advance(doc, { at: "cond1", status: "running", awaiting: "decision", context: input }, { type: "decide", handle: "no" });
+    expect(s.context).not.toBe(input);
+    expect(s.context).toEqual(input);
   });
   it("complete 併 result、走到 end done", () => {
     const s = advance(doc, { at: "act2", status: "running", awaiting: "action", context: { days: 5 } }, { type: "complete", result: { ticket: "T-1" } });

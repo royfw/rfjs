@@ -105,10 +105,11 @@ export function advance(doc: FlowDoc, state: FlowState, event: FlowEvent): FlowS
       if (node.type !== "condition") throw new FlowError("wrong-event", `decide at ${node.type}`);
       const edge = outEdges(doc, node.id).find((e) => e.sourceHandle === event.handle);
       if (!edge) throw new FlowError("unknown-handle", `no edge for handle ${event.handle} at ${node.id}`);
-      return land(doc, edge.target, ctx);
+      // 回傳新 state 的 context 一律不與輸入 state 共享物件(消費端可安全同時持有新舊 state)。
+      return land(doc, edge.target, { ...ctx });
     }
     case "timeout":
       if (node.type !== "form" && node.type !== "action") throw new FlowError("wrong-event", `timeout at ${node.type}`);
-      return land(doc, timeoutTarget(doc, node.id), ctx);
+      return land(doc, timeoutTarget(doc, node.id), { ...ctx });
   }
 }
