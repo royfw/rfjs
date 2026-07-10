@@ -74,8 +74,27 @@ session 在「提出方案、比較選項、報告路線圖、描述 UI/流程�
 
 ## 等前置條件
 
+### #13 workbench 故事線 + 部署形態討論
+**開在**:rfjs 根目錄(可貼給 AI/策略線 session,與 #3 相鄰但獨立)· **啟動條件**:無
+
+```
+討論 workbench 的故事線與部署形態(純討論,不動程式碼)。背景:workbench 目前是
+dataset explorer(四層:workbench → Fastify api → @rfjs/core → @rfjs/db),CLAUDE.md
+規定它是純 REST client。待決兩題:
+① 產品定位 —— workbench 要長成什麼:引擎驗證場?BPM 產品的前身?還是維持 showcase?
+   與 BPM 簽核場景(若已有該 spec)的關係是什麼?api filter 線的 dogfood 輪(ConfigTable
+   + metadata 宣告面板進 datasets 頁)是否照做、改做、或換載體?
+② 部署形態 —— 是否 Vercel 化:(a) Fastify api 留 k8s(GitLab deploy 已能建 Harbor
+   image),workbench 上 Vercel 指向它,架構不動;(b) delivery 層搬進 Next route
+   handlers(workbench 的 app/api/** 直接 import @rfjs/core;Postgres 走 pooled 連線
+   如 Neon;「純 REST client」規則改為「route handler 即 delivery 層」),一個 Vercel
+   專案全包。評估兩案對開發流/部署流/四層原則的影響。
+產出:zh-TW 決策文件(方向、取捨、對 api filter dogfood 輪的影響)到 docs/proposals/
+或 docs/superpowers/specs/,給我 review。不做任何實作。
+```
+
 ### #4 metadata 宣告面板(僅 A′ 切法)
-**開在**:rfjs 根目錄 · **啟動條件**:api filter 的「契約 PR」(data-schema 擴充)已 merge
+**開在**:rfjs 根目錄 · **啟動條件**:api filter 的「契約 PR」(data-schema 擴充)已 merge;若 #13 尚未定案,面板先以獨立組件開發(掛載頁面後定)
 
 ```
 接手 workbench 的資源 metadata 宣告面板。前情:@rfjs/data-schema 剛擴充了
