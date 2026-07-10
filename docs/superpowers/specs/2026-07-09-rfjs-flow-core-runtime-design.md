@@ -107,6 +107,19 @@ function resolveCondition(edge: FlowEdge, context: Record<string, unknown>): Pro
 
 **注意**:timeout **事件路由**(含條件式 timeout = timeout 邊 → condition 節點)**在本案範圍內**;只有「數時間的排程器」defer 給消費端。
 
+### 會簽的三種形態(釐清邊界)
+
+- **依序會辦(逐級呈核)—— 本案已涵蓋**:多簽核人一個接一個 = 節點串接(form → form → …),最小核心的順序推進本來就支援,不需加東西。
+- **平行會簽 / M-of-N —— defer(未來 `FlowState` 演化)**:多人同時簽、要等齊 / 等 N 個,會把核心從**單游標**(`at: 一個節點`)改成**多活躍 token 模型**(`active: Set<節點>`)+ join gate(AND / OR / count)。這是更大的引擎(Phase 2.5),等真實場景明確 join 語意再一次設計 token + join(兩者綁在一起,先設計形狀後補語意會錯)。消費端(BPM 產品 repo)設計持久化時應預期「目前單游標,未來狀態形狀可能長大」。
+- **投票式簽核 —— 拆兩層**:= 平行會簽(引擎的 fork + count-join 原語)+ **計票政策**(過半 / 加權 / 誰能投 —— 業務政策,用 decision-table/filter 表達)。前者未來回引擎,後者永遠留產品。
+- **子流程 —— defer,但可疊加**:節點本身是另一條 flow = spawn child `FlowState`,child done → 推進 parent。不改單游標模型,風險比平行低。
+
+### 歸屬原則:執行力學 vs 業務政策
+
+- **執行力學**(token 多活躍、AND/OR/M-of-N join gate、子流程 spawn)= 通用 graph 原語 → 最終回 **`@rfjs/flow-core`**(可重用)。
+- **業務政策**(計票規則 / 權重 / 誰能簽 / 通知 / SLA / escalation 條件)= 業務決定 → 住 **BPM 產品 repo** 自己的模組(常用 decision-table/filter)。
+- **時序(co-evolution)**:flow-core 最小先出 → BPM 產品 repo 貼場景**先在產品側**實作平行/投票 → 某模式證明是穩定通用的執行原語後,**才 graduate 回 flow-core**(政策層永遠留產品)。避免在無場景時憑空把 join/計票語意做錯。
+
 ## 8. 慣例
 
 spec/plan 繁中;commit/PR 英文 conventional(subject 全小寫,trailer 前空行,結尾 `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`);worktree 內開發;**HOLD PR**。動 `packages/*` → 附 changeset(新 publishable 套件 `@rfjs/flow-core` minor)。開工前 `git fetch` 對齊最新 main(有平行 session 在 feat-api-filter,區域不重疊 —— 本案動 flow-builder + 新套件)。
