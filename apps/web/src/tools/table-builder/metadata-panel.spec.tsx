@@ -6,14 +6,23 @@ import type { RequestMeta } from "@rfjs/data-schema";
 
 import { MetadataPanel } from "./metadata-panel";
 
-const LABELS = { hint: "hint text", copy: "Copy", copied: "Copied", download: "Download meta.json" };
+const LABELS = {
+  hint: "hint text",
+  copy: "Copy",
+  copied: "Copied",
+  download: "Download meta.json",
+};
 const CONFIG: TableConfig = {
   columns: [{ key: "price", label: "Price", dataType: "numeric", pin: "left" }],
   pagination: { pageSize: 5 },
 };
 const REQUEST: RequestMeta = {
   endpoint: "/api/items",
-  pagination: { strategy: "offset", limitParam: "limit", offsetParam: "offset" },
+  pagination: {
+    strategy: "offset",
+    limitParam: "limit",
+    offsetParam: "offset",
+  },
 };
 
 const writeText = vi.fn().mockResolvedValue(undefined);
@@ -39,7 +48,9 @@ describe("MetadataPanel", () => {
 
   it("includes request when provided", () => {
     render(<MetadataPanel config={CONFIG} request={REQUEST} labels={LABELS} />);
-    expect(screen.getByTestId("metadata-json").textContent).toContain('"endpoint"');
+    expect(screen.getByTestId("metadata-json").textContent).toContain(
+      '"endpoint"',
+    );
   });
 
   it("copy writes the JSON to the clipboard and flips the button label", async () => {
@@ -47,12 +58,16 @@ describe("MetadataPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
 
-    await waitFor(() => expect(screen.getByRole("button", { name: "Copied" })).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Copied" })).toBeTruthy(),
+    );
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('"fields"'));
   });
 
   it("download builds a json blob url and clicks an anchor", () => {
-    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
     render(<MetadataPanel config={CONFIG} labels={LABELS} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Download meta.json" }));

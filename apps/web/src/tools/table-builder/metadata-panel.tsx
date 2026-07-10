@@ -23,11 +23,21 @@ export interface MetadataPanelProps {
 
 // Metadata tab (design spec §2.2): a live, read-only reverse projection of the current config.
 // The Columns panel IS the editing surface for this data — no second editor here.
-export function MetadataPanel({ config, request, response, labels }: MetadataPanelProps) {
+export function MetadataPanel({
+  config,
+  request,
+  response,
+  labels,
+}: MetadataPanelProps) {
   const [copied, setCopied] = React.useState(false);
 
   const json = React.useMemo(
-    () => JSON.stringify(tableConfigToResourceMeta(config, request, response), null, 2),
+    () =>
+      JSON.stringify(
+        tableConfigToResourceMeta(config, request, response),
+        null,
+        2,
+      ),
     [config, request, response],
   );
 
@@ -46,7 +56,9 @@ export function MetadataPanel({ config, request, response, labels }: MetadataPan
   };
 
   const onDownload = () => {
-    const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+    const url = URL.createObjectURL(
+      new Blob([json], { type: "application/json" }),
+    );
     const a = document.createElement("a");
     a.href = url;
     a.download = "meta.json";
@@ -65,7 +77,10 @@ export function MetadataPanel({ config, request, response, labels }: MetadataPan
           {labels.download}
         </Button>
       </div>
-      <pre data-testid="metadata-json" className="max-h-80 overflow-auto rounded-md bg-muted/30 p-3 font-mono text-xs">
+      <pre
+        data-testid="metadata-json"
+        className="max-h-80 overflow-auto rounded-md bg-muted/30 p-3 font-mono text-xs"
+      >
         {json}
       </pre>
     </div>
