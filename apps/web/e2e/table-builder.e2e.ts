@@ -19,7 +19,12 @@ test("importing json then filtering shrinks the rows", async ({ page }) => {
   // NOTE: match "Load" with exact:true -- /load/i substring-matches "Upload" too, which
   // trips Playwright's strict-mode "resolved to 2 elements" error. Upload stays a
   // label-wrapped <input type="file"> (not a <button>) so it never competes with Load.
-  await page.getByPlaceholder("Paste JSON or CSV…").fill('[{"id":1,"price":10},{"id":2,"price":90}]');
+  // Wait for hydration before typing: the paste box is a controlled textarea pre-filled with
+  // the sample rows, so filling it pre-hydration races React re-asserting its state value
+  // (the fill and the sample JSON end up concatenated -> "Invalid JSON.").
+  const paste = page.getByPlaceholder("Paste JSON or CSV…");
+  await expect(paste).toHaveValue(/Sample Item/, { timeout: 15_000 });
+  await paste.fill('[{"id":1,"price":10},{"id":2,"price":90}]');
   await page.getByRole("button", { name: "Load", exact: true }).click();
   await expect(page.locator("table tbody tr")).toHaveCount(2, { timeout: 15_000 });
 
