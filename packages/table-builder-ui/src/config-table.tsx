@@ -6,8 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@rfjs/web-ui/components/button';
 import { formatCell, getByPath, resolveLabel } from '@rfjs/table-builder';
 import type { TableColumnConfig, TableConfig } from '@rfjs/table-builder';
+import { FilterTreeEditor, type FilterTreeLabels } from '@rfjs/filter-builder-ui';
 import { useConfigTable } from './use-config-table';
 import { DEFAULT_LABELS } from './labels';
+import { DEFAULT_FILTER_TREE_LABELS } from './filter-labels';
 import type { TableLabels, TableSource } from './types';
 
 // Next.js server-renders client components on the first pass — useLayoutEffect there
@@ -27,6 +29,8 @@ export interface ConfigTableProps {
   labels?: Partial<TableLabels>;
   /** BCP-47 locale used to resolve column labels and format cell values. Defaults to `'en'`. */
   locale?: string;
+  /** Overrides for the filter tree editor's labels (merged over `DEFAULT_FILTER_TREE_LABELS`). */
+  filterLabels?: Partial<FilterTreeLabels>;
 }
 
 function cx(...classes: Array<string | false | undefined>): string {
@@ -54,9 +58,11 @@ function alignClass(column: TableColumnConfig): string {
   return align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
 }
 
-export function ConfigTable({ config, source, labels, locale = 'en' }: ConfigTableProps) {
+export function ConfigTable({ config, source, labels, locale = 'en', filterLabels }: ConfigTableProps) {
   const t = useConfigTable(config, source);
   const mergedLabels: TableLabels = { ...DEFAULT_LABELS, ...labels };
+  const [filterOpen, setFilterOpen] = React.useState(false);
+  const filterTreeLabels: FilterTreeLabels = { ...DEFAULT_FILTER_TREE_LABELS, ...filterLabels };
 
   const orderedColumns = React.useMemo(() => orderColumns(config.columns), [config.columns]);
   const leftPinned = React.useMemo(() => orderedColumns.filter((c) => c.pin === 'left'), [orderedColumns]);
@@ -133,6 +139,39 @@ export function ConfigTable({ config, source, labels, locale = 'en' }: ConfigTab
 
   return (
     <div ref={containerRef} className="flex flex-col gap-2">
+      <div className="rounded-md border border-input">
+        <button
+          type="button"
+          aria-expanded={t.filterEnabled ? filterOpen : false}
+          disabled={!t.filterEnabled}
+          onClick={() => setFilterOpen((o) => !o)}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium disabled:opacity-60"
+        >
+          <span>{mergedLabels.filterTitle}</span>
+          {t.filterEnabled ? (
+            <span className="text-xs text-muted-foreground">
+              {replacePlaceholders(mergedLabels.filterMatched, { count: t.total ?? '' })}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">{mergedLabels.filterDisabled}</span>
+          )}
+        </button>
+        {t.filterEnabled && filterOpen && (
+          <div className="border-t border-input p-3">
+            {t.filterUncoverable && (
+              <p className="mb-2 text-xs text-destructive">{mergedLabels.filterUncoverable}</p>
+            )}
+            <FilterTreeEditor
+              group={t.filterTree}
+              engineId="data-filter"
+              schema={t.filterSchema}
+              onChange={t.setFilterTree}
+              onCreateField={() => {}}
+              labels={filterTreeLabels}
+            />
+          </div>
+        )}
+      </div>
       <Table>
         <TableHeader>
           <TableRow>

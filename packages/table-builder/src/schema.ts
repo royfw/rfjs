@@ -12,6 +12,7 @@ const tableColumnConfigObjectSchema = z.object({
   format: fieldFormatSchema.optional(),
   options: z.array(fieldOptionSchema).optional(),
   sortable: z.boolean().optional(),
+  filterable: z.boolean().optional(),
   visible: z.boolean().optional(),
   pin: z.enum(['left', 'right']).optional(),
   align: z.enum(['left', 'center', 'right']).optional(),

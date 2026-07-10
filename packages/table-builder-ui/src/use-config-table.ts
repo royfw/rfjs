@@ -3,6 +3,8 @@ import { hasNextCursor, pageCount as computePageCount, pageToOffset, sortRows } 
 import type { SortState, TableConfig } from '@rfjs/table-builder';
 import { buildRequestParams, extractCursor, extractRows, extractTotal } from '@rfjs/data-schema';
 import type { PageState } from '@rfjs/data-schema';
+import { runLiveMatch, emptyGroup, type BuilderGroup, type FieldSchema } from '@rfjs/filter-builder';
+import { columnsToFilterSchema } from './filter-schema';
 import type { TableSource } from './types';
 
 export interface UseConfigTableResult {
@@ -23,6 +25,11 @@ export interface UseConfigTableResult {
   error?: string;
   retry(): void;
   strategy: 'client' | 'offset' | 'page' | 'cursor';
+  filterTree: BuilderGroup;
+  setFilterTree(next: BuilderGroup): void;
+  filterSchema: FieldSchema[];
+  filterEnabled: boolean;
+  filterUncoverable: boolean;
 }
 
 const EMPTY_ROWS: Record<string, unknown>[] = [];
@@ -36,7 +43,7 @@ interface RemoteState {
 }
 
 // Design spec §5.2: ONE implementation for both source kinds, so the hook call sequence
-// (useState x5, useRef, useMemo x2, useEffect, useCallback x6) is identical every render --
+// (useState x6, useRef, useMemo x4, useEffect, useCallback x7) is identical every render --
 // even if a consumer toggles `source.kind` between 'rows' and 'remote'. All source-kind
 // branching happens INSIDE this body (plain values/conditionals, effect/callback bodies),
 // never as an early return from the hook itself -- see Task 5 review for why that broke
@@ -53,6 +60,7 @@ export function useConfigTable(config: TableConfig, source: TableSource): UseCon
     nextCursor: undefined,
   }));
   const [retryToken, setRetryToken] = useState(0);
+  const [filterTree, setFilterTreeState] = useState<BuilderGroup>(() => emptyGroup(() => crypto.randomUUID()));
 
   // Cursor-mode navigation stack (client-side, not React state): cursorsRef.current[uiPage - 1]
   // is the `cursor` request param needed to fetch that UI page -- index 0 (the first page) is
@@ -62,9 +70,15 @@ export function useConfigTable(config: TableConfig, source: TableSource): UseCon
 
   // --- client (static rows) derivation -- always computed, only used when source.kind === 'rows' ---
   const clientRows = source.kind === 'rows' ? source.rows : EMPTY_ROWS;
+  const filterSchema = useMemo(() => columnsToFilterSchema(config.columns), [config.columns]);
+  const match = useMemo(() => runLiveMatch(clientRows, filterTree), [clientRows, filterTree]);
+  // uncoverable (an operator the in-memory engine can't evaluate): don't misreport 0 rows --
+  // show all rows and let the UI surface a warning via filterUncoverable.
+  const filteredRows =
+    source.kind === 'rows' && !match.uncoverable ? (match.matched as Record<string, unknown>[]) : clientRows;
   const sortedRows = useMemo(
-    () => (sort ? sortRows(clientRows, sort, config.columns) : clientRows),
-    [clientRows, sort, config.columns],
+    () => (sort ? sortRows(filteredRows, sort, config.columns) : filteredRows),
+    [filteredRows, sort, config.columns],
   );
   const clientPageRows = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -192,6 +206,11 @@ export function useConfigTable(config: TableConfig, source: TableSource): UseCon
     setRetryToken((t) => t + 1);
   }, []);
 
+  const setFilterTree = useCallback((next: BuilderGroup) => {
+    setFilterTreeState(next);
+    setPageState(1);
+  }, []);
+
   return {
     rows,
     total,
@@ -210,5 +229,10 @@ export function useConfigTable(config: TableConfig, source: TableSource): UseCon
     error,
     retry,
     strategy: source.kind === 'rows' ? 'client' : source.request.pagination.strategy,
+    filterTree,
+    setFilterTree,
+    filterSchema,
+    filterEnabled: source.kind === 'rows',
+    filterUncoverable: source.kind === 'rows' && match.uncoverable,
   };
 }

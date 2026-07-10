@@ -11,6 +11,7 @@ export interface ColumnsPanelLabels {
   format: string;
   formatNone: string;
   sortable: string;
+  filter: string;
   pin: string;
   pinNone: string;
   pinLeft: string;
@@ -69,6 +70,10 @@ export function ColumnsPanel({ columns, onChange, labels }: ColumnsPanelProps) {
 
   function setSortable(index: number, sortable: boolean) {
     updateAt(index, (column) => ({ ...column, sortable }));
+  }
+
+  function setFilterable(index: number, filterable: boolean) {
+    updateAt(index, (column) => ({ ...column, filterable: filterable || undefined }));
   }
 
   function setFormat(index: number, format: string) {
@@ -167,6 +172,15 @@ export function ColumnsPanel({ columns, onChange, labels }: ColumnsPanelProps) {
                   aria-label={`${labels.sortable} ${column.key}`}
                 />
                 {labels.sortable}
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={column.filterable ?? false}
+                  onChange={(e) => setFilterable(index, e.target.checked)}
+                  aria-label={`${labels.filter} ${column.key}`}
+                />
+                {labels.filter}
               </label>
               <button
                 type="button"

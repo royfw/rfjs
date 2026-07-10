@@ -10,6 +10,8 @@ export interface TableColumnConfig {
   format?: FieldFormat;
   options?: FieldOption[];
   sortable?: boolean; // default false
+  /** 是否可作為篩選欄位(供 <ConfigTable> 的執行時篩選器)。 */
+  filterable?: boolean;
   visible?: boolean; // default true — editor show/hide toggle
   pin?: 'left' | 'right';
   align?: 'left' | 'center' | 'right'; // unspecified -> renderer defaults by dataType (numeric -> right, else left)

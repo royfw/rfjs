@@ -25,4 +25,12 @@ export interface TableLabels {
   pageOf: string; // 'Page {page} of {count}'
   total: string; // '{total} rows'
   pageSize: string;
+  /** 篩選區標題(收合列)。 */
+  filterTitle: string;
+  /** 篩選命中數,帶 {count} 佔位(ConfigTable 以 replacePlaceholders 代換)。 */
+  filterMatched: string;
+  /** 篩選含記憶體引擎不支援的條件時的警告。 */
+  filterUncoverable: string;
+  /** 遠端來源篩選停用時的說明。 */
+  filterDisabled: string;
 }

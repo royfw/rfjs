@@ -11,6 +11,7 @@ const LABELS = {
   format: "Format",
   formatNone: "None",
   sortable: "Sortable",
+  filter: "Filter",
   pin: "Pin",
   pinNone: "None",
   pinLeft: "Left",
@@ -120,5 +121,12 @@ describe("ColumnsPanel", () => {
     fireEvent.click(checkbox);
 
     expect(onChange).toHaveBeenCalledWith([ID_COLUMN, { ...PRICE_COLUMN, sortable: true }, CREATED_AT_COLUMN]);
+  });
+
+  it("toggling Filter writes column.filterable", () => {
+    const onChange = vi.fn();
+    render(<ColumnsPanel columns={[{ key: "a", label: "A", dataType: "string" }]} onChange={onChange} labels={LABELS} />);
+    fireEvent.click(screen.getByLabelText(/filter a/i));
+    expect(onChange).toHaveBeenCalledWith([{ key: "a", label: "A", dataType: "string", filterable: true }]);
   });
 });

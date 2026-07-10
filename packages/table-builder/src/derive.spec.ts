@@ -11,9 +11,20 @@ describe('deriveTableConfig', () => {
     });
     expect(cfg.pagination).toEqual({ pageSize: 10 });
     expect(cfg.columns).toEqual([
-      { key: 'name', label: { en: 'Name' }, dataType: 'string', sortable: true },
+      { key: 'name', label: { en: 'Name' }, dataType: 'string', sortable: true, filterable: true },
       { key: 'price', label: 'Price', dataType: 'numeric', format: 'currency', options: [{ value: 1, label: 'One' }] },
-    ]); // filterable is not carried over; visible/pin/align are omitted when absent
+    ]); // visible/pin/align are omitted when absent
+  });
+
+  it('carries filterable from field metadata (and omits it when unset)', () => {
+    const cfg = deriveTableConfig({
+      fields: [
+        { key: 'a', label: 'A', dataType: 'string', filterable: true },
+        { key: 'b', label: 'B', dataType: 'numeric' },
+      ],
+    });
+    expect(cfg.columns[0]).toMatchObject({ key: 'a', filterable: true });
+    expect('filterable' in cfg.columns[1]!).toBe(false);
   });
 
   it('copies label and options to prevent mutation of source metadata', () => {
