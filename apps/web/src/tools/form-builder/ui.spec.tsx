@@ -192,13 +192,14 @@ describe("FormBuilderTool preview tab integration", () => {
     await waitFor(() => expect(screen.getAllByText(/save-draft/).length).toBeGreaterThan(0));
   });
 
-  it("preview: query api button renders its echoed response into the result card", async () => {
+  it("preview: query api button renders its rows as a ConfigTable in the result", async () => {
     renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     fireEvent.click(await screen.findByRole("button", { name: /^query$/i }));
-    // echo fetcher 回 { echoedAt, received: { data, meta } };result dataPath received.data → kv 卡出現欄位 key
+    // query fetcher returns SAMPLE_QUERY_ROWS under `data`; result mode:'table' → ConfigTable headers + rows
     const resultContainer = document.querySelector('[data-item="res_query"]') as HTMLElement;
-    await waitFor(() => expect(resultContainer.textContent).toMatch(/name/i));
+    await waitFor(() => expect(resultContainer.textContent).toMatch(/email/i));
+    expect(resultContainer.textContent).toMatch(/Ada Lovelace/);
   });
 });
 
