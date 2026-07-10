@@ -7,6 +7,7 @@ import { Button } from '@rfjs/web-ui/components/button';
 import { formatCell, getByPath, resolveLabel } from '@rfjs/table-builder';
 import type { TableColumnConfig, TableConfig } from '@rfjs/table-builder';
 import { FilterTreeEditor, type FilterTreeLabels } from '@rfjs/filter-builder-ui';
+import type { BuilderGroup } from '@rfjs/filter-builder';
 import { useConfigTable } from './use-config-table';
 import { DEFAULT_LABELS } from './labels';
 import { DEFAULT_FILTER_TREE_LABELS } from './filter-labels';
@@ -31,6 +32,9 @@ export interface ConfigTableProps {
   locale?: string;
   /** Overrides for the filter tree editor's labels (merged over `DEFAULT_FILTER_TREE_LABELS`). */
   filterLabels?: Partial<FilterTreeLabels>;
+  /** 受控篩選樹(NL 助手等外部寫入用);未傳 = 內部狀態。 */
+  filterTree?: BuilderGroup;
+  onFilterTreeChange?: (next: BuilderGroup) => void;
 }
 
 function cx(...classes: Array<string | false | undefined>): string {
@@ -58,8 +62,8 @@ function alignClass(column: TableColumnConfig): string {
   return align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
 }
 
-export function ConfigTable({ config, source, labels, locale = 'en', filterLabels }: ConfigTableProps) {
-  const t = useConfigTable(config, source);
+export function ConfigTable({ config, source, labels, locale = 'en', filterLabels, filterTree, onFilterTreeChange }: ConfigTableProps) {
+  const t = useConfigTable(config, source, { filterTree, onFilterTreeChange });
   const mergedLabels: TableLabels = { ...DEFAULT_LABELS, ...labels };
   const [filterOpen, setFilterOpen] = React.useState(false);
   const filterTreeLabels: FilterTreeLabels = { ...DEFAULT_FILTER_TREE_LABELS, ...filterLabels };
@@ -169,6 +173,13 @@ export function ConfigTable({ config, source, labels, locale = 'en', filterLabel
               onCreateField={() => {}}
               labels={filterTreeLabels}
             />
+            {t.strategy !== 'client' && (
+              <div className="mt-2 flex justify-end">
+                <Button size="xs" variant="outline" onClick={t.applyFilter}>
+                  {mergedLabels.filterApply ?? 'Apply'}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

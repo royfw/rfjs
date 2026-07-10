@@ -35,4 +35,6 @@ export interface TableLabels {
   filterUncoverable: string;
   /** 遠端來源篩選停用時的說明。 */
   filterDisabled: string;
+  /** remote 模式 Apply 鈕文字(選填;預設 'Apply')。 */
+  filterApply?: string;
 }
