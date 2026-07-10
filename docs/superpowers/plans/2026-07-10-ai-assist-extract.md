@@ -954,7 +954,15 @@ export function createAiClient(arg: AiSettings | AiClientConfig): AiClient {
     }
   };
 
-  const doFetch = async (req: CompleteRequest, stream: boolean): Promise<Response> => {
+  // 一次「嘗試」＝設定 controller/timer/外部 abort 橋接 → fetch → 消費 body（json 或 SSE 迴圈），
+  // 全部包在同一個 try/finally。關鍵：finally 只在 body 消費完成或出錯後才 clearTimeout + 移除 abort 監聽，
+  // 因此 timeout 與 cancel 在「整個 stream 讀取期間」都持續有效（＝今天 client.ts 的行為，不可回歸）。
+  // 整個 attempt 由 withRetry 包起——每次重試都會 arm 一組全新的 controller/timer。
+  const attempt = async (
+    req: CompleteRequest,
+    stream: boolean,
+    onDelta?: (d: StreamDelta) => void,
+  ): Promise<string> => {
     const ctl = new AbortController();
     let timedOut = false;
     const timer = setTimeout(() => {
@@ -983,7 +991,51 @@ export function createAiClient(arg: AiSettings | AiClientConfig): AiClient {
         const text = await res.text().catch(() => '');
         throw new AiError('http', `AI endpoint returned ${res.status}`, text.slice(0, 500), res.status, parseRetryAfterMs(res));
       }
-      return res;
+      if (!stream) {
+        const data = (await res.json().catch(() => null)) as
+          | { choices?: { message?: { content?: unknown } }[] }
+          | null;
+        const content = data?.choices?.[0]?.message?.content;
+        if (typeof content !== 'string') throw new AiError('parse', 'unexpected completion payload shape');
+        return content;
+      }
+      if (!res.body) throw new AiError('parse', 'response has no stream body');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let full = '';
+      // SSE：每筆事件為 `data: {...}` 行，以 [DONE] 收尾；逐行解析 delta。
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (!line.startsWith('data:')) continue;
+          const data = line.slice(5).trim();
+          if (data === '' || data === '[DONE]') continue;
+          try {
+            const json = JSON.parse(data) as {
+              choices?: { delta?: { content?: unknown; reasoning_content?: unknown; reasoning?: unknown } }[];
+            };
+            const delta = json.choices?.[0]?.delta;
+            const content = typeof delta?.content === 'string' ? delta.content : undefined;
+            const reasoning =
+              typeof delta?.reasoning_content === 'string'
+                ? delta.reasoning_content
+                : typeof delta?.reasoning === 'string'
+                  ? delta.reasoning
+                  : undefined;
+            if (content) full += content;
+            if (content || reasoning) onDelta?.({ content, reasoning });
+          } catch {
+            /* 忽略單筆壞掉的 chunk，續讀 */
+          }
+        }
+      }
+      return full;
     } catch (e) {
       if (e instanceof AiError) throw e;
       if (e instanceof Error && e.name === 'AbortError') {
@@ -998,17 +1050,17 @@ export function createAiClient(arg: AiSettings | AiClientConfig): AiClient {
     }
   };
 
-  // 預設 maxRetries:0 → 只跑一次、first error 即拋 → 與今天行為等價。
+  // 預設 maxRetries:0 → 只跑一次、first error 即拋 → 與今天行為等價。（迴圈變數用 n，避免遮蔽上面的 attempt。）
   const withRetry = async <T>(fn: () => Promise<T>): Promise<T> => {
     const max = retry?.maxRetries ?? 0;
     const base = retry?.baseDelayMs ?? DEFAULT_BASE_DELAY_MS;
-    for (let attempt = 0; ; attempt++) {
+    for (let n = 0; ; n++) {
       try {
         return await fn();
       } catch (e) {
-        if (!(e instanceof AiError) || attempt >= max || !isRetryable(e)) throw e;
+        if (!(e instanceof AiError) || n >= max || !isRetryable(e)) throw e;
         const ra = retry?.respectRetryAfter === false ? undefined : e.retryAfterMs;
-        await sleep(ra ?? base * 2 ** attempt);
+        await sleep(ra ?? base * 2 ** n);
       }
     }
   };
@@ -1016,59 +1068,12 @@ export function createAiClient(arg: AiSettings | AiClientConfig): AiClient {
   return {
     async complete(req: CompleteRequest): Promise<string> {
       guard();
-      return withRetry(async () => {
-        const res = await doFetch(req, false);
-        const data = (await res.json().catch(() => null)) as
-          | { choices?: { message?: { content?: unknown } }[] }
-          | null;
-        const content = data?.choices?.[0]?.message?.content;
-        if (typeof content !== 'string') throw new AiError('parse', 'unexpected completion payload shape');
-        return content;
-      });
+      return withRetry(() => attempt(req, false));
     },
 
     async stream(req: CompleteRequest, onDelta: (d: StreamDelta) => void): Promise<string> {
       guard();
-      return withRetry(async () => {
-        const res = await doFetch(req, true);
-        if (!res.body) throw new AiError('parse', 'response has no stream body');
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let full = '';
-        // SSE：每筆事件為 `data: {...}` 行，以 [DONE] 收尾；逐行解析 delta。
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          let nl: number;
-          while ((nl = buffer.indexOf('\n')) >= 0) {
-            const line = buffer.slice(0, nl).trim();
-            buffer = buffer.slice(nl + 1);
-            if (!line.startsWith('data:')) continue;
-            const data = line.slice(5).trim();
-            if (data === '' || data === '[DONE]') continue;
-            try {
-              const json = JSON.parse(data) as {
-                choices?: { delta?: { content?: unknown; reasoning_content?: unknown; reasoning?: unknown } }[];
-              };
-              const delta = json.choices?.[0]?.delta;
-              const content = typeof delta?.content === 'string' ? delta.content : undefined;
-              const reasoning =
-                typeof delta?.reasoning_content === 'string'
-                  ? delta.reasoning_content
-                  : typeof delta?.reasoning === 'string'
-                    ? delta.reasoning
-                    : undefined;
-              if (content) full += content;
-              if (content || reasoning) onDelta({ content, reasoning });
-            } catch {
-              /* 忽略單筆壞掉的 chunk，續讀 */
-            }
-          }
-        }
-        return full;
-      });
+      return withRetry(() => attempt(req, true, onDelta));
     },
   };
 }
@@ -1137,12 +1142,52 @@ describe('createAiClient — opt-in retry', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+// 迴歸防護：cancel / timeout 必須在「stream body 讀取期間」仍有效（headers 到達後才拆掉會回歸——見 plan-review blocker）。
+// 造一個 headers 已到、但 body reader 卡住直到 abort 才 reject 的假 Response。
+describe('createAiClient.stream — mid-stream cancel & timeout (regression net)', () => {
+  function hangingStreamFetch() {
+    return vi.fn().mockImplementation((_u, init) =>
+      Promise.resolve({
+        ok: true,
+        body: {
+          getReader: () => ({
+            read: () =>
+              new Promise((_res, rej) => {
+                (init as RequestInit).signal?.addEventListener('abort', () =>
+                  rej(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+                );
+              }),
+          }),
+        },
+      } as unknown as Response),
+    );
+  }
+
+  it('external cancel during the stream body → AiError kind abort', async () => {
+    vi.stubGlobal('fetch', hangingStreamFetch());
+    const ctl = new AbortController();
+    const p = createAiClient(SETTINGS).stream({ system: 's', user: 'u', signal: ctl.signal }, () => {});
+    ctl.abort();
+    await expect(p).rejects.toMatchObject({ kind: 'abort' });
+  });
+
+  it('timeout during the stream body → AiError kind timeout', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', hangingStreamFetch());
+    const p = createAiClient(SETTINGS).stream({ system: 's', user: 'u', timeoutMs: 1000 }, () => {});
+    const assertion = expect(p).rejects.toMatchObject({ kind: 'timeout' });
+    await vi.advanceTimersByTimeAsync(1001);
+    await assertion;
+    vi.useRealTimers();
+  });
+});
 ```
 
 - [ ] **Step 3: 跑測試（既有 + 新）**
 
 Run: `pnpm --filter @rfjs/ai-assist vitest:run client`
-Expected: PASS（既有 complete/listAiModels/stream 全綠 + 新 config/auth/retry 全綠）。
+Expected: PASS（既有 complete/listAiModels/stream 全綠 + 新 config/auth/retry 全綠 + 新 stream mid-stream cancel/timeout 迴歸全綠）。
 
 - [ ] **Step 4: Commit**
 
@@ -1956,7 +2001,7 @@ EOF
 
 **Files:**
 - Modify: `apps/web/package.json`（deps）
-- Modify: `apps/web/next.config.ts`（transpilePackages）
+- Modify: `apps/web/next.config.js`（transpilePackages）
 - Modify: `apps/web/src/components/shared/ai-settings-dialog.tsx`（import）
 - Modify: `apps/web/src/components/shared/ai-settings-dialog.spec.tsx`（import）
 
@@ -1972,7 +2017,7 @@ EOF
     "@rfjs/ai-assist-ui": "workspace:*",
 ```
 
-- [ ] **Step 2: `apps/web/next.config.ts` 的 transpilePackages 加入 `-ui`**
+- [ ] **Step 2: `apps/web/next.config.js` 的 transpilePackages 加入 `-ui`**（實際檔案是 `.js`，ESM module，非 `.ts`）
 
 把陣列改為（新增最後一項）：
 
@@ -2036,7 +2081,7 @@ Expected: PASS。
 - [ ] **Step 7: Commit**
 
 ```bash
-git add apps/web/package.json apps/web/next.config.ts apps/web/src/components/shared/ai-settings-dialog.tsx apps/web/src/components/shared/ai-settings-dialog.spec.tsx pnpm-lock.yaml
+git add apps/web/package.json apps/web/next.config.js apps/web/src/components/shared/ai-settings-dialog.tsx apps/web/src/components/shared/ai-settings-dialog.spec.tsx pnpm-lock.yaml
 git commit -m "$(cat <<'EOF'
 refactor(web): point the ai settings dialog at @rfjs/ai-assist
 
@@ -2228,17 +2273,19 @@ EOF
 **Interfaces:**
 - Consumes: `createAiProxyHandler`（`@rfjs/ai-assist`）。
 
-- [ ] **Step 1: 確認 web 內已無舊 seam 引用**
+- [ ] **Step 1: 刪除舊檔**
 
-Run: `grep -rn "@/lib/ai\|shared/ai-panel" apps/web/src`
-Expected: 無輸出（Task 14/15 已全數改指向套件）。
-
-- [ ] **Step 2: 刪除舊檔**
+（順序很重要：舊 `ai-panel.tsx`/`ai-panel.spec.tsx` 本身仍 import `@/lib/ai/*`，故必須「先刪、再 grep」，否則 Step 2 的 grep gate 必不為空。）
 
 ```bash
 git rm -r apps/web/src/lib/ai
 git rm apps/web/src/components/shared/ai-panel.tsx apps/web/src/components/shared/ai-panel.spec.tsx
 ```
+
+- [ ] **Step 2: 確認 web 內已無殘留舊 seam 引用**
+
+Run: `grep -rn "@/lib/ai\|shared/ai-panel" apps/web/src`
+Expected: 無輸出（Task 14/15 已把 dialog + 4 工具全數改指向套件；本步刪除後應無任何殘留 importer）。
 
 - [ ] **Step 3: 寫 reference route `apps/web/src/app/api/ai/chat/completions/route.ts`**
 
@@ -2410,4 +2457,10 @@ EOF
 
 **Type consistency：** `AiPanelLabels`（Task 12 定義）↔ `useAiPanelLabels()`（Task 15 產出）欄位一致；`AiClientConfig`/`RetryPolicy`（Task 7）↔ client 測試（Task 7）一致；`createAiProxyHandler`/`AiProxyOptions`（Task 8）↔ reference route（Task 16）一致；`AiStorage`（Task 3）↔ settings/log 注入（Task 4/5）一致；`AiError` 加 `status`/`retryAfterMs`（Task 2）↔ client retry 分類（Task 7）一致。
 
-**已知、可接受的行為差異（非回歸）：** storage 的同分頁事件改為通用 `rfjs:ai-storage`；log 寫入現在也會派送該事件，故 settings 訂閱者在 log 寫入時會被喚醒一次——但 `useSyncExternalStore` 對相同 snapshot 不重繪，功能上惰性、既有測試全綠。
+**已知、可接受的行為差異（非回歸）：** storage 的同分頁事件改為通用 `rfjs:ai-storage`；log 寫入現在也會派送該事件，故 settings 訂閱者在 log 寫入時會被喚醒一次——但 `useSyncExternalStore` 對相同 snapshot 不重繪，功能上惰性、既有測試全綠。（另：跨分頁 `storage` 事件的 key 過濾被通用 adapter 移除，同屬惰性 broadening，plan-review 已判定不影響行為。）
+
+**Plan-review 硬化（ultracode 對抗式審核，2026-07-11）：** 修正三處——
+1. **[blocker]** Task 7 `client.ts` 原以 `doFetch` 於 header 到達時就 `clearTimeout` + 移除 abort 監聽，導致 stream body 讀取期間 `cancel()`/timeout 失效（BYOK stream 迴歸，既有測試抓不到）。已改為單一 `attempt()` 把 fetch + body/stream 消費包在同一 try/finally、cleanup 只在消費完成後執行，並補 mid-stream cancel/timeout 迴歸測試。
+2. **[major]** Task 14 目標檔實為 `apps/web/next.config.js`（非 `.ts`）——三處引用已更正。
+3. **[minor]** Task 16 grep gate 與刪除順序對調（先刪再 grep），使「無殘留 importer」成為真檢查。
+（審核另駁回 1 項 storage 跨分頁 key 過濾 nit——惰性、不影響行為，不修。）
