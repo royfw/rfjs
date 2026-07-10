@@ -1,6 +1,7 @@
 export * from './types';
 export * from './schema';
 export * from './derive';
+export * from './reverse';
 export * from './sort';
 export * from './format';
 export * from './paginate';
