@@ -41,6 +41,7 @@
     "README.zh-TW.md"
   ],
   "dependencies": {
+    "@rfjs/data-filter": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {
