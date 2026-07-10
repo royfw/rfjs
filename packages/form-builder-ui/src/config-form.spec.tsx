@@ -1266,3 +1266,43 @@ describe('result items', () => {
     await waitFor(() => expect(screen.getByText('No result yet')).toBeTruthy());
   });
 });
+
+describe('ConfigForm result mode:table', () => {
+  installResizeObserverMock();
+
+  const tableConfig: FormConfig = {
+    version: 1,
+    sections: [
+      {
+        id: 's1',
+        title: 'S',
+        rows: [
+          {
+            id: 'r1',
+            items: [
+              { id: 'btn', kind: 'button', label: 'Query', action: { type: 'api', url: '/api/search' } },
+              {
+                id: 'res',
+                kind: 'result',
+                mode: 'table',
+                sourceId: 'btn',
+                table: {
+                  columns: [{ key: 'name', label: 'Full Name', dataType: 'string' }],
+                  pagination: { pageSize: 10 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  it('passes item.table to the rendered table (label override shows)', async () => {
+    const rows = [{ id: 1, name: 'Ada' }, { id: 2, name: 'Alan' }];
+    const fetcher = vi.fn().mockResolvedValue(rows);
+    render(<ConfigForm config={tableConfig} onSubmit={() => {}} fetcher={fetcher} />);
+    fireEvent.click(screen.getByRole('button', { name: /query/i }));
+    await waitFor(() => expect(screen.getByText('Full Name')).toBeTruthy());
+  });
+});
