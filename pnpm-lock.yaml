@@ -217,6 +217,9 @@ importers:
       '@rfjs/filter-builder-ui':
         specifier: workspace:*
         version: link:../../packages/filter-builder-ui
+      '@rfjs/flow-core':
+        specifier: workspace:*
+        version: link:../../packages/flow-core
       '@rfjs/form-builder':
         specifier: workspace:*
         version: link:../../packages/form-builder
