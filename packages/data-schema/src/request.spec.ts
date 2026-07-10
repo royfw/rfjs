@@ -100,3 +100,31 @@ describe('buildRequestParams', () => {
     expect(buildRequestParams(postRequest, { pageSize: 10, offset: 0 }).method).toBe('POST');
   });
 });
+
+describe('buildRequestParams filter passthrough', () => {
+  const requestWithFilter = {
+    endpoint: '/api/items',
+    pagination: { strategy: 'offset', limitParam: 'limit', offsetParam: 'offset' },
+    filter: { style: 'pg', param: 'filter' },
+  } as const;
+  const group = { logic: 'and', filters: [{ target: 'column', column: 'price', operator: 'gte', value: 40 }] };
+
+  it('attaches filter when the meta declares one and a filter value is given', () => {
+    const built = buildRequestParams(requestWithFilter, { pageSize: 5 }, group);
+    expect(built.filter).toEqual(group);
+  });
+
+  it('omits filter when the meta has no filter declaration', () => {
+    const noFilterMeta = {
+      endpoint: '/api/items',
+      pagination: { strategy: 'offset', limitParam: 'limit', offsetParam: 'offset' },
+    } as const;
+    const built = buildRequestParams(noFilterMeta, { pageSize: 5 }, group);
+    expect('filter' in built).toBe(false);
+  });
+
+  it('omits filter when no filter value is given (back-compat two-arg call)', () => {
+    const built = buildRequestParams(requestWithFilter, { pageSize: 5 });
+    expect('filter' in built).toBe(false);
+  });
+});

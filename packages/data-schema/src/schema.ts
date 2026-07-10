@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { DataFieldMeta, DataResourceMeta, FieldOption, PaginationMeta, RequestMeta, ResponseMeta, SortMeta } from './types';
+import type { DataFieldMeta, DataResourceMeta, FilterRequestMeta, FieldOption, PaginationMeta, RequestMeta, ResponseMeta, SortMeta } from './types';
 
 export const localizedLabelSchema = z.union([z.string(), z.record(z.string(), z.string())]) satisfies z.ZodType<
   string | Record<string, string>
@@ -23,6 +23,7 @@ const dataFieldMetaObjectSchema = z.object({
   options: z.array(fieldOptionSchema).optional(),
   sortable: z.boolean().optional(),
   filterable: z.boolean().optional(),
+  kind: z.enum(['column', 'jsonb']).optional(),
 });
 
 export const dataFieldMetaSchema = dataFieldMetaObjectSchema.superRefine((field, ctx) => {
@@ -53,11 +54,17 @@ export const sortMetaSchema = z.discriminatedUnion('style', [
   z.object({ style: z.literal('split'), fieldParam: z.string(), dirParam: z.string() }),
 ]) satisfies z.ZodType<SortMeta>;
 
+export const filterRequestMetaSchema = z.object({
+  style: z.literal('pg'),
+  param: z.string().min(1),
+}) satisfies z.ZodType<FilterRequestMeta>;
+
 export const requestMetaSchema = z.object({
   endpoint: z.string().min(1),
   method: z.enum(['GET', 'POST']).optional(),
   pagination: paginationMetaSchema,
   sort: sortMetaSchema.optional(),
+  filter: filterRequestMetaSchema.optional(),
 }) satisfies z.ZodType<RequestMeta>;
 
 export const responseMetaSchema = z.object({
