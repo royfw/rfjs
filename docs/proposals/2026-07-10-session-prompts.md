@@ -95,6 +95,7 @@ description: 在向使用者提出方案、比較選項、報告路線圖或描�
 - `.flow` + `.node`/`.node.hot`/`.arr`:流程鏈(hot = 本次改動的關鍵節點)
 - `.wire` 套件(`.panel`/`.row`/`.tag`/`.btn`/`table`):wireframe 畫面示意
 - `.map .m`:總覽卡列;`.note`:金底提示塊;`.grid g2/g3`:欄位排版
+- `.who w-here/w-peer/w-bg/w-wait`:分派/歸屬徽章(誰做、等待中)
 
 ## 何時附 wireframe
 
@@ -139,6 +140,11 @@ description: 在向使用者提出方案、比較選項、報告路線圖或描�
   .num { display: inline-flex; width: 28px; height: 28px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
   .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 9px; border-radius: 99px; vertical-align: 2px; }
   .b-s { background: var(--ok-soft); color: var(--ok); } .b-m { background: var(--warn-soft); color: var(--warn); } .b-l { background: var(--info-soft); color: var(--info); }
+  .who { display: inline-flex; padding: 2px 12px; border-radius: 99px; font-size: 12.5px; font-weight: 700; }
+  .w-here { background: var(--accent-soft); color: var(--accent); }
+  .w-peer { background: var(--info-soft); color: var(--info); }
+  .w-bg { background: var(--ok-soft); color: var(--ok); }
+  .w-wait { background: var(--warn-soft); color: var(--warn); }
   .grid { display: grid; gap: 14px; } .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: 1fr 1fr 1fr; }
   @media (max-width: 760px) { .g2, .g3 { grid-template-columns: 1fr; } }
   .card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 13.5px; }
