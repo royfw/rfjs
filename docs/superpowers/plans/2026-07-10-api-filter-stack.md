@@ -98,7 +98,7 @@ describe('buildRequestParams filter passthrough', () => {
 - [ ] **Step 2: 跑測試確認失敗**
 
 Run: `pnpm -F @rfjs/data-schema exec vitest run src/schema.spec.ts src/request.spec.ts`
-Expected: FAIL —— `kind`/`filter` 鍵被 zod 以 unknown key 剔除後仍過?否 —— zod 預設 strip,`kind: 'json'` 的 reject 斷言會 FAIL(strip 不會 throw),`built.filter` 斷言 FAIL(第三參數不存在為 TS 錯,vitest 轉譯仍執行、值為 undefined)。至少 4 條紅。
+Expected: **恰 3 條紅、2 條綠**。紅:schema 兩條(zod 預設 strip unknown key,`kind: 'json'`/`style: 'sql'`/`param: ''` 的 `.toThrow()` 不會拋)+ request 的 'attaches filter'(現行無第三參數,`built.filter` 為 undefined)。綠:兩條 'omits filter' 是 back-compat 守衛測試 —— 現行 `BuiltRequest` 本就沒有 filter 鍵,實作前即綠是**預期**,不要動它們,實作後必須保持綠。
 
 - [ ] **Step 3: 實作**
 
@@ -489,7 +489,7 @@ describe('controlled filter tree', () => {
 - [ ] **Step 2: 跑測試確認失敗**
 
 Run: `pnpm -F @rfjs/table-builder-ui exec vitest run src/use-config-table.spec.ts`
-Expected: 新 describe 全 FAIL(`applyFilter`/`filterApplied` 不存在、`filterEnabled` 對 remote 為 false、第三參數不被接受);既有測試仍 PASS
+Expected: **7 條新測試中 5 條 FAIL**(enables filtering / applyFilter 兩條 / empty-tree / controlled tree —— `applyFilter` 不存在、remote `filterEnabled` 為 false、第三參數被忽略);**2 條守衛測試實作前即綠是預期**('keeps filtering disabled when the request declares no filter meta' 與 'editing the tree in remote mode does not refetch by itself' 驗證的是現行為的保持,不要動它們,實作後必須仍綠);既有測試仍 PASS
 
 - [ ] **Step 3: 實作**
 
@@ -564,11 +564,15 @@ export function useConfigTable(
     source.kind === 'remote' && source.request.filter !== undefined && filterSchema.length > 0;
 ```
 
-(f) applied filter 狀態 + applyFilter(放在 `setFilterTree` 定義之後):
+(f) applied filter 狀態 + applyFilter。**位置有硬性要求**:`appliedFilter` 的 `useState` 必須放在 hook 頂部 state 區塊((d) 的 `internalTree` 宣告之後、**remote fetch effect 之前**)—— effect 的 deps 陣列會讀它,放在 effect 後面會 TDZ(`Cannot access 'appliedFilter' before initialization`,全部測試炸)。只有 `applyFilter` 這個 useCallback 放在 `setFilterTree` 定義之後:
 
 ```ts
+  // 放 hook 頂部 state 區塊(internalTree 之後):
   const [appliedFilter, setAppliedFilter] = useState<PgFilterGroup | undefined>(undefined);
+```
 
+```ts
+  // 放 setFilterTree 定義之後:
   const applyFilter = useCallback(() => {
     if (!remoteFilterEnabled) return;
     const group = treeToPgFilterGroup(filterTree, filterSchema);
@@ -629,7 +633,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Modify: `packages/table-builder-ui/src/config-table.tsx`
 - Modify: `packages/table-builder-ui/src/types.ts`(`TableLabels` 加選填 `filterApply`)
 - Modify: `packages/table-builder-ui/src/labels.ts`(`DEFAULT_LABELS.filterApply`)
-- Test: `packages/table-builder-ui/src/config-table.spec.tsx`(附加)
+- Test: `packages/table-builder-ui/src/config-table.spec.tsx`(附加 + **同步一則既有文案斷言**,見 Step 3)
 
 **Interfaces:**
 - Consumes: Task 3 的 `UseConfigTableOptions`/`applyFilter`/`filterApplied`
@@ -703,12 +707,12 @@ describe('controlled filter tree props', () => {
 });
 ```
 
-(`CONFIG`/`ROWS`/`render`/`screen`/`fireEvent`/`waitFor`/`vi`/`emptyGroup` 對齊該檔既有 import;`+ condition` 的實際預設字樣以 `filter-labels.ts` 的 `DEFAULT_FILTER_TREE_LABELS` 為準 —— 實作前先 `grep addCondition packages/table-builder-ui/src/filter-labels.ts` 確認。)
+(該檔**沒有** `CONFIG`/`ROWS` 這兩個名字 —— 既有 fixtures 是 `config`、`FILT_CFG`、`FILT_ROWS`(約 L27、L161-171),把片段中的 `CONFIG`/`ROWS` 對應替換;`render`/`screen`/`fireEvent`/`waitFor`/`vi` 沿用既有 import;**`emptyGroup` 是新 import**,檔頭補 `import { emptyGroup } from '@rfjs/filter-builder';`;`+ condition` 的實際預設字樣以 `filter-labels.ts` 的 `DEFAULT_FILTER_TREE_LABELS` 為準 —— 實作前先 `grep addCondition packages/table-builder-ui/src/filter-labels.ts` 確認。)
 
 - [ ] **Step 2: 跑測試確認失敗**
 
 Run: `pnpm -F @rfjs/table-builder-ui exec vitest run src/config-table.spec.tsx`
-Expected: 新 describe FAIL(remote toggle 為 disabled、無 Apply 鈕、無 controlled props);既有 PASS
+Expected: **4 條中 2 條 FAIL** —— 'shows an enabled filter toggle and an Apply button'(Task 3 已使 toggle enabled,但 Apply 鈕不存在)與 controlled props 測試(props 未佈線,onFilterTreeChange 不會被呼叫);**2 條守衛實作前即綠是預期**('keeps the filter disabled…' 與 'rows mode shows no Apply button'),實作後必須仍綠;既有 PASS
 
 - [ ] **Step 3: 實作**
 
@@ -730,6 +734,8 @@ Expected: 新 describe FAIL(remote toggle 為 disabled、無 Apply 鈕、無 con
 ```ts
   filterDisabled: 'This data source does not declare a remote filter.',
 ```
+
+**同步既有測試**:`config-table.spec.tsx` 的 'disables the filter for a remote source with a note'(約 L202)斷言跟隨文案改 —— `expect(screen.getByText(/api filter coming later/i)).toBeTruthy();` 改為 `expect(screen.getByText(/does not declare a remote filter/i)).toBeTruthy();`。這是等強度的文案同步(測試仍驗證「remote 無 filter meta 時顯示停用說明」),不屬於刪弱既有測試。
 
 `packages/table-builder-ui/src/config-table.tsx`:
 
@@ -858,7 +864,7 @@ describe('pg filter execution', () => {
 - [ ] **Step 2: 跑測試確認失敗**
 
 Run: `pnpm -F web exec vitest run src/tools/table-builder/fake-fetcher.spec.ts src/tools/table-builder/ui.spec.tsx`
-Expected: fake-fetcher 3 條 FAIL(第三參數/filter 未實作 → total 不縮);ui 1 條 FAIL(remote filter 未啟用/無 Apply)
+Expected: fake-fetcher **前 2 條 FAIL**(filter 未實作 → total 不縮);**第 3 條 back-compat 實作前即綠是預期**(現行為本就回全量,它是回歸守衛);ui 1 條 FAIL(remote filter 未啟用/無 Apply)
 
 - [ ] **Step 3: 實作**
 
