@@ -246,7 +246,7 @@ packages/ai-assist-ui/                      # @rfjs/ai-assist-ui（private）
 
 ---
 
-## 15. 開放細節（review gate 需確認）
+## 15. 細節定案（review gate 已確認）
 
-1. **build config 來源**：inline（同 sibling，推薦）vs `tpl-toolkit` factory（brief 提及，但 workspace 尚無先例）。
-2. **`AiSettings` 的 model 欄位在 proxy 模式**：proxy 時前端是否仍送 model（讓 server 覆寫 or 採用），或 model 完全由 server 決定。傾向：前端可送、server `getServerSettings` 有最終決定權。
+1. **build config 來源**：**inline**（同 sibling `filter-builder`/`data-filter`/`retry`）。目前無 workspace 套件使用 `tpl-toolkit` factory（面向 `templates/`），故不當第一個吃它者；與所有已發布 `@rfjs/*` 一致。
+2. **proxy 模式的 model 欄位**：**前端可送 model 作為建議，但 server 端 `getServerSettings` 有最終覆寫/否決權**（避免前端指定任意/昂貴模型）。
