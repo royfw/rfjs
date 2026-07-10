@@ -19,7 +19,7 @@ test("importing json then filtering shrinks the rows", async ({ page }) => {
   // NOTE: match "Load" with exact:true -- /load/i substring-matches "Upload" too, which
   // trips Playwright's strict-mode "resolved to 2 elements" error. Upload stays a
   // label-wrapped <input type="file"> (not a <button>) so it never competes with Load.
-  await page.getByRole("textbox").first().fill('[{"id":1,"price":10},{"id":2,"price":90}]');
+  await page.getByPlaceholder("Paste JSON or CSV…").fill('[{"id":1,"price":10},{"id":2,"price":90}]');
   await page.getByRole("button", { name: "Load", exact: true }).click();
   await expect(page.locator("table tbody tr")).toHaveCount(2, { timeout: 15_000 });
 
@@ -28,6 +28,7 @@ test("importing json then filtering shrinks the rows", async ({ page }) => {
   // The filter toggle's accessible name is "Filter" plus a live "N matched" suffix (or the
   // disabled hint), so match by substring rather than exact. The operator select has no
   // `operatorLabels` override in this tool, so it falls back to the raw op id ("gte").
+  await page.getByRole("button", { name: "Columns", exact: true }).click();
   await page.getByRole("checkbox", { name: "Filter price" }).check();
   await page.getByRole("button", { name: "Filter" }).click();
   await page.getByRole("button", { name: "+ condition" }).click();
@@ -37,4 +38,15 @@ test("importing json then filtering shrinks the rows", async ({ page }) => {
   await page.getByRole("option", { name: "gte", exact: true }).click();
   await page.getByRole("textbox", { name: "value" }).fill("50");
   await expect(page.locator("table tbody tr")).toHaveCount(1, { timeout: 15_000 });
+});
+
+test("metadata tab shows the reverse-projected meta json", async ({ page }) => {
+  await page.goto(URL);
+  await expect(page.locator("table tbody tr").first()).toBeVisible({ timeout: 15_000 });
+
+  await page.getByRole("button", { name: "Metadata", exact: true }).click();
+
+  const pre = page.getByTestId("metadata-json");
+  await expect(pre).toContainText('"fields"');
+  await expect(pre).toContainText('"price"');
 });

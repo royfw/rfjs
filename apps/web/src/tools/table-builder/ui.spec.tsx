@@ -53,6 +53,7 @@ describe("TableBuilderTool", () => {
   it("editing page size in the pagination panel immediately changes the rendered row count", () => {
     renderTool();
 
+    fireEvent.click(screen.getByRole("button", { name: "Pagination" }));
     const pageSizeInput = screen.getByLabelText("Default page size") as HTMLInputElement;
     fireEvent.change(pageSizeInput, { target: { value: "3" } });
 
@@ -68,5 +69,32 @@ describe("TableBuilderTool", () => {
   it("preview: renders the ConfigTable filter section", () => {
     renderTool();
     expect(screen.getByRole("button", { name: /filter/i })).toBeTruthy();
+  });
+
+  // B-layout (design spec §2.1): the editor panels are tabs; the preview table must stay
+  // mounted below regardless of the active tab (the live edit→preview loop is the point).
+  it("tabs swap the editor panel while the preview table stays visible", () => {
+    renderTool();
+
+    // default tab = Source
+    expect(screen.getByText("Data source")).toBeTruthy();
+    expect(screen.queryByLabelText("Default page size")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Columns" }));
+    expect(screen.queryByText("Data source")).toBeNull();
+    expect(screen.getByText("Columns", { selector: "p" })).toBeTruthy();
+    // preview still rendered
+    expect(screen.getAllByRole("row").length).toBeGreaterThan(1);
+  });
+
+  it("metadata tab shows the reverse-projected DataResourceMeta JSON", () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("button", { name: "Metadata" }));
+
+    const pre = screen.getByTestId("metadata-json");
+    expect(pre.textContent).toContain('"fields"');
+    // static rows mode carries no request protocol
+    expect(pre.textContent).not.toContain('"request"');
   });
 });
