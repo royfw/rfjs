@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { columnsToFilterSchema, fieldsToFilterSchema } from './filter-schema';
 import type { TableColumnConfig } from '@rfjs/table-builder';
-import type { DataFieldMeta } from '@rfjs/data-schema';
 
 const cols: TableColumnConfig[] = [
   { key: 'name', label: 'Name', dataType: 'string', filterable: true },
