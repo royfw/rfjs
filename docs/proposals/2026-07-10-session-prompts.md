@@ -108,6 +108,25 @@ data-schema、packages/table-builder*(契約已凍結,只消費)。開獨立 wor
 (.claude/worktrees/feat-metadata-panel),走 brainstorm→spec→plan→SDD→截圖→HOLD PR。
 ```
 
+### #14 demo route handler + HTTP fetcher 模式
+**開在**:rfjs 根目錄 · **啟動條件**:#240(api filter stack)已 merge
+
+```
+接手 table-builder 示範的「真 HTTP」升級(S 級小輪)。前情:#240 已定契約
+(RequestMeta.method/filter.param、BuiltRequest.filter)且假 fetcher 的過濾/排序/
+分頁是純函式(apps/web/src/tools/table-builder/fake-fetcher.ts 的 applyPgFilter/
+parseSort/paginate)。目標:
+1. 新增 Next route handler apps/web/src/app/api/sample/items/route.ts —— POST 收
+   { ...params, filter },直接 import fake-fetcher 的純函式處理 SAMPLE_ROWS,回
+   {data:{items,total,nextCursor?}}(無 DB、無狀態,Vercel serverless 安全)
+2. 工具 fetcher 模式加「HTTP fetcher」選項:真 fetch('/api/sample/items') 打自己,
+   filter 進 POST body(依 meta.filter.param);行程內假 fetcher 保留(vitest 用)
+3. e2e:HTTP 模式套用篩選列數縮(Network 有真請求);light/dark 截圖
+紅線:packages/** 零改動(純 app 層)。走 spec(小)→ plan → SDD → HOLD PR。
+價值:示範從「協定真、傳輸假」升到「傳輸也真」,並為 #13 的 route-handler-as-
+delivery 方向做低風險預演。
+```
+
 ### #8 npm 發佈一波
 **開在**:rfjs 根目錄 · **啟動條件**:#1/#5/#6 已 merge;你已拍板「UI 套件發不發」
 
