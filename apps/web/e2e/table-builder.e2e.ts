@@ -19,11 +19,17 @@ test("importing json then filtering shrinks the rows", async ({ page }) => {
   // NOTE: match "Load" with exact:true -- /load/i substring-matches "Upload" too, which
   // trips Playwright's strict-mode "resolved to 2 elements" error. Upload stays a
   // label-wrapped <input type="file"> (not a <button>) so it never competes with Load.
-  // Wait for hydration before typing: the paste box is a controlled textarea pre-filled with
-  // the sample rows, so filling it pre-hydration races React re-asserting its state value
-  // (the fill and the sample JSON end up concatenated -> "Invalid JSON.").
+  // Hydration gate: filling the controlled paste box pre-hydration races React re-asserting
+  // its state value (fill + sample JSON end up concatenated -> "Invalid JSON."). Waiting on
+  // the textarea's value is NOT a hydration signal -- the SSR markup already carries the
+  // sample JSON. A tab click that actually swaps the panel is: it only works once React's
+  // handlers are attached, so retry it until the Pagination panel appears, then return.
+  await expect(async () => {
+    await page.getByRole("button", { name: "Pagination", exact: true }).click();
+    await expect(page.getByText("Default page size")).toBeVisible({ timeout: 500 });
+  }).toPass({ timeout: 15_000 });
+  await page.getByRole("button", { name: "Source", exact: true }).click();
   const paste = page.getByPlaceholder("Paste JSON or CSV…");
-  await expect(paste).toHaveValue(/Sample Item/, { timeout: 15_000 });
   await paste.fill('[{"id":1,"price":10},{"id":2,"price":90}]');
   await page.getByRole("button", { name: "Load", exact: true }).click();
   await expect(page.locator("table tbody tr")).toHaveCount(2, { timeout: 15_000 });
