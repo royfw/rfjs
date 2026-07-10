@@ -46,7 +46,8 @@ type FlowEvent =
   | { type: 'submit';   data: Record<string, unknown> }     // 給 form → data 併進 context
   | { type: 'decide';   handle: string }                    // 給 condition → 走該 handle 的 out-edge
   | { type: 'complete'; result?: Record<string, unknown> }  // 給 action → result 併進 context
-  | { type: 'fail';     error?: unknown };                  // action 失敗 → 進 failed 終態
+  | { type: 'fail';     error?: unknown }                   // action 失敗 → 進 failed 終態
+  | { type: 'timeout' };                                    // 逾時 → 走該節點 trigger:'timeout' 的 out-edge
 
 /** 進入流程:定位到 start,沿其唯一 out-edge 前進到第一個 block 節點。 */
 function startFlow(doc: FlowDoc): FlowState;
@@ -59,12 +60,17 @@ function resolveCondition(edge: FlowEdge, context: Record<string, unknown>): boo
 ```
 
 **推進規則**:
-- 事件的 `type` 必須對應目前節點的 `awaiting`(form↔submit、condition↔decide、action↔complete/fail),否則丟 `FlowError('wrong-event')`。
-- **非 condition 節點(form/action/start)恰有一條 out-edge**;0 條或 >1 條丟 `FlowError('no-edge')`(多出邊路由是 richer 功能,defer)。
+- 事件的 `type` 必須對應目前節點的 `awaiting`(form↔submit/timeout、condition↔decide、action↔complete/fail/timeout),否則丟 `FlowError('wrong-event')`。
+- **非 condition 節點(form/action/start)的出邊,依「事件性質」選**:`submit`/`complete` 走**非 timeout 邊**(`trigger !== 'timeout'`,即正常 onSubmit / 單一出邊);`timeout` 走 `trigger === 'timeout'` 的出邊。取不到對應邊丟 `FlowError('no-edge')`。(單一正常出邊 + 選配一條 timeout 邊 = 常見形狀;更複雜的多出邊路由 defer。)
 - **condition 節點**:依 `event.handle` 找 `sourceHandle === handle` 的 out-edge;找不到丟 `FlowError('unknown-handle')`。
 - 前進後「落」在目標節點,依其型別設 `awaiting`:form→`'submit'`、condition→`'decision'`(+ `options` = 各 out-edge 的 sourceHandle)、action→`'action'`、end→`status:'done'` / `awaiting:null`。
 - `submit.data` 與 `complete.result` **淺併**進 `context`。
 - `fail` 事件(僅 action 節點):`status:'failed'`、`awaiting:null`,停下;`error` 存入 `context.__error`(消費端可讀)。**失敗後怎麼走**(error edge / 退回 / 重試)= defer。
+
+**Timeout(逾時路由)**:引擎只認 `timeout` **事件** —— 由消費端的排程器在 deadline 到點時餵入(引擎無時鐘,見下)。收到 `timeout` 就走該節點 `trigger:'timeout'` 的出邊;沒有這條邊 → `FlowError('no-edge')`。
+- **單純逾時 escalate**:`trigger:'timeout'` 邊 → 直接指向升級/通知節點。
+- **條件式逾時**:讓 `trigger:'timeout'` 邊**指向一個 condition 節點** → 之後走既有 condition 分支(`resolveCondition`/filter 對 context 判斷)。**這不是額外功能,是 timeout 路由 + condition 節點的組合**,引擎零改動。
+- **「多久」不進引擎**:deadline 時長是消費端排程器讀的 metadata(放節點 config,如 `deadline:'24h'`);引擎不知道時長,只在收到 `timeout` 事件時路由。排程機制(數時間、到點觸發、人先動就取消)= 消費端 / hq(§7)。
 
 **result 收集**:`context` 累積全程資料;`status:'done'` 時 **`context` 即 flow 的最終 result**。引擎只把 context 穿過 state 回傳,**持久化由消費端負責**(存 DB/session 皆可)。**獨立的 result 映射層**(指定官方輸出欄位、轉換)= future work(§7),最小核心不做。
 
@@ -87,6 +93,7 @@ function resolveCondition(edge: FlowEdge, context: Record<string, unknown>): boo
 - **runtime 整條**:用內建 sample 請假流跑完整條 —— `startFlow` → submit → decide(yes/no 兩路各測)→ action complete → end done;逐步斷言 `at`/`awaiting`/`options`/`context`。
 - **result**:done 時 `context` 含 submit data + action result。
 - **fail**:action `fail` → `status:'failed'`、`context.__error` 存在。
+- **timeout**:節點有 `trigger:'timeout'` 邊時,`timeout` 事件走該邊(單純逾時);`trigger:'timeout'` 邊指向 condition 節點時,落地為 `awaiting:'decision'`(條件式逾時 —— 驗證組合成立);無 timeout 邊時 `timeout` 丟 `FlowError('no-edge')`。
 - **錯誤**:wrong-event(如 awaiting decision 卻餵 submit)、unknown-handle、no-edge(節點缺出邊)、no-path(start 無出邊)各丟對應 `FlowError.kind`。
 - **resolveCondition**:對固定 condition + context 回正確 boolean(接 data-filter);消費端「挑第一個成立 handle」的典型組合跑一次。
 - **schema/projection 遷移**:搬檔後既有 `schema.spec`/`projection.spec` 跟著進套件,斷言不變、全綠。
@@ -95,7 +102,9 @@ function resolveCondition(edge: FlowEdge, context: Record<string, unknown>): boo
 
 ## 7. 非目標(defer 到 hq 場景拉動)
 
-並行 / 會簽(join / 多簽核人)、退回 / back-transition、action 失敗後的路由(error edge / 重試)、計時器 / deadline、子流程、**獨立 result 映射層**(官方輸出欄位 + 轉換)、runtime 的持久化 / 排程(消費端負責)。這些等 hq 第一個簽核場景明確後再逐一拉進來。
+並行 / 會簽(join / 多簽核人)、退回 / back-transition、action 失敗後的路由(error edge / 重試)、**timeout 排程機制本身**(數時間、到點觸發、人先動則取消 —— 引擎只認 timeout 事件,排程由消費端做)、子流程、**獨立 result 映射層**(官方輸出欄位 + 轉換)、runtime 的持久化 / 排程(消費端負責)。這些等 hq 第一個簽核場景明確後再逐一拉進來。
+
+**注意**:timeout **事件路由**(含條件式 timeout = timeout 邊 → condition 節點)**在本案範圍內**;只有「數時間的排程器」defer 給消費端。
 
 ## 8. 慣例
 
