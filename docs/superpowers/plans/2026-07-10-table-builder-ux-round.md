@@ -804,7 +804,7 @@ export function parseNlTableResponse(raw: string): string {
 - [ ] **Step 4: 跑測試確認通過**
 
 Run: `pnpm -F web exec vitest run src/tools/table-builder/ai-nl-table.spec.ts`
-Expected: PASS(8 tests)
+Expected: PASS(7 tests)
 
 - [ ] **Step 5: Commit**
 
@@ -886,6 +886,8 @@ function renderTool() {
 }
 ```
 
+**同時刪掉檔頭的 `import { messages } from "./messages";`** —— renderTool 換用 assembleMessages 後它是檔內唯一使用處,留著會被 `--max-warnings 0` 的 unused-import 打紅。
+
 並加:
 
 ```tsx
@@ -946,14 +948,13 @@ Expected: 新 describe 2 條 FAIL(找不到 placeholder/按鈕);既有 7 條仍 
 (a) import 區加:
 
 ```tsx
-import { useLocale } from "next-intl";
 import { parseTableConfig } from "@rfjs/table-builder";
 import { AiPanel } from "@/components/shared/ai-panel";
 import { useAiAssist } from "@/lib/ai/use-ai-assist";
 import { buildNlTablePrompt, buildTableAskPrompt, parseNlTableResponse } from "./ai-nl-table";
 ```
 
-(`useTranslations` 的 import 行改成 `import { useLocale, useTranslations } from "next-intl";`。)
+另把既有的 `import { useTranslations } from "next-intl";` 改成 `import { useLocale, useTranslations } from "next-intl";`(**不要**另加一行 `useLocale` import —— 會重複宣告)。`parseTableConfig` 併入既有的 `@rfjs/table-builder` type import 旁的 value import(既有那行是 `import { deriveTableConfig } from "@rfjs/table-builder";`,改成 `import { deriveTableConfig, parseTableConfig } from "@rfjs/table-builder";`,不要新開一行重複 module)。
 
 (b) component 頂部(`const t = …` 之後)加:
 
@@ -1025,7 +1026,7 @@ import { buildNlTablePrompt, buildTableAskPrompt, parseNlTableResponse } from ".
 - [ ] **Step 5: 跑測試 + lint + typecheck**
 
 Run: `pnpm -F web exec vitest run src/tools/table-builder/`
-Expected: 全 PASS(ui 9 + metadata-panel 4 + ai-nl-table 8 + 其餘既有面板 spec)
+Expected: 全 PASS(ui 9 + metadata-panel 4 + ai-nl-table 7 + 其餘既有面板 spec)
 
 Run: `pnpm -F web lint && pnpm -F web check-types`
 Expected: 皆綠
