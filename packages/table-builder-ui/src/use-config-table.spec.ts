@@ -477,3 +477,138 @@ describe('useConfigTable static filtering', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
   });
 });
+
+// --- remote filtering (apply semantics) -------------------------------------------------------
+
+describe('remote filtering (apply semantics)', () => {
+  const FILTER_FIELDS = [
+    { key: 'price', label: 'Price', dataType: 'numeric' as const, filterable: true, kind: 'column' as const },
+  ];
+  const FILTER_REQUEST: RequestMeta = {
+    endpoint: '/api/items',
+    pagination: { strategy: 'page' as const, pageParam: 'page', pageSizeParam: 'pageSize' },
+    filter: { style: 'pg' as const, param: 'filter' },
+  };
+  const RESPONSE: ResponseMeta = { rowsPath: 'data.items', totalPath: 'data.total' };
+
+  function makeSource(fetchImpl: (built: unknown) => Promise<unknown>): TableSource {
+    return {
+      kind: 'remote' as const,
+      request: FILTER_REQUEST,
+      response: RESPONSE,
+      fields: FILTER_FIELDS,
+      fetch: fetchImpl as never,
+    };
+  }
+
+  function treeWith(field: string, operator: string, value: unknown) {
+    const group = emptyGroup(() => 'id-' + Math.random());
+    return {
+      ...group,
+      children: [{ kind: 'condition' as const, id: 'c1', field, dataType: 'numeric' as const, operator, value }],
+    };
+  }
+
+  it('enables filtering for a remote source that declares filter meta and filterable fields', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({ data: { items: [], total: 0 } });
+    const source = makeSource(fetchFn);
+    const { result } = renderHook(() => useConfigTable(baseConfig, source));
+    expect(result.current.filterEnabled).toBe(true);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+  });
+
+  it('keeps filtering disabled when the request declares no filter meta', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({ data: { items: [], total: 0 } });
+    const source = { ...makeSource(fetchFn), request: { ...FILTER_REQUEST, filter: undefined } };
+    const { result } = renderHook(() => useConfigTable(baseConfig, source));
+    expect(result.current.filterEnabled).toBe(false);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+  });
+
+  it('applyFilter compiles the tree, resets to page 1, and refetches with built.filter', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({ data: { items: [{ id: 1 }], total: 30 } });
+    const source = makeSource(fetchFn);
+    const { result } = renderHook(() => useConfigTable(baseConfig, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => result.current.setPage(3));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => result.current.setFilterTree(treeWith('price', 'gte', 40)));
+    act(() => result.current.applyFilter());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.page).toBe(1);
+    expect(result.current.filterApplied).toBe(true);
+    const lastBuilt = fetchFn.mock.calls.at(-1)![0] as { filter?: unknown; params: Record<string, string> };
+    expect(lastBuilt.filter).toEqual({
+      logic: 'and',
+      filters: [{ target: 'column', column: 'price', operator: 'gte', value: 40 }],
+    });
+    expect(lastBuilt.params.page).toBe('1');
+  });
+
+  it('page navigation after apply keeps sending the applied filter', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({ data: { items: [{ id: 1 }], total: 30 } });
+    const source = makeSource(fetchFn);
+    const { result } = renderHook(() => useConfigTable(baseConfig, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => result.current.setFilterTree(treeWith('price', 'gte', 40)));
+    act(() => result.current.applyFilter());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.nextPage());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    const lastBuilt = fetchFn.mock.calls.at(-1)![0] as { filter?: unknown };
+    expect(lastBuilt.filter).toBeDefined();
+  });
+
+  it('applying an empty tree clears the filter (built carries none)', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({ data: { items: [], total: 0 } });
+    const source = makeSource(fetchFn);
+    const { result } = renderHook(() => useConfigTable(baseConfig, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => result.current.setFilterTree(treeWith('price', 'gte', 40)));
+    act(() => result.current.applyFilter());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.setFilterTree(emptyGroup(() => 'e1')));
+    act(() => result.current.applyFilter());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.filterApplied).toBe(false);
+    const lastBuilt = fetchFn.mock.calls.at(-1)![0] as { filter?: unknown };
+    expect(lastBuilt.filter).toBeUndefined();
+  });
+
+  it('editing the tree in remote mode does not refetch by itself', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({ data: { items: [], total: 0 } });
+    const source = makeSource(fetchFn);
+    const { result } = renderHook(() => useConfigTable(baseConfig, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const callsBefore = fetchFn.mock.calls.length;
+
+    act(() => result.current.setFilterTree(treeWith('price', 'gte', 40)));
+
+    expect(fetchFn.mock.calls.length).toBe(callsBefore);
+  });
+});
+
+describe('controlled filter tree', () => {
+  it('uses the external tree and reports edits through onFilterTreeChange', () => {
+    const external = emptyGroup(() => 'x1');
+    const onChange = vi.fn();
+    const source: TableSource = { kind: 'rows' as const, rows: makeRows() };
+    const { result } = renderHook(() =>
+      useConfigTable(baseConfig, source, { filterTree: external, onFilterTreeChange: onChange }),
+    );
+
+    expect(result.current.filterTree).toBe(external);
+    const edited = { ...external, logic: 'or' as const };
+    act(() => result.current.setFilterTree(edited));
+    expect(onChange).toHaveBeenCalledWith(edited);
+    // external 未更新前,hook 仍回報外部樹(受控)
+    expect(result.current.filterTree).toBe(external);
+  });
+});

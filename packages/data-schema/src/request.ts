@@ -1,6 +1,6 @@
 import type { BuiltRequest, PageState, RequestMeta } from './types';
 
-export function buildRequestParams(request: RequestMeta, state: PageState): BuiltRequest {
+export function buildRequestParams(request: RequestMeta, state: PageState, filter?: unknown): BuiltRequest {
   const params: Record<string, string> = {};
   const { pagination } = request;
 
@@ -32,5 +32,7 @@ export function buildRequestParams(request: RequestMeta, state: PageState): Buil
     }
   }
 
-  return { endpoint: request.endpoint, method: request.method ?? 'GET', params };
+  const built: BuiltRequest = { endpoint: request.endpoint, method: request.method ?? 'GET', params };
+  if (request.filter && filter !== undefined) built.filter = filter;
+  return built;
 }

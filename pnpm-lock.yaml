@@ -1612,6 +1612,9 @@ importers:
       '@rfjs/filter-builder-ui':
         specifier: workspace:*
         version: link:../filter-builder-ui
+      '@rfjs/pg-filter':
+        specifier: workspace:*
+        version: link:../pg-filter
       '@rfjs/table-builder':
         specifier: workspace:*
         version: link:../table-builder
