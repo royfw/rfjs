@@ -1,14 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { ConfigTable } from "@rfjs/table-builder-ui";
 import type { TableLabels, TableSource } from "@rfjs/table-builder-ui";
-import { deriveTableConfig } from "@rfjs/table-builder";
+import { deriveTableConfig, parseTableConfig } from "@rfjs/table-builder";
 import type { TableConfig, TableColumnConfig, TablePaginationConfig } from "@rfjs/table-builder";
 import { inferFieldsFromRows } from "@rfjs/data-schema";
-import type { RequestMeta } from "@rfjs/data-schema";
+import type { RequestMeta, ResponseMeta } from "@rfjs/data-schema";
+
+import { AiPanel } from "@/components/shared/ai-panel";
+import { useAiAssist } from "@/lib/ai/use-ai-assist";
 
 import { SAMPLE_CONFIG, SAMPLE_META, SAMPLE_ROWS, samplePaginationMeta } from "./sample";
 import type { SourceMode } from "./sample";
@@ -16,10 +19,14 @@ import { makeFakeFetcher } from "./fake-fetcher";
 import { SourcePanel } from "./source-panel";
 import { ColumnsPanel } from "./columns-panel";
 import { PaginationPanel } from "./pagination-panel";
+import { MetadataPanel } from "./metadata-panel";
+import type { MetadataPanelLabels } from "./metadata-panel";
+import { buildNlTablePrompt, buildTableAskPrompt, parseNlTableResponse } from "./ai-nl-table";
 
 // Task 9 (design spec §6.1) adds the editor panels + live preview on top of Task 8's static
-// render: top row is three side-by-side edit panels (source / columns / pagination), bottom is
-// a full-width `<ConfigTable>` preview that reflects every edit immediately.
+// render: the editor area is tabbed (source / columns / pagination / metadata), and a
+// full-width `<ConfigTable>` preview below stays mounted regardless of the active tab, reflecting
+// every edit immediately.
 
 // Pre-fill the Source panel's paste box with the default rows as pretty JSON, so the box is a
 // usable, editable example of the data driving the initial table (module-scope: stable identity).
@@ -27,11 +34,16 @@ const SAMPLE_JSON = JSON.stringify(SAMPLE_ROWS, null, 2);
 
 export function TableBuilderTool() {
   const t = useTranslations("ToolUI");
+  const locale = useLocale();
+  const ai = useAiAssist();
 
   const [config, setConfig] = React.useState<TableConfig>(SAMPLE_CONFIG);
   const [sourceMode, setSourceMode] = React.useState<SourceMode>("rows");
   const [rows, setRows] = React.useState<Record<string, unknown>[]>(SAMPLE_ROWS);
   const [dataVersion, setDataVersion] = React.useState(0);
+
+  type EditorTab = "source" | "columns" | "pagination" | "metadata";
+  const [tab, setTab] = React.useState<EditorTab>("source");
 
   const labels: TableLabels = React.useMemo(
     () => ({
@@ -120,6 +132,16 @@ export function TableBuilderTool() {
     [t],
   );
 
+  const metadataPanelLabels: MetadataPanelLabels = React.useMemo(
+    () => ({
+      hint: t("tbMetaHint"),
+      copy: t("tbMetaCopy"),
+      copied: t("tbMetaCopied"),
+      download: t("tbMetaDownload"),
+    }),
+    [t],
+  );
+
   // Referential stability (Task 8's mandatory pattern): `<ConfigTable>`'s remote-fetch effect
   // keys off `source` identity, so this must stay memoized -- it's only rebuilt when the source
   // kind/strategy changes or the column set changes (the fake fetcher needs the current columns
@@ -134,6 +156,12 @@ export function TableBuilderTool() {
       fetch: makeFakeFetcher(SAMPLE_ROWS, config.columns),
     };
   }, [sourceMode, config.columns, rows]);
+
+  // Metadata tab inputs (design spec §2.2): rows mode is a pure fields description; fetcher
+  // mode carries the currently selected strategy's request protocol + the sample response map.
+  const metaRequest: RequestMeta | undefined =
+    sourceMode === "rows" ? undefined : { ...SAMPLE_META.request!, pagination: samplePaginationMeta(sourceMode) };
+  const metaResponse: ResponseMeta | undefined = sourceMode === "rows" ? undefined : SAMPLE_META.response;
 
   function handleColumnsChange(columns: TableColumnConfig[]) {
     setConfig((current) => ({ ...current, columns }));
@@ -154,11 +182,90 @@ export function TableBuilderTool() {
     setDataVersion((v) => v + 1);
   }
 
+  function applyGeneratedConfig(json: string) {
+    try {
+      setConfig(parseTableConfig(JSON.parse(json)));
+    } catch {
+      // stale/foreign log entry — leave the current config untouched
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t("tbEyebrow")}</p>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <AiPanel
+        title={t("aiBlockTitle")}
+        placeholder={t("tbAiPlaceholder")}
+        logKey="rfjs.ai.log.table-builder"
+        ai={ai}
+        onReapply={(e) => applyGeneratedConfig(e.appliedJson ?? "")}
+        appliedSummary={(e) => {
+          let n = 0;
+          try {
+            const parsed = JSON.parse(e.appliedJson ?? "") as { columns?: unknown[] };
+            n = Array.isArray(parsed.columns) ? parsed.columns.length : 0;
+          } catch {
+            n = 0;
+          }
+          return t("tbAiApplied", { count: n });
+        }}
+        actions={[
+          {
+            key: "generate",
+            label: t("tbAiGenerate"),
+            needsInput: true,
+            primary: true,
+            run: async (input) => {
+              const out = await ai.run({ ...buildNlTablePrompt(input, config), json: true }, parseNlTableResponse);
+              if (out === null) return null;
+              applyGeneratedConfig(out);
+              return { kind: "generate", prompt: input, appliedJson: out };
+            },
+          },
+          {
+            key: "ask",
+            label: t("aiAsk"),
+            needsInput: true,
+            run: async (input) => {
+              const out = await ai.runStream(
+                buildTableAskPrompt({ configJson: JSON.stringify(config, null, 2), locale }, input),
+                (raw) => raw.trim(),
+              );
+              return out === null ? null : { kind: "ask", prompt: input, answer: out };
+            },
+          },
+        ]}
+      />
+
+      {/* B-layout (design spec §2.1): editor panels are tabs, full width each; the ConfigTable
+          preview below stays mounted no matter which tab is active. Panels are conditionally
+          rendered — all editor state lives in this component or panel props, except the source
+          panel's paste text (internal state, resets to defaultText on tab switch; accepted v1). */}
+      <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
+        {(
+          [
+            { id: "source", label: t("tbTabSource") },
+            { id: "columns", label: t("tbTabColumns") },
+            { id: "pagination", label: t("tbTabPagination") },
+            { id: "metadata", label: t("tbTabMetadata") },
+          ] as { id: EditorTab; label: string }[]
+        ).map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setTab(item.id)}
+            aria-selected={tab === item.id}
+            className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
+              tab === item.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "source" ? (
         <SourcePanel
           mode={sourceMode}
           onModeChange={setSourceMode}
@@ -167,7 +274,11 @@ export function TableBuilderTool() {
           importLabels={importLabels}
           defaultText={SAMPLE_JSON}
         />
+      ) : null}
+      {tab === "columns" ? (
         <ColumnsPanel columns={config.columns} onChange={handleColumnsChange} labels={columnsPanelLabels} />
+      ) : null}
+      {tab === "pagination" ? (
         <PaginationPanel
           pagination={config.pagination}
           emptyText={config.emptyText}
@@ -175,7 +286,10 @@ export function TableBuilderTool() {
           onEmptyTextChange={handleEmptyTextChange}
           labels={paginationPanelLabels}
         />
-      </div>
+      ) : null}
+      {tab === "metadata" ? (
+        <MetadataPanel config={config} request={metaRequest} response={metaResponse} labels={metadataPanelLabels} />
+      ) : null}
 
       <div className="rounded-md border p-3">
         <p className="mb-2 text-sm font-semibold">{t("tbPreviewTitle")}</p>

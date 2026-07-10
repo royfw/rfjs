@@ -1,14 +1,35 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { messages } from "./messages";
+const mockRun = vi.fn();
+const mockCancel = vi.fn();
+
+vi.mock("@/lib/ai/use-ai-assist", () => ({
+  useAiAssist: () => ({
+    ready: true,
+    loading: false,
+    error: null,
+    cancel: mockCancel,
+    run: mockRun,
+    runStream: mockRun,
+    streamText: "",
+    streamReasoning: "",
+  }),
+}));
+
+import { assembleMessages } from "@/i18n/messages";
 import { SAMPLE_CONFIG } from "./sample";
 import { TableBuilderTool } from "./ui";
 
+beforeEach(() => {
+  localStorage.clear();
+  mockRun.mockReset();
+});
+
 function renderTool() {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages.en as Record<string, unknown>}>
+    <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
       <TableBuilderTool />
     </NextIntlClientProvider>,
   );
@@ -53,6 +74,7 @@ describe("TableBuilderTool", () => {
   it("editing page size in the pagination panel immediately changes the rendered row count", () => {
     renderTool();
 
+    fireEvent.click(screen.getByRole("button", { name: "Pagination" }));
     const pageSizeInput = screen.getByLabelText("Default page size") as HTMLInputElement;
     fireEvent.change(pageSizeInput, { target: { value: "3" } });
 
@@ -68,5 +90,67 @@ describe("TableBuilderTool", () => {
   it("preview: renders the ConfigTable filter section", () => {
     renderTool();
     expect(screen.getByRole("button", { name: /filter/i })).toBeTruthy();
+  });
+
+  // B-layout (design spec §2.1): the editor panels are tabs; the preview table must stay
+  // mounted below regardless of the active tab (the live edit→preview loop is the point).
+  it("tabs swap the editor panel while the preview table stays visible", () => {
+    renderTool();
+
+    // default tab = Source
+    expect(screen.getByText("Data source")).toBeTruthy();
+    expect(screen.queryByLabelText("Default page size")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Columns" }));
+    expect(screen.queryByText("Data source")).toBeNull();
+    expect(screen.getByText("Columns", { selector: "p" })).toBeTruthy();
+    // preview still rendered
+    expect(screen.getAllByRole("row").length).toBeGreaterThan(1);
+  });
+
+  it("metadata tab shows the reverse-projected DataResourceMeta JSON", () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("button", { name: "Metadata" }));
+
+    const pre = screen.getByTestId("metadata-json");
+    expect(pre.textContent).toContain('"fields"');
+    // static rows mode carries no request protocol
+    expect(pre.textContent).not.toContain('"request"');
+  });
+});
+
+describe("TableBuilderTool AI panel", () => {
+  it("generate applies the returned TableConfig to the live preview", async () => {
+    // `ai.run` resolves with the ALREADY-VALIDATED normalized json (the real hook applies
+    // parseNlTableResponse internally); the tool then parses + setConfig()s it.
+    const generated = {
+      columns: [{ key: "id", label: "Renamed Column", dataType: "numeric" }],
+      pagination: { pageSize: 5 },
+    };
+    mockRun.mockResolvedValue(JSON.stringify(generated, null, 2));
+    renderTool();
+
+    fireEvent.change(screen.getByPlaceholderText("Describe a table change or ask a question…"), {
+      target: { value: "rename id" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate config" }));
+
+    // preview header reflects the applied config
+    await screen.findByText("Renamed Column");
+    // applied summary shows the column count
+    await screen.findByText("Applied (1 columns)");
+  });
+
+  it("ask records a plain answer entry", async () => {
+    mockRun.mockResolvedValue("It lists products with prices.");
+    renderTool();
+
+    fireEvent.change(screen.getByPlaceholderText("Describe a table change or ask a question…"), {
+      target: { value: "what does this table show?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+
+    await screen.findByText("It lists products with prices.");
   });
 });
