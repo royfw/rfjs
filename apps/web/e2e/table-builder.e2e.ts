@@ -55,3 +55,24 @@ test("metadata tab shows the reverse-projected meta json", async ({ page }) => {
   await expect(pre).toContainText('"fields"');
   await expect(pre).toContainText('"price"');
 });
+
+test("fetcher mode: applying a remote filter shrinks the result set", async ({ page }) => {
+  await page.goto(URL);
+  await expect(page.locator("table tbody tr").first()).toBeVisible({ timeout: 15_000 });
+
+  // 切到假 fetcher(Source 頁籤是預設頁籤)
+  await page.getByRole("button", { name: "Fake fetcher" }).click();
+  await expect(page.locator("table tbody tr").first()).toBeVisible({ timeout: 15_000 });
+
+  await page.getByRole("button", { name: "Filter" }).click();
+  await page.getByRole("button", { name: "+ condition" }).click();
+  await page.getByRole("combobox", { name: "field" }).click();
+  await page.getByRole("option", { name: "price" }).click();
+  await page.getByRole("combobox", { name: "operator" }).click();
+  await page.getByRole("option", { name: "gte", exact: true }).click();
+  await page.getByRole("textbox", { name: "value" }).fill("40");
+  await page.getByRole("button", { name: "Apply", exact: true }).click();
+
+  // SAMPLE_ROWS 的 price = 10 + n*3.5(n=1..18)→ gte 40 命中 n>=9,共 10 筆
+  await expect(page.getByText("10 rows")).toBeVisible({ timeout: 15_000 });
+});
