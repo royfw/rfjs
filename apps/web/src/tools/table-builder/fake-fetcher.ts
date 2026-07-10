@@ -1,6 +1,9 @@
 import { sortRows } from "@rfjs/table-builder";
 import type { TableColumnConfig } from "@rfjs/table-builder";
-import type { BuiltRequest } from "@rfjs/data-schema";
+import { filterGroupToTree, runLiveMatch } from "@rfjs/filter-builder";
+import type { FilterConditionLike, FilterGroupLike } from "@rfjs/filter-builder";
+import type { PgFilterGroup, PgLeaf } from "@rfjs/pg-filter";
+import type { BuiltRequest, DataFieldMeta } from "@rfjs/data-schema";
 
 // A live example of the `DataResourceMeta` request/response contract (design spec §6.2): the
 // same in-memory rows are served under all three pagination strategies (offset/page/cursor) plus
@@ -66,6 +69,42 @@ function paginate(rows: Record<string, unknown>[], params: Record<string, string
   return { items, total: rows.length, nextCursor };
 }
 
+// pg 群組 → filter-builder 的 FilterGroupLike:column 葉不帶 dataType,從 fields 反查(spec §3)。
+function pgLeafToCondition(leaf: PgLeaf, fields: DataFieldMeta[]): FilterConditionLike {
+  if (leaf.target === "column") {
+    const meta = fields.find((f) => f.key === leaf.column);
+    return { field: leaf.column, dataType: meta?.dataType ?? "string", operator: leaf.operator, value: leaf.value };
+  }
+  return {
+    field: leaf.field,
+    dataType: leaf.dataType as FilterConditionLike["dataType"],
+    operator: leaf.operator,
+    value: leaf.value,
+  };
+}
+
+function pgGroupToFilterGroup(group: PgFilterGroup, fields: DataFieldMeta[]): FilterGroupLike {
+  return {
+    logic: group.logic,
+    filters: group.filters.map((node) =>
+      "logic" in node ? pgGroupToFilterGroup(node as PgFilterGroup, fields) : pgLeafToCondition(node as PgLeaf, fields),
+    ),
+  };
+}
+
+/** built.filter(PgFilterGroup)→ reverse 成 builder 樹 → runLiveMatch 在記憶體執行(dogfood reverse 鏈)。 */
+function applyPgFilter(
+  rows: Record<string, unknown>[],
+  filter: unknown,
+  fields: DataFieldMeta[],
+): Record<string, unknown>[] {
+  if (filter === undefined) return rows;
+  const tree = filterGroupToTree(pgGroupToFilterGroup(filter as PgFilterGroup, fields), () => crypto.randomUUID());
+  const match = runLiveMatch(rows, tree);
+  // 不可覆蓋的運算子:示範資料不該發生;寧可回全量也不要誤報 0 筆
+  return match.uncoverable ? rows : (match.matched as Record<string, unknown>[]);
+}
+
 /**
  * Builds a fake `TableSource['fetch']` implementation over static `rows`. `columns` is needed
  * only to pick the right comparator per `sortRows` (dataType-aware); pagination/sort strategy is
@@ -75,10 +114,12 @@ function paginate(rows: Record<string, unknown>[], params: Record<string, string
 export function makeFakeFetcher(
   rows: Record<string, unknown>[],
   columns: TableColumnConfig[],
+  fields: DataFieldMeta[] = [],
 ): (built: BuiltRequest) => Promise<unknown> {
   return (built: BuiltRequest): Promise<unknown> => {
+    const filtered = applyPgFilter(rows, built.filter, fields);
     const sort = parseSort(built.params);
-    const sorted = sort ? sortRows(rows, sort, columns) : rows;
+    const sorted = sort ? sortRows(filtered, sort, columns) : filtered;
     const { items, total, nextCursor } = paginate(sorted, built.params);
 
     const data: Record<string, unknown> = { items, total };
