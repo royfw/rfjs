@@ -85,6 +85,9 @@ export const messages: LocaleMessages = {
       mbShowAll: "show all",
       mbCollapseLabel: "collapse",
       mbViewingField: "viewing selected field",
+      mbAiPlaceholder: "Describe a resource or ask a question…",
+      mbAiGenerate: "Generate meta",
+      mbAiApplied: "Applied ({count} fields)",
 
       mbTreeAnd: "AND",
       mbTreeOr: "OR",
@@ -176,6 +179,9 @@ export const messages: LocaleMessages = {
       mbShowAll: "顯示整份",
       mbCollapseLabel: "收合",
       mbViewingField: "檢視選中欄位",
+      mbAiPlaceholder: "描述資源或提出問題…",
+      mbAiGenerate: "產生宣告",
+      mbAiApplied: "已套用({count} 個欄位)",
 
       mbTreeAnd: "且",
       mbTreeOr: "或",
