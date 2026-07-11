@@ -13,7 +13,7 @@
 - 規格:`docs/superpowers/specs/2026-07-11-metadata-studio-design.md`;視覺依據:`docs/mockups/2026-07-11-metadata-builder-visual-directions.html` 的 **C 段**(Studio)
 - 工作目錄:`/home/royfw/_/code/royfw/rfjs/.claude/worktrees/feat-metadata-studio` — 所有指令在此執行
 - **不變式**:`model.ts`、`protocol-panel.tsx`、`import-panel.tsx` 與其 spec **零改動**;localStorage meta 行為、匯入/匯出、zod 閘全部不動;紅線目錄照舊(`src/tools/table-builder/**`、`app/api/**`、engine 套件、workbench、form-builder 系)
-- **既定決策**(spec 開放點在此定案):① 預設**無選取**(meta 頁籤顯示整份 JSON;僅「+ 欄位」自動選取新列;移除選中列清空選取;匯入後**不**自動選取)② kind pill 色:column=`text-cyan-*`、jsonb=`text-violet-*`、未指定=虛線灰(比照 mockup C)③ 收合初值:localStorage `rfjs.metadata-builder.code-open` 無值時用 `matchMedia("(min-width:1024px)").matches`(桌機開、窄幅關),使用者切過就以儲存值為準
+- **既定決策**(spec 開放點在此定案):① 預設**無選取**(meta 頁籤顯示整份 JSON;僅「+ 欄位」自動選取新列;移除選中列清空選取;匯入後**不**自動選取)② kind pill 色:column=`text-cyan-*`、jsonb=`text-violet-*`、未指定=虛線灰(比照 mockup C)③ 收合初值:localStorage `rfjs.metadata-builder.code-open` 無值時用 `matchMedia("(min-width:1024px)").matches`(桌機開、窄幅關),使用者切過就以儲存值為準;**環境無 matchMedia(jsdom/vitest)時視同桌機、預設展開**
 - 既有測試**語義全數保留**(斷言強度不得降),選擇器隨新互動流改寫;`model.spec`/`protocol-panel.spec`/`import-panel.spec` 不得改
 - i18n en/zh-TW 同步(ui.spec 的 fragment parity 測試會抓);被淘汰的鍵兩語系同步刪
 - lint `--max-warnings 0`;**零 changeset**(僅動 apps/web)
@@ -52,7 +52,7 @@ export function FieldsPanel({ rows, onChange, selectedId, onSelect, labels }: {
 ```
 
 - 內部:`FieldList({ rows, selectedId, onSelect, onRemove, onAdd, dupKeys, labels })` 與 `FieldInspector({ row, onPatch, onPatchDataType, labels })`(row 為 `FieldRow | null`)。**行為搬遷不改寫**:`patch`/`patchDataType`(format 清除)/`removeField`(清選取)/`addField`(自動選取新列)/option 增刪改 —— 全部沿用現有實作邏輯,只換掛載位置
-- **DOM 契約**(測試依賴):清單列為 `role="option"` + `aria-selected`,容器 `role="listbox"` + `aria-label={labels.key}`… 改為容器 `aria-label="fields"`?—— **定案:容器 `<div role="listbox" aria-label={labels.inspectorTitle}>` 不妥;直接用 `<button role="option" aria-selected>` 列 + 外層 `role="listbox"` 無名**。列的可及名 = key 文字(空 key 列 = `labels.blankKey`)。inspector 內所有輸入沿用現有 aria-label(`labels.key`/`labels.labelEn`/…,`getByLabelText` 可及);dataType/format/kind 改 **segmented buttons**(`aria-pressed`,可及名 = 選項字面值,format 的「無」= `labels.formatNone` —— 與 kind 的 `labels.kindNone` 同字 "—" 會撞名,**兩組 segmented 各包 `role="group"` + `aria-label={labels.format}`/`{labels.kind}`**,測試以 `within(getByRole("group", { name: "format" }))` 定位)
+- **DOM 契約**(測試依賴):清單列為 `role="option"` + `aria-selected`,容器 `role="listbox"` + `aria-label={labels.key}`… 改為容器 `aria-label="fields"`?—— **定案:列 = `<div role="option" tabIndex={0} aria-selected>`(列內含 remove `<button>`,列本體不可是 button —— HTML 禁止巢狀按鈕);鍵盤:Enter/Space 選取、Escape 取消選取(spec §2.1);外層 `<div role="listbox">` 無名。**列的可及名 = key 文字(空 key 列 = `labels.blankKey`)。inspector 內所有輸入沿用現有 aria-label(`labels.key`/`labels.labelEn`/…,`getByLabelText` 可及);dataType/format/kind 改 **segmented buttons**(`aria-pressed`,可及名 = 選項字面值,format 的「無」= `labels.formatNone` —— 與 kind 的 `labels.kindNone` 同字 "—" 會撞名,**兩組 segmented 各包 `role="group"` + `aria-label={labels.format}`/`{labels.kind}`**,測試以 `within(getByRole("group", { name: "format" }))` 定位)
 
 - [ ] **Step 1: 重寫測試(先紅)**
 
@@ -165,8 +165,10 @@ describe("FieldsPanel (studio)", () => {
   it("marks duplicate and blank keys on the list", () => {
     render(<Harness initial={[row({ key: "a", id: "r1" }), row({ key: "a", id: "r2" }), row({ key: "", id: "r3" })]} />);
 
-    expect(screen.getAllByText("duplicate key")).toHaveLength(2);
-    expect(screen.getByText("key required")).toBeTruthy();
+    const items = screen.getAllByRole("option");
+    expect(within(items[0]!).getByText("duplicate key")).toBeTruthy();
+    expect(within(items[1]!).getByText("duplicate key")).toBeTruthy();
+    expect(within(items[2]!).getByText("key required")).toBeTruthy();
   });
 
   it("renders kind pills and flag badges on list rows", () => {
@@ -202,14 +204,14 @@ describe("FieldsPanel (studio)", () => {
 - [ ] **Step 2: 跑測試確認失敗**
 
 Run: `pnpm -F web exec vitest run src/tools/metadata-builder/fields-panel.spec.tsx`
-Expected: 全 FAIL(現行 FieldsPanel 無 selectedId/onSelect props → TS 轉譯仍跑,`getByRole("option")` 找不到;整個 describe 紅)
+Expected: 全 FAIL(8/8)—— 多數測試在 `getByRole("option")` 失敗(舊版 native `<select>` 的 `<option>` 會造成「找不到可點的列」或多重匹配);dup/blank 測試在 `getAllByRole("option")`+`within` 失敗。整個 describe 紅
 
 - [ ] **Step 3: 實作**
 
 (a) `field-list.tsx` —— `FieldList({ rows, selectedId, onSelect, onRemove, onAdd, dupKeys, labels })`:
 
-- 容器 `<div role="listbox" className="flex flex-col">`;每列 `<div role="option" aria-selected={r.id===selectedId} onClick={() => onSelect(r.id)} className={…選中金色底 bg-primary/10 outline…}>`:行號(mono 淡色)、key(mono font-semibold;空 key 顯示 `labels.blankKey` 淡紅斜體)、dataType 淡色 mono、kind pill(column: `bg-cyan-500/10 text-cyan-600 dark:text-cyan-400`;jsonb: `bg-violet-500/10 text-violet-600 dark:text-violet-400`;無 kind 不顯示 pill)、旗標徽章(sortable/filterable 為 true 才渲染,`bg-primary/10 text-primary` 小徽章,文字即 labels.sortable/filterable)、enum 徽章(`options.length > 0` 時顯示 `enum·N`)、列尾 remove 鈕(`aria-label={labels.remove}`,`opacity-0 group-hover:opacity-100`)
-- 列上驗證:key 空 → 紅點 + `labels.blankKey` 小字;dup → `labels.dupKey` 小字(沿用現有 dupKeys 判定,由組合層算好傳入)
+- 容器 `<div role="listbox" className="flex flex-col">`;每列 `<div role="option" aria-selected={r.id===selectedId} onClick={() => onSelect(r.id)} className={…選中金色底 bg-primary/10 outline…}>`:行號(mono 淡色)、key(mono font-semibold;空 key 顯示 `labels.blankKey` 淡紅斜體)、dataType 淡色 mono、kind pill(column: `bg-cyan-500/10 text-cyan-600 dark:text-cyan-400`;jsonb: `bg-violet-500/10 text-violet-600 dark:text-violet-400`;無 kind → **虛線灰 pill「kind —」**:`border border-dashed border-input text-muted-foreground`,比照 mockup C 與既定決策②)、旗標徽章(sortable/filterable 為 true 才渲染,`bg-primary/10 text-primary` 小徽章,文字即 labels.sortable/filterable)、enum 徽章(`options.length > 0` 時顯示 `enum·N`)、列尾 remove 鈕(`aria-label={labels.remove}`,`opacity-0 group-hover:opacity-100`)
+- 列上驗證:key 空 → 紅點(**blankKey 文案已由 key 槽顯示一次,列上不得重複渲染** —— 否則 getByText 多重匹配);dup → `labels.dupKey` 小字(沿用現有 dupKeys 判定,由組合層算好傳入)
 - 底部:「+ 欄位」鈕 + 彙總條(`labels.fieldSummary` 成品字串,淡色小字)
 
 (b) `field-inspector.tsx` —— `FieldInspector({ row, onPatch, onPatchDataType, labels })`:
@@ -217,7 +219,7 @@ Expected: 全 FAIL(現行 FieldsPanel 無 selectedId/onSelect props → TS 轉�
 - `row === null` → `<p className="text-xs text-muted-foreground">{labels.inspectorEmpty}</p>`
 - 有選取:eyebrow `{labels.inspectorTitle} · {row.key}`(mono);編輯列(`grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 items-center`):
   - label en/zh:兩個 `<input>`(aria-label 沿用 `labels.labelEn`/`labels.labelZh`)
-  - key:`<input aria-label={labels.key}>`(mono)
+  - key:`<input aria-label={labels.key}>`(mono;**`autoFocus` 當 `row.key === ""`** —— 新增欄位後自動聚焦,spec §2.1)
   - dataType:`<div role="group" aria-label={labels.dataType}>` 內 segmented buttons(`aria-pressed`,點擊呼叫 `onPatchDataType(value)`)
   - format:`role="group" aria-label={labels.format}`,第一顆 = `labels.formatNone`(清除),其餘 `formatOptionsFor(row.dataType)`;dataType 無 format 選項時整組不渲染
   - kind:`role="group" aria-label={labels.kind}`,`labels.kindNone` + column/jsonb
@@ -329,6 +331,8 @@ export interface CodePanelLabels {
 export function CodePanel({ meta, selectedFieldKey, onReset, onCollapse, labels, treeLabels }: {
   meta: DataResourceMeta;
   selectedFieldKey: string | null;   // 片段模式的目標(Task 3 由 selectedId 對應的 row.key 算出)
+  tab: 'meta' | 'schema' | 'try';    // 受控頁籤(ui.tsx 持有 —— 收合條要顯示當前頁籤名,且收合期間頁籤不丟)
+  onTabChange: (tab: 'meta' | 'schema' | 'try') => void;
   onReset: () => void;
   onCollapse: () => void;            // 收合鈕;收合後的展開條由 ui.tsx 渲染
   labels: CodePanelLabels;
@@ -377,7 +381,11 @@ function renderPanel(overrides: Partial<React.ComponentProps<typeof CodePanel>> 
     treeLabels: TREE_LABELS,
     ...overrides,
   };
-  return { ...render(<CodePanel {...props} />), props };
+  function Harness() {
+    const [tab, setTab] = React.useState<"meta" | "schema" | "try">("meta");
+    return <CodePanel {...props} tab={tab} onTabChange={setTab} />;
+  }
+  return { ...render(<Harness />), props };
 }
 
 describe("CodePanel tabs", () => {
@@ -414,6 +422,12 @@ describe("CodePanel fragment mode", () => {
     expect(metaJson.textContent).toContain('"key": "price"');
     expect(metaJson.textContent).not.toContain('"key": "title"');
     expect(metaJson.textContent).not.toContain('"request"');
+
+    // schema 頁籤同理(spec §3):只顯示選中欄位的 schema 項
+    fireEvent.click(screen.getByRole("button", { name: "schema" }));
+    expect(screen.getByTestId("schema-json").textContent).toContain('"path": "price"');
+    expect(screen.getByTestId("schema-json").textContent).not.toContain('"author.name"');
+    fireEvent.click(screen.getByRole("button", { name: "meta.json" }));
 
     fireEvent.click(screen.getByRole("button", { name: "show all" }));
     expect(screen.getByTestId("meta-json").textContent).toContain('"key": "title"');
@@ -468,18 +482,18 @@ Expected: FAIL —— `Cannot find module './code-panel'`
 
 `code-panel.tsx` 要點(視覺照 mockup C 段右欄):
 
-- 內部 state:`tab: 'meta'|'schema'|'try'`(useState,預設 'meta')、`showAll: boolean`(useState false;`selectedFieldKey` 變更時 reset false —— useEffect)、`copied`、`tree`(沿用舊 derived-preview)
+- **頁籤受控**(`tab`/`onTabChange` props,無內部 tab state);內部 state 只有:`showAll: boolean`(useState false;`selectedFieldKey` 變更時 reset false —— useEffect)、`copied`、`tree`(沿用舊 derived-preview)
 - 計算:`jsonResult`(整份,沿用舊 try/catch);**片段**:`fragment = selectedFieldKey && !showAll ? stringifySelected() : undefined`,其中 `stringifySelected()` 在 parse 成功的正規化 meta 裡 `fields.find(f => f.key === selectedFieldKey)`,找不到回 undefined(→ 顯示整份;測試 4);顯示 `fragment ?? jsonResult.json`
 - **著色**:純函式 `colorJson(json: string): React.ReactNode[]` —— 以 regex 逐 token 包 span:key(`"…":`)`text-sky-600 dark:text-sky-400`、字串值 `text-emerald-600 dark:text-emerald-400`、number/bool `text-amber-600 dark:text-amber-400`、標點原色淡化;**textContent 必須等於原字串**(不插入/刪除任何字元)。放同檔模組層,`<pre data-testid="meta-json">{colorJson(display)}</pre>`
 - 版面:標題列 = 三個頁籤鈕(mono 小字,active `text-primary border-b-2 border-primary`)+ 右側 Copy/下載/Reset/收合鈕(收合鈕 `aria-label={labels.collapse}`,icon 用 `PanelRightClose`(lucide));片段模式時 meta 頁籤下方一條小字列:`selectedFieldKey` + 「show all」鈕(`aria-label`/文字 = `labels.showAll`)
-- schema 頁籤:`<pre data-testid="schema-json">`(著色同);try 頁籤:FilterTreeEditor / 空 schema 提示(沿用)
+- schema 頁籤:`<pre data-testid="schema-json">`(著色同);**片段模式同理(spec §3)**:`selectedFieldKey && !showAll` 且 schema 內有 `path === selectedFieldKey` 的項時只顯示該項,否則整份(showAll 兩頁籤共用);try 頁籤:FilterTreeEditor / 空 schema 提示(沿用)
 - Copy/下載永遠用**整份** `jsonResult.json`(片段只是視圖);錯誤條沿用
 - 刪除 `derived-preview.tsx` 與其 spec
 
 - [ ] **Step 4: 跑測試確認通過 + lint/typecheck**
 
 Run: `pnpm -F web exec vitest run src/tools/metadata-builder/code-panel.spec.tsx && pnpm -F web lint && pnpm -F web check-types`
-Expected: 7/7 PASS。**注意**:ui.tsx 仍 import derived-preview → 刪檔會使 check-types 紅;**本 task 同步把 ui.tsx 的 `<DerivedPreview>` 換成 `<CodePanel meta={meta} selectedFieldKey={null} onReset={reset} onCollapse={() => {}} labels={…} treeLabels={treeLabels} />`**(labels memo 補 collapse/expand/showAll 三鍵;messages.ts 加 `mbCollapse`/`mbExpand`/`mbShowAll`,en: "collapse code panel"/"expand code panel"/"show all";zh-TW: "收合程式碼面板"/"展開程式碼面板"/"顯示整份";同時刪 `mbPreviewTitle` 鍵與其使用處 —— 面板自帶標題列)。ui.spec 若有引用 mbPreviewTitle 的斷言一併調整(現無)。
+Expected: 7/7 PASS。**注意**:ui.tsx 仍 import derived-preview → 刪檔會使 check-types 紅;**本 task 同步把 ui.tsx 的 `<DerivedPreview>` 換成 CodePanel**:ui.tsx 加 `const [codeTab, setCodeTab] = React.useState<"meta" | "schema" | "try">("meta");`(最終形,Task 3 直接沿用),渲染 `<CodePanel meta={meta} selectedFieldKey={null} tab={codeTab} onTabChange={setCodeTab} onReset={reset} onCollapse={() => {}} labels={…} treeLabels={treeLabels} />`(labels memo 補 collapse/expand/showAll 三鍵;messages.ts 加 `mbCollapse`/`mbExpand`/`mbShowAll`,en: "collapse code panel"/"expand code panel"/"show all";zh-TW: "收合程式碼面板"/"展開程式碼面板"/"顯示整份";**同時把 `mbMetaTitle` 的值兩語系都改為 `"meta.json"`**(現值 "meta",spec/mockup 的頁籤名是 meta.json —— 測試 fixture 也以 meta.json 斷言);同時刪 `mbPreviewTitle` 鍵與其使用處 —— 面板自帶標題列)。ui.spec 若有引用 mbPreviewTitle 的斷言一併調整(現無)。
 
 Run: `pnpm -F web exec vitest run src/tools/metadata-builder/`
 Expected: 全 PASS
@@ -556,7 +570,7 @@ describe("studio layout", () => {
 - [ ] **Step 2: 跑測試確認失敗**
 
 Run: `pnpm -F web exec vitest run src/tools/metadata-builder/ui.spec.tsx`
-Expected: 新 3 條 FAIL(fragment 未佈線 —— selectedFieldKey 恆 null;無收合鈕行為;既有測試 PASS)
+Expected: 新 3 條中 **2 條 FAIL**(fragment 未佈線 —— selectedFieldKey 恆 null;無收合鈕行為);第 3 條(stays mounted)在 Task 2 的無條件 CodePanel 下**已綠是預期**(回歸守護,非 TDD 紅);既有測試 PASS
 
 - [ ] **Step 3: 實作**
 
@@ -570,7 +584,7 @@ const [codeOpen, setCodeOpen] = React.useState(true); // SSR 首繪恆 true,避�
 // restore effect 內(既有 try/catch 之後)追加:
 const storedOpen = localStorage.getItem(CODE_OPEN_KEY);
 if (storedOpen !== null) setCodeOpen(storedOpen !== "0");
-else setCodeOpen(window.matchMedia("(min-width: 1024px)").matches); // 既定決策③
+else setCodeOpen(typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 1024px)").matches : true); // 既定決策③;jsdom 無 matchMedia → 視同桌機預設展開
 ```
 
 ```tsx
@@ -600,6 +614,8 @@ function toggleCode(next: boolean) {
             <CodePanel
               meta={meta}
               selectedFieldKey={tab === "fields" ? selectedFieldKey : null}
+              tab={codeTab}
+              onTabChange={setCodeTab}
               onReset={reset}
               onCollapse={() => toggleCode(false)}
               labels={codeLabels}
@@ -612,14 +628,14 @@ function toggleCode(next: boolean) {
               aria-label={t("mbExpand")}
               className="flex h-full min-h-10 w-full items-center justify-center gap-2 rounded-md border border-dashed border-input text-xs text-muted-foreground hover:text-foreground lg:w-10 lg:flex-col"
             >
-              <span className="lg:rotate-90 lg:whitespace-nowrap">CODE</span>
+              <span className="lg:rotate-90 lg:whitespace-nowrap">{codeTabLabel}</span>
             </button>
           )}
         </div>
       </div>
 ```
 
-(收合時右欄在 lg 縮成 `lg:w-10` 窄直條 —— grid 欄寬由內容決定?**不行**,grid 欄已固定 minmax。**定案**:收合時整個 grid 換 class —— `codeOpen ? "lg:grid-cols-[minmax(320px,1fr)_minmax(380px,1fr)]" : "lg:grid-cols-[1fr_2.5rem]"`,展開條在窄直條內。)
+(`const codeTabLabel = { meta: codeLabels.metaTitle, schema: codeLabels.schemaTitle, try: codeLabels.tryTitle }[codeTab];` —— 收合條顯示當前頁籤名,spec §4。收合時右欄在 lg 縮成窄直條 —— grid 欄寬由內容決定?**不行**,grid 欄已固定 minmax。**定案**:收合時整個 grid 換 class —— `codeOpen ? "lg:grid-cols-[minmax(320px,1fr)_minmax(380px,1fr)]" : "lg:grid-cols-[1fr_2.5rem]"`,展開條在窄直條內。)
 
 (d) `fieldsLabels` memo 補三鍵(fieldSummary 用 `t("mbFieldSummary", { n: rows.length, f: rows.filter((r) => r.filterable).length })` —— **注意**:含佔位鍵必須 t() 帶值;memo deps 需含 rows 或改為每 render 計算 —— **定案:fieldSummary 不進 memo,單獨常數逐 render 算**,memo 只放靜態鍵);`codeLabels` memo(metaTitle/schemaTitle/tryTitle 沿用既有三鍵 + collapse/expand/showAll)
 
@@ -649,7 +665,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: e2e 調整與新增**
 
-既有測試:「declaring a filterable field surfaces it in the try-filter editor」——「+ condition」現在在程式碼面板的 try 頁籤:hydration gate 後加 `await page.getByRole("button", { name: "try filter", exact: true }).click();` 再走原流程(field 下拉含 author.name 斷言不變)。
+既有測試:「declaring a filterable field surfaces it in the try-filter editor」——「+ condition」現在在程式碼面板的 try 頁籤:hydration gate 後加 `await page.getByRole("button", { name: "try filter", exact: true }).click();` 再走原流程。**原 author.name 斷言必須改為限定在下拉 popover 內** —— 重構後左欄欄位列也是 `role="option"` 且名稱含 author.name,裸查詢會觸發 strict-mode violation:`await expect(page.locator('[data-slot="popover-content"]').getByRole("option", { name: "author.name" })).toBeVisible();`(selector 以 web-ui Popover 實際 data-slot 為準,實作時先驗證)。
 
 新增:
 
