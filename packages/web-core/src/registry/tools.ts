@@ -153,4 +153,12 @@ export const toolRegistry: ToolDefinition[] = [
     relatedPackages: ['@rfjs/table-builder', '@rfjs/data-schema'],
     tags: ['table', 'builder', 'playground'],
   },
+  {
+    id: 'metadata-builder',
+    category: 'generator',
+    surface: 'web',
+    status: 'preview',
+    relatedPackages: ['@rfjs/data-schema'],
+    tags: ['metadata', 'schema', 'builder'],
+  },
 ];

@@ -14,6 +14,7 @@ import { tool as esQueryBuilder } from "./es-query-builder";
 import { tool as jsonbQueryBuilder } from "./jsonb-query-builder";
 import { tool as jsonbQueryGenerator } from "./jsonb-query-generator";
 import { tool as jwtDecoder } from "./jwt-decoder";
+import { tool as metadataBuilder } from "./metadata-builder";
 import { tool as mongoQueryBuilder } from "./mongo-query-builder";
 import { tool as mongoQueryGenerator } from "./mongo-query-generator";
 import { tool as objectFlatten } from "./object-flatten";
@@ -41,6 +42,7 @@ export const toolModules: ToolModule[] = [
   flowBuilder,
   decisionTable,
   tableBuilder,
+  metadataBuilder,
 ];
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = Object.fromEntries(
