@@ -300,7 +300,7 @@ export const DEFAULT_META: DataResourceMeta = {
 - [ ] **Step 4: 跑測試確認通過**
 
 Run: `pnpm -F web exec vitest run src/tools/metadata-builder/model.spec.ts`
-Expected: PASS(11 tests)
+Expected: PASS(9 tests)
 
 - [ ] **Step 5: Commit**
 
@@ -517,7 +517,7 @@ export function FieldsPanel({
 }
 ```
 
-(上方骨架中兩處註解是**結構指引**,實作時展開成完整 JSX —— 每個輸入都要能被測試以 `getByDisplayValue` 找到;checkbox 用 `aria-label={labels.sortable}`/`filterable`;所有變更走 `patch` 回報完整 rows 陣列。)
+(上方骨架中兩處註解是**結構指引**,實作時展開成完整 JSX。硬性要求:dataType/format/kind 都用**原生 `<select>` 且 option 的顯示文字 = value**(RTL 的 `getByDisplayValue` 對 select 匹配的是選中 option 的文字);key/label/option 用原生 `<input>`;checkbox 用 `aria-label={labels.sortable}`/`filterable`;options 開合鈕 `aria-label` 含 `labels.options`;所有變更走 `patch` 回報完整 rows 陣列。)
 
 - [ ] **Step 4: 跑測試確認通過 + lint**
 
@@ -573,7 +573,7 @@ import type { RequestMeta, ResponseMeta } from "@rfjs/data-schema";
 
 const LABELS = {
   enabled: "declare protocol", endpoint: "endpoint", method: "method", pagination: "pagination",
-  sort: "sort", sortNone: "none", filter: "filter", filterNone: "none", filterParam: "filter param",
+  sort: "sort", sortNone: "no sort", filter: "filter", filterNone: "none", filterParam: "filter param",
   rowsPath: "rowsPath", totalPath: "totalPath", cursorPath: "cursorPath",
   limitParam: "limitParam", offsetParam: "offsetParam", pageParam: "pageParam", pageSizeParam: "pageSizeParam",
   firstPage: "firstPage", cursorParam: "cursorParam", sortParam: "sort param", encoding: "encoding",
@@ -605,6 +605,7 @@ describe("ProtocolPanel", () => {
     fireEvent.click(screen.getByRole("switch", { name: "declare protocol" }));
 
     const next = onChange.mock.calls[0]![0];
+    expect(next.request.endpoint).toBe("/api/example");
     expect(next.request.pagination.strategy).toBe("offset");
     expect(next.response.rowsPath).toBe("");
   });
@@ -641,7 +642,7 @@ describe("ProtocolPanel", () => {
 });
 ```
 
-注意:最後一條的 `{ name: "none" }` 若同時命中 sort 的 none(`sortNone` 同字)會多重匹配 —— LABELS fixture 已把兩者都設為 "none",**實作時 sort/filter 的 none 鈕都要帶 aria-label 區分**(`aria-label={labels.sortNone + " sort"}` 不行 —— 直接讓 fixture 用不同字:把 fixture 的 `sortNone` 改為 `"no sort"`)。**寫測試時就用 `sortNone: "no sort"`**。
+注意:fixture 的 `sortNone` 刻意用 `"no sort"`(≠ `filterNone` 的 `"none"`)—— 否則最後一條測試的 `{ name: "none" }` 會同時命中 sort 與 filter 的 none 鈕而多重匹配。實作的 i18n 也照此(en `mbSortNone: "no sort"`)。
 
 - [ ] **Step 2: 跑測試確認失敗**
 
@@ -654,7 +655,7 @@ Expected: FAIL —— `Cannot find module './protocol-panel'`
 
 - 頂部 `Switch`(`@rfjs/web-ui/components/switch`,`aria-label={labels.enabled}`):
   - 關 → `onChange({ request: undefined, response: undefined })`
-  - 開(從空)→ seed:`{ request: { endpoint: "", pagination: { strategy: "offset", limitParam: "limit", offsetParam: "offset" } }, response: { rowsPath: "" } }`
+  - 開(從空)→ seed:`{ request: { endpoint: "/api/example", pagination: { strategy: "offset", limitParam: "limit", offsetParam: "offset" } }, response: { rowsPath: "" } }`(endpoint 不可空 —— `requestMetaSchema` 是 `min(1)`,空字串會讓恆在預覽的 `parseDataResourceMeta` 直接 throw)
 - request/response 未宣告時面板其餘部分不渲染
 - method:GET/POST segmented(button + `aria-pressed`);pagination:offset/page/cursor segmented,**切換策略時整個 pagination 重建為該策略的預設參數名**(offset: limit/offset;page: page/pageSize;cursor: cursor/limit);各策略的參數名輸入 `aria-label` 用對應 labels
 - sort:none/single/split segmented(none → 移除 `sort` 鍵;single 預設 `{ style:'single', param:'sort', encoding:'colon' }`,encoding colon/signed segmented;split 預設 `{ style:'split', fieldParam:'sortBy', dirParam:'order' }`)
@@ -781,7 +782,7 @@ Expected: FAIL —— `Cannot find module './import-panel'`
 `apps/web/src/tools/metadata-builder/import-panel.tsx` 要點(視覺照 mockup Import 頁):
 
 - 模式 segmented(meta.json / sample rows,button + `aria-pressed`);textarea 依模式換 placeholder;上傳走 label 包 `<input type="file">`(比照 table-builder source-panel 的模式 —— 不與 Load 鈕撞名)
-- Load:`JSON.parse` 失敗 → `setError(labels.invalidJson)`;meta 模式 → `parseDataResourceMeta`(zod throw → `setError(err.message 首行)`)成功 `onMeta(parsed)` 並清空錯誤;rows 模式 → `inferFieldsFromRows`(throw 同樣進錯誤條)成功 `onFields(fields)`
+- Load:`JSON.parse` 失敗 → `setError(labels.invalidJson)`;meta 模式 → `parseDataResourceMeta`(zod throw → **取 `err.issues?.[0]?.message ?? labels.invalidJson`** —— zod v4 的 `err.message` 是 issues 陣列的 JSON 字串、首行是 `[`,不可直接顯示;duck-typing 讀 `issues` 免 import zod)成功 `onMeta(parsed)` 並清空錯誤;rows 模式 → `inferFieldsFromRows`(throw 同樣進錯誤條)成功 `onFields(fields)`
 - 錯誤條 `role="alert"`;成功後清 textarea 與錯誤
 
 - [ ] **Step 4: 跑測試確認通過 + lint**
@@ -938,7 +939,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 **Files:**
 - Create: `apps/web/src/tools/metadata-builder/ui.tsx`、`apps/web/src/tools/metadata-builder/index.ts`、`apps/web/src/tools/metadata-builder/messages.ts`
-- Modify: `apps/web/src/tools/index.ts`(import + 陣列尾加一筆)、`apps/web/src/tools/messages.ts`(同)、`packages/web-core/src/registry/tools.ts`(陣列尾加一筆)
+- Modify: `apps/web/src/tools/index.ts`(import + 陣列尾加一筆)、`apps/web/src/tools/messages.ts`(同)、`packages/web-core/src/registry/tools.ts`(陣列尾加一筆)、`apps/web/src/tools/index.spec.ts`(`EXPECTED_WEB_TOOL_IDS` 按**字母序**插入 `"metadata-builder"` —— 該 spec 是 sorted 比對,位置錯會紅)
 - Test: `apps/web/src/tools/metadata-builder/ui.spec.tsx`
 - Create: `.changeset/web-core-metadata-builder.md`
 
@@ -987,6 +988,16 @@ function renderTool() {
 
 beforeEach(() => localStorage.clear());
 
+describe("messages parity", () => {
+  // 既有 i18n 閘(src/i18n/messages.spec.ts)只保護中央目錄;工具片段的 en/zh-TW 不對稱沒人抓 —— 自己守。
+  it("en and zh-TW fragments declare identical key sets", () => {
+    const en = messages.en as Record<string, Record<string, unknown>>;
+    const zh = messages["zh-TW"] as Record<string, Record<string, unknown>>;
+    expect(Object.keys(zh.ToolUI!).sort()).toEqual(Object.keys(en.ToolUI!).sort());
+    expect(Object.keys(zh.Tools!).sort()).toEqual(Object.keys(en.Tools!).sort());
+  });
+});
+
 describe("MetadataBuilderTool", () => {
   it("tabs swap the editor panel while the derived preview stays visible", () => {
     renderTool();
@@ -1002,8 +1013,9 @@ describe("MetadataBuilderTool", () => {
 
     fireEvent.change(screen.getByDisplayValue("price"), { target: { value: "cost" } });
 
-    expect(screen.getByTestId("meta-json").textContent).toContain('"cost"');
-    expect(screen.getByTestId("meta-json").textContent).not.toContain('"price"');
+    expect(screen.getByTestId("meta-json").textContent).toContain('"key": "cost"');
+    // 注意用完整 "key": 前綴 —— label 仍是 "Price"(大寫),裸 "price" 斷言只靠大小寫僥倖通過
+    expect(screen.getByTestId("meta-json").textContent).not.toContain('"key": "price"');
   });
 
   it("meta.json import replaces the whole meta", () => {
@@ -1063,7 +1075,28 @@ Expected: FAIL —— `Cannot find module './ui'`(全數紅)
 
 - state:`const [meta, setMeta] = React.useState<DataResourceMeta>(DEFAULT_META);` + `const [tab, setTab] = React.useState<'fields'|'protocol'|'import'>('fields');` + rows 投影:`const [rows, setRows] = React.useState<FieldRow[]>(() => metaToRows(DEFAULT_META.fields, () => crypto.randomUUID()));`
 - **同步規則(單一真相是 meta)**:Fields 編輯 → `setRows(next)` 且 `setMeta(m => ({ ...m, fields: rowsToMeta(next) }))`;Import/Reset **整份換 meta 時同步重建 rows**(`metaToRows`);Protocol 只動 request/response 不碰 rows
-- localStorage:掛載 effect 讀 `rfjs.metadata-builder.meta` → `JSON.parse` + `parseDataResourceMeta` try/catch,成功 `setMeta` + 重建 rows;之後 meta 變更 effect 寫入(`JSON.stringify(meta)`);Reset → `localStorage.removeItem` + 回 `DEFAULT_META` + 重建 rows
+- localStorage(**順序有硬性要求** —— 寫入 effect 若在還原前跑會把儲存值蓋成預設):
+
+```tsx
+  const restoredRef = React.useRef(false);
+  React.useEffect(() => {            // 1) 還原 —— 必須宣告在寫入 effect 之前
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw !== null) {
+        const parsed = parseDataResourceMeta(JSON.parse(raw));
+        setMeta(parsed);
+        setRows(metaToRows(parsed.fields, () => crypto.randomUUID()));
+      }
+    } catch { /* 壞資料靜默回預設(spec §6) */ }
+    restoredRef.current = true;
+  }, []);
+  React.useEffect(() => {            // 2) 持久化 —— 還原完成前不寫
+    if (!restoredRef.current) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
+  }, [meta]);
+```
+
+  Reset → `localStorage.removeItem(STORAGE_KEY)` + 回 `DEFAULT_META` + 重建 rows(`STORAGE_KEY = "rfjs.metadata-builder.meta"` 模組常數)
 - 版面:eyebrow(`mbEyebrow`)→ 三頁籤(segmented,同 #239 視覺)→ 當前面板 → 恆在 `<DerivedPreview meta={meta} onReset={reset} labels={…} treeLabels={…} />`
 - labels memos:fields/protocol/import/preview 各一個 useMemo(mb* 鍵);treeLabels 用 `mbTree*` 鍵(`FilterTreeLabels` 必填欄:logic/addCondition/addGroup/removeGroup/removeCondition/elemMatch —— 其餘選填省略)
 - Import 成功(兩種模式)後 `setTab('fields')`(spec §5)
@@ -1078,7 +1111,7 @@ import { MetadataBuilderTool } from "./ui";
 export const tool: ToolModule = { id: "metadata-builder", Component: MetadataBuilderTool };
 ```
 
-(c) `apps/web/src/tools/index.ts`:import 區加 `import { tool as metadataBuilder } from "./metadata-builder";`,`toolModules` 陣列尾加 `metadataBuilder`。`apps/web/src/tools/messages.ts` 同型(import + 陣列尾)。
+(c) `apps/web/src/tools/index.ts`:import 區加 `import { tool as metadataBuilder } from "./metadata-builder";`,`toolModules` 陣列尾加 `metadataBuilder`。`apps/web/src/tools/messages.ts` 同型(import + 陣列尾)。**同步** `apps/web/src/tools/index.spec.ts` 的 `EXPECTED_WEB_TOOL_IDS`:在字母序正確位置插入 `"metadata-builder"`(介於 `"jwt-decoder"` 與 `"mongo-query-builder"` 之間;該測試把實際 id `.sort()` 後與此陣列 `toEqual`)。
 
 (d) `packages/web-core/src/registry/tools.ts` 陣列尾加:
 
@@ -1105,13 +1138,13 @@ register the metadata-builder tool (data-schema authoring surface)
 
 - [ ] **Step 5: 跑測試確認通過 + 全工具測試 + lint/typecheck**
 
-Run: `pnpm -F web exec vitest run src/tools/metadata-builder/ && pnpm -F @rfjs/web-core vitest:run && pnpm -F web lint && pnpm -F web check-types`
-Expected: 全 PASS(ui 6 + 各面板;web-core registry spec 含新條目仍綠 —— 若該 spec 斷言工具總數,同步 +1 並在報告註明);lint/typecheck 綠
+Run: `pnpm -F web exec vitest run src/tools/metadata-builder/ src/tools/index.spec.ts src/i18n/ && pnpm -F @rfjs/web-core vitest:run && pnpm -F web lint && pnpm -F web check-types`
+Expected: 全 PASS(ui 7 + 各面板;web-core registry spec 含新條目仍綠 —— 若該 spec 斷言工具總數,同步 +1 並在報告註明);lint/typecheck 綠
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add apps/web/src/tools/metadata-builder/ apps/web/src/tools/index.ts apps/web/src/tools/messages.ts packages/web-core/src/registry/tools.ts .changeset/web-core-metadata-builder.md
+git add apps/web/src/tools/metadata-builder/ apps/web/src/tools/index.ts apps/web/src/tools/messages.ts apps/web/src/tools/index.spec.ts packages/web-core/src/registry/tools.ts .changeset/web-core-metadata-builder.md
 git commit -m "feat(web): assemble the metadata-builder tool and register it
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
