@@ -346,6 +346,21 @@ describe('createAiClient — opt-in retry', () => {
     ).rejects.toMatchObject({ kind: 'http' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('external abort during retry backoff is honored (no further attempt)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('busy', { status: 503 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const ctl = new AbortController();
+    const p = createAiClient({
+      baseUrl: 'http://ai.local/v1',
+      model: 'm',
+      auth: apiKeyAuth('k'),
+      retry: { maxRetries: 1, baseDelayMs: 100 },
+    }).complete({ system: 's', user: 'u', signal: ctl.signal });
+    setTimeout(() => ctl.abort(), 20); // abort during the ~100ms backoff, after the first 503
+    await expect(p).rejects.toMatchObject({ kind: 'abort' });
+    expect(fetchMock).toHaveBeenCalledTimes(1); // no second attempt
+  });
 });
 
 // 迴歸防護:cancel / timeout 必須在「stream body 讀取期間」仍有效(headers 到達後才拆掉會回歸——見 plan-review blocker)。

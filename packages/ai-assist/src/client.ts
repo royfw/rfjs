@@ -138,6 +138,13 @@ export function createAiClient(arg: AiSettings | AiClientConfig): AiClient {
     const onExternalAbort = () => ctl.abort();
     req.signal?.addEventListener('abort', onExternalAbort, { once: true });
     try {
+      // withRetry re-invokes attempt() after a backoff sleep; an external abort landing DURING that
+      // sleep fires on req.signal before the next attempt's {once:true} listener attaches, so it
+      // would be dropped. Re-check the (persistent) req.signal at the top of each attempt so a
+      // during-backoff cancel is honored — inside the try so the catch classifies it as 'abort'.
+      if (req.signal?.aborted) {
+        throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+      }
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         ...(await config.auth.authHeaders()),
