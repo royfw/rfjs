@@ -25,6 +25,7 @@ import {
 } from "./sample";
 import type { SourceMode } from "./sample";
 import { makeFakeFetcher } from "./fake-fetcher";
+import { makeHttpFetcher } from "./http-fetcher";
 import { SourcePanel } from "./source-panel";
 import { ColumnsPanel } from "./columns-panel";
 import { PaginationPanel } from "./pagination-panel";
@@ -53,6 +54,7 @@ export function TableBuilderTool() {
 
   const [config, setConfig] = React.useState<TableConfig>(SAMPLE_CONFIG);
   const [sourceMode, setSourceMode] = React.useState<SourceMode>("rows");
+  const [transport, setTransport] = React.useState<"memory" | "http">("memory");
   const [rows, setRows] =
     React.useState<Record<string, unknown>[]>(SAMPLE_ROWS);
   const [dataVersion, setDataVersion] = React.useState(0);
@@ -178,9 +180,12 @@ export function TableBuilderTool() {
       request,
       response: SAMPLE_META.response!,
       fields: SAMPLE_META.fields,
-      fetch: makeFakeFetcher(SAMPLE_ROWS, config.columns, SAMPLE_META.fields),
+      fetch:
+        transport === "http"
+          ? makeHttpFetcher("/api/query/sample")
+          : makeFakeFetcher(SAMPLE_ROWS, config.columns, SAMPLE_META.fields),
     };
-  }, [sourceMode, config.columns, rows]);
+  }, [sourceMode, transport, config.columns, rows]);
 
   // Metadata tab inputs (design spec §2.2): rows mode is a pure fields description; fetcher
   // mode carries the currently selected strategy's request protocol + the sample response map.
@@ -319,6 +324,8 @@ export function TableBuilderTool() {
           onImport={handleImport}
           importLabels={importLabels}
           defaultText={SAMPLE_JSON}
+          transport={transport}
+          onTransportChange={setTransport}
         />
       ) : null}
       {tab === "columns" ? (
