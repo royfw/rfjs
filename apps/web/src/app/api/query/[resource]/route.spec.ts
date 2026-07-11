@@ -25,6 +25,11 @@ describe("GET /api/query/[resource]", () => {
     const empty = await GET(new Request("http://t/api/query/sample?empty=1"), ctx("sample"));
     expect(((await empty.json()) as { data: { total: number } }).data.total).toBe(0);
   });
+
+  it("400 on a malformed ?filter", async () => {
+    const res = await GET(new Request("http://t/api/query/sample?filter=not-json"), ctx("sample"));
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("POST /api/query/[resource]", () => {

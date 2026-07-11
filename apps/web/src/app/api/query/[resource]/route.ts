@@ -32,7 +32,15 @@ export async function GET(req: Request, ctx: { params: Promise<{ resource: strin
   const params: Record<string, string> = {};
   for (const [k, v] of qs) if (!KNOBS.has(k) && k !== "filter") params[k] = v;
   const raw = qs.get("filter");
-  return respond(resource, qs, { params, filter: raw ? JSON.parse(raw) : undefined });
+  let filter: unknown;
+  if (raw) {
+    try {
+      filter = JSON.parse(raw);
+    } catch {
+      return Response.json({ error: "bad filter" }, { status: 400 });
+    }
+  }
+  return respond(resource, qs, { params, filter });
 }
 
 export async function POST(req: Request, ctx: { params: Promise<{ resource: string }> }): Promise<Response> {
