@@ -103,13 +103,13 @@ export const messages: LocaleMessages = {
   "zh-TW": {
     Tools: {
       "metadata-builder": {
-        title: "資源綱要設計器",
+        title: "Meta 建構器",
         description:
           "authoring 資料資源的 metadata —— 欄位 kind、enum 值域與請求/回應協定,匯出 meta.json 供任何消費者使用。",
       },
     },
     ToolUI: {
-      mbEyebrow: "資源綱要設計器",
+      mbEyebrow: "Meta 建構器",
       mbTabFields: "欄位",
       mbTabProtocol: "協定",
       mbTabImport: "匯入",
