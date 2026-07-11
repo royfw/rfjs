@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Panel polish — 現況 vs 提案 2026-07-11</title>
+<style>
+  :root {
+    --bg:#ffffff; --fg:#1a1a18; --muted:#6b6b66; --border:#e4e4e0; --card:#ffffff;
+    --input:#d4d4d0; --accent:#b8860b; --accent-soft:rgba(184,134,11,.10); --soft:#f5f5f3; --code:#f4f4f2;
+    --key:#1d4ed8; --str:#15803d;
+  }
+  .dark {
+    --bg:#0d1117; --fg:#e6e6e2; --muted:#99998f; --border:#26262b; --card:#14141a;
+    --input:#3a3a40; --accent:#d4a017; --accent-soft:rgba(212,160,23,.14); --soft:#1a1a20; --code:#101016;
+    --key:#60a5fa; --str:#4ade80;
+  }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--fg); font-family:system-ui,"Noto Sans TC",sans-serif; font-size:14px; line-height:1.55; padding:36px 20px 80px; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  .toggle { position:fixed; top:14px; right:14px; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:5px 12px; cursor:pointer; color:var(--fg); font-size:12px; }
+  h1 { font-size:20px; } .lede { color:var(--muted); font-size:13px; margin:4px 0 20px; }
+  .duo { display:grid; grid-template-columns:1fr 1fr; gap:20px; } @media (max-width:860px){ .duo{grid-template-columns:1fr;} }
+  .cap { font-size:12px; font-weight:700; margin-bottom:8px; }
+  .cap.bad { color:var(--muted); } .cap.good { color:var(--accent); }
+  .note { font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.6; }
+  .mono { font-family:ui-monospace,monospace; }
+  .btn { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--input); background:var(--card); color:var(--fg); border-radius:7px; padding:3px 10px; font-size:11.5px; cursor:pointer; }
+  pre { background:var(--code); margin:0; padding:12px 14px; font-size:11.5px; line-height:1.7; overflow:auto; }
+  .k{color:var(--key);} .s{color:var(--str);}
+
+  /* ── 現況面板 ── */
+  .panel-now { border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--card); }
+  .now-head { display:flex; align-items:center; gap:10px; padding:8px 12px; border-bottom:1px solid var(--border); font-size:11.5px; }
+  .now-head .tab { font-family:ui-monospace,monospace; color:var(--muted); cursor:pointer; }
+  .now-head .tab.on { color:var(--fg); border-bottom:2px solid var(--accent); }
+  .now-head .acts { margin-left:auto; display:flex; gap:6px; align-items:center; }
+  .now-frag { padding:4px 12px; font-size:11.5px; color:var(--muted); border-bottom:1px solid var(--border); }
+  .now-frag a { color:var(--fg); text-decoration:underline; cursor:pointer; }
+
+  /* ── 提案面板 ── */
+  .panel-new { border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--card); }
+  .new-tabs { display:flex; align-items:stretch; background:var(--soft); border-bottom:1px solid var(--border); }
+  .new-tabs .tab { font-family:ui-monospace,monospace; font-size:11.5px; color:var(--muted); padding:9px 16px; cursor:pointer; border-right:1px solid var(--border); }
+  .new-tabs .tab.on { color:var(--accent); background:var(--card); font-weight:700; box-shadow:inset 0 -2px 0 var(--accent); }
+  .new-tabs .collapse { margin-left:auto; display:flex; align-items:center; gap:6px; padding:0 12px; color:var(--muted); font-size:11.5px; cursor:pointer; border-left:1px solid var(--border); }
+  .new-tabs .collapse:hover { color:var(--fg); background:var(--accent-soft); }
+  .new-status { display:flex; align-items:center; gap:8px; padding:6px 14px; background:var(--accent-soft); border-bottom:1px solid var(--border); font-size:11.5px; }
+  .new-status .fkey { font-family:ui-monospace,monospace; font-weight:700; color:var(--accent); }
+  .new-status .showall { margin-left:auto; }
+  .new-actions { display:flex; gap:8px; padding:8px 14px; border-top:1px solid var(--border); background:var(--soft); }
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">☀ / ☾</button>
+<div class="wrap">
+  <h1>Code Panel polish — 現況 vs 提案</h1>
+  <p class="lede">兩個問題:① 收合鈕(icon-only)不顯眼 ② 頁籤/動作鈕/片段提示擠在一起沒有區塊感。提案:三段式分區 —— 頁籤列 / 狀態條 / 內容 / 動作列,收合鈕變成頁籤列尾端的可讀按鈕。</p>
+
+  <div class="duo">
+    <div>
+      <p class="cap bad">現況(#245 目前)</p>
+      <div class="panel-now">
+        <div class="now-head">
+          <span class="tab on">meta.json</span><span class="tab">schema</span><span class="tab">try filter</span>
+          <span class="acts">
+            <span class="btn">Copy</span><span class="btn">Download meta.json</span><span class="btn">Reset</span><span class="btn" title="collapse">⧉</span>
+          </span>
+        </div>
+        <div class="now-frag"><span class="mono">price</span> <a>show all</a></div>
+        <pre class="mono">{
+  <span class="k">"key"</span>: <span class="s">"price"</span>,
+  <span class="k">"dataType"</span>: <span class="s">"numeric"</span>,
+  <span class="k">"format"</span>: <span class="s">"currency"</span>,
+  <span class="k">"kind"</span>: <span class="s">"column"</span>
+}</pre>
+      </div>
+      <p class="note">問題:頁籤和四顆動作鈕同列互相擠壓;收合鈕只是一個小 icon(⧉),不知道是什麼;片段提示列太淡,不像「狀態」。</p>
+    </div>
+
+    <div>
+      <p class="cap good">提案(polish 後)</p>
+      <div class="panel-new">
+        <div class="new-tabs">
+          <span class="tab on">meta.json</span><span class="tab">schema</span><span class="tab">try filter</span>
+          <span class="collapse">⧉ 收合</span>
+        </div>
+        <div class="new-status">
+          <span>檢視選中欄位</span><span class="fkey">price</span>
+          <span class="showall btn">顯示整份</span>
+        </div>
+        <pre class="mono">{
+  <span class="k">"key"</span>: <span class="s">"price"</span>,
+  <span class="k">"dataType"</span>: <span class="s">"numeric"</span>,
+  <span class="k">"format"</span>: <span class="s">"currency"</span>,
+  <span class="k">"kind"</span>: <span class="s">"column"</span>
+}</pre>
+        <div class="new-actions">
+          <span class="btn">Copy</span><span class="btn">下載 meta.json</span><span class="btn" style="margin-left:auto">Reset</span>
+        </div>
+      </div>
+      <p class="note">改法:① 頁籤列獨占頂部(底色分區,active 金色底線),<b>收合鈕帶文字、有 hover 底色、佔頁籤列尾端</b> ② 片段模式變成金色淡底「狀態條」(說明文字 + 欄位名 + 顯示整份鈕)③ Copy/下載/Reset 移到<b>底部動作列</b>(soft 底色),不再和頁籤搶位;Reset 靠右隔開(它是危險動作)。無選取時狀態條整條不出現。</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
