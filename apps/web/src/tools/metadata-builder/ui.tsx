@@ -218,37 +218,41 @@ export function MetadataBuilderTool() {
     <div className="flex flex-col gap-4">
       <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t("mbEyebrow")}</p>
 
-      <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
-        {TABS.map((tabItem) => (
-          <button
-            key={tabItem.id}
-            type="button"
-            onClick={() => setTab(tabItem.id)}
-            aria-selected={tab === tabItem.id}
-            className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-              tab === tabItem.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tabItem.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 一塊一塊的縱向節奏(比照 form-builder):編輯區全寬在上,產物 code panel 全寬在下。 */}
-      <div className="min-w-0">
-        {tab === "fields" && (
-          <FieldsPanel
-            rows={rows}
-            onChange={handleFieldsChange}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            labels={{ ...fieldsLabels, fieldSummary }}
-          />
-        )}
-        {tab === "protocol" && (
-          <ProtocolPanel request={meta.request} response={meta.response} onChange={handleProtocolChange} labels={protocolLabels} />
-        )}
-        {tab === "import" && <ImportPanel onMeta={handleImportMeta} onFields={handleImportFields} labels={importLabels} />}
+      {/* 一塊一塊的縱向節奏(比照 form-builder):Editor 區塊卡在上、code panel 區塊卡在下,
+          兩塊同語言 —— 頁籤都做在卡片標題列(soft 底、active 金色底線)。 */}
+      <div className="min-w-0 overflow-hidden rounded-md border">
+        <div className="flex items-stretch border-b bg-muted/30">
+          {TABS.map((tabItem) => (
+            <button
+              key={tabItem.id}
+              type="button"
+              onClick={() => setTab(tabItem.id)}
+              aria-selected={tab === tabItem.id}
+              className={`px-4 py-2 text-[13px] font-medium transition-colors ${
+                tab === tabItem.id
+                  ? "bg-card font-semibold text-primary shadow-[inset_0_-2px_0_0_hsl(var(--primary))]"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tabItem.label}
+            </button>
+          ))}
+        </div>
+        <div className="p-4">
+          {tab === "fields" && (
+            <FieldsPanel
+              rows={rows}
+              onChange={handleFieldsChange}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              labels={{ ...fieldsLabels, fieldSummary }}
+            />
+          )}
+          {tab === "protocol" && (
+            <ProtocolPanel request={meta.request} response={meta.response} onChange={handleProtocolChange} labels={protocolLabels} />
+          )}
+          {tab === "import" && <ImportPanel onMeta={handleImportMeta} onFields={handleImportFields} labels={importLabels} />}
+        </div>
       </div>
 
       <div className="min-w-0">
