@@ -165,6 +165,9 @@ export function MetadataBuilderTool() {
       encoding: t("mbEncoding"),
       fieldParam: t("mbFieldParam"),
       dirParam: t("mbDirParam"),
+      try: t("mbTry"),
+      tryRows: t.raw("mbTryRows") as string,
+      tryError: t("mbTryError"),
     }),
     [t],
   );
