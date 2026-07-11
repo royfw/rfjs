@@ -9,6 +9,7 @@ const nextConfig = {
     "@rfjs/form-builder-ui",
     "@rfjs/bpmn-ui",
     "@rfjs/table-builder-ui",
+    "@rfjs/ai-assist-ui",
   ],
 };
 

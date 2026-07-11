@@ -10,7 +10,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import en from '@/messages/en.json';
-import { AI_SETTINGS_KEY } from '@/lib/ai/settings';
+import { AI_SETTINGS_KEY } from '@rfjs/ai-assist';
 import { AiSettingsDialog } from './ai-settings-dialog';
 
 function renderDialog() {

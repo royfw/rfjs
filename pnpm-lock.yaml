@@ -190,6 +190,12 @@ importers:
 
   apps/web:
     dependencies:
+      '@rfjs/ai-assist':
+        specifier: workspace:*
+        version: link:../../packages/ai-assist
+      '@rfjs/ai-assist-ui':
+        specifier: workspace:*
+        version: link:../../packages/ai-assist-ui
       '@rfjs/bpmn-ui':
         specifier: workspace:*
         version: link:../../packages/bpmn-ui
