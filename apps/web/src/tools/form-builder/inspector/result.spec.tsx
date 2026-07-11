@@ -58,3 +58,37 @@ describe("ResultSection", () => {
     expect(onChange).toHaveBeenCalledWith({ maxItems: undefined });
   });
 });
+
+describe("ResultSection table snapshot", () => {
+  it("snapshots pasted rows into resultTable", () => {
+    const onChange = vi.fn();
+    render(<ResultSection card={resCard({ mode: "table" })} onChange={onChange} apiButtons={apiButtons} />);
+    fireEvent.change(screen.getByPlaceholderText(/paste a sample/i), {
+      target: { value: '[{"id":1,"name":"Ada"}]' },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /snapshot/i }));
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ resultTable: expect.objectContaining({ columns: expect.any(Array) }) }),
+    );
+  });
+
+  it("shows an error and does not write on invalid JSON", () => {
+    const onChange = vi.fn();
+    render(<ResultSection card={resCard({ mode: "table" })} onChange={onChange} apiButtons={apiButtons} />);
+    fireEvent.change(screen.getByPlaceholderText(/paste a sample/i), { target: { value: "{bad" } });
+    fireEvent.click(screen.getByRole("button", { name: /snapshot/i }));
+    expect(screen.getByText(/invalid json/i)).toBeTruthy();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("clears resultTable", () => {
+    const onChange = vi.fn();
+    const withTable = resCard({
+      mode: "table",
+      resultTable: { columns: [{ key: "x", label: "X", dataType: "string" }], pagination: { pageSize: 10 } },
+    });
+    render(<ResultSection card={withTable} onChange={onChange} apiButtons={apiButtons} />);
+    fireEvent.click(screen.getByRole("button", { name: /clear/i }));
+    expect(onChange).toHaveBeenCalledWith({ resultTable: undefined });
+  });
+});

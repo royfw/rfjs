@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ZodType, ZodTypeAny } from 'zod';
+import { tableConfigSchema } from '@rfjs/table-builder';
 
 import type { FormConfig } from './types';
 
@@ -171,7 +172,7 @@ const resultItemSchema = z.object({
   sourceId: z.string().min(1).optional(),
   dataPath: z.string().min(1).optional(),
   maxItems: z.number().int().positive().optional(),
-  table: z.unknown().optional(),
+  table: tableConfigSchema.optional(),
   emptyText: localizedLabelSchema.optional(),
 });
 

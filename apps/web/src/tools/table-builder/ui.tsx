@@ -78,6 +78,7 @@ export function TableBuilderTool() {
       filterMatched: t.raw("tbFilterMatched") as string,
       filterUncoverable: t("tbFilterUncoverable"),
       filterDisabled: t("tbFilterDisabled"),
+      filterApply: t("tbFilterApply"),
     }),
     [t],
   );
@@ -176,7 +177,8 @@ export function TableBuilderTool() {
       kind: "remote",
       request,
       response: SAMPLE_META.response!,
-      fetch: makeFakeFetcher(SAMPLE_ROWS, config.columns),
+      fields: SAMPLE_META.fields,
+      fetch: makeFakeFetcher(SAMPLE_ROWS, config.columns, SAMPLE_META.fields),
     };
   }, [sourceMode, config.columns, rows]);
 

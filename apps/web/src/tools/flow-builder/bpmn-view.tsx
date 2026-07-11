@@ -7,10 +7,9 @@ import { useTranslations } from "next-intl";
 import { BpmnViewer } from "@rfjs/bpmn-ui";
 import { Button } from "@rfjs/web-ui/components/button";
 import { Switch } from "@rfjs/web-ui/components/switch";
+import { projectFlow, type FlowDoc } from "@rfjs/flow-core";
 
 import { compileToBpmn } from "./bpmn";
-import { projectFlow } from "./projection";
-import type { FlowDoc } from "./schema";
 
 // dark 模式容器套 invert(做法複製自 bpmn-viewer tool 的 ui.tsx;因並行紅線
 // 不動共用檔,本地維護一份):圖形填色 #b9b9b9 → 反轉後 ≈ #464646,

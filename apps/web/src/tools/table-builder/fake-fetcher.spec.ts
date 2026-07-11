@@ -83,3 +83,49 @@ describe("makeFakeFetcher", () => {
     expect(page4.nextCursor).toBeUndefined();
   });
 });
+
+describe('pg filter execution', () => {
+  const FIELDS = [
+    { key: 'price', label: 'Price', dataType: 'numeric' as const, filterable: true, kind: 'column' as const },
+    { key: 'author.name', label: 'Author', dataType: 'string' as const, filterable: true, kind: 'jsonb' as const },
+  ];
+  const ROWS = [
+    { id: 1, price: 10, author: { name: 'Ada' } },
+    { id: 2, price: 50, author: { name: 'Grace' } },
+    { id: 3, price: 90, author: { name: 'Ada' } },
+  ];
+  const COLUMNS = [
+    { key: 'price', label: 'Price', dataType: 'numeric' as const },
+    { key: 'author.name', label: 'Author', dataType: 'string' as const },
+  ];
+
+  function built(filter: unknown) {
+    return { endpoint: '/x', method: 'GET' as const, params: { limit: '10', offset: '0' }, filter };
+  }
+
+  it('filters by a column leaf (dataType resolved from fields)', async () => {
+    const fetcher = makeFakeFetcher(ROWS, COLUMNS, FIELDS);
+    const payload = (await fetcher(
+      built({ logic: 'and', filters: [{ target: 'column', column: 'price', operator: 'gte', value: 50 }] }),
+    )) as { data: { items: unknown[]; total: number } };
+    expect(payload.data.total).toBe(2);
+    expect(payload.data.items).toHaveLength(2);
+  });
+
+  it('filters by a jsonb leaf with a nested path', async () => {
+    const fetcher = makeFakeFetcher(ROWS, COLUMNS, FIELDS);
+    const payload = (await fetcher(
+      built({
+        logic: 'and',
+        filters: [{ target: 'jsonb', field: 'author.name', dataType: 'string', operator: 'eq', value: 'Ada' }],
+      }),
+    )) as { data: { items: unknown[]; total: number } };
+    expect(payload.data.total).toBe(2);
+  });
+
+  it('serves all rows when built carries no filter (back-compat)', async () => {
+    const fetcher = makeFakeFetcher(ROWS, COLUMNS, FIELDS);
+    const payload = (await fetcher(built(undefined))) as { data: { total: number } };
+    expect(payload.data.total).toBe(3);
+  });
+});

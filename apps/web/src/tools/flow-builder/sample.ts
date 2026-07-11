@@ -1,4 +1,4 @@
-import type { FlowDoc } from "./schema";
+import type { FlowDoc } from "@rfjs/flow-core";
 
 /** 內建範例:請假申請 → 判斷 → 通知 / 自動核准。
  * 座標刻意讓主軸(start→form→cond→end)的把手中心對齊 y=150:

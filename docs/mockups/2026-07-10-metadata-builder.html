@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metadata Builder — mockup 2026-07-10</title>
+<style>
+  /* web-ui-aligned tokens (light/dark) — matches the rfjs app look, not the proposal house style */
+  :root {
+    --bg: #ffffff; --fg: #1a1a18; --muted: #6b6b66; --border: #e4e4e0; --card: #ffffff;
+    --input: #d4d4d0; --accent: #b8860b; --accent-fg: #ffffff; --soft: #f5f5f3; --err: #b3261e;
+  }
+  .dark {
+    --bg: #0d1117; --fg: #e6e6e2; --muted: #99998f; --border: #2c2c31; --card: #14141a;
+    --input: #3a3a40; --accent: #d4a017; --accent-fg: #14141a; --soft: #1c1c22; --err: #f2b8b5;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font-family: system-ui, "Noto Sans TC", sans-serif; font-size: 14px; line-height: 1.6; padding: 32px 24px 80px; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .toggle { position: fixed; top: 14px; right: 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; color: var(--fg); font-size: 12px; }
+  h1 { font-size: 24px; } .desc { color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--muted); margin: 22px 0 10px; }
+  /* segmented tabs (#239 pattern) */
+  .tabs { display: inline-flex; gap: 2px; border: 1px solid var(--input); background: var(--soft); border-radius: 10px; padding: 4px; margin-bottom: 14px; }
+  .tabs button { border: 0; background: transparent; color: var(--muted); font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: 7px; cursor: pointer; }
+  .tabs button.on { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .panel { border: 1px solid var(--border); border-radius: 10px; padding: 16px; background: var(--card); }
+  .panel h3 { font-size: 13.5px; margin-bottom: 10px; }
+  .hint { color: var(--muted); font-size: 12px; }
+  /* fields table */
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  .in { border: 1px solid var(--input); background: transparent; color: var(--fg); border-radius: 6px; padding: 3px 8px; font-size: 12.5px; font-family: inherit; }
+  .in.mono { font-family: ui-monospace, monospace; }
+  select.in { padding-right: 4px; }
+  .ck { accent-color: var(--accent); }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--input); background: var(--card); color: var(--fg); border-radius: 8px; padding: 5px 14px; font-size: 12.5px; cursor: pointer; }
+  .btn.p { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+  .btn.xs { padding: 2px 9px; font-size: 11.5px; border-radius: 6px; }
+  .x { color: var(--muted); cursor: pointer; font-size: 15px; }
+  .kindtag { font-size: 10.5px; border: 1px solid var(--input); border-radius: 5px; padding: 0 6px; color: var(--muted); }
+  /* options sub-editor */
+  .optbox { background: var(--soft); border: 1px dashed var(--input); border-radius: 8px; padding: 8px 10px; margin: 6px 0 2px 24px; }
+  .optrow { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
+  .err { color: var(--err); font-size: 12px; margin-top: 6px; }
+  /* protocol grid */
+  .grid2 { display: grid; grid-template-columns: 160px 1fr; gap: 10px 14px; align-items: center; max-width: 620px; }
+  .lbl { color: var(--muted); font-size: 12.5px; }
+  .seg { display: inline-flex; gap: 2px; border: 1px solid var(--input); border-radius: 8px; padding: 3px; background: var(--soft); }
+  .seg span { padding: 3px 12px; border-radius: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+  .seg span.on { background: var(--bg); color: var(--fg); }
+  /* import */
+  .paste { width: 100%; min-height: 96px; border: 1px solid var(--input); border-radius: 8px; background: transparent; color: var(--fg); font-family: ui-monospace, monospace; font-size: 12px; padding: 10px; }
+  /* preview strip */
+  .previews { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  @media (max-width: 800px) { .previews { grid-template-columns: 1fr; } }
+  pre { background: var(--soft); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 11.5px; overflow: auto; max-height: 260px; font-family: ui-monospace, monospace; }
+  .ftree { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 12px; margin-top: 14px; }
+  .chip { display: inline-block; border: 1px solid var(--input); border-radius: 6px; padding: 1px 9px; font-size: 11.5px; background: var(--soft); margin-right: 6px; }
+  .note { color: var(--muted); font-size: 11.5px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">☀ / ☾</button>
+<div class="wrap">
+  <h1>Metadata Builder</h1>
+  <p class="desc">Author a data resource's metadata — field kinds, enum domains, and the request/response protocol — then hand it to any consumer as meta.json.</p>
+
+  <p class="eyebrow">METADATA BUILDER</p>
+
+  <!-- 編輯頁籤(B-layout:頁籤 + 恆在預覽) -->
+  <div class="tabs">
+    <button class="on" onclick="show(this,'t-fields')">欄位 Fields</button>
+    <button onclick="show(this,'t-proto')">協定 Protocol</button>
+    <button onclick="show(this,'t-import')">匯入 Import</button>
+  </div>
+
+  <!-- ═══ Fields ═══ -->
+  <div id="t-fields" class="panel">
+    <h3>欄位宣告 <span class="hint">— kind 與 enum 值域是 infer 推不出、只能人宣告的部分</span></h3>
+    <table>
+      <tr><th style="width:130px">key</th><th style="width:110px">label</th><th style="width:90px">dataType</th><th style="width:90px">format</th><th style="width:46px">sortable</th><th style="width:46px">filterable</th><th style="width:96px">kind</th><th style="width:60px">options</th><th></th></tr>
+      <tr>
+        <td><input class="in mono" value="id" size="10"></td>
+        <td><input class="in" value="ID" size="8"></td>
+        <td><select class="in"><option>string</option></select></td>
+        <td><select class="in"><option>—</option></select></td>
+        <td><input type="checkbox" class="ck" checked></td>
+        <td><input type="checkbox" class="ck"></td>
+        <td><select class="in"><option>—</option><option selected>column</option><option>jsonb</option></select></td>
+        <td><button class="btn xs">＋</button></td>
+        <td><span class="x">✕</span></td>
+      </tr>
+      <tr>
+        <td><input class="in mono" value="price" size="10"></td>
+        <td><input class="in" value="Price" size="8"></td>
+        <td><select class="in"><option selected>numeric</option></select></td>
+        <td><select class="in"><option selected>currency</option></select></td>
+        <td><input type="checkbox" class="ck" checked></td>
+        <td><input type="checkbox" class="ck" checked></td>
+        <td><select class="in"><option>—</option><option selected>column</option><option>jsonb</option></select></td>
+        <td><button class="btn xs">＋</button></td>
+        <td><span class="x">✕</span></td>
+      </tr>
+      <tr>
+        <td><input class="in mono" value="author.name" size="10"></td>
+        <td><input class="in" value="Author" size="8"></td>
+        <td><select class="in"><option selected>string</option></select></td>
+        <td><select class="in"><option selected>—</option></select></td>
+        <td><input type="checkbox" class="ck" checked></td>
+        <td><input type="checkbox" class="ck" checked></td>
+        <td><select class="in"><option>—</option><option>column</option><option selected>jsonb</option></select></td>
+        <td><button class="btn xs">＋</button></td>
+        <td><span class="x">✕</span></td>
+      </tr>
+      <tr>
+        <td><input class="in mono" value="status" size="10"></td>
+        <td><input class="in" value="Status" size="8"></td>
+        <td><select class="in"><option selected>string</option></select></td>
+        <td><select class="in"><option selected>—</option></select></td>
+        <td><input type="checkbox" class="ck"></td>
+        <td><input type="checkbox" class="ck" checked></td>
+        <td><select class="in"><option>—</option><option selected>column</option><option>jsonb</option></select></td>
+        <td><button class="btn xs on">3</button></td>
+        <td><span class="x">✕</span></td>
+      </tr>
+    </table>
+    <!-- status 的 options 子編輯器(展開態) -->
+    <div class="optbox">
+      <div class="hint" style="margin-bottom:4px">status 的 enum options</div>
+      <div class="optrow"><input class="in mono" value="draft" size="9"><input class="in" value="Draft" size="9"><span class="x">✕</span></div>
+      <div class="optrow"><input class="in mono" value="published" size="9"><input class="in" value="Published" size="9"><span class="x">✕</span></div>
+      <div class="optrow"><input class="in mono" value="archived" size="9"><input class="in" value="Archived" size="9"><span class="x">✕</span></div>
+      <button class="btn xs" style="margin-top:4px">+ option</button>
+    </div>
+    <div style="margin-top:10px; display:flex; gap:8px;">
+      <button class="btn">+ 欄位</button>
+      <span class="err" style="align-self:center">⚠ key 重複:price(第 2、5 列)— 示意錯誤態</span>
+    </div>
+  </div>
+
+  <!-- ═══ Protocol ═══ -->
+  <div id="t-proto" class="panel" style="display:none">
+    <h3>請求/回應協定 <span class="hint">— 對應 RequestMeta / ResponseMeta,zod 即時驗證</span></h3>
+    <div class="grid2">
+      <span class="lbl">endpoint</span><input class="in mono" value="/api/sample/items" style="max-width:280px">
+      <span class="lbl">method</span><div class="seg"><span>GET</span><span class="on">POST</span></div>
+      <span class="lbl">pagination</span><div class="seg"><span class="on">offset</span><span>page</span><span>cursor</span></div>
+      <span class="lbl">└ limitParam / offsetParam</span><div><input class="in mono" value="limit" size="7"> <input class="in mono" value="offset" size="7"></div>
+      <span class="lbl">sort</span><div class="seg"><span class="on">single</span><span>split</span></div>
+      <span class="lbl">└ param / encoding</span><div><input class="in mono" value="sort" size="7"> <div class="seg" style="vertical-align:middle"><span class="on">colon</span><span>signed</span></div></div>
+      <span class="lbl">filter</span><div class="seg"><span class="on">pg</span><span style="opacity:.4">(future)</span></div>
+      <span class="lbl">└ param</span><input class="in mono" value="filter" size="7" style="max-width:120px">
+      <span class="lbl">response rowsPath</span><input class="in mono" value="data.items" style="max-width:200px">
+      <span class="lbl">totalPath / cursorPath</span><div><input class="in mono" value="data.total" size="10"> <input class="in mono" value="data.nextCursor" size="12"></div>
+    </div>
+  </div>
+
+  <!-- ═══ Import ═══ -->
+  <div id="t-import" class="panel" style="display:none">
+    <h3>匯入 <span class="hint">— meta.json 或樣本資料起手</span></h3>
+    <div class="seg" style="margin-bottom:8px"><span class="on">meta.json</span><span>樣本 rows(infer 起手)</span></div>
+    <textarea class="paste">{ "fields": [ { "key": "id", "label": "ID", "dataType": "string" }, … ] }</textarea>
+    <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+      <button class="btn p">載入</button>
+      <span class="hint">meta.json 走 parseDataResourceMeta 驗證;樣本 rows 走 inferFieldsFromRows 產欄位再手動補 kind/options</span>
+    </div>
+    <p class="err">Invalid meta: fields[2].format "currency" is not compatible with dataType "string" — 示意錯誤態</p>
+  </div>
+
+  <!-- ═══ 恆在預覽 ═══ -->
+  <p class="eyebrow" style="margin-top:20px">衍生產物(恆在)</p>
+  <div class="panel">
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:8px;">
+      <button class="btn xs">Copy meta.json</button><button class="btn xs">下載 meta.json</button><button class="btn xs">Reset 預設樣本</button>
+    </div>
+    <div class="previews">
+      <div>
+        <div class="hint" style="margin-bottom:4px">DataResourceMeta(單一真相,存 localStorage)</div>
+        <pre>{
+  "fields": [
+    { "key": "id", "label": "ID", "dataType": "string",
+      "sortable": true, "kind": "column" },
+    { "key": "price", "label": "Price", "dataType": "numeric",
+      "format": "currency", "sortable": true,
+      "filterable": true, "kind": "column" },
+    { "key": "author.name", "label": "Author", "dataType": "string",
+      "sortable": true, "filterable": true, "kind": "jsonb" },
+    { "key": "status", "label": "Status", "dataType": "string",
+      "filterable": true, "kind": "column",
+      "options": [ { "value": "draft", "label": "Draft" }, … ] }
+  ],
+  "request": { "endpoint": "/api/sample/items", "method": "POST",
+    "pagination": { "strategy": "offset", … },
+    "filter": { "style": "pg", "param": "filter" } },
+  "response": { "rowsPath": "data.items", "totalPath": "data.total" }
+}</pre>
+      </div>
+      <div>
+        <div class="hint" style="margin-bottom:4px">fieldsToFilterSchema(meta)→ FieldSchema[](篩選消費者看到的)</div>
+        <pre>[
+  { "path": "price",       "dataType": "numeric",
+    "include": true, "kind": "column" },
+  { "path": "author.name", "dataType": "string",
+    "include": true, "kind": "jsonb" },
+  { "path": "status",      "dataType": "string",
+    "include": true, "kind": "column" }
+]</pre>
+        <div class="ftree">
+          <div class="hint" style="margin-bottom:6px">即時試篩(FilterTreeEditor,吃上面的 schema)</div>
+          <span class="chip">AND</span><span class="chip">+ condition</span><span class="chip">+ group</span>
+          <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+            <select class="in"><option>price</option><option>author.name</option><option>status</option></select>
+            <span class="kindtag">num</span>
+            <select class="in"><option>gte</option></select>
+            <input class="in mono" value="40" size="6">
+            <span class="x">✕</span>
+          </div>
+          <p class="note">宣告的欄位立刻可篩 —— kind 決定 column/jsonb 葉;沒勾 filterable 或沒宣告 kind 的欄位不會出現</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function show(btn, id) {
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  ['t-fields','t-proto','t-import'].forEach(t => document.getElementById(t).style.display = t === id ? '' : 'none');
+}
+</script>
+</body>
+</html>

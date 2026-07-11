@@ -17,6 +17,7 @@
     "@rfjs/data-schema": "workspace:*",
     "@rfjs/filter-builder": "workspace:*",
     "@rfjs/filter-builder-ui": "workspace:*",
+    "@rfjs/pg-filter": "workspace:*",
     "@rfjs/table-builder": "workspace:*",
     "@rfjs/web-ui": "workspace:*",
     "lucide-react": "^1.17.0"

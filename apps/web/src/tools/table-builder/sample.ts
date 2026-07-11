@@ -18,15 +18,25 @@ export type SourceMode = "rows" | "offset" | "page" | "cursor";
 export const SAMPLE_META: DataResourceMeta = {
   fields: [
     { key: "id", label: "ID", dataType: "string", sortable: true },
-    { key: "title", label: "Title", dataType: "string", sortable: true },
-    { key: "price", label: "Price", dataType: "numeric", format: "currency", sortable: true },
+    { key: "title", label: "Title", dataType: "string", sortable: true, filterable: true, kind: "column" },
+    {
+      key: "price",
+      label: "Price",
+      dataType: "numeric",
+      format: "currency",
+      sortable: true,
+      filterable: true,
+      kind: "column",
+    },
     { key: "createdAt", label: "Created", dataType: "date", format: "date", sortable: true },
     { key: "inStock", label: "In stock", dataType: "boolean" },
-    { key: "author.name", label: "Author", dataType: "string", sortable: true },
+    { key: "author.name", label: "Author", dataType: "string", sortable: true, filterable: true, kind: "jsonb" },
     {
       key: "status",
       label: "Status",
       dataType: "string",
+      filterable: true,
+      kind: "column",
       options: [
         { value: "draft", label: "Draft" },
         { value: "published", label: "Published" },
@@ -39,6 +49,7 @@ export const SAMPLE_META: DataResourceMeta = {
     method: "GET",
     pagination: { strategy: "offset", limitParam: "limit", offsetParam: "offset" },
     sort: { style: "single", param: "sort", encoding: "colon" },
+    filter: { style: "pg", param: "filter" },
   },
   response: { rowsPath: "data.items", totalPath: "data.total", cursorPath: "data.nextCursor" },
 };

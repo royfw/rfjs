@@ -1,4 +1,5 @@
 import type { ConditionalRule } from './conditional';
+import type { TableConfig } from '@rfjs/table-builder';
 
 // Data-type vocabulary — identical to @rfjs/filter-builder's FieldType.
 export type ScalarType = 'string' | 'numeric' | 'date' | 'boolean';
@@ -136,8 +137,8 @@ export interface ResultItem {
   dataPath?: string;
   /** card 模式陣列上限,預設 10。 */
   maxItems?: number;
-  /** mode:'table' 預留:未來放 @rfjs/table-builder 的 TableConfig;v1 透傳不解讀。 */
-  table?: unknown;
+  /** mode:'table' 的欄位設定;缺省時 renderer 從回應 rows derive。 */
+  table?: TableConfig;
   /** 空狀態文案;缺省內建 'No result yet'。 */
   emptyText?: LocalizedLabel;
 }

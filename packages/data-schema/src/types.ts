@@ -26,7 +26,13 @@ export interface DataFieldMeta {
   format?: FieldFormat;
   options?: FieldOption[]; // enum fields (status code -> label)
   sortable?: boolean; // default false
-  filterable?: boolean; // reserved for a future filter consumer; v1 table does not use this
+  filterable?: boolean; // authored: whether this field may appear in a filter tree (remote filter consumer since the api-filter round)
+  /**
+   * How the backend queries this field: a typed SQL column or a JSONB path. Literals align with
+   * `@rfjs/filter-builder`'s `FieldKind` (no cross-dependency — same convention as `ScalarType`).
+   * Authored only — `inferFieldsFromRows` never produces it; absent = not remotely filterable.
+   */
+  kind?: 'column' | 'jsonb';
 }
 
 export type PaginationMeta =
@@ -38,11 +44,18 @@ export type SortMeta =
   | { style: 'single'; param: string; encoding: 'colon' | 'signed' } // sort=name:asc / sort=-name
   | { style: 'split'; fieldParam: string; dirParam: string }; // sortBy=name&order=asc
 
+/** How a compiled filter rides the request: currently only the pg-filter tree style. */
+export interface FilterRequestMeta {
+  style: 'pg'; // room to grow (e.g. other encodings) without breaking the shape
+  param: string; // request key: POST body key, or the query param a GET fetcher serializes into
+}
+
 export interface RequestMeta {
   endpoint: string;
   method?: 'GET' | 'POST'; // default GET
   pagination: PaginationMeta;
   sort?: SortMeta;
+  filter?: FilterRequestMeta;
 }
 
 export interface ResponseMeta {
@@ -76,4 +89,6 @@ export interface BuiltRequest {
   endpoint: string;
   method: 'GET' | 'POST';
   params: Record<string, string>;
+  /** Compiled filter (opaque to data-schema); the fetcher places it per `RequestMeta.filter.param`. */
+  filter?: unknown;
 }

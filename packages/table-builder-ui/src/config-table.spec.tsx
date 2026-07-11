@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { describe, expect, it, vi } from 'vitest';
 import type { TableConfig, TableColumnConfig } from '@rfjs/table-builder';
 import type { BuiltRequest, RequestMeta, ResponseMeta } from '@rfjs/data-schema';
+import { emptyGroup } from '@rfjs/filter-builder';
 import { ConfigTable } from './config-table';
 import type { TableSource } from './types';
 
@@ -199,7 +200,69 @@ describe('ConfigTable (filter section)', () => {
       fetch: fetchFn,
     };
     render(<ConfigTable config={FILT_CFG} source={source} />);
-    expect(screen.getByText(/api filter coming later/i)).toBeTruthy();
+    expect(screen.getByText(/does not declare a remote filter/i)).toBeTruthy();
     expect(screen.queryByText('+ condition')).toBeNull();
+  });
+});
+
+describe('remote filter UI', () => {
+  const REMOTE_FIELDS = [
+    { key: 'price', label: 'Price', dataType: 'numeric' as const, filterable: true, kind: 'column' as const },
+  ];
+  const REMOTE_FETCH = () => Promise.resolve({ data: { items: [{ id: 'r1', price: 10 }], total: 1 } });
+  const REMOTE_SOURCE = {
+    kind: 'remote' as const,
+    request: {
+      endpoint: '/api/items',
+      pagination: { strategy: 'page' as const, pageParam: 'page', pageSizeParam: 'pageSize' },
+      filter: { style: 'pg' as const, param: 'filter' },
+    },
+    response: { rowsPath: 'data.items', totalPath: 'data.total' },
+    fields: REMOTE_FIELDS,
+    fetch: REMOTE_FETCH,
+  };
+  const REMOTE_SOURCE_NO_FILTER = {
+    ...REMOTE_SOURCE,
+    request: { ...REMOTE_SOURCE.request, filter: undefined },
+  };
+
+  it('shows an enabled filter toggle and an Apply button for a filterable remote source', async () => {
+    render(<ConfigTable config={config} source={REMOTE_SOURCE} />);
+    const toggle = screen.getByRole('button', { name: /filter/i });
+    expect((toggle as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(toggle);
+    expect(await screen.findByRole('button', { name: 'Apply' })).toBeTruthy();
+  });
+
+  it('keeps the filter disabled for a remote source without filter meta', async () => {
+    render(<ConfigTable config={config} source={REMOTE_SOURCE_NO_FILTER} />);
+    const toggle = screen.getByRole('button', { name: /filter/i });
+    expect((toggle as HTMLButtonElement).disabled).toBe(true);
+    await waitFor(() => expect(screen.queryByText(/loading/i)).toBeNull());
+  });
+
+  it('rows mode shows no Apply button (live filtering unchanged)', () => {
+    render(<ConfigTable config={config} source={{ kind: 'rows', rows: FILT_ROWS }} />);
+    fireEvent.click(screen.getByRole('button', { name: /filter/i }));
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
+  });
+});
+
+describe('controlled filter tree props', () => {
+  it('renders the injected tree and reports edits via onFilterTreeChange', () => {
+    const external = emptyGroup(() => 'ext-1');
+    const onChange = vi.fn();
+    render(
+      <ConfigTable
+        config={config}
+        source={{ kind: 'rows', rows: FILT_ROWS }}
+        filterTree={external}
+        onFilterTreeChange={onChange}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /filter/i }));
+    // FilterTreeEditor 的「+ condition」預設 label(DEFAULT_FILTER_TREE_LABELS)
+    fireEvent.click(screen.getByRole('button', { name: /\+ condition/i }));
+    expect(onChange).toHaveBeenCalled();
   });
 });

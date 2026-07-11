@@ -182,7 +182,7 @@ export const SAMPLE_CONFIG: FormConfig = {
         {
           id: "r_result",
           items: [
-            { id: "res_query", kind: "result", mode: "card", sourceId: "btn_query", dataPath: "received.data", emptyText: "Run a query to see results" },
+            { id: "res_query", kind: "result", mode: "table", sourceId: "btn_query", dataPath: "data", emptyText: "Run a query to see results" },
           ],
         },
       ],

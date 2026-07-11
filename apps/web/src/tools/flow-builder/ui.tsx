@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@rfjs/web-ui/components/button";
 import type { FilterTreeLabels } from "@rfjs/filter-builder-ui";
+import { flowToJson } from "@rfjs/flow-core";
 
 import { nodeTypes } from "./nodes";
 import { AdaptiveEdge } from "./edges";
@@ -25,7 +26,6 @@ import { BpmnViewPanel } from "./bpmn-view";
 import { Inspector } from "./inspector";
 import { NodeSheet } from "./node-sheet";
 import { findFreePosition, newNode, toFlowDoc, toReactFlow, type FlowNodeData } from "./model";
-import { flowToJson } from "./schema";
 import { sample } from "./sample";
 
 // 直接觀察 <html> 的 class(next-themes attribute="class"):比 useTheme 的

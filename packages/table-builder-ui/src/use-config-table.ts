@@ -3,8 +3,9 @@ import { hasNextCursor, pageCount as computePageCount, pageToOffset, sortRows } 
 import type { SortState, TableConfig } from '@rfjs/table-builder';
 import { buildRequestParams, extractCursor, extractRows, extractTotal } from '@rfjs/data-schema';
 import type { PageState } from '@rfjs/data-schema';
-import { runLiveMatch, emptyGroup, type BuilderGroup, type FieldSchema } from '@rfjs/filter-builder';
-import { columnsToFilterSchema } from './filter-schema';
+import { runLiveMatch, emptyGroup, treeToPgFilterGroup, type BuilderGroup, type FieldSchema } from '@rfjs/filter-builder';
+import type { PgFilterGroup } from '@rfjs/pg-filter';
+import { columnsToFilterSchema, fieldsToFilterSchema } from './filter-schema';
 import type { TableSource } from './types';
 
 export interface UseConfigTableResult {
@@ -30,6 +31,16 @@ export interface UseConfigTableResult {
   filterSchema: FieldSchema[];
   filterEnabled: boolean;
   filterUncoverable: boolean;
+  /** remote 模式:把當前樹編譯成 pg 群組並重抓(重置分頁);rows 模式 no-op。 */
+  applyFilter(): void;
+  /** remote 模式:目前是否有已套用(非空)的 filter。 */
+  filterApplied: boolean;
+}
+
+export interface UseConfigTableOptions {
+  /** 受控篩選樹:提供時 hook 不持有樹狀態,編輯經 onFilterTreeChange 回報。 */
+  filterTree?: BuilderGroup;
+  onFilterTreeChange?: (next: BuilderGroup) => void;
 }
 
 const EMPTY_ROWS: Record<string, unknown>[] = [];
@@ -43,12 +54,17 @@ interface RemoteState {
 }
 
 // Design spec §5.2: ONE implementation for both source kinds, so the hook call sequence
-// (useState x6, useRef, useMemo x4, useEffect, useCallback x7) is identical every render --
+// (useState x7, useRef, useMemo x4, useEffect, useCallback x8) is identical every render --
 // even if a consumer toggles `source.kind` between 'rows' and 'remote'. All source-kind
 // branching happens INSIDE this body (plain values/conditionals, effect/callback bodies),
 // never as an early return from the hook itself -- see Task 5 review for why that broke
 // the rules of hooks.
-export function useConfigTable(config: TableConfig, source: TableSource): UseConfigTableResult {
+export function useConfigTable(
+  config: TableConfig,
+  source: TableSource,
+  options: UseConfigTableOptions = {},
+): UseConfigTableResult {
+  const sourceKind = source.kind;
   const [page, setPageState] = useState(1);
   const [pageSize, setPageSizeState] = useState(config.pagination.pageSize);
   const [sort, setSort] = useState<SortState | undefined>(config.defaultSort);
@@ -60,7 +76,13 @@ export function useConfigTable(config: TableConfig, source: TableSource): UseCon
     nextCursor: undefined,
   }));
   const [retryToken, setRetryToken] = useState(0);
-  const [filterTree, setFilterTreeState] = useState<BuilderGroup>(() => emptyGroup(() => crypto.randomUUID()));
+  const [internalTree, setInternalTree] = useState<BuilderGroup>(() => emptyGroup(() => crypto.randomUUID()));
+  // appliedFilter must live here (top state block, before the remote fetch effect) -- the
+  // effect's deps array reads it, and declaring it after setFilterTree would TDZ every test.
+  const [appliedFilter, setAppliedFilter] = useState<PgFilterGroup | undefined>(undefined);
+  const externalTree = options.filterTree;
+  const filterTree = externalTree ?? internalTree;
+  const onFilterTreeChange = options.onFilterTreeChange;
 
   // Cursor-mode navigation stack (client-side, not React state): cursorsRef.current[uiPage - 1]
   // is the `cursor` request param needed to fetch that UI page -- index 0 (the first page) is
@@ -70,7 +92,12 @@ export function useConfigTable(config: TableConfig, source: TableSource): UseCon
 
   // --- client (static rows) derivation -- always computed, only used when source.kind === 'rows' ---
   const clientRows = source.kind === 'rows' ? source.rows : EMPTY_ROWS;
-  const filterSchema = useMemo(() => columnsToFilterSchema(config.columns), [config.columns]);
+  const filterSchema = useMemo(
+    () => (source.kind === 'remote' ? fieldsToFilterSchema(source.fields ?? []) : columnsToFilterSchema(config.columns)),
+    [source, config.columns],
+  );
+  const remoteFilterEnabled =
+    source.kind === 'remote' && source.request.filter !== undefined && filterSchema.length > 0;
   const match = useMemo(() => runLiveMatch(clientRows, filterTree), [clientRows, filterTree]);
   // uncoverable (an operator the in-memory engine can't evaluate): don't misreport 0 rows --
   // show all rows and let the UI surface a warning via filterUncoverable.
@@ -107,7 +134,7 @@ export function useConfigTable(config: TableConfig, source: TableSource): UseCon
       pageState.cursor = cursorsRef.current[page - 1];
     }
 
-    const built = buildRequestParams(request, pageState);
+    const built = buildRequestParams(request, pageState, appliedFilter);
 
     fetchFn(built)
       .then((payload) => {
@@ -137,7 +164,7 @@ export function useConfigTable(config: TableConfig, source: TableSource): UseCon
     return () => {
       active = false;
     };
-  }, [source, page, pageSize, sort, retryToken]);
+  }, [source, page, pageSize, sort, retryToken, appliedFilter]);
 
   const clientTotal = sortedRows.length;
   const clientPageCount = computePageCount(clientTotal, pageSize);
@@ -206,10 +233,23 @@ export function useConfigTable(config: TableConfig, source: TableSource): UseCon
     setRetryToken((t) => t + 1);
   }, []);
 
-  const setFilterTree = useCallback((next: BuilderGroup) => {
-    setFilterTreeState(next);
+  const setFilterTree = useCallback(
+    (next: BuilderGroup) => {
+      onFilterTreeChange?.(next);
+      if (externalTree === undefined) setInternalTree(next);
+      // rows 模式:編輯即生效,回第 1 頁;remote 模式:編輯不打 API(Apply 才生效),分頁不動
+      if (sourceKind === 'rows') setPageState(1);
+    },
+    [onFilterTreeChange, externalTree, sourceKind],
+  );
+
+  const applyFilter = useCallback(() => {
+    if (!remoteFilterEnabled) return;
+    const group = treeToPgFilterGroup(filterTree, filterSchema);
+    setAppliedFilter(hasConditions(group) ? group : undefined);
     setPageState(1);
-  }, []);
+    cursorsRef.current = [undefined]; // 篩選變了,舊游標無意義(spec §2.2)
+  }, [remoteFilterEnabled, filterTree, filterSchema]);
 
   return {
     rows,
@@ -232,7 +272,14 @@ export function useConfigTable(config: TableConfig, source: TableSource): UseCon
     filterTree,
     setFilterTree,
     filterSchema,
-    filterEnabled: source.kind === 'rows',
+    filterEnabled: source.kind === 'rows' || remoteFilterEnabled,
     filterUncoverable: source.kind === 'rows' && match.uncoverable,
+    applyFilter,
+    filterApplied: appliedFilter !== undefined,
   };
+}
+
+/** 空樹/全不完整條件會編譯成無葉群組 —— 這種 filter 不該上請求(spec §2.2「空樹」)。 */
+function hasConditions(group: PgFilterGroup): boolean {
+  return group.filters.some((f) => ('logic' in f ? hasConditions(f as PgFilterGroup) : true));
 }

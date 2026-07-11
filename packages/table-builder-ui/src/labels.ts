@@ -13,5 +13,6 @@ export const DEFAULT_LABELS: TableLabels = {
   filterTitle: 'Filter',
   filterMatched: '{count} matched',
   filterUncoverable: 'This filter uses conditions the in-memory engine cannot evaluate.',
-  filterDisabled: 'Filtering runs on static data only (api filter coming later).',
+  filterDisabled: 'This data source does not declare a remote filter.',
+  filterApply: 'Apply',
 };

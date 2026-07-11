@@ -20,6 +20,7 @@
     "@rfjs/decision-table": "workspace:*",
     "@rfjs/filter-builder": "workspace:*",
     "@rfjs/filter-builder-ui": "workspace:*",
+    "@rfjs/flow-core": "workspace:*",
     "@rfjs/form-builder": "workspace:*",
     "@rfjs/form-builder-ui": "workspace:*",
     "@rfjs/data-filter": "workspace:*",

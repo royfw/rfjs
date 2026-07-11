@@ -123,6 +123,16 @@ describe("TableBuilderTool", () => {
     // static rows mode carries no request protocol
     expect(pre.textContent).not.toContain('"request"');
   });
+
+  it('fetcher mode: filter section is enabled and offers an Apply button', async () => {
+    renderTool();
+    fireEvent.click(screen.getByRole('button', { name: 'Fake fetcher' }));
+
+    const toggle = await screen.findByRole('button', { name: /filter/i });
+    await waitFor(() => expect((toggle as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(toggle);
+    expect(await screen.findByRole('button', { name: 'Apply' })).toBeTruthy();
+  });
 });
 
 describe("TableBuilderTool AI panel", () => {

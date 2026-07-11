@@ -3,6 +3,9 @@
 import * as React from 'react';
 import { Loader2 } from 'lucide-react';
 import { resolveLabel, type LocalizedLabel } from '@rfjs/form-builder';
+import { deriveTableConfig, type TableConfig } from '@rfjs/table-builder';
+import { inferFieldsFromRows } from '@rfjs/data-schema';
+import { ConfigTable } from '@rfjs/table-builder-ui';
 
 export type ResultViewState = 'empty' | 'loading' | 'error' | 'ready';
 
@@ -11,6 +14,7 @@ export interface ResultViewProps {
   state: ResultViewState;
   value?: unknown;
   maxItems?: number;
+  table?: TableConfig;
   emptyText?: LocalizedLabel;
   locale?: string;
 }
@@ -41,8 +45,17 @@ function KvCard({ value }: { value: unknown }) {
 
 const stateBox = 'flex min-h-24 items-center justify-center gap-2 rounded-md border border-dashed border-input bg-muted/20 text-sm text-muted-foreground';
 
+function ResultTable({ rows, table, locale }: { rows: Record<string, unknown>[]; table?: TableConfig; locale: string }) {
+  const config = React.useMemo(
+    () => table ?? deriveTableConfig({ fields: inferFieldsFromRows(rows) }),
+    [table, rows],
+  );
+  const source = React.useMemo(() => ({ kind: 'rows' as const, rows }), [rows]);
+  return <ConfigTable config={config} source={source} locale={locale} />;
+}
+
 /** api 回應的純展示元件 —— card 刻意零配置(僅 maxItems);欄位級控制屬 table 模式(table-builder)。 */
-export function ResultView({ mode, state, value, maxItems, emptyText, locale = 'en' }: ResultViewProps) {
+export function ResultView({ mode, state, value, maxItems, table, emptyText, locale = 'en' }: ResultViewProps) {
   if (state === 'empty') {
     return <div className={stateBox}>{emptyText ? resolveLabel(emptyText, locale) : 'No result yet'}</div>;
   }
@@ -66,12 +79,11 @@ export function ResultView({ mode, state, value, maxItems, emptyText, locale = '
   }
 
   if (mode === 'table') {
-    return (
-      <div className={`${stateBox} flex-col gap-1`}>
-        <span className="font-medium text-foreground/70">Table view</span>
-        <span className="text-xs">pending @rfjs/table-builder</span>
-      </div>
-    );
+    const rows = Array.isArray(value) ? (value as Record<string, unknown>[]) : null;
+    if (!rows || rows.length === 0 || !rows.every((r) => r !== null && typeof r === 'object' && !Array.isArray(r))) {
+      return <div className={stateBox}>{emptyText ? resolveLabel(emptyText, locale) : 'No result yet'}</div>;
+    }
+    return <ResultTable rows={rows} table={table} locale={locale} />;
   }
 
   // mode === 'card'

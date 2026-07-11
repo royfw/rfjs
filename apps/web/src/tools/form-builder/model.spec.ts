@@ -212,4 +212,21 @@ describe('result cards', () => {
     const item = cardsToFormConfig(groups, cards).sections![0]!.rows[0]!.items[0]!;
     expect(item).toMatchObject({ kind: 'result', mode: 'json' });
   });
+
+  it('round-trips a table-mode result item with a TableConfig', () => {
+    const table = {
+      columns: [{ key: 'name', label: 'Name', dataType: 'string' as const }],
+      pagination: { pageSize: 10 },
+    };
+    const groups = [{ id: 'g1', title: 'G', collapsed: false }];
+    const cards = [
+      { id: 'res', groupId: 'g1', kind: 'result' as const, label: 'Result', mode: 'table' as const,
+        resultTable: table, col: 1, span: 6, row: 1 },
+    ];
+    const config = cardsToFormConfig(groups, cards);
+    const back = formConfigToCards(config);
+    const res = back.cards.find((c) => c.id === 'res');
+    expect(res?.mode).toBe('table');
+    expect(res?.resultTable).toEqual(table);
+  });
 });
