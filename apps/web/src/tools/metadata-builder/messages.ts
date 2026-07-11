@@ -85,6 +85,9 @@ export const messages: LocaleMessages = {
       mbShowAll: "show all",
       mbCollapseLabel: "collapse",
       mbViewingField: "viewing selected field",
+      mbAiPlaceholder: "Describe a resource or ask a question…",
+      mbAiGenerate: "Generate meta",
+      mbAiApplied: "Applied ({count} fields)",
 
       mbTreeAnd: "AND",
       mbTreeOr: "OR",
@@ -100,13 +103,13 @@ export const messages: LocaleMessages = {
   "zh-TW": {
     Tools: {
       "metadata-builder": {
-        title: "資源綱要設計器",
+        title: "Metadata 建構器",
         description:
           "authoring 資料資源的 metadata —— 欄位 kind、enum 值域與請求/回應協定,匯出 meta.json 供任何消費者使用。",
       },
     },
     ToolUI: {
-      mbEyebrow: "資源綱要設計器",
+      mbEyebrow: "Metadata 建構器",
       mbTabFields: "欄位",
       mbTabProtocol: "協定",
       mbTabImport: "匯入",
@@ -176,6 +179,9 @@ export const messages: LocaleMessages = {
       mbShowAll: "顯示整份",
       mbCollapseLabel: "收合",
       mbViewingField: "檢視選中欄位",
+      mbAiPlaceholder: "描述資源或提出問題…",
+      mbAiGenerate: "產生宣告",
+      mbAiApplied: "已套用({count} 個欄位)",
 
       mbTreeAnd: "且",
       mbTreeOr: "或",

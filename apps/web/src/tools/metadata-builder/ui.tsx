@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { parseDataResourceMeta } from "@rfjs/data-schema";
 import type { DataFieldMeta, DataResourceMeta } from "@rfjs/data-schema";
@@ -11,6 +11,9 @@ import { FieldsPanel, type FieldsPanelLabels } from "./fields-panel";
 import { ProtocolPanel, type ProtocolPanelLabels } from "./protocol-panel";
 import { ImportPanel, type ImportPanelLabels } from "./import-panel";
 import { CodePanel, type CodePanelLabels, type CodePanelTab } from "./code-panel";
+import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
+import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
+import { buildMetaAskPrompt, buildNlMetaPrompt, parseNlMetaResponse } from "./ai-nl-meta";
 
 const STORAGE_KEY = "rfjs.metadata-builder.meta";
 const CODE_OPEN_KEY = "rfjs.metadata-builder.code-open";
@@ -26,6 +29,9 @@ type Tab = "fields" | "protocol" | "import";
 // narrows the code panel while the Fields tab is active.
 export function MetadataBuilderTool() {
   const t = useTranslations("ToolUI");
+  const locale = useLocale();
+  const ai = useAiAssist();
+  const aiLabels = useAiPanelLabels();
   const [meta, setMeta] = React.useState<DataResourceMeta>(DEFAULT_META);
   const [tab, setTab] = React.useState<Tab>("fields");
   const [rows, setRows] = React.useState<FieldRow[]>(() => metaToRows(DEFAULT_META.fields, () => crypto.randomUUID()));
@@ -81,6 +87,14 @@ export function MetadataBuilderTool() {
     setRows(metaToRows(nextMeta.fields, () => crypto.randomUUID()));
     setTab("fields");
     setSelectedId(null);
+  }
+
+  function applyGeneratedMeta(json: string) {
+    try {
+      handleImportMeta(parseDataResourceMeta(JSON.parse(json)));
+    } catch {
+      // stale/foreign log entry — leave the current meta untouched
+    }
   }
 
   function handleImportFields(fields: DataFieldMeta[]) {
@@ -217,6 +231,51 @@ export function MetadataBuilderTool() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t("mbEyebrow")}</p>
+
+      <AiPanel
+        title={t("aiBlockTitle")}
+        placeholder={t("mbAiPlaceholder")}
+        logKey="rfjs.ai.log.metadata-builder"
+        ai={ai}
+        labels={aiLabels}
+        onReapply={(e) => applyGeneratedMeta(e.appliedJson ?? "")}
+        appliedSummary={(e) => {
+          let n = 0;
+          try {
+            const parsed = JSON.parse(e.appliedJson ?? "") as { fields?: unknown[] };
+            n = Array.isArray(parsed.fields) ? parsed.fields.length : 0;
+          } catch {
+            n = 0;
+          }
+          return t("mbAiApplied", { count: n });
+        }}
+        actions={[
+          {
+            key: "generate",
+            label: t("mbAiGenerate"),
+            needsInput: true,
+            primary: true,
+            run: async (input) => {
+              const out = await ai.run({ ...buildNlMetaPrompt(input, meta), json: true }, parseNlMetaResponse);
+              if (out === null) return null;
+              applyGeneratedMeta(out);
+              return { kind: "generate", prompt: input, appliedJson: out };
+            },
+          },
+          {
+            key: "ask",
+            label: t("aiAsk"),
+            needsInput: true,
+            run: async (input) => {
+              const out = await ai.runStream(
+                buildMetaAskPrompt({ metaJson: JSON.stringify(meta, null, 2), locale }, input),
+                (raw) => raw.trim(),
+              );
+              return out === null ? null : { kind: "ask", prompt: input, answer: out };
+            },
+          },
+        ]}
+      />
 
       {/* 一塊一塊的縱向節奏(比照 form-builder):Editor 區塊卡在上、code panel 區塊卡在下,
           兩塊同語言 —— 頁籤都做在卡片標題列(soft 底、active 金色底線)。 */}

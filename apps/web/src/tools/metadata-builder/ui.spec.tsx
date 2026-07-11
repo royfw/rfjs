@@ -1,19 +1,41 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "./messages";
+
+const mockRun = vi.fn();
+const mockCancel = vi.fn();
+
+vi.mock("@rfjs/ai-assist-ui", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@rfjs/ai-assist-ui")>()),
+  useAiAssist: () => ({
+    ready: true,
+    loading: false,
+    error: null,
+    cancel: mockCancel,
+    run: mockRun,
+    runStream: mockRun,
+    streamText: "",
+    streamReasoning: "",
+  }),
+}));
+
 import { MetadataBuilderTool } from "./ui";
+import { assembleMessages } from "@/i18n/messages";
 
 function renderTool() {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages.en as Record<string, unknown>}>
+    <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
       <MetadataBuilderTool />
     </NextIntlClientProvider>,
   );
 }
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  mockRun.mockReset();
+});
 
 describe("messages parity", () => {
   // 既有 i18n 閘(src/i18n/messages.spec.ts)只保護中央目錄;工具片段的 en/zh-TW 不對稱沒人抓 —— 自己守。
@@ -122,5 +144,38 @@ describe("studio layout", () => {
     expect(screen.getByTestId("meta-json")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Import" }));
     expect(screen.getByTestId("meta-json")).toBeTruthy();
+  });
+});
+
+describe("MetadataBuilderTool AI panel", () => {
+  it("generate applies the returned meta through the import path and lands on Fields", async () => {
+    const generated = { fields: [{ key: "order", label: "Order", dataType: "string" }] };
+    mockRun.mockResolvedValue(JSON.stringify(generated, null, 2));
+    renderTool();
+
+    // 先切去 Protocol,證明 generate 會帶回 Fields 頁籤(import 語義)
+    fireEvent.click(screen.getByRole("button", { name: "Protocol" }));
+
+    fireEvent.change(screen.getByPlaceholderText("Describe a resource or ask a question…"), {
+      target: { value: "an order resource" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate meta" }));
+
+    // 整份取代:新欄位出現在清單、舊 request 不在預覽 JSON、回到 Fields 頁籤
+    expect(await screen.findByRole("option", { name: /order/ })).toBeTruthy();
+    expect(screen.getByTestId("meta-json").textContent).not.toContain('"request"');
+    await screen.findByText("Applied (1 fields)");
+  });
+
+  it("ask records a plain answer entry", async () => {
+    mockRun.mockResolvedValue("It declares a single product resource.");
+    renderTool();
+
+    fireEvent.change(screen.getByPlaceholderText("Describe a resource or ask a question…"), {
+      target: { value: "what is this?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+
+    await screen.findByText("It declares a single product resource.");
   });
 });
