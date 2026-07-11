@@ -46,6 +46,7 @@ export function FieldsPanel({
   }
 
   function removeField(id: string) {
+    setOpenOptions((o) => (o === id ? null : o));
     onChange(rows.filter((r) => r.id !== id));
   }
 
@@ -216,21 +217,21 @@ export function FieldsPanel({
                               value={o.value}
                               onChange={(e) => patchOption(r, o.id, { value: e.target.value })}
                               className={`${inputClass} w-24 font-mono`}
-                              aria-label={labels.key}
+                              aria-label={`${labels.options} ${r.key} value`}
                             />
                             <input
                               type="text"
                               value={o.labelEn}
                               onChange={(e) => patchOption(r, o.id, { labelEn: e.target.value })}
                               className={`${inputClass} w-24`}
-                              aria-label={labels.labelEn}
+                              aria-label={`${labels.options} ${r.key} ${labels.labelEn}`}
                             />
                             <input
                               type="text"
                               value={o.labelZh}
                               onChange={(e) => patchOption(r, o.id, { labelZh: e.target.value })}
                               className={`${inputClass} w-24`}
-                              aria-label={labels.labelZh}
+                              aria-label={`${labels.options} ${r.key} ${labels.labelZh}`}
                             />
                             <button
                               type="button"
