@@ -10,9 +10,9 @@ export interface SourcePanelLabels {
   title: string;
   rows: string;
   fetcher: string;
-  offset: string;
-  page: string;
-  cursor: string;
+  transport: string;
+  transportMemory: string;
+  transportHttp: string;
 }
 
 export interface SourcePanelImportLabels {
@@ -34,11 +34,6 @@ export interface SourcePanelProps {
   transport?: "memory" | "http";
   onTransportChange?: (t: "memory" | "http") => void;
 }
-
-// Fetcher strategies shown once 'rows' is switched off (design spec §6.1: "靜態 rows ↔ 假
-// fetcher 切換;fetcher 模式再切 offset / page / cursor"). Clicking "fetcher" from 'rows' always
-// lands on 'offset' -- the strategy row below then lets the user pick a different one.
-const REMOTE_MODES: Exclude<SourceMode, "rows">[] = ["offset", "page", "cursor"];
 
 function segmentClass(active: boolean): string {
   return [
@@ -101,36 +96,22 @@ export function SourcePanel({
           <button type="button" className={segmentClass(!isRemote)} onClick={() => onModeChange("rows")}>
             {labels.rows}
           </button>
-          <button type="button" className={segmentClass(isRemote)} onClick={() => onModeChange("offset")}>
+          <button type="button" className={segmentClass(isRemote)} onClick={() => onModeChange("remote")}>
             {labels.fetcher}
           </button>
         </div>
-        {isRemote ? (
-          <div className="flex gap-1">
-            {REMOTE_MODES.map((strategy) => (
-              <button
-                key={strategy}
-                type="button"
-                className={segmentClass(mode === strategy)}
-                onClick={() => onModeChange(strategy)}
-              >
-                {labels[strategy]}
-              </button>
-            ))}
-          </div>
-        ) : null}
         {isRemote && onTransportChange && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Transport</span>
+            <span className="text-xs text-muted-foreground">{labels.transport}</span>
             <button
               type="button"
               className={segmentClass(transport === "memory")}
               onClick={() => onTransportChange("memory")}
             >
-              in-memory
+              {labels.transportMemory}
             </button>
             <button type="button" className={segmentClass(transport === "http")} onClick={() => onTransportChange("http")}>
-              HTTP
+              {labels.transportHttp}
             </button>
           </div>
         )}
