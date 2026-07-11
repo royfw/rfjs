@@ -237,7 +237,8 @@ export function MetadataBuilderTool() {
           codeOpen ? "lg:grid-cols-[minmax(320px,1fr)_minmax(380px,1fr)]" : "lg:grid-cols-[1fr_2.5rem]"
         }`}
       >
-        <div>
+        {/* min-w-0:grid 軌道內的寬內容(不換行的條件列/長 JSON)否則會撐爆軌道溢出框線 */}
+        <div className="min-w-0">
           {tab === "fields" && (
             <FieldsPanel
               rows={rows}
@@ -252,7 +253,7 @@ export function MetadataBuilderTool() {
           )}
           {tab === "import" && <ImportPanel onMeta={handleImportMeta} onFields={handleImportFields} labels={importLabels} />}
         </div>
-        <div>
+        <div className="min-w-0">
           {codeOpen ? (
             <CodePanel
               meta={meta}

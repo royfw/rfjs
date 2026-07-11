@@ -242,14 +242,18 @@ export function CodePanel({
           (schema.length === 0 ? (
             <p className="text-xs text-muted-foreground">{labels.emptySchema}</p>
           ) : (
-            <FilterTreeEditor
-              group={tree}
-              engineId="pg-filter"
-              schema={schema}
-              onChange={setTree}
-              onCreateField={() => {}}
-              labels={treeLabels}
-            />
+            /* FilterTreeEditor 的條件列有固定寬度且不換行(紅線套件,容器端圍堵):
+               橫向捲動取代爆框。 */
+            <div className="overflow-x-auto">
+              <FilterTreeEditor
+                group={tree}
+                engineId="pg-filter"
+                schema={schema}
+                onChange={setTree}
+                onCreateField={() => {}}
+                labels={treeLabels}
+              />
+            </div>
           ))}
       </div>
     </div>
