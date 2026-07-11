@@ -1,6 +1,6 @@
 import { MarkerType, type Node as RFNode, type Edge as RFEdge } from "@xyflow/react";
 
-import type { FlowDoc, FlowNodeType } from "./schema";
+import type { FlowDoc, FlowNodeType } from "@rfjs/flow-core";
 
 export interface FlowNodeData {
   type: FlowNodeType;
