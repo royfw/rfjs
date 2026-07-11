@@ -1,7 +1,7 @@
 import type { LocaleMessages } from "@/tools/types";
 
 // `mb`-prefixed ToolUI keys map 1:1 onto the FieldsPanelLabels / ProtocolPanelLabels /
-// ImportPanelLabels / DerivedPreviewLabels / FilterTreeLabels props each building block
+// ImportPanelLabels / CodePanelLabels / FilterTreeLabels props each building block
 // (Tasks 2–5) already exercises with its own string-literal fixtures — the en values below
 // match those fixtures verbatim so ui.spec.tsx's fireEvent lookups (by role/name/placeholder)
 // keep working once the panels are wired through t().
@@ -19,7 +19,6 @@ export const messages: LocaleMessages = {
       mbTabFields: "Fields",
       mbTabProtocol: "Protocol",
       mbTabImport: "Import",
-      mbPreviewTitle: "Derived artifacts",
 
       mbKey: "key",
       mbLabelEn: "Label (en)",
@@ -37,6 +36,9 @@ export const messages: LocaleMessages = {
       mbRemove: "remove",
       mbDupKey: "duplicate key",
       mbBlankKey: "key required",
+      mbInspectorTitle: "INSPECTOR",
+      mbInspectorEmpty: "select or add a field",
+      mbFieldSummary: "{n} fields · {f} filterable",
 
       mbProtoEnabled: "declare protocol",
       mbEndpoint: "endpoint",
@@ -70,7 +72,7 @@ export const messages: LocaleMessages = {
       mbInvalidJson: "Invalid JSON.",
       mbImportHint: "meta.json is validated with parseDataResourceMeta; sample rows seed fields via inferFieldsFromRows — declare kind and enum options by hand afterwards.",
 
-      mbMetaTitle: "meta",
+      mbMetaTitle: "meta.json",
       mbSchemaTitle: "schema",
       mbTryTitle: "try filter",
       mbEmptySchema: "declare a field as filterable and pick its kind (column/jsonb) to try filtering here",
@@ -78,6 +80,11 @@ export const messages: LocaleMessages = {
       mbCopied: "Copied",
       mbDownload: "Download meta.json",
       mbReset: "Reset",
+      mbCollapse: "collapse code panel",
+      mbExpand: "expand code panel",
+      mbShowAll: "show all",
+      mbCollapseLabel: "collapse",
+      mbViewingField: "viewing selected field",
 
       mbTreeAnd: "AND",
       mbTreeOr: "OR",
@@ -103,7 +110,6 @@ export const messages: LocaleMessages = {
       mbTabFields: "欄位",
       mbTabProtocol: "協定",
       mbTabImport: "匯入",
-      mbPreviewTitle: "衍生產物",
 
       mbKey: "鍵值",
       mbLabelEn: "標籤(en)",
@@ -121,6 +127,9 @@ export const messages: LocaleMessages = {
       mbRemove: "移除",
       mbDupKey: "鍵值重複",
       mbBlankKey: "鍵值必填",
+      mbInspectorTitle: "檢視器",
+      mbInspectorEmpty: "選擇或新增一個欄位",
+      mbFieldSummary: "{n} 欄 · {f} 可篩",
 
       mbProtoEnabled: "宣告協定",
       mbEndpoint: "端點",
@@ -154,7 +163,7 @@ export const messages: LocaleMessages = {
       mbInvalidJson: "JSON 格式錯誤。",
       mbImportHint: "meta.json 會經 parseDataResourceMeta 驗證;樣本 rows 以 inferFieldsFromRows 產生欄位,之後再手動補 kind 與 enum options。",
 
-      mbMetaTitle: "meta",
+      mbMetaTitle: "meta.json",
       mbSchemaTitle: "schema",
       mbTryTitle: "試篩",
       mbEmptySchema: "宣告 filterable 且指定 kind(column/jsonb)的欄位後,可在此試篩。",
@@ -162,6 +171,11 @@ export const messages: LocaleMessages = {
       mbCopied: "已複製",
       mbDownload: "下載 meta.json",
       mbReset: "重設",
+      mbCollapse: "收合程式碼面板",
+      mbExpand: "展開程式碼面板",
+      mbShowAll: "顯示整份",
+      mbCollapseLabel: "收合",
+      mbViewingField: "檢視選中欄位",
 
       mbTreeAnd: "且",
       mbTreeOr: "或",

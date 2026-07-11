@@ -38,7 +38,8 @@ describe("MetadataBuilderTool", () => {
   it("editing a field key reflects into the preview json", () => {
     renderTool();
 
-    fireEvent.change(screen.getByDisplayValue("price"), { target: { value: "cost" } });
+    fireEvent.click(screen.getByRole("option", { name: /price/ }));
+    fireEvent.change(screen.getByLabelText("key"), { target: { value: "cost" } });
 
     expect(screen.getByTestId("meta-json").textContent).toContain('"key": "cost"');
     // 注意用完整 "key": 前綴 —— label 仍是 "Price"(大寫),裸 "price" 斷言只靠大小寫僥倖通過
@@ -76,7 +77,8 @@ describe("MetadataBuilderTool", () => {
 
   it("persists edits to localStorage and restores them on remount", () => {
     const { unmount } = renderTool();
-    fireEvent.change(screen.getByDisplayValue("price"), { target: { value: "cost" } });
+    fireEvent.click(screen.getByRole("option", { name: /price/ }));
+    fireEvent.change(screen.getByLabelText("key"), { target: { value: "cost" } });
     unmount();
 
     renderTool();
@@ -87,5 +89,38 @@ describe("MetadataBuilderTool", () => {
     localStorage.setItem("rfjs.metadata-builder.meta", "{broken");
     renderTool();
     expect(screen.getByTestId("meta-json").textContent).toContain('"price"');
+  });
+});
+
+describe("studio layout", () => {
+  it("selecting a field switches the code panel to fragment mode; deselect via remove shows full json", () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("option", { name: /price/ }));
+    expect(screen.getByTestId("meta-json").textContent).not.toContain('"request"'); // 片段模式
+    expect(screen.getByTestId("meta-json").textContent).toContain('"key": "price"');
+
+    fireEvent.click(screen.getByRole("button", { name: "show all" }));
+    expect(screen.getByTestId("meta-json").textContent).toContain('"request"');
+  });
+
+  it("collapse hides the code panel and persists; expand restores it", () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("button", { name: "collapse code panel" }));
+    expect(screen.queryByTestId("meta-json")).toBeNull();
+    expect(localStorage.getItem("rfjs.metadata-builder.code-open")).toBe("0");
+
+    fireEvent.click(screen.getByRole("button", { name: "expand code panel" }));
+    expect(screen.getByTestId("meta-json")).toBeTruthy();
+    expect(localStorage.getItem("rfjs.metadata-builder.code-open")).toBe("1");
+  });
+
+  it("the code panel stays mounted across editor tabs", () => {
+    renderTool();
+    fireEvent.click(screen.getByRole("button", { name: "Protocol" }));
+    expect(screen.getByTestId("meta-json")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
+    expect(screen.getByTestId("meta-json")).toBeTruthy();
   });
 });
