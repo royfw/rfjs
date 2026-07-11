@@ -58,9 +58,12 @@ export function FieldsPanel({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <FieldList rows={rows} selectedId={selectedId} onSelect={onSelect} onRemove={removeField} onAdd={addField} dupKeys={dupKeys} labels={labels} />
-      <div className="border-t border-dashed border-input pt-3">
+    // 欄位清單|檢視器 並排(lg;窄幅直疊)—— 選中後不需往下捲,檢視器就在旁邊。
+    <div className="grid gap-4 lg:grid-cols-[minmax(300px,5fr)_minmax(280px,4fr)]">
+      <div className="min-w-0">
+        <FieldList rows={rows} selectedId={selectedId} onSelect={onSelect} onRemove={removeField} onAdd={addField} dupKeys={dupKeys} labels={labels} />
+      </div>
+      <div className="min-w-0 rounded-md border border-dashed border-input p-3 lg:self-start">
         <FieldInspector row={selected} onPatch={patch} onPatchDataType={patchDataType} labels={labels} />
       </div>
     </div>

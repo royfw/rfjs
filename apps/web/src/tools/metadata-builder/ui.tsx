@@ -234,50 +234,45 @@ export function MetadataBuilderTool() {
         ))}
       </div>
 
-      <div
-        className={`grid gap-4 ${
-          codeOpen ? "lg:grid-cols-[minmax(320px,1fr)_minmax(380px,1fr)]" : "lg:grid-cols-[1fr_2.5rem]"
-        }`}
-      >
-        {/* min-w-0:grid 軌道內的寬內容(不換行的條件列/長 JSON)否則會撐爆軌道溢出框線 */}
-        <div className="min-w-0">
-          {tab === "fields" && (
-            <FieldsPanel
-              rows={rows}
-              onChange={handleFieldsChange}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              labels={{ ...fieldsLabels, fieldSummary }}
-            />
-          )}
-          {tab === "protocol" && (
-            <ProtocolPanel request={meta.request} response={meta.response} onChange={handleProtocolChange} labels={protocolLabels} />
-          )}
-          {tab === "import" && <ImportPanel onMeta={handleImportMeta} onFields={handleImportFields} labels={importLabels} />}
-        </div>
-        <div className="min-w-0">
-          {codeOpen ? (
-            <CodePanel
-              meta={meta}
-              selectedFieldKey={tab === "fields" ? selectedFieldKey : null}
-              tab={codeTab}
-              onTabChange={setCodeTab}
-              onReset={reset}
-              onCollapse={() => toggleCode(false)}
-              labels={codeLabels}
-              treeLabels={treeLabels}
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => toggleCode(true)}
-              aria-label={t("mbExpand")}
-              className="flex h-full min-h-10 w-full items-center justify-center gap-2 rounded-md border border-dashed border-input text-xs text-muted-foreground hover:text-foreground lg:w-10 lg:flex-col"
-            >
-              <span className="lg:rotate-90 lg:whitespace-nowrap">{codeTabLabel}</span>
-            </button>
-          )}
-        </div>
+      {/* 一塊一塊的縱向節奏(比照 form-builder):編輯區全寬在上,產物 code panel 全寬在下。 */}
+      <div className="min-w-0">
+        {tab === "fields" && (
+          <FieldsPanel
+            rows={rows}
+            onChange={handleFieldsChange}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            labels={{ ...fieldsLabels, fieldSummary }}
+          />
+        )}
+        {tab === "protocol" && (
+          <ProtocolPanel request={meta.request} response={meta.response} onChange={handleProtocolChange} labels={protocolLabels} />
+        )}
+        {tab === "import" && <ImportPanel onMeta={handleImportMeta} onFields={handleImportFields} labels={importLabels} />}
+      </div>
+
+      <div className="min-w-0">
+        {codeOpen ? (
+          <CodePanel
+            meta={meta}
+            selectedFieldKey={tab === "fields" ? selectedFieldKey : null}
+            tab={codeTab}
+            onTabChange={setCodeTab}
+            onReset={reset}
+            onCollapse={() => toggleCode(false)}
+            labels={codeLabels}
+            treeLabels={treeLabels}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => toggleCode(true)}
+            aria-label={t("mbExpand")}
+            className="flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-dashed border-input text-xs text-muted-foreground hover:text-foreground"
+          >
+            {codeTabLabel}
+          </button>
+        )}
       </div>
     </div>
   );
