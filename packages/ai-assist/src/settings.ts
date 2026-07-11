@@ -1,7 +1,7 @@
-import type { AiSettings } from "./types";
-import { type AiStorage, createBrowserStorage } from "./storage";
+import type { AiSettings } from './types';
+import { type AiStorage, createBrowserStorage } from './storage';
 
-export const AI_SETTINGS_KEY = "rfjs.ai.settings";
+export const AI_SETTINGS_KEY = 'rfjs.ai.settings';
 
 export function loadAiSettings(
   storage: AiStorage = createBrowserStorage(),
@@ -11,9 +11,9 @@ export function loadAiSettings(
   try {
     const v = JSON.parse(raw) as Partial<AiSettings>;
     if (
-      typeof v.baseUrl === "string" &&
-      typeof v.apiKey === "string" &&
-      typeof v.model === "string"
+      typeof v.baseUrl === 'string' &&
+      typeof v.apiKey === 'string' &&
+      typeof v.model === 'string'
     ) {
       return { baseUrl: v.baseUrl, apiKey: v.apiKey, model: v.model };
     }
@@ -30,18 +30,13 @@ export function saveAiSettings(
   storage.set(AI_SETTINGS_KEY, JSON.stringify(s));
 }
 
-export function clearAiSettings(
-  storage: AiStorage = createBrowserStorage(),
-): void {
+export function clearAiSettings(storage: AiStorage = createBrowserStorage()): void {
   storage.remove(AI_SETTINGS_KEY);
 }
 
 export function isConfigured(s: AiSettings | null): s is AiSettings {
   return (
-    !!s &&
-    s.baseUrl.trim() !== "" &&
-    s.apiKey.trim() !== "" &&
-    s.model.trim() !== ""
+    !!s && s.baseUrl.trim() !== '' && s.apiKey.trim() !== '' && s.model.trim() !== ''
   );
 }
 

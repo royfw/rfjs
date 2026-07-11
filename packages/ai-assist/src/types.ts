@@ -5,7 +5,7 @@ export interface AiSettings {
   model: string;
 }
 
-export type AiErrorKind = "config" | "http" | "timeout" | "abort" | "parse";
+export type AiErrorKind = 'config' | 'http' | 'timeout' | 'abort' | 'parse';
 
 export class AiError extends Error {
   constructor(
@@ -18,7 +18,7 @@ export class AiError extends Error {
     public readonly retryAfterMs?: number,
   ) {
     super(message);
-    this.name = "AiError";
+    this.name = 'AiError';
   }
 }
 
@@ -42,8 +42,5 @@ export interface StreamDelta {
 export interface AiClient {
   complete(req: CompleteRequest): Promise<string>;
   /** SSE 串流；每個增量呼叫 onDelta，回傳累積的完整 content（與 complete 等價）。 */
-  stream(
-    req: CompleteRequest,
-    onDelta: (d: StreamDelta) => void,
-  ): Promise<string>;
+  stream(req: CompleteRequest, onDelta: (d: StreamDelta) => void): Promise<string>;
 }

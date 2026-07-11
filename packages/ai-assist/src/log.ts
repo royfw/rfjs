@@ -1,9 +1,9 @@
-import { type AiStorage, createBrowserStorage } from "./storage";
+import { type AiStorage, createBrowserStorage } from './storage';
 
 /** AI 互動紀錄的持久化接口 —— 重新套用 / 聊天歷史共用；後端可換。 */
 export interface AiAssistEntry {
   id: string;
-  kind: "generate" | "ask" | "explain" | "check";
+  kind: 'generate' | 'ask' | 'explain' | 'check';
   prompt?: string;
   answer?: string;
   appliedJson?: string;
@@ -18,22 +18,22 @@ export interface AiLogStore {
   clear(): void;
 }
 
-const KINDS = new Set(["generate", "ask", "explain", "check"]);
+const KINDS = new Set(['generate', 'ask', 'explain', 'check']);
 
 function isEntry(v: unknown): v is AiAssistEntry {
-  if (typeof v !== "object" || v === null) return false;
+  if (typeof v !== 'object' || v === null) return false;
   const e = v as Partial<AiAssistEntry>;
   return (
-    typeof e.id === "string" &&
-    typeof e.kind === "string" &&
+    typeof e.id === 'string' &&
+    typeof e.kind === 'string' &&
     KINDS.has(e.kind) &&
-    typeof e.at === "string"
+    typeof e.at === 'string'
   );
 }
 
 /** 只保留 string 的選填欄位——防止被竄改的紀錄（如 appliedJson 為數字）流入重新套用 / 畫面。 */
 function normalize(e: AiAssistEntry): AiAssistEntry {
-  const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+  const str = (v: unknown) => (typeof v === 'string' ? v : undefined);
   return {
     id: e.id,
     kind: e.kind,
