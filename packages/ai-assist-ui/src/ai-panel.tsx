@@ -1,18 +1,30 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, ChevronRight, ClipboardCheck, FileText, HelpCircle, Sparkles, Zap } from "lucide-react";
-import { useTranslations } from "next-intl";
+import {
+  ChevronDown,
+  ChevronRight,
+  ClipboardCheck,
+  FileText,
+  HelpCircle,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 
 import { Button } from "@rfjs/web-ui/components/button";
 import { Textarea } from "@rfjs/web-ui/components/textarea";
 
-import type { useAiAssist } from "@/lib/ai/use-ai-assist";
-import { createAiLog, type AiAssistEntry } from "@/lib/ai/log";
+import { createAiLog, type AiAssistEntry } from "@rfjs/ai-assist";
+import { useAiAssist } from "./use-ai-assist";
 
 export const AI_BLOCK_OPEN_KEY = "rfjs.ai.block.open";
 
-const KIND_ICON = { generate: Zap, ask: HelpCircle, explain: FileText, check: ClipboardCheck } as const;
+const KIND_ICON = {
+  generate: Zap,
+  ask: HelpCircle,
+  explain: FileText,
+  check: ClipboardCheck,
+} as const;
 
 export interface AiPanelAction {
   key: string;
@@ -20,6 +32,21 @@ export interface AiPanelAction {
   needsInput?: boolean;
   primary?: boolean;
   run: (input: string) => Promise<Omit<AiAssistEntry, "id" | "at"> | null>;
+}
+
+export interface AiPanelLabels {
+  kindGenerate: string;
+  kindAsk: string;
+  kindExplain: string;
+  kindCheck: string;
+  cancel: string;
+  notConfigured: string;
+  viewRaw: string;
+  thinking: string;
+  answers: string;
+  advisory: string;
+  clear: string;
+  reapply: string;
 }
 
 export function AiPanel({
@@ -30,6 +57,7 @@ export function AiPanel({
   ai,
   onReapply,
   appliedSummary,
+  labels,
 }: {
   title: string;
   placeholder: string;
@@ -38,8 +66,8 @@ export function AiPanel({
   ai: ReturnType<typeof useAiAssist>;
   onReapply?: (entry: AiAssistEntry) => void;
   appliedSummary?: (entry: AiAssistEntry) => string;
+  labels: AiPanelLabels;
 }) {
-  const t = useTranslations("ToolUI");
   const [nl, setNl] = React.useState("");
   const log = React.useMemo(() => createAiLog(logKey), [logKey]);
   const [entries, setEntries] = React.useState<AiAssistEntry[]>([]);
@@ -62,7 +90,11 @@ export function AiPanel({
     if (action.needsInput && !nl.trim()) return;
     const partial = await action.run(nl);
     if (partial !== null) {
-      const entry: AiAssistEntry = { ...partial, id: crypto.randomUUID(), at: new Date().toISOString() };
+      const entry: AiAssistEntry = {
+        ...partial,
+        id: crypto.randomUUID(),
+        at: new Date().toISOString(),
+      };
       setEntries(log.append(entry));
       if (action.needsInput) setNl("");
     }
@@ -71,10 +103,10 @@ export function AiPanel({
   const enterAction = actions.find((a) => a.needsInput);
   const busyOrOff = !ai.ready || ai.loading;
   const kindLabel: Record<string, string> = {
-    generate: t("aiKindGenerate"),
-    ask: t("aiKindAsk"),
-    explain: t("aiKindExplain"),
-    check: t("aiKindCheck"),
+    generate: labels.kindGenerate,
+    ask: labels.kindAsk,
+    explain: labels.kindExplain,
+    check: labels.kindCheck,
   };
 
   const renderAction = (a: AiPanelAction) => (
@@ -96,9 +128,15 @@ export function AiPanel({
         aria-expanded={open}
         className="flex items-center gap-2 px-5 py-3 text-muted-foreground transition-colors hover:text-foreground"
       >
-        {open ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+        {open ? (
+          <ChevronDown className="size-4" />
+        ) : (
+          <ChevronRight className="size-4" />
+        )}
         <Sparkles className="size-4" />
-        <span className="font-mono text-xs uppercase tracking-wide">{title}</span>
+        <span className="font-mono text-xs uppercase tracking-wide">
+          {title}
+        </span>
       </button>
 
       {open ? (
@@ -112,7 +150,13 @@ export function AiPanel({
               onChange={(e) => setNl(e.target.value)}
               onKeyDown={(e) => {
                 // Enter=第一個 needsInput 動作;Shift+Enter 換行;IME/loading 防護。
-                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && !ai.loading && enterAction) {
+                if (
+                  e.key === "Enter" &&
+                  !e.shiftKey &&
+                  !e.nativeEvent.isComposing &&
+                  !ai.loading &&
+                  enterAction
+                ) {
                   e.preventDefault();
                   void exec(enterAction);
                 }
@@ -123,19 +167,25 @@ export function AiPanel({
             {actions.map((a, i) => (
               <React.Fragment key={a.key}>
                 {renderAction(a)}
-                {a.needsInput && actions[i + 1] && !actions[i + 1]!.needsInput ? (
+                {a.needsInput &&
+                actions[i + 1] &&
+                !actions[i + 1]!.needsInput ? (
                   <span className="h-5 w-px bg-border" aria-hidden />
                 ) : null}
               </React.Fragment>
             ))}
             {ai.loading ? (
               <Button size="sm" variant="outline" onClick={ai.cancel}>
-                {t("aiCancel")}
+                {labels.cancel}
               </Button>
             ) : null}
           </div>
 
-          {!ai.ready ? <p className="text-xs text-muted-foreground">{t("aiNotConfigured")}</p> : null}
+          {!ai.ready ? (
+            <p className="text-xs text-muted-foreground">
+              {labels.notConfigured}
+            </p>
+          ) : null}
 
           {ai.error ? (
             <div role="alert" className="text-xs text-fault">
@@ -144,8 +194,10 @@ export function AiPanel({
               </p>
               {ai.error.kind === "parse" && ai.error.detail ? (
                 <details>
-                  <summary>{t("aiViewRaw")}</summary>
-                  <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs">{ai.error.detail}</pre>
+                  <summary>{labels.viewRaw}</summary>
+                  <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs">
+                    {ai.error.detail}
+                  </pre>
                 </details>
               ) : null}
             </div>
@@ -155,7 +207,9 @@ export function AiPanel({
             <div className="rounded-md border bg-card px-3 py-2 text-sm">
               {ai.streamReasoning ? (
                 <details open className="mb-1">
-                  <summary className="cursor-pointer text-xs text-muted-foreground">{t("aiThinking")}</summary>
+                  <summary className="cursor-pointer text-xs text-muted-foreground">
+                    {labels.thinking}
+                  </summary>
                   <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs text-muted-foreground">
                     {ai.streamReasoning}
                   </pre>
@@ -169,10 +223,10 @@ export function AiPanel({
             <div className="rounded-md border bg-card">
               <div className="flex items-baseline justify-between gap-3 border-b px-3 py-1.5">
                 <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {t("aiAnswers")}
+                  {labels.answers}
                 </span>
                 <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                  {t("aiAdvisory")}
+                  {labels.advisory}
                   <Button
                     size="xs"
                     variant="ghost"
@@ -181,15 +235,19 @@ export function AiPanel({
                       setEntries([]);
                     }}
                   >
-                    {t("aiClear")}
+                    {labels.clear}
                   </Button>
                 </span>
               </div>
               <ul className="flex max-h-64 flex-col overflow-y-auto">
                 {[...entries].reverse().map((e) => {
-                  const Icon = KIND_ICON[e.kind as keyof typeof KIND_ICON] ?? Sparkles;
+                  const Icon =
+                    KIND_ICON[e.kind as keyof typeof KIND_ICON] ?? Sparkles;
                   return (
-                    <li key={e.id} className="flex gap-2.5 border-b px-3 py-2 text-sm last:border-b-0">
+                    <li
+                      key={e.id}
+                      className="flex gap-2.5 border-b px-3 py-2 text-sm last:border-b-0"
+                    >
                       <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                       <div className="flex min-w-0 flex-col gap-0.5">
                         <span className="text-xs text-muted-foreground">
@@ -200,15 +258,23 @@ export function AiPanel({
                         </span>
                         {e.appliedJson && appliedSummary ? (
                           <span className="flex items-center gap-2">
-                            <span className="text-xs text-emerald-600 dark:text-emerald-400">{appliedSummary(e)}</span>
+                            <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                              {appliedSummary(e)}
+                            </span>
                             {onReapply ? (
-                              <Button size="xs" variant="outline" onClick={() => onReapply(e)}>
-                                {t("aiReapply")}
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                onClick={() => onReapply(e)}
+                              >
+                                {labels.reapply}
                               </Button>
                             ) : null}
                           </span>
                         ) : (
-                          <span className="whitespace-pre-wrap">{e.answer}</span>
+                          <span className="whitespace-pre-wrap">
+                            {e.answer}
+                          </span>
                         )}
                       </div>
                     </li>

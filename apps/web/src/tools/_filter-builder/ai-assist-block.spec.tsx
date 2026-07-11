@@ -11,18 +11,33 @@ let mockReady = true;
 let mockLoading = false;
 let mockError: { kind: string; message: string; detail?: string } | null = null;
 
-vi.mock("@/lib/ai/use-ai-assist", () => ({
-  useAiAssist: () => ({ ready: mockReady, loading: mockLoading, error: mockError, cancel: mockCancel, run: mockRun, runStream: mockRun, streamText: "", streamReasoning: "" }),
+vi.mock("@rfjs/ai-assist-ui", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@rfjs/ai-assist-ui")>()),
+  useAiAssist: () => ({
+    ready: mockReady,
+    loading: mockLoading,
+    error: mockError,
+    cancel: mockCancel,
+    run: mockRun,
+    runStream: mockRun,
+    streamText: "",
+    streamReasoning: "",
+  }),
 }));
 
 import { AiAssistBlock } from "./ai-assist-block";
 
-const SCHEMA: FieldSchema[] = [{ path: "age", dataType: "numeric", include: true, kind: "jsonb" }];
+const SCHEMA: FieldSchema[] = [
+  { path: "age", dataType: "numeric", include: true, kind: "jsonb" },
+];
 const LOG_KEY = "rfjs.ai.log.spec-tool";
 
 function renderBlock(onApply = vi.fn()) {
   render(
-    <NextIntlClientProvider locale="en" messages={en as Record<string, unknown>}>
+    <NextIntlClientProvider
+      locale="en"
+      messages={en as Record<string, unknown>}
+    >
       <AiAssistBlock
         schema={SCHEMA}
         canonicalJson='{"logic":"and","filters":[]}'
@@ -50,19 +65,25 @@ describe("AiAssistBlock — generate(既有行為遷移)", () => {
     const json = '{\n  "logic": "and",\n  "filters": []\n}';
     mockRun.mockResolvedValue(json);
     const onApply = renderBlock();
-    fireEvent.change(screen.getByPlaceholderText(/describe a filter/i), { target: { value: "active users" } });
+    fireEvent.change(screen.getByPlaceholderText(/describe a filter/i), {
+      target: { value: "active users" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /^generate$/i }));
     await waitFor(() => expect(onApply).toHaveBeenCalledWith(json));
     expect(screen.getByText(/applied \(0 conditions\)/i)).toBeTruthy();
     expect(JSON.parse(localStorage.getItem(LOG_KEY)!)).toHaveLength(1);
     // 產生 prompt 帶入目前樹(接續組合:「且…」描述會合併而非整棵重建)
-    expect(mockRun.mock.calls[0]![0].system).toContain('{"logic":"and","filters":[]}');
+    expect(mockRun.mock.calls[0]![0].system).toContain(
+      '{"logic":"and","filters":[]}',
+    );
   });
 
   it("失敗(run 回 null):onApply 不被呼叫、堆疊不變", async () => {
     mockRun.mockResolvedValue(null);
     const onApply = renderBlock();
-    fireEvent.change(screen.getByPlaceholderText(/describe a filter/i), { target: { value: "x" } });
+    fireEvent.change(screen.getByPlaceholderText(/describe a filter/i), {
+      target: { value: "x" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /^generate$/i }));
     await waitFor(() => expect(mockRun).toHaveBeenCalled());
     expect(onApply).not.toHaveBeenCalled();
@@ -74,7 +95,9 @@ describe("AiAssistBlock — ask / explain", () => {
   it("提問:堆疊出現問題+回答(display-only,不呼叫 onApply)", async () => {
     mockRun.mockResolvedValue("可以,條件會…");
     const onApply = renderBlock();
-    fireEvent.change(screen.getByPlaceholderText(/describe a filter/i), { target: { value: "能挑出活躍嗎?" } });
+    fireEvent.change(screen.getByPlaceholderText(/describe a filter/i), {
+      target: { value: "能挑出活躍嗎?" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /^ask$/i }));
     await waitFor(() => expect(screen.getByText("可以,條件會…")).toBeTruthy());
     expect(screen.getByText("能挑出活躍嗎?")).toBeTruthy();
@@ -86,8 +109,12 @@ describe("AiAssistBlock — ask / explain", () => {
   it("解釋:免輸入可按、堆疊出現回答", async () => {
     mockRun.mockResolvedValue("這組條件會選出…");
     renderBlock();
-    fireEvent.click(screen.getByRole("button", { name: /explain current filter/i }));
-    await waitFor(() => expect(screen.getByText("這組條件會選出…")).toBeTruthy());
+    fireEvent.click(
+      screen.getByRole("button", { name: /explain current filter/i }),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("這組條件會選出…")).toBeTruthy(),
+    );
   });
 });
 

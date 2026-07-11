@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockRun = vi.fn();
 const mockCancel = vi.fn();
 
-vi.mock("@/lib/ai/use-ai-assist", () => ({
+vi.mock("@rfjs/ai-assist-ui", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@rfjs/ai-assist-ui")>()),
   useAiAssist: () => ({
     ready: true,
     loading: false,
@@ -45,7 +46,9 @@ describe("TableBuilderTool", () => {
     renderTool();
 
     // 18 sample rows; select a page size of 10 so the assertion (page 1 of 2) is unambiguous.
-    const pageSizeSelect = screen.getByLabelText(/rows per page/i) as HTMLSelectElement;
+    const pageSizeSelect = screen.getByLabelText(
+      /rows per page/i,
+    ) as HTMLSelectElement;
     fireEvent.change(pageSizeSelect, { target: { value: "10" } });
 
     await screen.findByText(/Page 1 of 2/);
@@ -75,7 +78,9 @@ describe("TableBuilderTool", () => {
     renderTool();
 
     fireEvent.click(screen.getByRole("button", { name: "Pagination" }));
-    const pageSizeInput = screen.getByLabelText("Default page size") as HTMLInputElement;
+    const pageSizeInput = screen.getByLabelText(
+      "Default page size",
+    ) as HTMLInputElement;
     fireEvent.change(pageSizeInput, { target: { value: "3" } });
 
     const rows = screen.getAllByRole("row");
@@ -141,9 +146,12 @@ describe("TableBuilderTool AI panel", () => {
     mockRun.mockResolvedValue(JSON.stringify(generated, null, 2));
     renderTool();
 
-    fireEvent.change(screen.getByPlaceholderText("Describe a table change or ask a question…"), {
-      target: { value: "rename id" },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText("Describe a table change or ask a question…"),
+      {
+        target: { value: "rename id" },
+      },
+    );
     fireEvent.click(screen.getByRole("button", { name: "Generate config" }));
 
     // preview header reflects the applied config
@@ -156,9 +164,12 @@ describe("TableBuilderTool AI panel", () => {
     mockRun.mockResolvedValue("It lists products with prices.");
     renderTool();
 
-    fireEvent.change(screen.getByPlaceholderText("Describe a table change or ask a question…"), {
-      target: { value: "what does this table show?" },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText("Describe a table change or ask a question…"),
+      {
+        target: { value: "what does this table show?" },
+      },
+    );
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 
     await screen.findByText("It lists products with prices.");

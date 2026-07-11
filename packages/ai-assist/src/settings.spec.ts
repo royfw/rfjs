@@ -8,14 +8,23 @@ import {
   saveAiSettings,
   subscribeAiSettings,
 } from './settings';
+import type { AiStorage } from './storage';
 
 describe('ai settings storage', () => {
   beforeEach(() => localStorage.clear());
 
   it('round-trips settings through localStorage', () => {
     expect(loadAiSettings()).toBeNull();
-    saveAiSettings({ baseUrl: 'http://localhost:4000/v1', apiKey: 'sk-x', model: 'gpt-test' });
-    expect(loadAiSettings()).toEqual({ baseUrl: 'http://localhost:4000/v1', apiKey: 'sk-x', model: 'gpt-test' });
+    saveAiSettings({
+      baseUrl: 'http://localhost:4000/v1',
+      apiKey: 'sk-x',
+      model: 'gpt-test',
+    });
+    expect(loadAiSettings()).toEqual({
+      baseUrl: 'http://localhost:4000/v1',
+      apiKey: 'sk-x',
+      model: 'gpt-test',
+    });
     expect(localStorage.getItem(AI_SETTINGS_KEY)).toBeTruthy();
     clearAiSettings();
     expect(loadAiSettings()).toBeNull();
@@ -42,5 +51,24 @@ describe('ai settings storage', () => {
     unsub();
     saveAiSettings({ baseUrl: 'u', apiKey: 'k', model: 'm' });
     expect(cb).toHaveBeenCalledTimes(2); // 取消訂閱後不再收到
+  });
+
+  it('uses an injected storage adapter (no window/localStorage touch)', () => {
+    const map = new Map<string, string>();
+    const fake: AiStorage = {
+      get: (k) => map.get(k) ?? null,
+      set: (k, v) => void map.set(k, v),
+      remove: (k) => void map.delete(k),
+    };
+    saveAiSettings({ baseUrl: 'u', apiKey: 'k', model: 'm' }, fake);
+    expect(map.get(AI_SETTINGS_KEY)).toBeTruthy();
+    expect(loadAiSettings(fake)).toEqual({
+      baseUrl: 'u',
+      apiKey: 'k',
+      model: 'm',
+    });
+    expect(localStorage.getItem(AI_SETTINGS_KEY)).toBeNull(); // 沒碰 localStorage
+    // 無 subscribe 的 adapter → 取得 no-op unsub，不拋錯
+    expect(typeof subscribeAiSettings(() => {}, fake)).toBe('function');
   });
 });

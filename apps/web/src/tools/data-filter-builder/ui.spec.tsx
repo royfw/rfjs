@@ -2,13 +2,13 @@ import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
 
-import { messages } from "./messages";
+import { assembleMessages } from "@/i18n/messages";
 import { DataFilterBuilder } from "./ui";
 
 describe("DataFilterBuilder", () => {
   it("renders the builder over the default sample", () => {
     render(
-      <NextIntlClientProvider locale="en" messages={messages.en as Record<string, unknown>}>
+      <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
         <DataFilterBuilder />
       </NextIntlClientProvider>,
     );
@@ -17,7 +17,7 @@ describe("DataFilterBuilder", () => {
 
   it("shows the live matched counts", () => {
     render(
-      <NextIntlClientProvider locale="en" messages={messages.en as Record<string, unknown>}>
+      <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
         <DataFilterBuilder />
       </NextIntlClientProvider>,
     );

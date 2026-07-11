@@ -1,5 +1,5 @@
 // jsdom shim: radix-ui Select uses pointer capture and scrollIntoView APIs not available in jsdom
-if (typeof Element !== 'undefined') {
+if (typeof Element !== "undefined") {
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = () => false;
   }
@@ -13,7 +13,7 @@ if (typeof Element !== 'undefined') {
     Element.prototype.scrollIntoView = () => {};
   }
 }
-if (typeof window !== 'undefined' && !window.ResizeObserver) {
+if (typeof window !== "undefined" && !window.ResizeObserver) {
   window.ResizeObserver = class ResizeObserver {
     observe() {}
     unobserve() {}
@@ -31,12 +31,21 @@ let mockReady = true;
 let mockLoading = false;
 let mockError: { kind: string; message: string; detail?: string } | null = null;
 
-vi.mock("@/lib/ai/use-ai-assist", () => ({
-  useAiAssist: () => ({ ready: mockReady, loading: mockLoading, error: mockError, cancel: mockCancel, run: mockRun, runStream: mockRun, streamText: "", streamReasoning: "" }),
+vi.mock("@rfjs/ai-assist-ui", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@rfjs/ai-assist-ui")>()),
+  useAiAssist: () => ({
+    ready: mockReady,
+    loading: mockLoading,
+    error: mockError,
+    cancel: mockCancel,
+    run: mockRun,
+    runStream: mockRun,
+    streamText: "",
+    streamReasoning: "",
+  }),
 }));
 
 import { FormBuilderTool, createPreviewFetcher } from "./ui";
-import { messages } from "./messages";
 import { resolveCards, collides, type PlacedCard } from "./layout-grid";
 import { assembleMessages } from "@/i18n/messages";
 
@@ -51,7 +60,7 @@ beforeEach(() => {
 
 function renderTool() {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages.en as Record<string, unknown>}>
+    <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
       <FormBuilderTool />
     </NextIntlClientProvider>,
   );
@@ -60,7 +69,10 @@ function renderTool() {
 describe("createPreviewFetcher", () => {
   it("echoes an api-action request (body shaped { data, meta }) instead of delegating to sampleFetcher", async () => {
     const body = { data: { name: "Ada" }, meta: { name: "save-draft" } };
-    const result = await createPreviewFetcher({ url: "/api/actions/save-draft", body });
+    const result = await createPreviewFetcher({
+      url: "/api/actions/save-draft",
+      body,
+    });
     expect(typeof (result as { echoedAt: string }).echoedAt).toBe("string");
     expect((result as { received: unknown }).received).toEqual(body);
     // Not sampleFetcher's canned dataSource shape (an array under `data`).
@@ -109,14 +121,17 @@ describe("canvas no-overlap invariant", () => {
     const out = resolveCards(cards, "a", 12);
     for (let i = 0; i < out.length; i++)
       for (let j = i + 1; j < out.length; j++)
-        if (out[i]!.groupId === out[j]!.groupId) expect(collides(out[i]!, out[j]!)).toBe(false);
+        if (out[i]!.groupId === out[j]!.groupId)
+          expect(collides(out[i]!, out[j]!)).toBe(false);
   });
 });
 
 describe("FormBuilderTool drag threshold", () => {
   it("a sub-threshold pointer move (a click) does not move the card", () => {
     renderTool();
-    const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
+    const card = screen
+      .getByText("Name")
+      .closest(".cursor-grab") as HTMLElement;
     const before = card.style.gridColumn;
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
     fireEvent.pointerMove(window, { clientX: 102, clientY: 101 }); // ~2px, below the 4px threshold
@@ -128,7 +143,9 @@ describe("FormBuilderTool drag threshold", () => {
 describe("FormBuilderTool group reorder", () => {
   it("each group has a reorder handle", () => {
     renderTool();
-    expect(screen.getAllByRole("button", { name: /reorder group/i }).length).toBeGreaterThanOrEqual(2);
+    expect(
+      screen.getAllByRole("button", { name: /reorder group/i }).length,
+    ).toBeGreaterThanOrEqual(2);
   });
 });
 
@@ -189,7 +206,9 @@ describe("FormBuilderTool preview tab integration", () => {
     // the Canvas tab's "Live Preview" section toggle button.
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     fireEvent.click(await screen.findByRole("button", { name: /save draft/i }));
-    await waitFor(() => expect(screen.getAllByText(/save-draft/).length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText(/save-draft/).length).toBeGreaterThan(0),
+    );
   });
 
   it("preview: query api button renders its rows as a ConfigTable in the result", async () => {
@@ -206,11 +225,14 @@ describe("FormBuilderTool preview tab integration", () => {
 describe("FormBuilderTool mobile config overlay (does not block canvas drag)", () => {
   // The inspector container uses the full-screen overlay classes on mobile only
   // when the mobile config is open. A press-to-drag must NOT open it.
-  const isOverlayOpen = () => screen.getByTestId("card-inspector").className.includes("fixed");
+  const isOverlayOpen = () =>
+    screen.getByTestId("card-inspector").className.includes("fixed");
 
   it("a tap (press-release without moving) opens the mobile config overlay", () => {
     renderTool();
-    const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
+    const card = screen
+      .getByText("Name")
+      .closest(".cursor-grab") as HTMLElement;
     expect(isOverlayOpen()).toBe(false);
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
     expect(isOverlayOpen()).toBe(false); // still closed mid-press → canvas not covered
@@ -220,7 +242,9 @@ describe("FormBuilderTool mobile config overlay (does not block canvas drag)", (
 
   it("a press-drag (past the threshold) does NOT open the overlay, so the canvas stays draggable", () => {
     renderTool();
-    const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
+    const card = screen
+      .getByText("Name")
+      .closest(".cursor-grab") as HTMLElement;
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
     fireEvent.pointerMove(window, { clientX: 140, clientY: 140 }); // ~57px, past the 4px threshold → a drag
     fireEvent.pointerUp(window, { clientX: 140, clientY: 140 });
@@ -243,8 +267,12 @@ function renderToolWithCentralMessages() {
 describe("FormBuilderTool — AI panel", () => {
   it("shows the shared AI panel instead of the old ✨ generate row", () => {
     renderTool();
-    expect(screen.getByPlaceholderText(/describe a form or ask a question/i)).toBeTruthy();
-    expect(screen.getByRole("button", { name: /^generate form$/i })).toBeTruthy();
+    expect(
+      screen.getByPlaceholderText(/describe a form or ask a question/i),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /^generate form$/i }),
+    ).toBeTruthy();
   });
 
   it("re-apply: a preloaded entry's appliedJson rebuilds the canvas via applyJson", async () => {
@@ -255,7 +283,8 @@ describe("FormBuilderTool — AI panel", () => {
           id: "e1",
           kind: "generate",
           prompt: "a form with a name field",
-          appliedJson: '{"version":1,"fields":[{"key":"name","label":"Name","component":"Input","dataType":"string"}]}',
+          appliedJson:
+            '{"version":1,"fields":[{"key":"name","label":"Name","component":"Input","dataType":"string"}]}',
           at: "2026-07-08T00:00:00.000Z",
         },
       ]),

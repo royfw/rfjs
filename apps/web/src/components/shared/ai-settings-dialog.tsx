@@ -17,9 +17,7 @@ import {
 import { Input } from '@rfjs/web-ui/components/input';
 import { Label } from '@rfjs/web-ui/components/label';
 
-import { createAiClient, listAiModels } from '@/lib/ai/client';
-import { loadAiSettings, saveAiSettings } from '@/lib/ai/settings';
-import { AiError } from '@/lib/ai/types';
+import { AiError, createAiClient, listAiModels, loadAiSettings, saveAiSettings } from '@rfjs/ai-assist';
 
 type TestState = 'idle' | 'testing' | 'ok' | 'fail';
 

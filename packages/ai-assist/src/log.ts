@@ -1,4 +1,6 @@
-/** AI 互動紀錄的持久化接口 —— Wave 2 重新套用 / Wave 3 聊天歷史共用;後端可換。 */
+import { type AiStorage, createBrowserStorage } from './storage';
+
+/** AI 互動紀錄的持久化接口 —— 重新套用 / 聊天歷史共用；後端可換。 */
 export interface AiAssistEntry {
   id: string;
   kind: 'generate' | 'ask' | 'explain' | 'check';
@@ -21,19 +23,33 @@ const KINDS = new Set(['generate', 'ask', 'explain', 'check']);
 function isEntry(v: unknown): v is AiAssistEntry {
   if (typeof v !== 'object' || v === null) return false;
   const e = v as Partial<AiAssistEntry>;
-  return typeof e.id === 'string' && typeof e.kind === 'string' && KINDS.has(e.kind) && typeof e.at === 'string';
+  return (
+    typeof e.id === 'string' &&
+    typeof e.kind === 'string' &&
+    KINDS.has(e.kind) &&
+    typeof e.at === 'string'
+  );
 }
 
-/** 只保留 string 的選填欄位——防止被竄改的紀錄(如 appliedJson 為數字)流入重新套用 / 畫面。 */
+/** 只保留 string 的選填欄位——防止被竄改的紀錄（如 appliedJson 為數字）流入重新套用 / 畫面。 */
 function normalize(e: AiAssistEntry): AiAssistEntry {
   const str = (v: unknown) => (typeof v === 'string' ? v : undefined);
-  return { id: e.id, kind: e.kind, at: e.at, prompt: str(e.prompt), answer: str(e.answer), appliedJson: str(e.appliedJson) };
+  return {
+    id: e.id,
+    kind: e.kind,
+    at: e.at,
+    prompt: str(e.prompt),
+    answer: str(e.answer),
+    appliedJson: str(e.appliedJson),
+  };
 }
 
-export function createAiLog(storageKey: string): AiLogStore {
+export function createAiLog(
+  storageKey: string,
+  storage: AiStorage = createBrowserStorage(),
+): AiLogStore {
   const list = (): AiAssistEntry[] => {
-    if (typeof window === 'undefined') return [];
-    const raw = window.localStorage.getItem(storageKey);
+    const raw = storage.get(storageKey);
     if (!raw) return [];
     try {
       const v: unknown = JSON.parse(raw);
@@ -46,13 +62,11 @@ export function createAiLog(storageKey: string): AiLogStore {
     list,
     append(entry) {
       const next = [...list(), entry].slice(-AI_LOG_LIMIT);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(storageKey, JSON.stringify(next));
-      }
+      storage.set(storageKey, JSON.stringify(next));
       return next;
     },
     clear() {
-      if (typeof window !== 'undefined') window.localStorage.removeItem(storageKey);
+      storage.remove(storageKey);
     },
   };
 }
