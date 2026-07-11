@@ -95,7 +95,18 @@ function parseRetryAfterMs(res: Response): number | undefined {
   return Number.isFinite(secs) ? secs * 1000 : undefined;
 }
 
-const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    const done = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', done);
+      resolve();
+    };
+    const timer = setTimeout(done, ms);
+    if (signal?.aborted) return done();
+    signal?.addEventListener('abort', done, { once: true });
+  });
+}
 
 export function createAiClient(settings: AiSettings): AiClient;
 export function createAiClient(config: AiClientConfig): AiClient;
@@ -248,7 +259,7 @@ export function createAiClient(arg: AiSettings | AiClientConfig): AiClient {
   };
 
   // 預設 maxRetries:0 → 只跑一次、first error 即拋 → 與今天行為等價。(迴圈變數用 n,避免遮蔽上面的 attempt。)
-  const withRetry = async <T>(fn: () => Promise<T>): Promise<T> => {
+  const withRetry = async <T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> => {
     const max = retry?.maxRetries ?? 0;
     const base = retry?.baseDelayMs ?? DEFAULT_BASE_DELAY_MS;
     for (let n = 0; ; n++) {
@@ -257,7 +268,7 @@ export function createAiClient(arg: AiSettings | AiClientConfig): AiClient {
       } catch (e) {
         if (!(e instanceof AiError) || n >= max || !isRetryable(e)) throw e;
         const ra = retry?.respectRetryAfter === false ? undefined : e.retryAfterMs;
-        await sleep(ra ?? base * 2 ** n);
+        await sleep(ra ?? base * 2 ** n, signal);
       }
     }
   };
@@ -265,7 +276,7 @@ export function createAiClient(arg: AiSettings | AiClientConfig): AiClient {
   return {
     async complete(req: CompleteRequest): Promise<string> {
       guard();
-      return withRetry(() => attempt(req, false));
+      return withRetry(() => attempt(req, false), req.signal);
     },
 
     async stream(
@@ -273,7 +284,7 @@ export function createAiClient(arg: AiSettings | AiClientConfig): AiClient {
       onDelta: (d: StreamDelta) => void,
     ): Promise<string> {
       guard();
-      return withRetry(() => attempt(req, true, onDelta));
+      return withRetry(() => attempt(req, true, onDelta), req.signal);
     },
   };
 }
