@@ -5,18 +5,29 @@ import { useLocale, useTranslations } from "next-intl";
 
 import type { FieldSchema } from "@rfjs/filter-builder";
 
-import { useAiAssist } from "@/lib/ai/use-ai-assist";
-import { AiPanel, type AiPanelAction } from "@/components/shared/ai-panel";
+import { AiPanel, useAiAssist, type AiPanelAction } from "@rfjs/ai-assist-ui";
+import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
 import { buildNlFilterPrompt, parseNlFilterResponse } from "./ai-nl-filter";
-import { buildAskPrompt, buildExplainPrompt, type ExplainContext } from "./ai-explain";
+import {
+  buildAskPrompt,
+  buildExplainPrompt,
+  type ExplainContext,
+} from "./ai-explain";
 
 /** 簡單葉數:遞迴數 filters 內非 group 的條件(「已套用(N 個條件)」用)。 */
 function countConditions(json: string): number {
   try {
     const walk = (g: unknown): number => {
-      if (typeof g !== "object" || g === null || !Array.isArray((g as { filters?: unknown[] }).filters)) return 0;
+      if (
+        typeof g !== "object" ||
+        g === null ||
+        !Array.isArray((g as { filters?: unknown[] }).filters)
+      )
+        return 0;
       return (g as { filters: unknown[] }).filters.reduce<number>(
-        (n, f) => n + (typeof f === "object" && f !== null && "filters" in f ? walk(f) : 1),
+        (n, f) =>
+          n +
+          (typeof f === "object" && f !== null && "filters" in f ? walk(f) : 1),
         0,
       );
     };
@@ -47,7 +58,15 @@ export function AiAssistBlock({
   const t = useTranslations("ToolUI");
   const locale = useLocale();
   const ai = useAiAssist();
-  const ctx: ExplainContext = { canonicalJson, schema, compiled, engineId, locale, sampleRows };
+  const aiLabels = useAiPanelLabels();
+  const ctx: ExplainContext = {
+    canonicalJson,
+    schema,
+    compiled,
+    engineId,
+    locale,
+    sampleRows,
+  };
 
   const actions: AiPanelAction[] = [
     {
@@ -56,8 +75,16 @@ export function AiAssistBlock({
       needsInput: true,
       primary: true,
       run: async (input) => {
-        const prompt = buildNlFilterPrompt(input, schema, canonicalJson, sampleRows);
-        const out = await ai.run({ ...prompt, json: true }, parseNlFilterResponse);
+        const prompt = buildNlFilterPrompt(
+          input,
+          schema,
+          canonicalJson,
+          sampleRows,
+        );
+        const out = await ai.run(
+          { ...prompt, json: true },
+          parseNlFilterResponse,
+        );
         if (out === null) return null;
         onApply(out);
         return { kind: "generate", prompt: input, appliedJson: out };
@@ -68,15 +95,21 @@ export function AiAssistBlock({
       label: t("aiAsk"),
       needsInput: true,
       run: async (input) => {
-        const out = await ai.runStream(buildAskPrompt(ctx, input), (raw) => raw.trim());
-        return out === null ? null : { kind: "ask", prompt: input, answer: out };
+        const out = await ai.runStream(buildAskPrompt(ctx, input), (raw) =>
+          raw.trim(),
+        );
+        return out === null
+          ? null
+          : { kind: "ask", prompt: input, answer: out };
       },
     },
     {
       key: "explain",
       label: t("aiExplain"),
       run: async () => {
-        const out = await ai.runStream(buildExplainPrompt(ctx), (raw) => raw.trim());
+        const out = await ai.runStream(buildExplainPrompt(ctx), (raw) =>
+          raw.trim(),
+        );
         return out === null ? null : { kind: "explain", answer: out };
       },
     },
@@ -89,8 +122,11 @@ export function AiAssistBlock({
       actions={actions}
       logKey={logKey}
       ai={ai}
+      labels={aiLabels}
       onReapply={(e) => onApply(e.appliedJson ?? "")}
-      appliedSummary={(e) => t("aiApplied", { count: countConditions(e.appliedJson ?? "") })}
+      appliedSummary={(e) =>
+        t("aiApplied", { count: countConditions(e.appliedJson ?? "") })
+      }
     />
   );
 }

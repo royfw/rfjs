@@ -6,14 +6,23 @@ import { useLocale, useTranslations } from "next-intl";
 import { ConfigTable } from "@rfjs/table-builder-ui";
 import type { TableLabels, TableSource } from "@rfjs/table-builder-ui";
 import { deriveTableConfig, parseTableConfig } from "@rfjs/table-builder";
-import type { TableConfig, TableColumnConfig, TablePaginationConfig } from "@rfjs/table-builder";
+import type {
+  TableConfig,
+  TableColumnConfig,
+  TablePaginationConfig,
+} from "@rfjs/table-builder";
 import { inferFieldsFromRows } from "@rfjs/data-schema";
 import type { RequestMeta, ResponseMeta } from "@rfjs/data-schema";
 
-import { AiPanel } from "@/components/shared/ai-panel";
-import { useAiAssist } from "@/lib/ai/use-ai-assist";
+import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
+import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
 
-import { SAMPLE_CONFIG, SAMPLE_META, SAMPLE_ROWS, samplePaginationMeta } from "./sample";
+import {
+  SAMPLE_CONFIG,
+  SAMPLE_META,
+  SAMPLE_ROWS,
+  samplePaginationMeta,
+} from "./sample";
 import type { SourceMode } from "./sample";
 import { makeFakeFetcher } from "./fake-fetcher";
 import { SourcePanel } from "./source-panel";
@@ -21,7 +30,11 @@ import { ColumnsPanel } from "./columns-panel";
 import { PaginationPanel } from "./pagination-panel";
 import { MetadataPanel } from "./metadata-panel";
 import type { MetadataPanelLabels } from "./metadata-panel";
-import { buildNlTablePrompt, buildTableAskPrompt, parseNlTableResponse } from "./ai-nl-table";
+import {
+  buildNlTablePrompt,
+  buildTableAskPrompt,
+  parseNlTableResponse,
+} from "./ai-nl-table";
 
 // Task 9 (design spec §6.1) adds the editor panels + live preview on top of Task 8's static
 // render: the editor area is tabbed (source / columns / pagination / metadata), and a
@@ -36,10 +49,12 @@ export function TableBuilderTool() {
   const t = useTranslations("ToolUI");
   const locale = useLocale();
   const ai = useAiAssist();
+  const aiLabels = useAiPanelLabels();
 
   const [config, setConfig] = React.useState<TableConfig>(SAMPLE_CONFIG);
   const [sourceMode, setSourceMode] = React.useState<SourceMode>("rows");
-  const [rows, setRows] = React.useState<Record<string, unknown>[]>(SAMPLE_ROWS);
+  const [rows, setRows] =
+    React.useState<Record<string, unknown>[]>(SAMPLE_ROWS);
   const [dataVersion, setDataVersion] = React.useState(0);
 
   type EditorTab = "source" | "columns" | "pagination" | "metadata";
@@ -73,7 +88,12 @@ export function TableBuilderTool() {
   // `operatorLabels` is omitted for v1 -- ConfigTable falls back to raw operator ids.
   const filterLabels = React.useMemo(
     () => ({
-      logic: { and: t("tbFilterAnd"), or: t("tbFilterOr"), nor: t("tbFilterNor"), not: t("tbFilterNot") },
+      logic: {
+        and: t("tbFilterAnd"),
+        or: t("tbFilterOr"),
+        nor: t("tbFilterNor"),
+        not: t("tbFilterNot"),
+      },
       addCondition: t("tbFilterAddCond"),
       addGroup: t("tbFilterAddGroup"),
       removeGroup: t("tbFilterRemoveGroup"),
@@ -148,7 +168,10 @@ export function TableBuilderTool() {
   // to pick a sort comparator).
   const source: TableSource = React.useMemo(() => {
     if (sourceMode === "rows") return { kind: "rows", rows };
-    const request: RequestMeta = { ...SAMPLE_META.request!, pagination: samplePaginationMeta(sourceMode) };
+    const request: RequestMeta = {
+      ...SAMPLE_META.request!,
+      pagination: samplePaginationMeta(sourceMode),
+    };
     return {
       kind: "remote",
       request,
@@ -160,8 +183,14 @@ export function TableBuilderTool() {
   // Metadata tab inputs (design spec §2.2): rows mode is a pure fields description; fetcher
   // mode carries the currently selected strategy's request protocol + the sample response map.
   const metaRequest: RequestMeta | undefined =
-    sourceMode === "rows" ? undefined : { ...SAMPLE_META.request!, pagination: samplePaginationMeta(sourceMode) };
-  const metaResponse: ResponseMeta | undefined = sourceMode === "rows" ? undefined : SAMPLE_META.response;
+    sourceMode === "rows"
+      ? undefined
+      : {
+          ...SAMPLE_META.request!,
+          pagination: samplePaginationMeta(sourceMode),
+        };
+  const metaResponse: ResponseMeta | undefined =
+    sourceMode === "rows" ? undefined : SAMPLE_META.response;
 
   function handleColumnsChange(columns: TableColumnConfig[]) {
     setConfig((current) => ({ ...current, columns }));
@@ -192,18 +221,23 @@ export function TableBuilderTool() {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t("tbEyebrow")}</p>
+      <p className="text-xs font-semibold tracking-widest text-muted-foreground">
+        {t("tbEyebrow")}
+      </p>
 
       <AiPanel
         title={t("aiBlockTitle")}
         placeholder={t("tbAiPlaceholder")}
         logKey="rfjs.ai.log.table-builder"
         ai={ai}
+        labels={aiLabels}
         onReapply={(e) => applyGeneratedConfig(e.appliedJson ?? "")}
         appliedSummary={(e) => {
           let n = 0;
           try {
-            const parsed = JSON.parse(e.appliedJson ?? "") as { columns?: unknown[] };
+            const parsed = JSON.parse(e.appliedJson ?? "") as {
+              columns?: unknown[];
+            };
             n = Array.isArray(parsed.columns) ? parsed.columns.length : 0;
           } catch {
             n = 0;
@@ -217,7 +251,10 @@ export function TableBuilderTool() {
             needsInput: true,
             primary: true,
             run: async (input) => {
-              const out = await ai.run({ ...buildNlTablePrompt(input, config), json: true }, parseNlTableResponse);
+              const out = await ai.run(
+                { ...buildNlTablePrompt(input, config), json: true },
+                parseNlTableResponse,
+              );
               if (out === null) return null;
               applyGeneratedConfig(out);
               return { kind: "generate", prompt: input, appliedJson: out };
@@ -229,10 +266,15 @@ export function TableBuilderTool() {
             needsInput: true,
             run: async (input) => {
               const out = await ai.runStream(
-                buildTableAskPrompt({ configJson: JSON.stringify(config, null, 2), locale }, input),
+                buildTableAskPrompt(
+                  { configJson: JSON.stringify(config, null, 2), locale },
+                  input,
+                ),
                 (raw) => raw.trim(),
               );
-              return out === null ? null : { kind: "ask", prompt: input, answer: out };
+              return out === null
+                ? null
+                : { kind: "ask", prompt: input, answer: out };
             },
           },
         ]}
@@ -257,7 +299,9 @@ export function TableBuilderTool() {
             onClick={() => setTab(item.id)}
             aria-selected={tab === item.id}
             className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-              tab === item.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              tab === item.id
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {item.label}
@@ -276,7 +320,11 @@ export function TableBuilderTool() {
         />
       ) : null}
       {tab === "columns" ? (
-        <ColumnsPanel columns={config.columns} onChange={handleColumnsChange} labels={columnsPanelLabels} />
+        <ColumnsPanel
+          columns={config.columns}
+          onChange={handleColumnsChange}
+          labels={columnsPanelLabels}
+        />
       ) : null}
       {tab === "pagination" ? (
         <PaginationPanel
@@ -288,7 +336,12 @@ export function TableBuilderTool() {
         />
       ) : null}
       {tab === "metadata" ? (
-        <MetadataPanel config={config} request={metaRequest} response={metaResponse} labels={metadataPanelLabels} />
+        <MetadataPanel
+          config={config}
+          request={metaRequest}
+          response={metaResponse}
+          labels={metadataPanelLabels}
+        />
       ) : null}
 
       <div className="rounded-md border p-3">

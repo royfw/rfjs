@@ -1,11 +1,21 @@
 if (typeof Element !== "undefined") {
-  if (!Element.prototype.hasPointerCapture) Element.prototype.hasPointerCapture = () => false;
-  if (!Element.prototype.setPointerCapture) Element.prototype.setPointerCapture = () => {};
-  if (!Element.prototype.releasePointerCapture) Element.prototype.releasePointerCapture = () => {};
-  if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {};
+  if (!Element.prototype.hasPointerCapture)
+    Element.prototype.hasPointerCapture = () => false;
+  if (!Element.prototype.setPointerCapture)
+    Element.prototype.setPointerCapture = () => {};
+  if (!Element.prototype.releasePointerCapture)
+    Element.prototype.releasePointerCapture = () => {};
+  if (!Element.prototype.scrollIntoView)
+    Element.prototype.scrollIntoView = () => {};
 }
 
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -19,8 +29,18 @@ let mockReady = true;
 let mockLoading = false;
 let mockError: { kind: string; message: string; detail?: string } | null = null;
 
-vi.mock("@/lib/ai/use-ai-assist", () => ({
-  useAiAssist: () => ({ ready: mockReady, loading: mockLoading, error: mockError, cancel: mockCancel, run: mockRun, runStream: mockRun, streamText: "", streamReasoning: "" }),
+vi.mock("@rfjs/ai-assist-ui", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@rfjs/ai-assist-ui")>()),
+  useAiAssist: () => ({
+    ready: mockReady,
+    loading: mockLoading,
+    error: mockError,
+    cancel: mockCancel,
+    run: mockRun,
+    runStream: mockRun,
+    streamText: "",
+    streamReasoning: "",
+  }),
 }));
 
 import { messages } from "./messages";
@@ -28,7 +48,10 @@ import { DecisionTableTool } from "./ui";
 
 function renderTool() {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages.en as Record<string, unknown>}>
+    <NextIntlClientProvider
+      locale="en"
+      messages={messages.en as Record<string, unknown>}
+    >
       <DecisionTableTool />
     </NextIntlClientProvider>,
   );
@@ -47,22 +70,30 @@ describe("DecisionTableTool", () => {
   it("renders the sample rules", () => {
     renderTool();
     const rulesList = screen.getByTestId("dt-rules-list");
-    expect(within(rulesList).getByText(/big spend goes to the cfo/i)).toBeTruthy();
+    expect(
+      within(rulesList).getByText(/big spend goes to the cfo/i),
+    ).toBeTruthy();
     expect(within(rulesList).getByText(/finance requests/i)).toBeTruthy();
   });
 
   it("single evaluation shows the routed approver", async () => {
     renderTool();
     const ta = screen.getByLabelText(/context json/i) as HTMLTextAreaElement;
-    fireEvent.change(ta, { target: { value: '{"amount": 200000, "dept": "Engineering"}' } });
+    fireEvent.change(ta, {
+      target: { value: '{"amount": 200000, "dept": "Engineering"}' },
+    });
     fireEvent.click(screen.getAllByRole("button", { name: /^evaluate$/i })[0]!);
-    await waitFor(() => expect(screen.getAllByText(/cfo/i).length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText(/cfo/i).length).toBeGreaterThan(0),
+    );
   });
 
   it("batch evaluation renders one result row per context", async () => {
     renderTool();
     const ta = screen.getByLabelText(/rows json/i) as HTMLTextAreaElement;
-    fireEvent.change(ta, { target: { value: '[{"amount":200000},{"amount":1,"dept":"HR"}]' } });
+    fireEvent.change(ta, {
+      target: { value: '[{"amount":200000},{"amount":1,"dept":"HR"}]' },
+    });
     fireEvent.click(screen.getAllByRole("button", { name: /^evaluate$/i })[1]!);
     await waitFor(() => {
       expect(screen.getAllByTestId("dt-batch-row")).toHaveLength(2);
@@ -88,14 +119,18 @@ describe("DecisionTableTool", () => {
 describe("DecisionTableTool — AI panel", () => {
   it("shows the shared AI panel and drops the old Rules-header Check button", () => {
     renderTool();
-    expect(screen.getByPlaceholderText(/describe or ask a question/i)).toBeTruthy();
+    expect(
+      screen.getByPlaceholderText(/describe or ask a question/i),
+    ).toBeTruthy();
     const header = screen.getByText(/^Rules$/).closest("div")!;
     expect(within(header).queryByRole("button", { name: /check/i })).toBeNull();
   });
 
   it("check succeeds → the answer stack shows the formatted finding", async () => {
     mockRun.mockImplementation((_req, parse) =>
-      Promise.resolve(parse('{"findings":[{"kind":"gap","ruleIds":[],"message":"m"}]}')),
+      Promise.resolve(
+        parse('{"findings":[{"kind":"gap","ruleIds":[],"message":"m"}]}'),
+      ),
     );
     renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^check table$/i }));
