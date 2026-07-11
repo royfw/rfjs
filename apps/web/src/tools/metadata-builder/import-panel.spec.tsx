@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ImportPanel } from "./import-panel";
@@ -60,5 +60,27 @@ describe("ImportPanel", () => {
       { key: "name", label: "name", dataType: "string" },
       { key: "age", label: "age", dataType: "numeric" },
     ]);
+  });
+
+  it("renders the hint next to the Load button", () => {
+    render(<ImportPanel onMeta={vi.fn()} onFields={vi.fn()} labels={LABELS} />);
+
+    expect(screen.getByText("hint")).toBeDefined();
+  });
+
+  it("auto-parses an uploaded meta.json through onMeta", async () => {
+    const onMeta = vi.fn();
+    const { container } = render(<ImportPanel onMeta={onMeta} onFields={vi.fn()} labels={LABELS} />);
+
+    const file = new File(['{"fields":[{"key":"a","label":"A","dataType":"string"}]}'], "meta.json", {
+      type: "application/json",
+    });
+    const input = container.querySelector('input[type="file"]');
+    if (!input) throw new Error("file input not found");
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(onMeta).toHaveBeenCalledWith({ fields: [{ key: "a", label: "A", dataType: "string" }] });
+    });
   });
 });

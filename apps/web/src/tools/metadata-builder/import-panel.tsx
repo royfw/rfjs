@@ -36,11 +36,11 @@ export function ImportPanel({
     ].join(" ");
   }
 
-  function runLoad() {
+  function runLoad(nextText: string) {
     // Parse JSON first
     let parsed: unknown;
     try {
-      parsed = JSON.parse(text);
+      parsed = JSON.parse(nextText);
     } catch {
       setError(labels.invalidJson);
       return;
@@ -54,10 +54,10 @@ export function ImportPanel({
         onMeta(meta);
         setText("");
       } catch (err) {
-        // Duck-typed zod error handling: use err.issues?.[0]?.message to avoid JSON array string
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const errMsg = (err as any)?.issues?.[0]?.message ?? labels.invalidJson;
-        setError(errMsg);
+        // Duck-typed zod error handling: read issues[0].message — zod v4's err.message is a
+        // JSON array string (first line "["), which must not be shown directly.
+        const issues = (err as { issues?: { message?: string }[] }).issues;
+        setError(issues?.[0]?.message ?? labels.invalidJson);
       }
     } else {
       // rows mode
@@ -82,6 +82,7 @@ export function ImportPanel({
     reader.onload = () => {
       const content = String(reader.result ?? "");
       setText(content);
+      runLoad(content);
     };
     reader.readAsText(file);
   }
@@ -113,10 +114,11 @@ export function ImportPanel({
         <button
           type="button"
           className="rounded-md border border-primary px-2 py-1 text-xs font-medium"
-          onClick={runLoad}
+          onClick={() => runLoad(text)}
         >
           {labels.load}
         </button>
+        <span className="text-xs text-muted-foreground">{labels.hint}</span>
       </div>
       {error ? (
         <p role="alert" className="text-xs text-destructive">
