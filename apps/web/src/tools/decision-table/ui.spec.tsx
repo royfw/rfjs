@@ -43,15 +43,12 @@ vi.mock("@rfjs/ai-assist-ui", async (importOriginal) => ({
   }),
 }));
 
-import { messages } from "./messages";
 import { DecisionTableTool } from "./ui";
+import { assembleMessages } from "@/i18n/messages";
 
 function renderTool() {
   return render(
-    <NextIntlClientProvider
-      locale="en"
-      messages={messages.en as Record<string, unknown>}
-    >
+    <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
       <DecisionTableTool />
     </NextIntlClientProvider>,
   );

@@ -46,7 +46,6 @@ vi.mock("@rfjs/ai-assist-ui", async (importOriginal) => ({
 }));
 
 import { FormBuilderTool, createPreviewFetcher } from "./ui";
-import { messages } from "./messages";
 import { resolveCards, collides, type PlacedCard } from "./layout-grid";
 import { assembleMessages } from "@/i18n/messages";
 
@@ -61,10 +60,7 @@ beforeEach(() => {
 
 function renderTool() {
   return render(
-    <NextIntlClientProvider
-      locale="en"
-      messages={messages.en as Record<string, unknown>}
-    >
+    <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
       <FormBuilderTool />
     </NextIntlClientProvider>,
   );
