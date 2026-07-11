@@ -37,6 +37,9 @@ export const messages: LocaleMessages = {
       mbRemove: "remove",
       mbDupKey: "duplicate key",
       mbBlankKey: "key required",
+      mbInspectorTitle: "INSPECTOR",
+      mbInspectorEmpty: "select or add a field",
+      mbFieldSummary: "{n} fields · {f} filterable",
 
       mbProtoEnabled: "declare protocol",
       mbEndpoint: "endpoint",
@@ -121,6 +124,9 @@ export const messages: LocaleMessages = {
       mbRemove: "移除",
       mbDupKey: "鍵值重複",
       mbBlankKey: "鍵值必填",
+      mbInspectorTitle: "檢視器",
+      mbInspectorEmpty: "選擇或新增一個欄位",
+      mbFieldSummary: "{n} 欄 · {f} 可篩",
 
       mbProtoEnabled: "宣告協定",
       mbEndpoint: "端點",

@@ -25,6 +25,7 @@ export function MetadataBuilderTool() {
   const [meta, setMeta] = React.useState<DataResourceMeta>(DEFAULT_META);
   const [tab, setTab] = React.useState<Tab>("fields");
   const [rows, setRows] = React.useState<FieldRow[]>(() => metaToRows(DEFAULT_META.fields, () => crypto.randomUUID()));
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
   const restoredRef = React.useRef(false);
   React.useEffect(() => {
@@ -92,9 +93,15 @@ export function MetadataBuilderTool() {
       remove: t("mbRemove"),
       dupKey: t("mbDupKey"),
       blankKey: t("mbBlankKey"),
+      inspectorTitle: t("mbInspectorTitle"),
+      inspectorEmpty: t("mbInspectorEmpty"),
+      fieldSummary: "",
     }),
     [t],
   );
+  // fieldSummary depends on `rows` (which changes far more often than `t`) — computed fresh every
+  // render and merged in below, kept out of the [t]-memoized labels object above.
+  const fieldSummary = t("mbFieldSummary", { n: rows.length, f: rows.filter((r) => r.filterable).length });
 
   const protocolLabels: ProtocolPanelLabels = React.useMemo(
     () => ({
@@ -195,7 +202,15 @@ export function MetadataBuilderTool() {
         ))}
       </div>
 
-      {tab === "fields" && <FieldsPanel rows={rows} onChange={handleFieldsChange} labels={fieldsLabels} />}
+      {tab === "fields" && (
+        <FieldsPanel
+          rows={rows}
+          onChange={handleFieldsChange}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          labels={{ ...fieldsLabels, fieldSummary }}
+        />
+      )}
       {tab === "protocol" && (
         <ProtocolPanel request={meta.request} response={meta.response} onChange={handleProtocolChange} labels={protocolLabels} />
       )}

@@ -38,7 +38,8 @@ describe("MetadataBuilderTool", () => {
   it("editing a field key reflects into the preview json", () => {
     renderTool();
 
-    fireEvent.change(screen.getByDisplayValue("price"), { target: { value: "cost" } });
+    fireEvent.click(screen.getByRole("option", { name: /price/ }));
+    fireEvent.change(screen.getByLabelText("key"), { target: { value: "cost" } });
 
     expect(screen.getByTestId("meta-json").textContent).toContain('"key": "cost"');
     // 注意用完整 "key": 前綴 —— label 仍是 "Price"(大寫),裸 "price" 斷言只靠大小寫僥倖通過
@@ -76,7 +77,8 @@ describe("MetadataBuilderTool", () => {
 
   it("persists edits to localStorage and restores them on remount", () => {
     const { unmount } = renderTool();
-    fireEvent.change(screen.getByDisplayValue("price"), { target: { value: "cost" } });
+    fireEvent.click(screen.getByRole("option", { name: /price/ }));
+    fireEvent.change(screen.getByLabelText("key"), { target: { value: "cost" } });
     unmount();
 
     renderTool();
