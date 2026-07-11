@@ -83,6 +83,8 @@ export const messages: LocaleMessages = {
       mbCollapse: "collapse code panel",
       mbExpand: "expand code panel",
       mbShowAll: "show all",
+      mbCollapseLabel: "collapse",
+      mbViewingField: "viewing selected field",
 
       mbTreeAnd: "AND",
       mbTreeOr: "OR",
@@ -172,6 +174,8 @@ export const messages: LocaleMessages = {
       mbCollapse: "收合程式碼面板",
       mbExpand: "展開程式碼面板",
       mbShowAll: "顯示整份",
+      mbCollapseLabel: "收合",
+      mbViewingField: "檢視選中欄位",
 
       mbTreeAnd: "且",
       mbTreeOr: "或",

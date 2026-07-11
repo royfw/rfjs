@@ -10,6 +10,7 @@ const LABELS = {
   emptySchema: "declare a field as filterable and pick its kind (column/jsonb) to try filtering here",
   copy: "Copy", copied: "Copied", download: "Download meta.json", reset: "Reset",
   collapse: "collapse code panel", expand: "expand code panel", showAll: "show all",
+  collapseLabel: "collapse", viewingField: "viewing selected field",
 };
 const TREE_LABELS = {
   logic: { and: "AND", or: "OR", nor: "NOR", not: "NOT" },

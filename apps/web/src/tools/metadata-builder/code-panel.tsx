@@ -21,6 +21,10 @@ export interface CodePanelLabels {
   collapse: string;
   expand: string;
   showAll: string;
+  /** 收合鈕的可視短文字(aria-label 仍用 collapse)。 */
+  collapseLabel: string;
+  /** 片段狀態條的說明文字。 */
+  viewingField: string;
 }
 
 export type CodePanelTab = "meta" | "schema" | "try";
@@ -72,8 +76,10 @@ function TabButton({ label, active, onClick }: { label: string; active: boolean;
     <button
       type="button"
       onClick={onClick}
-      className={`border-b-2 px-3 py-1.5 font-mono text-xs transition-colors ${
-        active ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+      className={`px-4 py-2 font-mono text-xs transition-colors ${
+        active
+          ? "bg-card font-semibold text-primary shadow-[inset_0_-2px_0_0_hsl(var(--primary))]"
+          : "text-muted-foreground hover:text-foreground"
       }`}
     >
       {label}
@@ -83,17 +89,25 @@ function TabButton({ label, active, onClick }: { label: string; active: boolean;
 
 function FragmentBar({
   fieldKey,
+  viewingLabel,
   showAllLabel,
   onShowAll,
 }: {
   fieldKey: string;
+  viewingLabel: string;
   showAllLabel: string;
   onShowAll: () => void;
 }) {
+  // 片段「狀態條」(polish mockup):金色淡底,說明+欄位名在左,顯示整份靠右。
   return (
-    <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
-      <span className="font-mono">{fieldKey}</span>
-      <button type="button" className="underline underline-offset-2 hover:text-foreground" onClick={onShowAll}>
+    <div className="mb-2 flex items-center gap-2 rounded-md bg-primary/10 px-3 py-1.5 text-xs">
+      <span className="text-muted-foreground">{viewingLabel}</span>
+      <span className="font-mono font-semibold text-primary">{fieldKey}</span>
+      <button
+        type="button"
+        className="ml-auto rounded-md border border-input bg-card px-2 py-0.5 hover:bg-muted/50"
+        onClick={onShowAll}
+      >
         {showAllLabel}
       </button>
     </div>
@@ -188,38 +202,32 @@ export function CodePanel({
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-1">
-        <div className="flex">
-          <TabButton label={labels.metaTitle} active={tab === "meta"} onClick={() => onTabChange("meta")} />
-          <TabButton label={labels.schemaTitle} active={tab === "schema"} onClick={() => onTabChange("schema")} />
-          <TabButton label={labels.tryTitle} active={tab === "try"} onClick={() => onTabChange("try")} />
-        </div>
-        <div className="flex items-center gap-1 p-1">
-          <Button size="xs" variant="outline" onClick={() => void onCopy()} disabled={fullJson === undefined}>
-            {copied ? labels.copied : labels.copy}
-          </Button>
-          <Button size="xs" variant="outline" onClick={onDownload} disabled={fullJson === undefined}>
-            {labels.download}
-          </Button>
-          <Button size="xs" variant="outline" onClick={onReset}>
-            {labels.reset}
-          </Button>
-          <Button size="icon-xs" variant="outline" aria-label={labels.collapse} onClick={onCollapse}>
-            <PanelRightClose className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+    <div className="flex flex-col overflow-hidden rounded-md border">
+      {/* ① 頁籤列(soft 底,獨占頂部;收合鈕帶文字、佔尾端)— polish mockup */}
+      <div className="flex items-stretch border-b bg-muted/30">
+        <TabButton label={labels.metaTitle} active={tab === "meta"} onClick={() => onTabChange("meta")} />
+        <TabButton label={labels.schemaTitle} active={tab === "schema"} onClick={() => onTabChange("schema")} />
+        <TabButton label={labels.tryTitle} active={tab === "try"} onClick={() => onTabChange("try")} />
+        <button
+          type="button"
+          aria-label={labels.collapse}
+          onClick={onCollapse}
+          className="ml-auto flex items-center gap-1.5 border-l px-3 text-xs text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
+        >
+          <PanelRightClose className="h-3.5 w-3.5" />
+          {labels.collapseLabel}
+        </button>
       </div>
 
       {metaResult.error !== undefined && (
         <p className="mx-3 rounded-md bg-destructive/10 px-2 py-1 text-xs text-destructive">{metaResult.error}</p>
       )}
 
-      <div className="px-3 pb-3">
+      <div className="p-3">
         {tab === "meta" && (
           <div>
             {inFragmentMode && metaFragmentJson !== undefined && (
-              <FragmentBar fieldKey={selectedFieldKey!} showAllLabel={labels.showAll} onShowAll={() => setShowAll(true)} />
+              <FragmentBar fieldKey={selectedFieldKey!} viewingLabel={labels.viewingField} showAllLabel={labels.showAll} onShowAll={() => setShowAll(true)} />
             )}
             <pre data-testid="meta-json" className="max-h-80 overflow-auto rounded-md bg-muted/30 p-3 font-mono text-xs">
               {colorJson(metaDisplay)}
@@ -230,7 +238,7 @@ export function CodePanel({
         {tab === "schema" && (
           <div>
             {inFragmentMode && schemaFragmentJson !== undefined && (
-              <FragmentBar fieldKey={selectedFieldKey!} showAllLabel={labels.showAll} onShowAll={() => setShowAll(true)} />
+              <FragmentBar fieldKey={selectedFieldKey!} viewingLabel={labels.viewingField} showAllLabel={labels.showAll} onShowAll={() => setShowAll(true)} />
             )}
             <pre data-testid="schema-json" className="max-h-80 overflow-auto rounded-md bg-muted/30 p-3 font-mono text-xs">
               {colorJson(schemaDisplay)}
@@ -255,6 +263,19 @@ export function CodePanel({
               />
             </div>
           ))}
+      </div>
+
+      {/* ④ 底部動作列(soft 底):Copy/下載靠左,Reset(破壞性)靠右隔離 — polish mockup */}
+      <div className="flex items-center gap-2 border-t bg-muted/30 px-3 py-2">
+        <Button size="xs" variant="outline" onClick={() => void onCopy()} disabled={fullJson === undefined}>
+          {copied ? labels.copied : labels.copy}
+        </Button>
+        <Button size="xs" variant="outline" onClick={onDownload} disabled={fullJson === undefined}>
+          {labels.download}
+        </Button>
+        <Button size="xs" variant="outline" className="ml-auto" onClick={onReset}>
+          {labels.reset}
+        </Button>
       </div>
     </div>
   );

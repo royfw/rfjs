@@ -182,6 +182,8 @@ export function MetadataBuilderTool() {
       collapse: t("mbCollapse"),
       expand: t("mbExpand"),
       showAll: t("mbShowAll"),
+      collapseLabel: t("mbCollapseLabel"),
+      viewingField: t("mbViewingField"),
     }),
     [t],
   );
