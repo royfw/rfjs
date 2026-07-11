@@ -62,6 +62,9 @@ export const messages: LocaleMessages = {
       mbEncoding: "encoding",
       mbFieldParam: "fieldParam",
       mbDirParam: "dirParam",
+      mbTry: "Try endpoint",
+      mbTryRows: "{count} rows",
+      mbTryError: "Request failed",
 
       mbModeMeta: "meta.json",
       mbModeRows: "sample rows",
@@ -156,6 +159,9 @@ export const messages: LocaleMessages = {
       mbEncoding: "編碼方式",
       mbFieldParam: "欄位參數",
       mbDirParam: "方向參數",
+      mbTry: "試打",
+      mbTryRows: "{count} 筆",
+      mbTryError: "請求失敗",
 
       mbModeMeta: "meta.json",
       mbModeRows: "樣本資料列",

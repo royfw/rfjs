@@ -120,7 +120,7 @@ export const DEFAULT_META: DataResourceMeta = {
     },
   ],
   request: {
-    endpoint: "/api/sample/items",
+    endpoint: "/api/query/sample",
     method: "POST",
     pagination: { strategy: "offset", limitParam: "limit", offsetParam: "offset" },
     sort: { style: "single", param: "sort", encoding: "colon" },

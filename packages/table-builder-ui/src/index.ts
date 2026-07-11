@@ -4,3 +4,4 @@ export * from './filter-schema';
 export * from './filter-labels';
 export * from './use-config-table';
 export * from './config-table';
+export * from './http-fetcher';

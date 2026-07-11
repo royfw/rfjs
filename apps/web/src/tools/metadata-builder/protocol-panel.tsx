@@ -3,7 +3,9 @@
 import * as React from "react";
 
 import { Switch } from "@rfjs/web-ui/components/switch";
+import { buildRequestParams, extractRows } from "@rfjs/data-schema";
 import type { FilterRequestMeta, PaginationMeta, RequestMeta, ResponseMeta, SortMeta } from "@rfjs/data-schema";
+import { makeHttpFetcher } from "@rfjs/table-builder-ui";
 
 export interface ProtocolPanelLabels {
   enabled: string;
@@ -28,13 +30,17 @@ export interface ProtocolPanelLabels {
   encoding: string;
   fieldParam: string;
   dirParam: string;
+  try: string;
+  tryRows: string;
+  tryError: string;
 }
 
 const DEFAULT_REQUEST: RequestMeta = {
-  endpoint: "/api/example",
+  endpoint: "/api/query/sample",
+  method: "GET",
   pagination: { strategy: "offset", limitParam: "limit", offsetParam: "offset" },
 };
-const DEFAULT_RESPONSE: ResponseMeta = { rowsPath: "" };
+const DEFAULT_RESPONSE: ResponseMeta = { rowsPath: "data.items", totalPath: "data.total" };
 
 function paginationDefaults(strategy: PaginationMeta["strategy"]): PaginationMeta {
   switch (strategy) {
@@ -101,6 +107,26 @@ export function ProtocolPanel({
   labels: ProtocolPanelLabels;
 }) {
   const enabled = request !== undefined && response !== undefined;
+
+  const [trying, setTrying] = React.useState(false);
+  const [tryOut, setTryOut] = React.useState<{ rows: number; raw: string } | null>(null);
+  const [tryErr, setTryErr] = React.useState<string | null>(null);
+
+  async function runTry() {
+    if (!request || !response) return;
+    setTrying(true);
+    setTryOut(null);
+    setTryErr(null);
+    try {
+      const built = buildRequestParams(request, { pageSize: 10 });
+      const out = await makeHttpFetcher(request)(built);
+      setTryOut({ rows: extractRows(out, response).length, raw: JSON.stringify(out, null, 2) });
+    } catch (e) {
+      setTryErr(e instanceof Error ? e.message : labels.tryError);
+    } finally {
+      setTrying(false);
+    }
+  }
 
   function handleToggle(checked: boolean) {
     if (!checked) {
@@ -298,6 +324,24 @@ export function ProtocolPanel({
               value={response.cursorPath ?? ""}
               onChange={(v) => patchResponse({ cursorPath: v === "" ? undefined : v })}
             />
+          </div>
+
+          <div className="col-span-2 mt-1 flex flex-col gap-1">
+            <button
+              type="button"
+              disabled={trying}
+              onClick={runTry}
+              className="w-fit rounded-md border border-input px-2 py-1 text-xs hover:bg-muted disabled:opacity-50"
+            >
+              {labels.try}
+            </button>
+            {tryErr && <span className="text-xs text-destructive">{tryErr}</span>}
+            {tryOut && (
+              <>
+                <span className="text-xs text-muted-foreground">{labels.tryRows.replace("{count}", String(tryOut.rows))}</span>
+                <pre className="max-h-40 overflow-auto rounded-md border border-input bg-muted/30 p-2 font-mono text-[11px]">{tryOut.raw}</pre>
+              </>
+            )}
           </div>
         </div>
       )}
