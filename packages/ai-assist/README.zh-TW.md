@@ -52,7 +52,7 @@ const full = await client.stream(
 `auth: AuthStrategy` + 可選 `retry: RetryPolicy`），供非 BYOK 呼叫端使用，例如
 走 proxy 的 client —— 見下方認證段落。重試為 opt-in（`maxRetries` 預設
 `0`，即行為不變），只重試 `429`/`5xx`/timeout，並在有 `Retry-After` header 時
-遵循它。
+遵循它（僅解析數字秒數形式；HTTP-date 形式會退回指數退避）。
 
 錯誤會以 `AiError` 拋出，`kind` 為 `'config' | 'http' | 'timeout' | 'abort' |
 'parse'`，HTTP 錯誤另附選填的 `status`/`retryAfterMs`。
@@ -127,7 +127,7 @@ Promise<Response>` handler：讀取伺服端設定（env/secret）、以伺服�
 原樣透傳——包含 SSE 串流 body。
 
 ```typescript
-// app/api/ai/route.ts
+// app/api/ai/chat/completions/route.ts
 import { createAiProxyHandler } from '@rfjs/ai-assist';
 
 const handler = createAiProxyHandler({
@@ -143,8 +143,9 @@ const handler = createAiProxyHandler({
 export const POST = handler;
 ```
 
-瀏覽器端的 client 接著以 `noAuth()`（見上）打 `/api/ai` —— API key 完全不會
-出現在客戶端。
+瀏覽器端的 client 接著以 `baseUrl: '/api/ai'` 搭配 `noAuth()`（見上）—— client
+會自動補上 `/chat/completions`，對應到上方的路由 —— API key 完全不會出現在
+客戶端。
 
 ## 安全模型
 

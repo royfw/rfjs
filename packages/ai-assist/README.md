@@ -52,7 +52,9 @@ const full = await client.stream(
 `model` + `auth: AuthStrategy` + optional `retry: RetryPolicy`) for non-BYOK
 callers such as a proxy-backed client — see the auth section below. Retries
 are opt-in (`maxRetries` defaults to `0`, i.e. no behavior change) and only
-retry `429`/`5xx`/timeout responses, honoring `Retry-After` when present.
+retry `429`/`5xx`/timeout responses, honoring `Retry-After` when present (only
+the numeric-seconds form is parsed; an HTTP-date value falls back to
+exponential backoff).
 
 Errors are thrown as `AiError` with a `kind` of `'config' | 'http' | 'timeout'
 | 'abort' | 'parse'`, plus optional `status`/`retryAfterMs` for HTTP errors.
@@ -130,7 +132,7 @@ server's key, overrides `model` with the server's configured model, and
 passes the response straight through — including SSE streaming bodies.
 
 ```typescript
-// app/api/ai/route.ts
+// app/api/ai/chat/completions/route.ts
 import { createAiProxyHandler } from '@rfjs/ai-assist';
 
 const handler = createAiProxyHandler({
@@ -146,8 +148,9 @@ const handler = createAiProxyHandler({
 export const POST = handler;
 ```
 
-The browser-side client then talks to `/api/ai` with `noAuth()` (see above) —
-no API key ever reaches the client.
+The browser-side client then uses `baseUrl: '/api/ai'` with `noAuth()` (see
+above) — the client appends `/chat/completions`, resolving to the route
+above — so no API key ever reaches the client.
 
 ## Security model
 

@@ -19,6 +19,8 @@ export function createAiProxyHandler(
         headers: { 'content-type': 'application/json' },
       });
     }
+    // Reference handler: a malformed body falls through as {} (server model still injected).
+    // Validate and 400 before enabling in production.
     const clientBody = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const upstreamBody = { ...clientBody, model: settings.model }; // server model wins
     const upstream = await fetch(
