@@ -129,3 +129,20 @@ describe("SourcePanel", () => {
     expect(onImport).toHaveBeenCalledWith([{ a: 1, b: "x" }]);
   });
 });
+
+const baseLabels = {} as never; // labels 有預設值;見 SourcePanel props
+
+describe("SourcePanel transport toggle", () => {
+  it("shows a transport toggle only when remote, and reports changes", () => {
+    const onTransportChange = vi.fn();
+    const { rerender } = render(
+      <SourcePanel mode="rows" onModeChange={() => {}} labels={baseLabels} transport="memory" onTransportChange={onTransportChange} />,
+    );
+    expect(screen.queryByRole("button", { name: /http/i })).toBeNull();
+    rerender(
+      <SourcePanel mode="offset" onModeChange={() => {}} labels={baseLabels} transport="memory" onTransportChange={onTransportChange} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /http/i }));
+    expect(onTransportChange).toHaveBeenCalledWith("http");
+  });
+});

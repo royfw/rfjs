@@ -31,6 +31,8 @@ export interface SourcePanelProps {
   importLabels?: SourcePanelImportLabels;
   /** Initial paste-box contents (e.g. the sample rows as JSON) so the box is a usable, editable example. */
   defaultText?: string;
+  transport?: "memory" | "http";
+  onTransportChange?: (t: "memory" | "http") => void;
 }
 
 // Fetcher strategies shown once 'rows' is switched off (design spec §6.1: "靜態 rows ↔ 假
@@ -45,7 +47,16 @@ function segmentClass(active: boolean): string {
   ].join(" ");
 }
 
-export function SourcePanel({ mode, onModeChange, labels, onImport, importLabels, defaultText }: SourcePanelProps) {
+export function SourcePanel({
+  mode,
+  onModeChange,
+  labels,
+  onImport,
+  importLabels,
+  defaultText,
+  transport,
+  onTransportChange,
+}: SourcePanelProps) {
   const isRemote = mode !== "rows";
   const [format, setFormat] = React.useState<ImportFormat>("json");
   const [text, setText] = React.useState(defaultText ?? "");
@@ -108,6 +119,21 @@ export function SourcePanel({ mode, onModeChange, labels, onImport, importLabels
             ))}
           </div>
         ) : null}
+        {isRemote && onTransportChange && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Transport</span>
+            <button
+              type="button"
+              className={segmentClass(transport === "memory")}
+              onClick={() => onTransportChange("memory")}
+            >
+              in-memory
+            </button>
+            <button type="button" className={segmentClass(transport === "http")} onClick={() => onTransportChange("http")}>
+              HTTP
+            </button>
+          </div>
+        )}
         {!isRemote && importLabels ? (
           <div className="flex flex-col gap-2 border-t pt-2">
             <div className="flex gap-1">
