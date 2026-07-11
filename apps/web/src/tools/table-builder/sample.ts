@@ -45,7 +45,7 @@ export const SAMPLE_META: DataResourceMeta = {
     },
   ],
   request: {
-    endpoint: "/api/sample/items",
+    endpoint: "/api/query/sample",
     method: "GET",
     pagination: { strategy: "offset", limitParam: "limit", offsetParam: "offset" },
     sort: { style: "single", param: "sort", encoding: "colon" },

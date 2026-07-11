@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { ConfigTable } from "@rfjs/table-builder-ui";
+import { ConfigTable, makeHttpFetcher } from "@rfjs/table-builder-ui";
 import type { TableLabels, TableSource } from "@rfjs/table-builder-ui";
 import { deriveTableConfig, parseTableConfig } from "@rfjs/table-builder";
 import type {
@@ -25,7 +25,6 @@ import {
 } from "./sample";
 import type { SourceMode } from "./sample";
 import { makeFakeFetcher } from "./fake-fetcher";
-import { makeHttpFetcher } from "./http-fetcher";
 import { SourcePanel } from "./source-panel";
 import { ColumnsPanel } from "./columns-panel";
 import { PaginationPanel } from "./pagination-panel";
@@ -182,7 +181,7 @@ export function TableBuilderTool() {
       fields: SAMPLE_META.fields,
       fetch:
         transport === "http"
-          ? makeHttpFetcher("/api/query/sample")
+          ? makeHttpFetcher(request)
           : makeFakeFetcher(SAMPLE_ROWS, config.columns, SAMPLE_META.fields),
     };
   }, [sourceMode, transport, config.columns, rows]);
