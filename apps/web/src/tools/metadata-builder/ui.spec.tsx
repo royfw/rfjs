@@ -91,3 +91,36 @@ describe("MetadataBuilderTool", () => {
     expect(screen.getByTestId("meta-json").textContent).toContain('"price"');
   });
 });
+
+describe("studio layout", () => {
+  it("selecting a field switches the code panel to fragment mode; deselect via remove shows full json", () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("option", { name: /price/ }));
+    expect(screen.getByTestId("meta-json").textContent).not.toContain('"request"'); // 片段模式
+    expect(screen.getByTestId("meta-json").textContent).toContain('"key": "price"');
+
+    fireEvent.click(screen.getByRole("button", { name: "show all" }));
+    expect(screen.getByTestId("meta-json").textContent).toContain('"request"');
+  });
+
+  it("collapse hides the code panel and persists; expand restores it", () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("button", { name: "collapse code panel" }));
+    expect(screen.queryByTestId("meta-json")).toBeNull();
+    expect(localStorage.getItem("rfjs.metadata-builder.code-open")).toBe("0");
+
+    fireEvent.click(screen.getByRole("button", { name: "expand code panel" }));
+    expect(screen.getByTestId("meta-json")).toBeTruthy();
+    expect(localStorage.getItem("rfjs.metadata-builder.code-open")).toBe("1");
+  });
+
+  it("the code panel stays mounted across editor tabs", () => {
+    renderTool();
+    fireEvent.click(screen.getByRole("button", { name: "Protocol" }));
+    expect(screen.getByTestId("meta-json")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Import" }));
+    expect(screen.getByTestId("meta-json")).toBeTruthy();
+  });
+});

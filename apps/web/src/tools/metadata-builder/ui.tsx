@@ -13,15 +13,17 @@ import { ImportPanel, type ImportPanelLabels } from "./import-panel";
 import { CodePanel, type CodePanelLabels, type CodePanelTab } from "./code-panel";
 
 const STORAGE_KEY = "rfjs.metadata-builder.meta";
+const CODE_OPEN_KEY = "rfjs.metadata-builder.code-open";
 
 type Tab = "fields" | "protocol" | "import";
 
 // Assembly shell (design spec §Studio, direction C): eyebrow → segmented tabs (#239 pattern) →
-// current editor panel → an always-on <CodePanel>. `meta` is the single source of truth (plan
-// Task 6 sync rule); `rows` is a UI-only projection kept in lockstep on every meta-replacing
-// operation (import/reset/restore) via metaToRows. `codeTab` is controlled here (not inside
-// CodePanel) so a future collapse bar can keep showing the active tab name; `selectedFieldKey`
-// is temporarily null until Task 3 wires it to the fields-panel selection.
+// a two-column grid pairing the current editor panel with the <CodePanel> (or its collapsed
+// bar). `meta` is the single source of truth (plan Task 6 sync rule); `rows` is a UI-only
+// projection kept in lockstep on every meta-replacing operation (import/reset/restore) via
+// metaToRows. `codeTab` is controlled here (not inside CodePanel) so the collapsed bar can keep
+// showing the active tab name; `selectedFieldKey` mirrors the fields-panel selection and only
+// narrows the code panel while the Fields tab is active.
 export function MetadataBuilderTool() {
   const t = useTranslations("ToolUI");
   const [meta, setMeta] = React.useState<DataResourceMeta>(DEFAULT_META);
@@ -29,6 +31,7 @@ export function MetadataBuilderTool() {
   const [rows, setRows] = React.useState<FieldRow[]>(() => metaToRows(DEFAULT_META.fields, () => crypto.randomUUID()));
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [codeTab, setCodeTab] = React.useState<CodePanelTab>("meta");
+  const [codeOpen, setCodeOpen] = React.useState(true); // SSR first paint is always open, to avoid a hydration mismatch
 
   const restoredRef = React.useRef(false);
   React.useEffect(() => {
@@ -43,6 +46,14 @@ export function MetadataBuilderTool() {
     } catch {
       /* corrupt storage silently falls back to the default sample */
     }
+    const storedOpen = localStorage.getItem(CODE_OPEN_KEY);
+    if (storedOpen !== null) {
+      setCodeOpen(storedOpen !== "0");
+    } else {
+      // no stored preference yet: default open on desktop widths, collapsed on narrow viewports.
+      // jsdom has no matchMedia — guard it and treat that as "desktop" so tests see the default-open behavior.
+      setCodeOpen(typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 1024px)").matches : true);
+    }
     restoredRef.current = true;
   }, []);
   React.useEffect(() => {
@@ -50,6 +61,11 @@ export function MetadataBuilderTool() {
     if (!restoredRef.current) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
   }, [meta]);
+
+  function toggleCode(next: boolean) {
+    setCodeOpen(next);
+    localStorage.setItem(CODE_OPEN_KEY, next ? "1" : "0");
+  }
 
   function handleFieldsChange(next: FieldRow[]) {
     setRows(next);
@@ -64,19 +80,24 @@ export function MetadataBuilderTool() {
     setMeta(nextMeta);
     setRows(metaToRows(nextMeta.fields, () => crypto.randomUUID()));
     setTab("fields");
+    setSelectedId(null);
   }
 
   function handleImportFields(fields: DataFieldMeta[]) {
     setMeta((m) => ({ ...m, fields }));
     setRows(metaToRows(fields, () => crypto.randomUUID()));
     setTab("fields");
+    setSelectedId(null);
   }
 
   function reset() {
     localStorage.removeItem(STORAGE_KEY);
     setMeta(DEFAULT_META);
     setRows(metaToRows(DEFAULT_META.fields, () => crypto.randomUUID()));
+    setSelectedId(null);
   }
+
+  const selectedFieldKey = rows.find((r) => r.id === selectedId)?.key ?? null;
 
   const fieldsLabels: FieldsPanelLabels = React.useMemo(
     () => ({
@@ -148,7 +169,7 @@ export function MetadataBuilderTool() {
     [t],
   );
 
-  const codePanelLabels: CodePanelLabels = React.useMemo(
+  const codeLabels: CodePanelLabels = React.useMemo(
     () => ({
       metaTitle: t("mbMetaTitle"),
       schemaTitle: t("mbSchemaTitle"),
@@ -164,6 +185,9 @@ export function MetadataBuilderTool() {
     }),
     [t],
   );
+  // shown on the collapsed bar — the active code tab's title, kept in sync without re-deriving
+  // the whole codeLabels memo.
+  const codeTabLabel = { meta: codeLabels.metaTitle, schema: codeLabels.schemaTitle, try: codeLabels.tryTitle }[codeTab];
 
   const treeLabels = React.useMemo(
     () => ({
@@ -208,30 +232,50 @@ export function MetadataBuilderTool() {
         ))}
       </div>
 
-      {tab === "fields" && (
-        <FieldsPanel
-          rows={rows}
-          onChange={handleFieldsChange}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          labels={{ ...fieldsLabels, fieldSummary }}
-        />
-      )}
-      {tab === "protocol" && (
-        <ProtocolPanel request={meta.request} response={meta.response} onChange={handleProtocolChange} labels={protocolLabels} />
-      )}
-      {tab === "import" && <ImportPanel onMeta={handleImportMeta} onFields={handleImportFields} labels={importLabels} />}
-
-      <CodePanel
-        meta={meta}
-        selectedFieldKey={null}
-        tab={codeTab}
-        onTabChange={setCodeTab}
-        onReset={reset}
-        onCollapse={() => {}}
-        labels={codePanelLabels}
-        treeLabels={treeLabels}
-      />
+      <div
+        className={`grid gap-4 ${
+          codeOpen ? "lg:grid-cols-[minmax(320px,1fr)_minmax(380px,1fr)]" : "lg:grid-cols-[1fr_2.5rem]"
+        }`}
+      >
+        <div>
+          {tab === "fields" && (
+            <FieldsPanel
+              rows={rows}
+              onChange={handleFieldsChange}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              labels={{ ...fieldsLabels, fieldSummary }}
+            />
+          )}
+          {tab === "protocol" && (
+            <ProtocolPanel request={meta.request} response={meta.response} onChange={handleProtocolChange} labels={protocolLabels} />
+          )}
+          {tab === "import" && <ImportPanel onMeta={handleImportMeta} onFields={handleImportFields} labels={importLabels} />}
+        </div>
+        <div>
+          {codeOpen ? (
+            <CodePanel
+              meta={meta}
+              selectedFieldKey={tab === "fields" ? selectedFieldKey : null}
+              tab={codeTab}
+              onTabChange={setCodeTab}
+              onReset={reset}
+              onCollapse={() => toggleCode(false)}
+              labels={codeLabels}
+              treeLabels={treeLabels}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => toggleCode(true)}
+              aria-label={t("mbExpand")}
+              className="flex h-full min-h-10 w-full items-center justify-center gap-2 rounded-md border border-dashed border-input text-xs text-muted-foreground hover:text-foreground lg:w-10 lg:flex-col"
+            >
+              <span className="lg:rotate-90 lg:whitespace-nowrap">{codeTabLabel}</span>
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
