@@ -68,7 +68,7 @@ export const messages: LocaleMessages = {
       mbLoad: "Load",
       mbUpload: "Upload .json",
       mbInvalidJson: "Invalid JSON.",
-      mbImportHint: "hint",
+      mbImportHint: "meta.json is validated with parseDataResourceMeta; sample rows seed fields via inferFieldsFromRows — declare kind and enum options by hand afterwards.",
 
       mbMetaTitle: "meta",
       mbSchemaTitle: "schema",
@@ -152,7 +152,7 @@ export const messages: LocaleMessages = {
       mbLoad: "載入",
       mbUpload: "上傳 .json",
       mbInvalidJson: "JSON 格式錯誤。",
-      mbImportHint: "提示",
+      mbImportHint: "meta.json 會經 parseDataResourceMeta 驗證;樣本 rows 以 inferFieldsFromRows 產生欄位,之後再手動補 kind 與 enum options。",
 
       mbMetaTitle: "meta",
       mbSchemaTitle: "schema",
