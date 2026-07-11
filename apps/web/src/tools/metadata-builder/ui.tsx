@@ -10,22 +10,25 @@ import { DEFAULT_META, metaToRows, rowsToMeta, type FieldRow } from "./model";
 import { FieldsPanel, type FieldsPanelLabels } from "./fields-panel";
 import { ProtocolPanel, type ProtocolPanelLabels } from "./protocol-panel";
 import { ImportPanel, type ImportPanelLabels } from "./import-panel";
-import { DerivedPreview, type DerivedPreviewLabels } from "./derived-preview";
+import { CodePanel, type CodePanelLabels, type CodePanelTab } from "./code-panel";
 
 const STORAGE_KEY = "rfjs.metadata-builder.meta";
 
 type Tab = "fields" | "protocol" | "import";
 
-// Assembly shell (design spec §B-layout): eyebrow → segmented tabs (#239 pattern) → current
-// editor panel → an always-on <DerivedPreview>. `meta` is the single source of truth (plan
+// Assembly shell (design spec §Studio, direction C): eyebrow → segmented tabs (#239 pattern) →
+// current editor panel → an always-on <CodePanel>. `meta` is the single source of truth (plan
 // Task 6 sync rule); `rows` is a UI-only projection kept in lockstep on every meta-replacing
-// operation (import/reset/restore) via metaToRows.
+// operation (import/reset/restore) via metaToRows. `codeTab` is controlled here (not inside
+// CodePanel) so a future collapse bar can keep showing the active tab name; `selectedFieldKey`
+// is temporarily null until Task 3 wires it to the fields-panel selection.
 export function MetadataBuilderTool() {
   const t = useTranslations("ToolUI");
   const [meta, setMeta] = React.useState<DataResourceMeta>(DEFAULT_META);
   const [tab, setTab] = React.useState<Tab>("fields");
   const [rows, setRows] = React.useState<FieldRow[]>(() => metaToRows(DEFAULT_META.fields, () => crypto.randomUUID()));
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [codeTab, setCodeTab] = React.useState<CodePanelTab>("meta");
 
   const restoredRef = React.useRef(false);
   React.useEffect(() => {
@@ -145,7 +148,7 @@ export function MetadataBuilderTool() {
     [t],
   );
 
-  const previewLabels: DerivedPreviewLabels = React.useMemo(
+  const codePanelLabels: CodePanelLabels = React.useMemo(
     () => ({
       metaTitle: t("mbMetaTitle"),
       schemaTitle: t("mbSchemaTitle"),
@@ -155,6 +158,9 @@ export function MetadataBuilderTool() {
       copied: t("mbCopied"),
       download: t("mbDownload"),
       reset: t("mbReset"),
+      collapse: t("mbCollapse"),
+      expand: t("mbExpand"),
+      showAll: t("mbShowAll"),
     }),
     [t],
   );
@@ -216,10 +222,16 @@ export function MetadataBuilderTool() {
       )}
       {tab === "import" && <ImportPanel onMeta={handleImportMeta} onFields={handleImportFields} labels={importLabels} />}
 
-      <div>
-        <p className="mb-2 text-xs font-semibold tracking-widest text-muted-foreground">{t("mbPreviewTitle")}</p>
-        <DerivedPreview meta={meta} onReset={reset} labels={previewLabels} treeLabels={treeLabels} />
-      </div>
+      <CodePanel
+        meta={meta}
+        selectedFieldKey={null}
+        tab={codeTab}
+        onTabChange={setCodeTab}
+        onReset={reset}
+        onCollapse={() => {}}
+        labels={codePanelLabels}
+        treeLabels={treeLabels}
+      />
     </div>
   );
 }
