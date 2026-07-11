@@ -1117,6 +1117,9 @@ importers:
       '@rfjs/object-utils':
         specifier: workspace:*
         version: link:../object-utils
+      '@rfjs/table-builder':
+        specifier: workspace:*
+        version: link:../table-builder
       zod:
         specifier: ^4.0.0
         version: 4.4.3
@@ -1160,9 +1163,18 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.0.0
         version: 5.4.0(react-hook-form@7.80.0(react@19.2.7))
+      '@rfjs/data-schema':
+        specifier: workspace:*
+        version: link:../data-schema
       '@rfjs/form-builder':
         specifier: workspace:*
         version: link:../form-builder
+      '@rfjs/table-builder':
+        specifier: workspace:*
+        version: link:../table-builder
+      '@rfjs/table-builder-ui':
+        specifier: workspace:*
+        version: link:../table-builder-ui
       '@rfjs/web-ui':
         specifier: workspace:*
         version: link:../web-ui

@@ -31,6 +31,7 @@
     "@rfjs/data-expr": "workspace:*",
     "@rfjs/data-filter": "workspace:*",
     "@rfjs/object-utils": "workspace:*",
+    "@rfjs/table-builder": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

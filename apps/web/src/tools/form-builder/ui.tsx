@@ -53,6 +53,14 @@ const GAP = 8;
 const DRAG_THRESHOLD = 4; // px the pointer must travel before a press becomes a drag (a click just selects)
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
+// Demo rows for query-shaped api-action URLs (e.g. /api/actions/query) — lets the
+// result mode:'table' snapshot/preview show a ConfigTable instead of a bare echo.
+const SAMPLE_QUERY_ROWS = [
+  { id: 1001, name: "Ada Lovelace", email: "ada@example.com", amount: 1240, status: "paid" },
+  { id: 1002, name: "Alan Turing", email: "alan@example.com", amount: 980, status: "pending" },
+  { id: 1003, name: "Grace Hopper", email: "grace@example.com", amount: 3010, status: "paid" },
+];
+
 // Merged preview fetcher: echoes api-action requests (body shaped { data, meta }),
 // otherwise delegates to sampleFetcher for dataSource requests (e.g. /api/countries).
 // Detects api-action by checking if req.body has both 'data' and 'meta' properties.
@@ -63,8 +71,9 @@ export async function createPreviewFetcher(req: { url: string; body?: unknown })
     "data" in req.body &&
     "meta" in req.body
   ) {
-    // api-action request: echo it back with a timestamp
-    return { echoedAt: new Date().toISOString(), received: req.body };
+    // api-action request: echo it back with a timestamp; query-shaped URLs also get demo rows.
+    const echo = { echoedAt: new Date().toISOString(), received: req.body };
+    return /search|query|list/i.test(req.url) ? { ...echo, data: SAMPLE_QUERY_ROWS } : echo;
   }
   // dataSource request: delegate to sampleFetcher
   return sampleFetcher(req);

@@ -6,6 +6,7 @@ import {
   type LocalizedLabel, type FieldOption, type FieldValidation, type ConditionalRule, type DataSource,
   type ButtonAction,
 } from "@rfjs/form-builder";
+import type { TableConfig } from "@rfjs/table-builder";
 
 export type Kind = "field" | "content" | "divider" | "spacer" | "ai-note" | "button" | "result";
 // Canvas Component = full engine FieldComponent union.
@@ -40,7 +41,7 @@ export interface Card {
   sourceId?: string; // result
   dataPath?: string; // result
   maxItems?: number; // result
-  resultTable?: unknown; // result
+  resultTable?: TableConfig; // result
   emptyText?: string; // result
   col: number;
   span: number;

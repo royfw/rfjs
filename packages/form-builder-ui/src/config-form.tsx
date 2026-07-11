@@ -489,7 +489,7 @@ export function ConfigForm({ config, defaultValues, onSubmit, submitLabel = 'Sub
         : 'ready';
       return (
         <div key={item.id} data-item={item.id} style={place ? placementStyle(place) : fieldSpanStyle(undefined, flow, cols)}>
-          <ResultView mode={item.mode} state={state} value={value} maxItems={item.maxItems} emptyText={item.emptyText} locale={locale} />
+          <ResultView mode={item.mode} state={state} value={value} maxItems={item.maxItems} table={item.table} emptyText={item.emptyText} locale={locale} />
         </div>
       );
     }

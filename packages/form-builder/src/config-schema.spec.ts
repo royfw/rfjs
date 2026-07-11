@@ -552,7 +552,8 @@ describe('result items', () => {
     const full = {
       id: 'res2', kind: 'result', mode: 'card',
       sourceId: 'btn1', dataPath: 'data.items', maxItems: 5,
-      table: { anything: true }, emptyText: { en: 'Nothing', 'zh-TW': '沒有資料' },
+      table: { columns: [{ key: 'name', label: 'Name', dataType: 'string' }], pagination: { pageSize: 10 } },
+      emptyText: { en: 'Nothing', 'zh-TW': '沒有資料' },
     };
     for (const item of [minimal, full]) {
       const r = formConfigSchema.safeParse(withItem(item));
@@ -570,5 +571,43 @@ describe('result items', () => {
       const r = formConfigSchema.safeParse(withItem(item));
       expect(r.success, JSON.stringify(item)).toBe(false);
     }
+  });
+});
+
+describe('result item table (mode:table)', () => {
+  const withTable = {
+    version: 1,
+    sections: [
+      {
+        id: 's1',
+        title: 'S',
+        rows: [
+          {
+            id: 'r1',
+            items: [
+              {
+                id: 'res',
+                kind: 'result',
+                mode: 'table',
+                table: {
+                  columns: [{ key: 'name', label: 'Name', dataType: 'string' }],
+                  pagination: { pageSize: 10 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  it('accepts a result item carrying a valid TableConfig', () => {
+    expect(parseFormConfig(withTable)).toEqual(withTable);
+  });
+
+  it('rejects a result item whose table has no columns', () => {
+    const bad = JSON.parse(JSON.stringify(withTable));
+    bad.sections[0].rows[0].items[0].table.columns = [];
+    expect(FormConfigSchema.safeParse(bad).success).toBe(false);
   });
 });
