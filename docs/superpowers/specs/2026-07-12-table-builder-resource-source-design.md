@@ -50,6 +50,7 @@ Resource 分頁(取代現在的 source 面板)由上而下:
 - **source memo**:`preview==='live' ? makeHttpFetcher(request) : makeFakeFetcher(rows, columns, fields)`(沿用現有兩個 fetcher;只是入口改名/收斂)。無協定資源 → `TableSource {kind:'rows', rows}`。
 - **Import meta.json**:新增 seed 分支,`parseDataResourceMeta` 驗證 → set fields/request/response;沿用 metadata-builder `import-panel` 的 meta 模式邏輯(可抽共用或複製精簡)。
 - **i18n**:Seed 三選一、Preview「範本資料(離線)/呼叫端點(live)」、「+ 加上協定」等文案(en + zh-TW);沿用共享 `ToolUI` namespace,`{count}` 類用 `t.raw`。
+- **概念層說明**:資源/協定/離線-live 的整體解釋走 `<ToolIntro>`(見 spec ③,同 apps/web PR),本輪只保留欄位/面板級微提示;不重複解釋。
 - **ProtocolPanel** 來源改 `@rfjs/data-schema-ui`(① 落地後)。
 - 無 packages 變更 → 無 changeset。
 
