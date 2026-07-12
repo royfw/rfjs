@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ProtocolPanel } from "./index";
+import { ProtocolPanel } from "./protocol-panel";
 import type { RequestMeta, ResponseMeta } from "@rfjs/data-schema";
 
 const LABELS = {

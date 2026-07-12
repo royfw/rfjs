@@ -1,4 +1,4 @@
-import type { BuiltRequest, RequestMeta } from '@rfjs/data-schema';
+import type { BuiltRequest, RequestMeta } from './types';
 
 /**
  * RequestMeta-driven HTTP transport for a remote `TableSource.fetch`. Serializes the tool's

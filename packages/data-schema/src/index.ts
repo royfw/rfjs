@@ -5,3 +5,4 @@ export * from './schema';
 export * from './infer';
 export * from './request';
 export * from './response';
+export * from './http-fetcher';
