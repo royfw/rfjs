@@ -112,6 +112,24 @@ describe("MetadataBuilderTool", () => {
     renderTool();
     expect(screen.getByTestId("meta-json").textContent).toContain('"price"');
   });
+
+  it("mount never writes the default sample over a stored meta (no transient clobber)", () => {
+    localStorage.setItem(
+      "rfjs.metadata-builder.meta",
+      JSON.stringify({ fields: [{ key: "customField", label: "Custom", dataType: "string" }] }),
+    );
+    const spy = vi.spyOn(Storage.prototype, "setItem");
+    renderTool();
+    // the persist effect's mount run used to fire with the pre-restore DEFAULT_META
+    // before the restore setMeta landed — that write must not happen.
+    const clobber = spy.mock.calls.find(([key, value]) => {
+      if (key !== "rfjs.metadata-builder.meta") return false;
+      const parsed = JSON.parse(value as string) as { fields: { key: string }[] };
+      return parsed.fields[0]?.key !== "customField";
+    });
+    expect(clobber).toBeUndefined();
+    spy.mockRestore();
+  });
 });
 
 describe("studio layout", () => {

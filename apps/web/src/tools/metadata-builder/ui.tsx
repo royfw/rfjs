@@ -40,7 +40,7 @@ export function MetadataBuilderTool() {
   const [codeTab, setCodeTab] = React.useState<CodePanelTab>("meta");
   const [codeOpen, setCodeOpen] = React.useState(true); // SSR first paint is always open, to avoid a hydration mismatch
 
-  const restoredRef = React.useRef(false);
+  const skipFirstPersistRef = React.useRef(true);
   React.useEffect(() => {
     // 1) restore — must be declared before the persist effect below.
     try {
@@ -61,11 +61,16 @@ export function MetadataBuilderTool() {
       // jsdom has no matchMedia — guard it and treat that as "desktop" so tests see the default-open behavior.
       setCodeOpen(typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 1024px)").matches : true);
     }
-    restoredRef.current = true;
   }, []);
   React.useEffect(() => {
-    // 2) persist — skip every run until the restore effect above has completed.
-    if (!restoredRef.current) return;
+    // 2) persist — the mount run always carries the pre-restore DEFAULT_META (the restore
+    //    effect's setMeta has not been applied yet), so writing here would clobber the stored
+    //    meta for one tick; skip exactly that first run. The restore's setMeta (or the first
+    //    user edit) triggers the next run with the correct value.
+    if (skipFirstPersistRef.current) {
+      skipFirstPersistRef.current = false;
+      return;
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
   }, [meta]);
 
