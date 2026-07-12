@@ -40,11 +40,10 @@ export function ToolIntro({
 }) {
   const [open, setOpen] = React.useState(false);
   const [dismissed, setDismissed] = React.useState(false);
-  const restoredRef = React.useRef(false);
+  const skipFirstPersistRef = React.useRef(true);
 
-  // Restore-before-persist (metadata-builder's established localStorage pattern): read once on
-  // mount, and never write until the read happened -- otherwise the first render's defaults
-  // would clobber the stored state.
+  // Restore-before-persist: read once on mount; the persist effect below skips its own mount
+  // run, which is the only run that can still see the pre-restore defaults.
   React.useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -56,11 +55,17 @@ export function ToolIntro({
     } catch {
       // corrupted storage -> defaults
     }
-    restoredRef.current = true;
   }, [storageKey]);
 
   React.useEffect(() => {
-    if (!restoredRef.current) return;
+    // The mount run always carries the pre-restore defaults (the restore effect's setState has
+    // not been applied yet), so writing here would clobber the stored value for one tick — skip
+    // exactly that first run. The restore's setState (or the first user action) triggers the
+    // next run with correct values.
+    if (skipFirstPersistRef.current) {
+      skipFirstPersistRef.current = false;
+      return;
+    }
     try {
       localStorage.setItem(storageKey, JSON.stringify({ open, dismissed }));
     } catch {

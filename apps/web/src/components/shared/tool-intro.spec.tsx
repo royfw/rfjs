@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToolIntro } from "./tool-intro";
 
@@ -69,6 +69,21 @@ describe("ToolIntro", () => {
     renderIntro();
     expect(screen.getByText("How does this tool work?")).toBeTruthy();
     expect(screen.queryByText("A DataResourceMeta.")).toBeNull();
+  });
+
+  it("mount never writes pre-restore defaults over stored state (no transient clobber)", () => {
+    localStorage.setItem("tool-intro:test", JSON.stringify({ open: false, dismissed: true }));
+    const spy = vi.spyOn(Storage.prototype, "setItem");
+    renderIntro();
+    // the persist effect's mount run used to fire with the pre-restore defaults
+    // ({dismissed:false}) before the restore setState landed — that write must not happen.
+    const clobber = spy.mock.calls.find(
+      ([key, value]) =>
+        key === "tool-intro:test" &&
+        (JSON.parse(value as string) as { dismissed: boolean }).dismissed === false,
+    );
+    expect(clobber).toBeUndefined();
+    spy.mockRestore();
   });
 
   it("persists open state after toggling (restore-before-persist holds)", () => {
