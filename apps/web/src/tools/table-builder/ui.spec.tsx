@@ -55,18 +55,8 @@ describe("TableBuilderTool", () => {
     expect(screen.getByText(/18 rows/)).toBeTruthy();
   });
 
-  it("renders SAMPLE_CONFIG's pageSize rows by default (static source)", () => {
+  it("renders SAMPLE_CONFIG's pageSize rows by default (sample resource, offline preview)", async () => {
     renderTool();
-
-    // one <tr> for the header + one per visible data row.
-    const rows = screen.getAllByRole("row");
-    expect(rows.length).toBe(1 + SAMPLE_CONFIG.pagination.pageSize);
-  });
-
-  it("switching the data source to remote still renders rows", async () => {
-    renderTool();
-
-    fireEvent.click(screen.getByRole("button", { name: "Remote" }));
 
     await waitFor(() => {
       const rows = screen.getAllByRole("row");
@@ -74,7 +64,20 @@ describe("TableBuilderTool", () => {
     });
   });
 
-  it("editing page size in the pagination panel immediately changes the rendered row count", () => {
+  it("toggling the protocol off falls back to static rows (still renders)", async () => {
+    renderTool();
+    // default = sample resource with protocol -> the declare-protocol switch is ON
+    fireEvent.click(await screen.findByRole("switch", { name: "declare protocol" }));
+
+    await waitFor(() => {
+      const rows = screen.getAllByRole("row");
+      expect(rows.length).toBe(1 + SAMPLE_CONFIG.pagination.pageSize);
+    });
+    // without a protocol there is no offline/live preview toggle
+    expect(screen.queryByRole("button", { name: /call endpoint/i })).toBeNull();
+  });
+
+  it("editing page size in the pagination panel immediately changes the rendered row count", async () => {
     renderTool();
 
     fireEvent.click(screen.getByRole("button", { name: "Pagination" }));
@@ -83,8 +86,10 @@ describe("TableBuilderTool", () => {
     ) as HTMLInputElement;
     fireEvent.change(pageSizeInput, { target: { value: "3" } });
 
-    const rows = screen.getAllByRole("row");
-    expect(rows.length).toBe(1 + 3);
+    await waitFor(() => {
+      const rows = screen.getAllByRole("row");
+      expect(rows.length).toBe(1 + 3);
+    });
   });
 
   // Smoke test only: real "add condition -> row count shrinks" behavior is covered by the e2e
@@ -99,34 +104,37 @@ describe("TableBuilderTool", () => {
 
   // B-layout (design spec §2.1): the editor panels are tabs; the preview table must stay
   // mounted below regardless of the active tab (the live edit→preview loop is the point).
-  it("tabs swap the editor panel while the preview table stays visible", () => {
+  it("tabs swap the editor panel while the preview table stays visible", async () => {
     renderTool();
 
     // default tab = Source
-    expect(screen.getByText("Data source")).toBeTruthy();
+    expect(screen.getByText("Data resource")).toBeTruthy();
     expect(screen.queryByLabelText("Default page size")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Columns" }));
-    expect(screen.queryByText("Data source")).toBeNull();
+    expect(screen.queryByText("Data resource")).toBeNull();
     expect(screen.getByText("Columns", { selector: "p" })).toBeTruthy();
     // preview still rendered
-    expect(screen.getAllByRole("row").length).toBeGreaterThan(1);
+    await waitFor(() => expect(screen.getAllByRole("row").length).toBeGreaterThan(1));
   });
 
-  it("metadata tab shows the reverse-projected DataResourceMeta JSON", () => {
+  it("metadata tab carries the protocol by default and drops it when the protocol is off", async () => {
     renderTool();
 
     fireEvent.click(screen.getByRole("button", { name: "Metadata" }));
-
     const pre = screen.getByTestId("metadata-json");
     expect(pre.textContent).toContain('"fields"');
-    // static rows mode carries no request protocol
-    expect(pre.textContent).not.toContain('"request"');
+    expect(pre.textContent).toContain('"request"');
+
+    // turn the protocol off (switch lives on the Resource tab)
+    fireEvent.click(screen.getByRole("button", { name: "Resource" }));
+    fireEvent.click(screen.getByRole("switch", { name: "declare protocol" }));
+    fireEvent.click(screen.getByRole("button", { name: "Metadata" }));
+    expect(screen.getByTestId("metadata-json").textContent).not.toContain('"request"');
   });
 
   it('fetcher mode: filter section is enabled and offers an Apply button', async () => {
     renderTool();
-    fireEvent.click(screen.getByRole('button', { name: 'Remote' }));
 
     const toggle = await screen.findByRole('button', { name: /filter/i });
     await waitFor(() => expect((toggle as HTMLButtonElement).disabled).toBe(false));
@@ -134,10 +142,54 @@ describe("TableBuilderTool", () => {
     expect(await screen.findByRole('button', { name: 'Apply' })).toBeTruthy();
   });
 
-  it("remote mode renders the protocol editor with an editable endpoint", async () => {
+  it("renders the protocol editor with an editable endpoint by default", async () => {
     renderTool();
-    fireEvent.click(screen.getByRole("button", { name: /remote|遠端/i }));
     expect(await screen.findByDisplayValue("/api/query/sample")).toBeTruthy();
+  });
+
+  it("importing rows seeds a protocol-less resource (offline preview queries the imported rows)", async () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("button", { name: "Paste rows" }));
+    fireEvent.change(screen.getByPlaceholderText("Paste JSON or CSV…"), {
+      target: { value: '[{"name":"Imported Row"}]' },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load" }));
+
+    await screen.findByText("Imported Row");
+    // rows import clears the protocol -> switch off, no preview toggle
+    expect((screen.getByRole("switch", { name: "declare protocol" }) as HTMLInputElement).getAttribute("aria-checked")).toBe("false");
+    expect(screen.queryByRole("button", { name: /call endpoint/i })).toBeNull();
+  });
+
+  it("offline preview shows the offline/live toggle when the protocol is on", async () => {
+    renderTool();
+    expect(await screen.findByRole("button", { name: "Sample data (offline)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Call endpoint (live)" })).toBeTruthy();
+  });
+
+  it("importing a meta.json seeds fields + protocol end-to-end", async () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import meta.json" }));
+    fireEvent.change(screen.getByPlaceholderText("Paste a DataResourceMeta (meta.json)…"), {
+      target: {
+        value: JSON.stringify({
+          fields: [{ key: "name", label: "Name", dataType: "string" }],
+          request: {
+            endpoint: "/api/query/imported",
+            method: "GET",
+            pagination: { strategy: "offset", limitParam: "limit", offsetParam: "offset" },
+          },
+          response: { rowsPath: "data.items" },
+        }),
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load" }));
+
+    // protocol carried in: endpoint editable in the ProtocolPanel, switch stays on
+    expect(await screen.findByDisplayValue("/api/query/imported")).toBeTruthy();
+    expect(screen.getByRole("switch", { name: "declare protocol" }).getAttribute("aria-checked")).toBe("true");
   });
 });
 

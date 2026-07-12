@@ -12,16 +12,16 @@ import type {
   TablePaginationConfig,
 } from "@rfjs/table-builder";
 import { inferFieldsFromRows } from "@rfjs/data-schema";
-import type { RequestMeta, ResponseMeta } from "@rfjs/data-schema";
+import type { DataFieldMeta, DataResourceMeta, RequestMeta, ResponseMeta } from "@rfjs/data-schema";
 
 import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
 import { ProtocolPanel, type ProtocolPanelLabels } from "@rfjs/data-schema-ui";
 
 import { SAMPLE_CONFIG, SAMPLE_META, SAMPLE_ROWS } from "./sample";
-import type { SourceMode } from "./sample";
 import { makeFakeFetcher } from "./fake-fetcher";
-import { SourcePanel } from "./source-panel";
+import { ResourcePanel } from "./resource-panel";
+import type { PreviewMode } from "./resource-panel";
 import { ColumnsPanel } from "./columns-panel";
 import { PaginationPanel } from "./pagination-panel";
 import { MetadataPanel } from "./metadata-panel";
@@ -48,13 +48,15 @@ export function TableBuilderTool() {
   const aiLabels = useAiPanelLabels();
 
   const [config, setConfig] = React.useState<TableConfig>(SAMPLE_CONFIG);
-  const [sourceMode, setSourceMode] = React.useState<SourceMode>("rows");
-  const [transport, setTransport] = React.useState<"memory" | "http">("memory");
-  const [request, setRequest] = React.useState<RequestMeta>(SAMPLE_META.request!);
-  const [response, setResponse] = React.useState<ResponseMeta>(SAMPLE_META.response!);
+  const [request, setRequest] = React.useState<RequestMeta | undefined>(SAMPLE_META.request);
+  const [response, setResponse] = React.useState<ResponseMeta | undefined>(SAMPLE_META.response);
+  const [fields, setFields] = React.useState<DataFieldMeta[]>(SAMPLE_META.fields);
+  const [preview, setPreview] = React.useState<PreviewMode>("offline");
   const [rows, setRows] =
     React.useState<Record<string, unknown>[]>(SAMPLE_ROWS);
   const [dataVersion, setDataVersion] = React.useState(0);
+
+  const hasProtocol = request !== undefined && response !== undefined;
 
   type EditorTab = "source" | "columns" | "pagination" | "metadata";
   const [tab, setTab] = React.useState<EditorTab>("source");
@@ -103,16 +105,24 @@ export function TableBuilderTool() {
     [t],
   );
 
-  const sourcePanelLabels = React.useMemo(
+  const resourcePanelLabels = React.useMemo(
     () => ({
-      title: t("tbSourcePanelTitle"),
-      rows: t("tbSourceStatic"),
-      fetcher: t("tbSourceFetcher"),
-      transport: t("tbTransport"),
-      transportMemory: t("tbTransportMemory"),
-      transportHttp: t("tbTransportHttp"),
+      title: t("tbResourceTitle"),
+      seedMeta: t("tbSeedImportMeta"),
+      seedRows: t("tbSeedPasteRows"),
+      seedSample: t("tbSeedSample"),
+      metaPlaceholder: t("tbSeedMetaPlaceholder"),
+      metaHint: t("tbSeedMetaHint"),
+      metaInvalid: t("tbSeedMetaInvalid"),
+      sampleHint: t("tbSeedSampleHint"),
+      sampleLoad: t("tbSeedSampleLoad"),
+      fieldsSummary: t("tbFieldsSummary", { count: fields.length }),
+      protoHint: t("tbProtoHint"),
+      previewLabel: t("tbPreviewData"),
+      previewOffline: t("tbPreviewOffline"),
+      previewLive: t("tbPreviewLive"),
     }),
-    [t],
+    [t, fields.length],
   );
 
   // protocolLabels reuses the metadata-builder tool's `mb*` ToolUI keys (all tool messages
@@ -197,28 +207,26 @@ export function TableBuilderTool() {
     [t],
   );
 
-  // Referential stability (Task 8's mandatory pattern): `<ConfigTable>`'s remote-fetch effect
-  // keys off `source` identity, so this must stay memoized -- it's only rebuilt when the source
-  // kind/strategy changes or the column set changes (the fake fetcher needs the current columns
-  // to pick a sort comparator).
+  // One data truth (design spec ② Z-model): the offline fetcher simulates the protocol over the
+  // RESOURCE's own rows/fields -- never the SAMPLE_* constants (the pre-Z divergence trap where
+  // imported rows and the in-memory preview queried different data).
   const source: TableSource = React.useMemo(() => {
-    if (sourceMode === "rows") return { kind: "rows", rows };
+    if (!request || !response) return { kind: "rows", rows };
     return {
       kind: "remote",
       request,
       response,
-      fields: SAMPLE_META.fields,
+      fields,
       fetch:
-        transport === "http"
+        preview === "live"
           ? makeHttpFetcher(request)
-          : makeFakeFetcher(SAMPLE_ROWS, config.columns, SAMPLE_META.fields),
+          : makeFakeFetcher(rows, config.columns, fields),
     };
-  }, [sourceMode, transport, request, response, config.columns, rows]);
+  }, [request, response, preview, config.columns, rows, fields]);
 
-  // Metadata tab inputs (design spec §2.2): rows mode is a pure fields description; remote mode
-  // carries the currently edited request/response protocol (see the `<ProtocolPanel>` below).
-  const metaRequest: RequestMeta | undefined = sourceMode === "rows" ? undefined : request;
-  const metaResponse: ResponseMeta | undefined = sourceMode === "rows" ? undefined : response;
+  // Metadata tab carries whatever protocol the resource declares (undefined = none).
+  const metaRequest: RequestMeta | undefined = request;
+  const metaResponse: ResponseMeta | undefined = response;
 
   function handleColumnsChange(columns: TableColumnConfig[]) {
     setConfig((current) => ({ ...current, columns }));
@@ -232,10 +240,34 @@ export function TableBuilderTool() {
     setConfig((current) => ({ ...current, emptyText }));
   }
 
-  function handleImport(nextRows: Record<string, unknown>[]) {
-    const meta = { fields: inferFieldsFromRows(nextRows) };
-    setConfig(deriveTableConfig(meta));
+  function handleImportRows(nextRows: Record<string, unknown>[]) {
+    const nextFields = inferFieldsFromRows(nextRows);
+    setFields(nextFields);
+    setConfig(deriveTableConfig({ fields: nextFields }));
     setRows(nextRows);
+    // pasted rows seed a NEW protocol-less resource (design spec ②) -- re-add via the switch
+    setRequest(undefined);
+    setResponse(undefined);
+    setPreview("offline");
+    setDataVersion((v) => v + 1);
+  }
+
+  function handleImportMeta(meta: DataResourceMeta) {
+    setFields(meta.fields);
+    setRequest(meta.request);
+    setResponse(meta.response);
+    setConfig(deriveTableConfig(meta));
+    setPreview("offline");
+    setDataVersion((v) => v + 1);
+  }
+
+  function handleSampleReset() {
+    setFields(SAMPLE_META.fields);
+    setRows(SAMPLE_ROWS);
+    setRequest(SAMPLE_META.request);
+    setResponse(SAMPLE_META.response);
+    setConfig(SAMPLE_CONFIG);
+    setPreview("offline");
     setDataVersion((v) => v + 1);
   }
 
@@ -315,7 +347,7 @@ export function TableBuilderTool() {
       <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
         {(
           [
-            { id: "source", label: t("tbTabSource") },
+            { id: "source", label: t("tbTabResource") },
             { id: "columns", label: t("tbTabColumns") },
             { id: "pagination", label: t("tbTabPagination") },
             { id: "metadata", label: t("tbTabMetadata") },
@@ -339,28 +371,26 @@ export function TableBuilderTool() {
 
       {tab === "source" ? (
         <>
-          <SourcePanel
-            mode={sourceMode}
-            onModeChange={setSourceMode}
-            labels={sourcePanelLabels}
-            onImport={handleImport}
+          <ResourcePanel
+            labels={resourcePanelLabels}
             importLabels={importLabels}
-            defaultText={SAMPLE_JSON}
-            transport={transport}
-            onTransportChange={setTransport}
+            onImportRows={handleImportRows}
+            onImportMeta={handleImportMeta}
+            onSampleReset={handleSampleReset}
+            defaultRowsText={SAMPLE_JSON}
+            hasProtocol={hasProtocol}
+            preview={preview}
+            onPreviewChange={setPreview}
           />
-          {sourceMode !== "rows" && (
-            <ProtocolPanel
-              request={request}
-              response={response}
-              showEnableToggle={false}
-              onChange={(n) => {
-                if (n.request) setRequest(n.request);
-                if (n.response) setResponse(n.response);
-              }}
-              labels={protocolLabels}
-            />
-          )}
+          <ProtocolPanel
+            request={request}
+            response={response}
+            onChange={(n) => {
+              setRequest(n.request);
+              setResponse(n.response);
+            }}
+            labels={protocolLabels}
+          />
         </>
       ) : null}
       {tab === "columns" ? (
@@ -398,7 +428,7 @@ export function TableBuilderTool() {
             every successful import so re-importing also remounts -- and clears -- the table's
             internal filter tree. */}
         <ConfigTable
-          key={`${sourceMode}:${config.pagination.pageSize}:${dataVersion}`}
+          key={`${hasProtocol ? "remote" : "rows"}:${config.pagination.pageSize}:${dataVersion}`}
           config={config}
           source={source}
           labels={labels}
