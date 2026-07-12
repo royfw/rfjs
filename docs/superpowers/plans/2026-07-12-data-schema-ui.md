@@ -79,8 +79,10 @@ import { makeHttpFetcher } from './http-fetcher';
 - [ ] **Step 2: 跑測試確認 fail**
 
 ```bash
-pnpm -F @rfjs/data-schema vitest:run -- http-fetcher
+pnpm -F @rfjs/data-schema vitest:run http-fetcher
 ```
+
+(注意:不要寫 `vitest:run -- http-fetcher` —— pnpm 會把字面 `--` 轉給 vitest,filter 會被忽略。)
 
 Expected: FAIL —— `Cannot find module './http-fetcher'`(或等價 resolve 錯誤)。
 
@@ -166,7 +168,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ### Task 2: 建立 `packages/data-schema-ui`(ProtocolPanel 進 package)
 
 **Files:**
-- Create: `packages/data-schema-ui/package.json`、`tsconfig.json`、`vitest.config.mts`、`README.md`、`README.zh-TW.md`
+- Create: `packages/data-schema-ui/package.json`、`tsconfig.json`、`vitest.config.mts`、`eslint.config.js`、`README.md`、`README.zh-TW.md`
 - Create: `packages/data-schema-ui/src/types.ts`、`src/protocol-panel.tsx`(自 `apps/web/src/components/protocol-panel/index.tsx` 搬入)、`src/protocol-panel.spec.tsx`(自 `.../index.spec.tsx` 搬入)、`src/index.ts`
 - Create: `.changeset/data-schema-ui-init.md`
 
@@ -266,6 +268,32 @@ export default defineConfig({
     reporters: ['verbose'],
   },
 });
+```
+
+`packages/data-schema-ui/eslint.config.js`(逐字複製 `packages/table-builder-ui/eslint.config.js` —— 注意:filter-builder-ui **沒有**這個檔是它的潛在缺陷,不要鏡射那個缺口;ESLint 9 flat config 沒有 config 檔會直接 exit 2。五個 import 都已在上方 devDependencies):
+
+```js
+import js from "@eslint/js";
+import eslintConfigPrettier from "eslint-config-prettier";
+import pluginReact from "eslint-plugin-react";
+import pluginReactHooks from "eslint-plugin-react-hooks";
+import tseslint from "typescript-eslint";
+
+/** @type {import("eslint").Linter.Config[]} */
+export default [
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  pluginReact.configs.flat.recommended,
+  {
+    plugins: { "react-hooks": pluginReactHooks },
+    settings: { react: { version: "detect" } },
+    rules: {
+      ...pluginReactHooks.configs.recommended.rules,
+      "react/react-in-jsx-scope": "off",
+    },
+  },
+  eslintConfigPrettier,
+];
 ```
 
 然後:
@@ -468,6 +496,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ### Task 3: apps/web 接線(換 import、刪舊件、transpile + @source、web changeset)
 
 **Files:**
+- Modify: `apps/web/package.json`(dependencies 加 `"@rfjs/data-schema-ui": "workspace:*"`)+ `pnpm-lock.yaml`(隨 install 更新)
 - Modify: `apps/web/src/tools/metadata-builder/ui.tsx:11`、`apps/web/src/tools/table-builder/ui.tsx:19`
 - Delete: `apps/web/src/components/protocol-panel/`(`index.tsx` + `index.spec.tsx`)
 - Modify: `apps/web/next.config.js`、`apps/web/src/app/globals.css`
@@ -476,6 +505,22 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 **Interfaces:**
 - Consumes: Task 2 的 `ProtocolPanel` / `type ProtocolPanelLabels`(from `@rfjs/data-schema-ui`)。
 - Produces: apps/web 無 app-level protocol-panel;兩工具行為不變。
+
+- [ ] **Step 0: apps/web 宣告依賴 + install**
+
+`apps/web/package.json` dependencies,於既有 `"@rfjs/data-schema": "workspace:*",`(line 27)之後加一行:
+
+```json
+    "@rfjs/data-schema-ui": "workspace:*",
+```
+
+然後在 repo root:
+
+```bash
+pnpm install
+```
+
+Expected: lockfile 更新(web importer 多出 data-schema-ui),`apps/web/node_modules/@rfjs/data-schema-ui` 連結出現。(pnpm 是嚴格隔離 node_modules + `inject-workspace-packages=true` —— 未宣告的 workspace package 從 apps/web 解析不到,漏這步 = check-types/test/next dev 全掛 TS2307。)
 
 - [ ] **Step 1: 換兩個工具的 import**
 
@@ -548,7 +593,7 @@ Consume ProtocolPanel from the new @rfjs/data-schema-ui package; the app-level s
 ```
 
 ```bash
-git add -A apps/web .changeset/web-protocol-panel-package.md
+git add -A apps/web pnpm-lock.yaml .changeset/web-protocol-panel-package.md
 git commit -m "refactor(web): consume ProtocolPanel from @rfjs/data-schema-ui
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
