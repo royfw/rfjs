@@ -64,7 +64,7 @@
 - 保持兩工具行為/外觀不變(由既有 spec 迴歸覆蓋)。
 
 ### 4. Changesets
-- `@rfjs/data-schema` minor、`@rfjs/table-builder-ui` patch、`@rfjs/data-schema-ui` version-only(private,首發 0.0.0)、**`web` patch(apps 也要 changeset —— 2026-07-12 政策更新)**。
+- `@rfjs/data-schema` minor、`@rfjs/table-builder-ui` patch、`@rfjs/data-schema-ui` minor(新 package 首發;private → 版本紀錄用)、**`web` patch(apps 也要 changeset —— 2026-07-12 政策更新)**。
 
 ## 明確不做(YAGNI / 分層)
 - 不把 form-builder 的 `DataSource`(單值/options fetch)併進 data-schema —— 形狀本質不同(無分頁/多方言/label-value),併 = 過度抽象。
