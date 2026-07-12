@@ -52,7 +52,7 @@ Resource 分頁(取代現在的 source 面板)由上而下:
 - **i18n**:Seed 三選一、Preview「範本資料(離線)/呼叫端點(live)」、「+ 加上協定」等文案(en + zh-TW);沿用共享 `ToolUI` namespace,`{count}` 類用 `t.raw`。
 - **概念層說明**:資源/協定/離線-live 的整體解釋走 `<ToolIntro>`(見 spec ③,同 apps/web PR),本輪只保留欄位/面板級微提示;不重複解釋。
 - **ProtocolPanel** 來源改 `@rfjs/data-schema-ui`(① 落地後)。
-- 無 packages 變更 → 無 changeset。
+- 無 packages 變更;changeset:`web` patch(apps 也要 changeset —— 2026-07-12 政策更新;與 ③ 併同 PR 時共用一份)。
 
 ## 明確不做
 - 不動執行引擎 / fetcher 實作(`makeHttpFetcher` / `makeFakeFetcher` 行為不變,只是入口語意收斂)。

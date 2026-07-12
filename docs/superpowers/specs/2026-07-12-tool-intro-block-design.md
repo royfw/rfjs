@@ -55,7 +55,7 @@ type ToolIntroProps = {
 - 不套其餘工具(decision-table/form/flow/…)—— S1;元件設計成可複用,日後逐一接。
 - 不做 tooltip / docs 連結 / 圖示系統 / markdown 內文 —— 只有 question + tagline + concept 格。
 - 不改 `PageHeader` 或 `ToolDefinition` registry(說明仍走 i18n,不進 registry)。
-- 無 packages 變更 → 無 changeset。
+- 無 packages 變更;changeset:`web` patch(apps 也要 changeset —— 2026-07-12 政策更新;與 ② 併同 PR 時共用一份)。
 
 ## 驗收
 - `<ToolIntro>` 預設收合;展開顯示概念格;✕ 關閉後重整不再出現(localStorage)。

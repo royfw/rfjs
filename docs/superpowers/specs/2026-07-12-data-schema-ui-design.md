@@ -37,7 +37,7 @@
      table-builder ──── import ───┘ (fetcher 從 data-schema 或 table-builder-ui re-export 取)
 ```
 
-- `@rfjs/data-schema-ui` deps = `@rfjs/data-schema` + `@rfjs/web-ui` + `lucide-react`(**對齊 filter-builder-ui**;不再依賴 table-builder-ui)。
+- `@rfjs/data-schema-ui` deps = `@rfjs/data-schema` + `@rfjs/web-ui`(**對齊 filter-builder-ui** 的形態;不再依賴 table-builder-ui。ProtocolPanel 未用 lucide-react → 不加,YAGNI)。
 - `private: true`(依賴 `@rfjs/web-ui` 私有設計系統,與 filter-builder-ui 同);依 changeset 政策 → version-only changeset。
 
 ## 變更清單
@@ -51,7 +51,7 @@
 
 ### 2. 建立 `packages/data-schema-ui`
 - 鏡射 `packages/filter-builder-ui` 結構:`package.json`、`tsconfig.json`、`vitest.config.mts`、`README.md`/`README.zh-TW.md`、`src/index.ts`、`src/protocol-panel.tsx`、`src/types.ts`(labels 型別)。
-- `package.json`:name `@rfjs/data-schema-ui`,`private: true`,`exports { ".": "./src/index.ts" }`,deps `@rfjs/data-schema` + `@rfjs/web-ui` + `lucide-react`,devDeps/peerDeps 比照 filter-builder-ui(React 19)。
+- `package.json`:name `@rfjs/data-schema-ui`,`private: true`,`exports { ".": "./src/index.ts" }`,deps `@rfjs/data-schema` + `@rfjs/web-ui`,devDeps/peerDeps 比照 filter-builder-ui(React 19)。
 - `src/protocol-panel.tsx`:從 `apps/web/src/components/protocol-panel/index.tsx` 原封搬入;唯一改動 = `makeHttpFetcher` 改從 `@rfjs/data-schema` import(不再從 table-builder-ui)。
 - `src/index.ts`:`export { ProtocolPanel, DEFAULT_REQUEST, DEFAULT_RESPONSE } from './protocol-panel'; export type { ProtocolPanelLabels } from './types'`。
 - 搬 protocol-panel 的既有 spec 進 package(改 render import 來源)。
@@ -60,10 +60,11 @@
 - 刪 `apps/web/src/components/protocol-panel/`。
 - metadata-builder + table-builder 的 `import ... from "@/components/protocol-panel"` → `from "@rfjs/data-schema-ui"`。
 - `apps/web/next.config.js` `transpilePackages` += `"@rfjs/data-schema-ui"`。
+- `apps/web/src/app/globals.css` 加 `@source "../../../../packages/data-schema-ui/src"`(Tailwind 掃描 package 內 class,同 filter-builder-ui/form-builder-ui 的既有陷阱註解)。
 - 保持兩工具行為/外觀不變(由既有 spec 迴歸覆蓋)。
 
 ### 4. Changesets
-- `@rfjs/data-schema` minor、`@rfjs/table-builder-ui` patch、`@rfjs/data-schema-ui` version-only(private,首發 0.0.0)。
+- `@rfjs/data-schema` minor、`@rfjs/table-builder-ui` patch、`@rfjs/data-schema-ui` version-only(private,首發 0.0.0)、**`web` patch(apps 也要 changeset —— 2026-07-12 政策更新)**。
 
 ## 明確不做(YAGNI / 分層)
 - 不把 form-builder 的 `DataSource`(單值/options fetch)併進 data-schema —— 形狀本質不同(無分頁/多方言/label-value),併 = 過度抽象。
