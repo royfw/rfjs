@@ -191,6 +191,16 @@ describe("TableBuilderTool", () => {
     expect(await screen.findByDisplayValue("/api/query/imported")).toBeTruthy();
     expect(screen.getByRole("switch", { name: "declare protocol" }).getAttribute("aria-checked")).toBe("true");
   });
+
+  it("renders the collapsible ToolIntro and expands to the concepts", () => {
+    renderTool();
+    const header = screen.getByRole("button", { name: /how does this tool work/i });
+    expect(header.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText(/A DataResourceMeta\. Seed it/)).toBeNull();
+    fireEvent.click(header);
+    expect(header.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText(/A DataResourceMeta\. Seed it/)).toBeTruthy();
+  });
 });
 
 describe("TableBuilderTool AI panel", () => {

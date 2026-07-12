@@ -17,6 +17,7 @@ import type { DataFieldMeta, DataResourceMeta, RequestMeta, ResponseMeta } from 
 import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
 import { ProtocolPanel, type ProtocolPanelLabels } from "@rfjs/data-schema-ui";
+import { ToolIntro } from "@/components/shared/tool-intro";
 
 import { SAMPLE_CONFIG, SAMPLE_META, SAMPLE_ROWS } from "./sample";
 import { makeFakeFetcher } from "./fake-fetcher";
@@ -284,6 +285,18 @@ export function TableBuilderTool() {
       <p className="text-xs font-semibold tracking-widest text-muted-foreground">
         {t("tbEyebrow")}
       </p>
+
+      <ToolIntro
+        storageKey="tool-intro:table-builder"
+        question={t("tbIntroQuestion")}
+        tagline={t("tbIntroTagline")}
+        concepts={[
+          { term: t("tbIntroC1t"), desc: t("tbIntroC1d") },
+          { term: t("tbIntroC2t"), desc: t("tbIntroC2d") },
+          { term: t("tbIntroC3t"), desc: t("tbIntroC3d") },
+        ]}
+        labels={{ expand: t("tbIntroExpand"), collapse: t("tbIntroCollapse"), dismiss: t("tbIntroDismiss") }}
+      />
 
       <AiPanel
         title={t("aiBlockTitle")}
