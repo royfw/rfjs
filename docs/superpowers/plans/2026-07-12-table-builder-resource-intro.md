@@ -809,6 +809,8 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
     });
 ```
 
+(函式簽名同步改 `it("editing page size in the pagination panel immediately changes the rendered row count", async () => {` —— `await` 在非 async callback 內是 SyntaxError,會弄壞整檔。)
+
 1d. 「tabs swap the editor panel…」中兩處 `"Data source"` 改為 `"Data resource"`;`{ name: "Columns" }` 不變;末行 row 斷言改:
 
 ```tsx
@@ -869,6 +871,30 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
     renderTool();
     expect(await screen.findByRole("button", { name: "Sample data (offline)" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Call endpoint (live)" })).toBeTruthy();
+  });
+
+  it("importing a meta.json seeds fields + protocol end-to-end", async () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import meta.json" }));
+    fireEvent.change(screen.getByPlaceholderText("Paste a DataResourceMeta (meta.json)…"), {
+      target: {
+        value: JSON.stringify({
+          fields: [{ key: "name", label: "Name", dataType: "string" }],
+          request: {
+            endpoint: "/api/query/imported",
+            method: "GET",
+            pagination: { strategy: "offset", limitParam: "limit", offsetParam: "offset" },
+          },
+          response: { rowsPath: "data.items" },
+        }),
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load" }));
+
+    // protocol carried in: endpoint editable in the ProtocolPanel, switch stays on
+    expect(await screen.findByDisplayValue("/api/query/imported")).toBeTruthy();
+    expect(screen.getByRole("switch", { name: "declare protocol" }).getAttribute("aria-checked")).toBe("true");
   });
 ```
 
@@ -1090,8 +1116,10 @@ import type { DataFieldMeta, DataResourceMeta, RequestMeta, ResponseMeta } from 
 5i. ConfigTable `key` 改為:
 
 ```tsx
-          key={`${hasProtocol ? "remote" : "rows"}:${preview}:${config.pagination.pageSize}:${dataVersion}`}
+          key={`${hasProtocol ? "remote" : "rows"}:${config.pagination.pageSize}:${dataVersion}`}
 ```
+
+(**`preview` 刻意不進 key** —— `source` memo(5d)的 deps 已含 `preview`,offline↔live 切換會改變 `source` identity,`useConfigTable` 的 fetch effect 自動 refetch **而不 remount**,保住使用者的 filter tree/已套用篩選/頁碼/每頁筆數 —— 與今日 memory↔http 切換的行為對齊(spec ②「誠實改名」)。只有協定加/移除(hasProtocol)與重新匯入(dataVersion)才 remount。)
 
 - [ ] **Step 6: 刪舊面板**
 
@@ -1133,6 +1161,8 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 - [ ] **Step 1: 兩個 ui.spec 各加 failing 測試**
 
+**斷言原則:展開驗證必須鎖定「只在展開後的 concepts grid 出現、且全頁唯一」的字串** —— tagline 收合時就可見(斷它 = 空洞測試);「meta.json」在 metadata-builder 的 code panel tab/下載鈕/tagline 多處出現(`getByText(/meta\.json/i)` 會 Found multiple elements 直接炸)。
+
 `table-builder/ui.spec.tsx`(describe("TableBuilderTool") 內):
 
 ```tsx
@@ -1140,8 +1170,10 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
     renderTool();
     const header = screen.getByRole("button", { name: /how does this tool work/i });
     expect(header.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText(/A DataResourceMeta\. Seed it/)).toBeNull();
     fireEvent.click(header);
-    expect(screen.getByText(/one resource/i)).toBeTruthy();
+    expect(header.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText(/A DataResourceMeta\. Seed it/)).toBeTruthy();
   });
 ```
 
@@ -1151,8 +1183,9 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
   it("renders the collapsible ToolIntro and expands to the concepts", () => {
     renderTool();
     const header = screen.getByRole("button", { name: /how does this tool work/i });
+    expect(screen.queryByText("Field kinds, data types, enum domains, filterability.")).toBeNull();
     fireEvent.click(header);
-    expect(screen.getByText(/meta\.json/i)).toBeTruthy();
+    expect(screen.getByText("Field kinds, data types, enum domains, filterability.")).toBeTruthy();
   });
 ```
 
@@ -1318,12 +1351,16 @@ cd /home/royfw/_/code/royfw/rfjs/.claude/worktrees/feat-table-builder-resource
 pnpm --dir apps/web exec next dev --port 3171 &
 ```
 
-playwright-core 截圖(bundled chromium `/home/royfw/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome`,CJS:`import pw from '…/playwright-core/index.js'; const { chromium } = pw;`),對照 Z mockup(`scratchpad/2026-07-12-table-builder-resource-centric-Z.html`)與 ③ mockup V1:
+playwright-core 截圖(bundled chromium `/home/royfw/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome`,CJS:`import pw from '…/playwright-core/index.js'; const { chromium } = pw;`),對照 Z mockup(`scratchpad/2026-07-12-table-builder-resource-centric-Z.html`)與 ③ mockup V1。完整矩陣(補齊 spec ②/③ 驗收):
 
-1. table-builder 預設(Resource 分頁:seed chips + 協定 switch ON + ProtocolPanel + 離線/live + 預覽表)。
-2. ToolIntro 展開態(點 header 後)。
-3. 貼 rows 匯入後(協定 switch OFF、無 live 選項、預覽顯示匯入資料)。
-4. metadata-builder(ToolIntro + 既有面板無回歸)。
+1. table-builder 預設(Resource 分頁:seed chips + 協定 switch ON + ProtocolPanel + 離線/live + 預覽表)—— sample seed。
+2. 點「Call endpoint (live)」→ `page.waitForResponse('**/api/query/sample*')` 等預覽重繪 → 截圖(**spec ② 的 live 真打驗收**;表格 rows 需與 route 回應一致)。
+3. Import meta.json seed:點該 chip、貼入含 fields+request 的 meta、Load → 截圖(fields 摘要更新 + 協定 switch ON + endpoint 帶入值)。
+4. 貼 rows 匯入後(協定 switch OFF、無 live 選項、預覽顯示匯入資料)。
+5. ToolIntro 展開態(table-builder)。
+6. metadata-builder 收合態(既有面板無回歸)。
+7. metadata-builder ToolIntro 展開態。
+8. dark/light 各一:以 `document.documentElement.classList` 切換(或既有主題切換鈕)重截 5 與 7 的另一色系(補齊 spec ③ 的 dark/light 驗收)。
 
 Expected: 與 mockup 形狀一致;截完 kill dev server。
 
@@ -1343,4 +1380,4 @@ Expected: 5 個 commits(T1–T5)+ 乾淨 working tree。**HOLD —— 不開 PR*
 - **Spec ③ coverage**:V1 摺疊 callout(T1)、localStorage 開合+dismiss(T1)、S1 兩工具接線(T4)、i18n 文案(T4 Step 3)、無 packages 變更、`web` patch changeset(T5)。✓
 - **Placeholder scan**:無 TBD/TODO;所有程式碼步驟含完整程式碼或精確 diff。✓
 - **Type consistency**:`PreviewMode`/`ResourcePanelProps`/`onImportMeta(meta: DataResourceMeta)` 在 T2 定義、T3 一致消費;`handleImportRows`/`handleImportMeta`/`handleSampleReset` 名稱在 T3 內一致;`ToolIntroLabels` T1↔T4 一致。✓
-- **已知取捨**:預設狀態改為 remote+離線(async)是 Z 的刻意語意;ProtocolPanel 重新開啟協定時重置為 DEFAULT_REQUEST(面板既有行為,兩工具一致)。
+- **已知取捨**:預設狀態改為 remote+離線(async)是 Z 的刻意語意;ProtocolPanel 重新開啟協定時重置為 DEFAULT_REQUEST(面板既有行為,兩工具一致)。**spec ② 原訂「+ 加上協定」按鈕 + `showEnableToggle={false}` 已改為 ProtocolPanel 既有 enable switch(同能力、零新 UI/i18n;spec ② 已同步修訂)——由對抗式驗證抓出的 spec↔plan 分歧,以修訂 spec 收斂。**

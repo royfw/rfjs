@@ -29,7 +29,7 @@
 
 規則:
 - **有協定**(request/response 存在)= 可查詢資源 → 預覽可選「離線(對範本 rows 模擬此協定)」或「live(真打 endpoint)」。
-- **無協定** = 純靜態資源 → 只能離線預覽貼入的 rows(無 live 選項,因為沒有 endpoint)。協定區顯示「+ 加上協定」把它升級成可查詢資源。
+- **無協定** = 純靜態資源 → 只能離線預覽貼入的 rows(無 live 選項,因為沒有 endpoint)。協定區的 enable switch 開啟即升級成可查詢資源(重新開啟會重置為 ProtocolPanel 的 DEFAULT_REQUEST/DEFAULT_RESPONSE —— 面板既有行為)。
 
 ## UI 形狀(Resource 分頁)
 
@@ -38,7 +38,7 @@ Resource 分頁(取代現在的 source 面板)由上而下:
    - `⤓ Import meta.json`:貼/上傳一份 `DataResourceMeta`(zod gate = `parseDataResourceMeta`)→ 帶入 fields + request + response。**這就是 metadata-builder → table-builder 的橋。**
    - `貼 rows(JSON/CSV)`:沿用現有 import panel(papaparse + `inferFieldsFromRows`)→ 無協定資源。
    - `從零 author`:空白資源(現有 SAMPLE 起手)。
-2. **Protocol**:有協定時嵌 `<ProtocolPanel showEnableToggle={false}>`(來自 ①);無協定時顯示「+ 加上協定」。
+2. **Protocol**:恆嵌 `<ProtocolPanel>`(來自 ①,enable switch 預設開啟);switch = 協定的加/移除 —— off 即無協定資源。(修訂:原訂「無協定時顯示『+ 加上協定』按鈕 + `showEnableToggle={false}`」改用面板既有 switch,同能力、零新 UI。)
 3. **Fields**:摘要(N 欄),詳編仍在 Columns 分頁。
 4. **Preview 取數方式**:單一 segmented —— `範本資料(離線)` / `呼叫端點(live)`(= 舊 transport memory/http 的誠實改名)。無協定時鎖在離線、隱藏 live。
 
@@ -50,7 +50,7 @@ Resource 分頁(取代現在的 source 面板)由上而下:
 - **source memo**:`preview==='live' ? makeHttpFetcher(request) : makeFakeFetcher(rows, columns, fields)`(沿用現有兩個 fetcher;只是入口改名/收斂)。無協定資源 → `TableSource {kind:'rows', rows}`。
   - **陷阱(修掉現況的資料分岔)**:現行 `ui.tsx` 的 in-memory 分支寫死 `makeFakeFetcher(SAMPLE_ROWS, …)` —— import 自訂 rows 後切 Remote+In-memory 查到的仍是內建範本。Z 之下離線 fetcher **必須吃資源自己的 `rows` state**(同 fields:資源的 fields,非恆為 `SAMPLE_META.fields`),整頁只有一份資料真相。實作時不得照抄現行常數。
 - **Import meta.json**:新增 seed 分支,`parseDataResourceMeta` 驗證 → set fields/request/response;沿用 metadata-builder `import-panel` 的 meta 模式邏輯(可抽共用或複製精簡)。
-- **i18n**:Seed 三選一、Preview「範本資料(離線)/呼叫端點(live)」、「+ 加上協定」等文案(en + zh-TW);沿用共享 `ToolUI` namespace,`{count}` 類用 `t.raw`。
+- **i18n**:Seed 三選一、Preview「範本資料(離線)/呼叫端點(live)」等文案(en + zh-TW;協定加/移除沿用 ProtocolPanel 的 `mbProtoEnabled`,無新 key);沿用共享 `ToolUI` namespace,`{count}` 類用 `t.raw`。
 - **概念層說明**:資源/協定/離線-live 的整體解釋走 `<ToolIntro>`(見 spec ③,同 apps/web PR),本輪只保留欄位/面板級微提示;不重複解釋。
 - **ProtocolPanel** 來源改 `@rfjs/data-schema-ui`(① 落地後)。
 - 無 packages 變更;changeset:`web` patch(apps 也要 changeset —— 2026-07-12 政策更新;與 ③ 併同 PR 時共用一份)。
@@ -64,7 +64,7 @@ Resource 分頁(取代現在的 source 面板)由上而下:
 ## 驗收
 - Resource 分頁三種 seed 皆可用;import meta.json 帶入 fields+協定並正確預覽。
 - 有協定資源可切離線/live;live 真打 `/api/query/sample` → ConfigTable 渲染;離線對範本 rows 模擬。
-- 無協定資源只顯示離線、無 live、有「+ 加上協定」。
+- 無協定資源只顯示離線、無 live;協定 switch 為 off 且可重新開啟(升級回可查詢資源)。
 - `pnpm -F web check-types && lint && test` 全過;既有 table-builder 測試更新後全綠。
 - 截圖:三 seed、有/無協定兩態、離線/live 切換。
 
