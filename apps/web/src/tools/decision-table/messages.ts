@@ -10,6 +10,14 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      dctIntroTagline: "DMN-style rules (filter trees) → evaluate live",
+      dctIntroC1t: "① Author",
+      dctIntroC1d:
+        "Rows are rules whose conditions are nested filter trees; outputs are constants or expressions.",
+      dctIntroC2t: "② Evaluate",
+      dctIntroC2d: "Run one context or a whole batch.",
+      dctIntroC3t: "③ Live",
+      dctIntroC3d: "Matched rule + output, live.",
       dtEyebrow: "DECISION TABLE",
       dtRules: "Rules",
       dtAddRule: "+ Rule",
@@ -57,6 +65,13 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      dctIntroTagline: "DMN 式規則(篩選樹)→ 即時求值",
+      dctIntroC1t: "① 編寫",
+      dctIntroC1d: "每列是規則,條件是巢狀篩選樹,輸出是常數或運算式。",
+      dctIntroC2t: "② 求值",
+      dctIntroC2d: "對單一 context 或整批求值。",
+      dctIntroC3t: "③ 即時",
+      dctIntroC3d: "看命中規則與輸出。",
       dtEyebrow: "決策表",
       dtRules: "規則",
       dtAddRule: "+ 規則",
