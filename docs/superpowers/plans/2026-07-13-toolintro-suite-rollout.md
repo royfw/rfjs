@@ -70,14 +70,41 @@
 
 ## 每工具 ui.spec.tsx 接線斷言配方
 
-在該工具既有 `ui.spec.tsx` 的主 describe 內,加一則(沿用該檔既有的 render helper 名稱與 provider 包法):
+接線斷言鎖 ToolIntro 的按鈕名 `introQuestion`(= "How does this tool work?")。**`introQuestion` 是中央-only key(Task 1 只加進 `messages/*.json`),不在任何工具 fragment 裡** —— 所以 render 的 provider **必須**餵 `assembleMessages("en")`(deep-merge 中央 + fragment);用工具本地 `messages.en` fragment 會讓按鈕名退化成字面 `ToolUI.introQuestion`、斷言必掛。**不要**靠「把 introQuestion 加進工具 fragment」繞過。三種情況:
+
+**(a) 既有 ui.spec 且已用 `assembleMessages("en")`(被接線工具中除 es-client-demo 外皆是)**:主 describe 內加一則,沿用該檔既有 render helper:
 ```tsx
   it("renders the collapsible ToolIntro", () => {
     <renderHelper>();
     expect(screen.getByRole("button", { name: /how does this tool work/i })).toBeTruthy();
   });
 ```
-若該檔尚未 import `screen`/`getByRole` 所需,沿用其既有 import。若該工具無 ui.spec.tsx,建一個最小的(render + 上述斷言 + 必要 provider）。
+
+**(b) es-client-demo —— 既有 ui.spec 用本地 fragment**:先把 provider 遷到中央合併訊息,再加斷言:
+- `es-client-demo/ui.spec.tsx:11` 的 `messages={messages.en as Record<string, unknown>}` → `messages={assembleMessages("en")}`;
+- 檔頂 `import { messages } from "./messages";` → `import { assembleMessages } from "@/i18n/messages";`(`messages` 若無其他引用須移除,否則 lint 掛未用 import);
+- assembleMessages 仍含 es-client-demo fragment,既有 "Fields"/"Search body"/"paginate" 斷言不受影響。
+
+**(c) 無 ui.spec 的 6 個工具(jsonb-query-generator / mongo-query-generator / data-filter-tester / jwt-decoder / object-flatten / type-converter)**:各建一個最小 spec,provider **必須** `assembleMessages("en")`(勿抄 es-client-demo / bpmn-viewer / flow-builder 的本地 fragment 寫法):
+```tsx
+import { render, screen } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import { describe, expect, it } from "vitest";
+import { assembleMessages } from "@/i18n/messages";
+import { <ToolComponent> } from "./ui";
+
+describe("<ToolComponent>", () => {
+  it("renders the collapsible ToolIntro", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
+        <<ToolComponent> />
+      </NextIntlClientProvider>,
+    );
+    expect(screen.getByRole("button", { name: /how does this tool work/i })).toBeTruthy();
+  });
+});
+```
+(`<ToolComponent>` = 該工具 ui.tsx 的 export 名;若 render 另需 mock(如 AI）沿用同家族既有 spec 的 mock,但 message provider 一律 `assembleMessages("en")`。)
 
 ---
 
@@ -237,7 +264,9 @@ Expected:4 工具測試(含新接線斷言)PASS;types/lint 綠。
 
 **decision-table(前綴 `dctIntro`):** en `Tagline`="DMN-style rules (filter trees) → evaluate live";C1 "① Author"/"Rows are rules whose conditions are nested filter trees; outputs are constants or expressions.";C2 "② Evaluate"/"Run one context or a whole batch.";C3 "③ Live"/"Matched rule + output, live." — zh `Tagline`="DMN 式規則(篩選樹)→ 即時求值";C1 "① 編寫"/"每列是規則,條件是巢狀篩選樹,輸出是常數或運算式。";C2 "② 求值"/"對單一 context 或整批求值。";C3 "③ 即時"/"看命中規則與輸出。"
 
-- [ ] **Step 1–4:** 逐工具加 key(en+zh)+ 套 ui.tsx / ui.spec 配方。
+> **decision-table 例外(唯一有 eyebrow 的工具,不套用 wrap 配方)**:它的既有根已是 `<div className="flex flex-col gap-4">`,第一個 child 是 eyebrow `<p>{t("dtEyebrow")}</p>`(ui.tsx:176-179)。**不新增 wrapper** —— 直接把 `<ToolIntro storageKey="tool-intro:decision-table" …>` 插在該 eyebrow `<p>` **之後**(對齊 table-builder/metadata-builder 的「eyebrow 後」擺法,見 spec §分工)。其餘 3 個工具(mongo-query-builder / es-query-builder / es-client-demo)照 wrap 配方。es-client-demo 的 ui.spec 另需依「ui.spec 配方 (b)」把 provider 遷到 `assembleMessages("en")`。
+
+- [ ] **Step 1–4:** 逐工具加 key(en+zh)+ 套 ui.tsx / ui.spec 配方(decision-table 依上方例外、es-client-demo 依配方 (b))。
 - [ ] **Step 5:** 驗證 4 工具測試 + types + lint,commit:
 ```bash
 git commit -m "feat(web): wire ToolIntro into mongo/es builders and decision-table
