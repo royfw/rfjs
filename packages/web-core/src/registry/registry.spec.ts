@@ -24,6 +24,17 @@ describe('toolRegistry', () => {
       }
     }
   });
+
+  // A shipped web tool with working code must not still read as 'planned' (the badge would lie).
+  // flow-builder / bpmn-viewer are carved out — they belong to the separate BPM project and keep
+  // their own status lifecycle.
+  it("no built web-surface tool is left at 'planned'", () => {
+    const carveOut = new Set(['flow-builder', 'bpmn-viewer']);
+    const stalePlanned = toolRegistry.filter(
+      (t) => t.surface === 'web' && t.status === 'planned' && !carveOut.has(t.id),
+    );
+    expect(stalePlanned.map((t) => t.id)).toEqual([]);
+  });
 });
 
 describe('toolDefinitionSchema web-surface guard', () => {
