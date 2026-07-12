@@ -291,14 +291,14 @@ export function TableBuilderTool() {
 
       <ToolIntro
         storageKey="tool-intro:table-builder"
-        question={t("tbIntroQuestion")}
+        question={t("introQuestion")}
         tagline={t("tbIntroTagline")}
         concepts={[
           { term: t("tbIntroC1t"), desc: t("tbIntroC1d") },
           { term: t("tbIntroC2t"), desc: t("tbIntroC2d") },
           { term: t("tbIntroC3t"), desc: t("tbIntroC3d") },
         ]}
-        labels={{ expand: t("tbIntroExpand"), collapse: t("tbIntroCollapse"), dismiss: t("tbIntroDismiss") }}
+        labels={{ expand: t("introExpand"), collapse: t("introCollapse"), dismiss: t("introDismiss") }}
       />
 
       <AiPanel
