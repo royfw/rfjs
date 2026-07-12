@@ -48,6 +48,7 @@ Resource 分頁(取代現在的 source 面板)由上而下:
 
 - **model / state**:移除 `transport: 'memory'|'http'` 獨立旗標,改 `preview: 'offline' | 'live'`(僅有協定時可切 live)。`SourceMode` 概念收成「資源有無協定」——以 `request`/`response` 是否存在表達(可能保留一個內部 boolean,實作細節)。
 - **source memo**:`preview==='live' ? makeHttpFetcher(request) : makeFakeFetcher(rows, columns, fields)`(沿用現有兩個 fetcher;只是入口改名/收斂)。無協定資源 → `TableSource {kind:'rows', rows}`。
+  - **陷阱(修掉現況的資料分岔)**:現行 `ui.tsx` 的 in-memory 分支寫死 `makeFakeFetcher(SAMPLE_ROWS, …)` —— import 自訂 rows 後切 Remote+In-memory 查到的仍是內建範本。Z 之下離線 fetcher **必須吃資源自己的 `rows` state**(同 fields:資源的 fields,非恆為 `SAMPLE_META.fields`),整頁只有一份資料真相。實作時不得照抄現行常數。
 - **Import meta.json**:新增 seed 分支,`parseDataResourceMeta` 驗證 → set fields/request/response;沿用 metadata-builder `import-panel` 的 meta 模式邏輯(可抽共用或複製精簡)。
 - **i18n**:Seed 三選一、Preview「範本資料(離線)/呼叫端點(live)」、「+ 加上協定」等文案(en + zh-TW);沿用共享 `ToolUI` namespace,`{count}` 類用 `t.raw`。
 - **概念層說明**:資源/協定/離線-live 的整體解釋走 `<ToolIntro>`(見 spec ③,同 apps/web PR),本輪只保留欄位/面板級微提示;不重複解釋。
