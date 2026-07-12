@@ -14,6 +14,7 @@ import { CodePanel, type CodePanelLabels, type CodePanelTab } from "./code-panel
 import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
 import { buildMetaAskPrompt, buildNlMetaPrompt, parseNlMetaResponse } from "./ai-nl-meta";
+import { ToolIntro } from "@/components/shared/tool-intro";
 
 const STORAGE_KEY = "rfjs.metadata-builder.meta";
 const CODE_OPEN_KEY = "rfjs.metadata-builder.code-open";
@@ -234,6 +235,18 @@ export function MetadataBuilderTool() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t("mbEyebrow")}</p>
+
+      <ToolIntro
+        storageKey="tool-intro:metadata-builder"
+        question={t("tbIntroQuestion")}
+        tagline={t("mbIntroTagline")}
+        concepts={[
+          { term: t("mbIntroC1t"), desc: t("mbIntroC1d") },
+          { term: t("mbIntroC2t"), desc: t("mbIntroC2d") },
+          { term: t("mbIntroC3t"), desc: t("mbIntroC3d") },
+        ]}
+        labels={{ expand: t("tbIntroExpand"), collapse: t("tbIntroCollapse"), dismiss: t("tbIntroDismiss") }}
+      />
 
       <AiPanel
         title={t("aiBlockTitle")}

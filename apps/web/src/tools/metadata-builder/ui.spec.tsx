@@ -178,4 +178,12 @@ describe("MetadataBuilderTool AI panel", () => {
 
     await screen.findByText("It declares a single product resource.");
   });
+
+  it("renders the collapsible ToolIntro and expands to the concepts", () => {
+    renderTool();
+    const header = screen.getByRole("button", { name: /how does this tool work/i });
+    expect(screen.queryByText("Field kinds, data types, enum domains, filterability.")).toBeNull();
+    fireEvent.click(header);
+    expect(screen.getByText("Field kinds, data types, enum domains, filterability.")).toBeTruthy();
+  });
 });

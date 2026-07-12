@@ -2,12 +2,6 @@ import { deriveTableConfig } from "@rfjs/table-builder";
 import type { DataResourceMeta } from "@rfjs/data-schema";
 import type { TableConfig } from "@rfjs/table-builder";
 
-/** Editor source-panel state (Task 9, design spec §6.1; collapsed for the in-tool protocol
- * editor): 'rows' is the static in-memory source; 'remote' is the fake-fetcher/HTTP source whose
- * request/response protocol is now edited directly via `<ProtocolPanel>` instead of a fixed
- * offset/page/cursor strategy toggle. */
-export type SourceMode = "rows" | "remote";
-
 /**
  * Sample resource metadata (design spec §6.1/§6.2): one column per scalar kind the contract
  * supports -- plain string, numeric+currency, date, boolean, a dot-path into a nested object
