@@ -24,4 +24,15 @@ describe("DataFilterBuilder", () => {
     // empty tree → matches everything (2 sample rows)
     expect(screen.getByText("raw 2 · matched 2")).toBeDefined();
   });
+
+  it("renders the collapsible ToolIntro", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
+        <DataFilterBuilder />
+      </NextIntlClientProvider>,
+    );
+    expect(
+      screen.getByRole("button", { name: /how does this tool work/i }),
+    ).toBeTruthy();
+  });
 });

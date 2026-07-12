@@ -19,4 +19,15 @@ describe("PgFilterBuilder", () => {
       screen.getByRole("button", { name: "target name" }).textContent,
     ).toBe("col");
   });
+
+  it("renders the collapsible ToolIntro", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
+        <PgFilterBuilder />
+      </NextIntlClientProvider>,
+    );
+    expect(
+      screen.getByRole("button", { name: /how does this tool work/i }),
+    ).toBeTruthy();
+  });
 });
