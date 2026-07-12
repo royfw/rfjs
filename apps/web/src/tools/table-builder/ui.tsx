@@ -34,7 +34,7 @@ import {
 } from "./ai-nl-table";
 
 // Task 9 (design spec §6.1) adds the editor panels + live preview on top of Task 8's static
-// render: the editor area is tabbed (source / columns / pagination / metadata), and a
+// render: the editor area is tabbed (resource / columns / pagination / metadata), and a
 // full-width `<ConfigTable>` preview below stays mounted regardless of the active tab, reflecting
 // every edit immediately.
 
@@ -255,8 +255,11 @@ export function TableBuilderTool() {
 
   function handleImportMeta(meta: DataResourceMeta) {
     setFields(meta.fields);
-    setRequest(meta.request);
-    setResponse(meta.response);
+    // a partial protocol (request XOR response) is treated as none -- half a protocol
+    // can't be queried, and a lingering half would leak into the Metadata tab.
+    const complete = meta.request !== undefined && meta.response !== undefined;
+    setRequest(complete ? meta.request : undefined);
+    setResponse(complete ? meta.response : undefined);
     setConfig(deriveTableConfig(meta));
     setPreview("offline");
     setDataVersion((v) => v + 1);
@@ -355,8 +358,8 @@ export function TableBuilderTool() {
 
       {/* B-layout (design spec §2.1): editor panels are tabs, full width each; the ConfigTable
           preview below stays mounted no matter which tab is active. Panels are conditionally
-          rendered — all editor state lives in this component or panel props, except the source
-          panel's paste text (internal state, resets to defaultText on tab switch; accepted v1). */}
+          rendered — all editor state lives in this component or panel props, except the resource
+          panel's paste boxes (internal state, reset on tab switch; accepted v1). */}
       <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
         {(
           [

@@ -37,7 +37,7 @@ Resource 分頁(取代現在的 source 面板)由上而下:
 1. **Seed —— 這份資源從哪來**:三選一 chip
    - `⤓ Import meta.json`:貼/上傳一份 `DataResourceMeta`(zod gate = `parseDataResourceMeta`)→ 帶入 fields + request + response。**這就是 metadata-builder → table-builder 的橋。**
    - `貼 rows(JSON/CSV)`:沿用現有 import panel(papaparse + `inferFieldsFromRows`)→ 無協定資源。
-   - `從零 author`:空白資源(現有 SAMPLE 起手)。
+   - `範例資源(Sample resource)`:重設為內建範例資源(fields+rows+協定+config 全回 SAMPLE)。
 2. **Protocol**:恆嵌 `<ProtocolPanel>`(來自 ①,enable switch 預設開啟);switch = 協定的加/移除 —— off 即無協定資源。(修訂:原訂「無協定時顯示『+ 加上協定』按鈕 + `showEnableToggle={false}`」改用面板既有 switch,同能力、零新 UI。)
 3. **Fields**:摘要(N 欄),詳編仍在 Columns 分頁。
 4. **Preview 取數方式**:單一 segmented —— `範本資料(離線)` / `呼叫端點(live)`(= 舊 transport memory/http 的誠實改名)。無協定時鎖在離線、隱藏 live。

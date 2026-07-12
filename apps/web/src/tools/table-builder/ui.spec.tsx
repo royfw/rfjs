@@ -192,6 +192,33 @@ describe("TableBuilderTool", () => {
     expect(screen.getByRole("switch", { name: "declare protocol" }).getAttribute("aria-checked")).toBe("true");
   });
 
+  it("importing a meta.json with a partial protocol (request only) treats it as protocol-less", async () => {
+    renderTool();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import meta.json" }));
+    fireEvent.change(screen.getByPlaceholderText("Paste a DataResourceMeta (meta.json)…"), {
+      target: {
+        value: JSON.stringify({
+          fields: [{ key: "name", label: "Name", dataType: "string" }],
+          request: {
+            endpoint: "/api/query/partial",
+            method: "GET",
+            pagination: { strategy: "offset", limitParam: "limit", offsetParam: "offset" },
+          },
+          // no response -> half a protocol
+        }),
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Load" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("switch", { name: "declare protocol" }).getAttribute("aria-checked")).toBe("false");
+    });
+    // the half must not leak into the Metadata tab
+    fireEvent.click(screen.getByRole("button", { name: "Metadata" }));
+    expect(screen.getByTestId("metadata-json").textContent).not.toContain('"request"');
+  });
+
   it("renders the collapsible ToolIntro and expands to the concepts", () => {
     renderTool();
     const header = screen.getByRole("button", { name: /how does this tool work/i });
