@@ -205,6 +205,9 @@ importers:
       '@rfjs/data-schema':
         specifier: workspace:*
         version: link:../../packages/data-schema
+      '@rfjs/data-schema-ui':
+        specifier: workspace:*
+        version: link:../../packages/data-schema-ui
       '@rfjs/data-transform':
         specifier: workspace:*
         version: link:../../packages/data-transform

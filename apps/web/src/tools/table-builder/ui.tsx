@@ -16,7 +16,7 @@ import type { RequestMeta, ResponseMeta } from "@rfjs/data-schema";
 
 import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
-import { ProtocolPanel, type ProtocolPanelLabels } from "@/components/protocol-panel";
+import { ProtocolPanel, type ProtocolPanelLabels } from "@rfjs/data-schema-ui";
 
 import { SAMPLE_CONFIG, SAMPLE_META, SAMPLE_ROWS } from "./sample";
 import type { SourceMode } from "./sample";

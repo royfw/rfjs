@@ -25,6 +25,7 @@
     "@rfjs/form-builder-ui": "workspace:*",
     "@rfjs/data-filter": "workspace:*",
     "@rfjs/data-schema": "workspace:*",
+    "@rfjs/data-schema-ui": "workspace:*",
     "@rfjs/es-client": "workspace:*",
     "@rfjs/es-query": "workspace:*",
     "@rfjs/pg-filter": "workspace:*",
