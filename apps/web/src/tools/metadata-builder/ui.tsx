@@ -8,7 +8,7 @@ import type { DataFieldMeta, DataResourceMeta } from "@rfjs/data-schema";
 
 import { DEFAULT_META, metaToRows, rowsToMeta, type FieldRow } from "./model";
 import { FieldsPanel, type FieldsPanelLabels } from "./fields-panel";
-import { ProtocolPanel, type ProtocolPanelLabels } from "./protocol-panel";
+import { ProtocolPanel, type ProtocolPanelLabels } from "@/components/protocol-panel";
 import { ImportPanel, type ImportPanelLabels } from "./import-panel";
 import { CodePanel, type CodePanelLabels, type CodePanelTab } from "./code-panel";
 import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";

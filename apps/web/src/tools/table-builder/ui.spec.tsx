@@ -63,10 +63,10 @@ describe("TableBuilderTool", () => {
     expect(rows.length).toBe(1 + SAMPLE_CONFIG.pagination.pageSize);
   });
 
-  it("switching the data source to the fake fetcher (offset mode) still renders rows", async () => {
+  it("switching the data source to remote still renders rows", async () => {
     renderTool();
 
-    fireEvent.click(screen.getByRole("button", { name: "Fake fetcher" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remote" }));
 
     await waitFor(() => {
       const rows = screen.getAllByRole("row");
@@ -126,12 +126,18 @@ describe("TableBuilderTool", () => {
 
   it('fetcher mode: filter section is enabled and offers an Apply button', async () => {
     renderTool();
-    fireEvent.click(screen.getByRole('button', { name: 'Fake fetcher' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remote' }));
 
     const toggle = await screen.findByRole('button', { name: /filter/i });
     await waitFor(() => expect((toggle as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(toggle);
     expect(await screen.findByRole('button', { name: 'Apply' })).toBeTruthy();
+  });
+
+  it("remote mode renders the protocol editor with an editable endpoint", async () => {
+    renderTool();
+    fireEvent.click(screen.getByRole("button", { name: /remote|遠端/i }));
+    expect(await screen.findByDisplayValue("/api/query/sample")).toBeTruthy();
   });
 });
 

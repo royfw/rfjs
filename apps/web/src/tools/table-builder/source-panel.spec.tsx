@@ -7,9 +7,18 @@ const LABELS = {
   title: "Data source",
   rows: "Static rows",
   fetcher: "Fake fetcher",
-  offset: "Offset",
-  page: "Page",
-  cursor: "Cursor",
+  transport: "Transport",
+  transportMemory: "in-memory",
+  transportHttp: "HTTP",
+};
+
+const FULL_LABELS = {
+  title: "Data source",
+  rows: "Static rows",
+  fetcher: "Remote",
+  transport: "Transport",
+  transportMemory: "in-memory",
+  transportHttp: "HTTP",
 };
 
 const IMPORT_LABELS = {
@@ -21,21 +30,13 @@ const IMPORT_LABELS = {
 };
 
 describe("SourcePanel", () => {
-  it("switching from rows to fetcher reports the default offset strategy", () => {
+  it("switching from rows to fetcher reports remote mode", () => {
     const onModeChange = vi.fn();
     render(<SourcePanel mode="rows" onModeChange={onModeChange} labels={LABELS} />);
 
     fireEvent.click(screen.getByRole("button", { name: LABELS.fetcher }));
 
-    expect(onModeChange).toHaveBeenCalledWith("offset");
-  });
-
-  it("does not render the strategy switch in rows mode", () => {
-    render(<SourcePanel mode="rows" onModeChange={vi.fn()} labels={LABELS} />);
-
-    expect(screen.queryByRole("button", { name: LABELS.offset })).toBeNull();
-    expect(screen.queryByRole("button", { name: LABELS.page })).toBeNull();
-    expect(screen.queryByRole("button", { name: LABELS.cursor })).toBeNull();
+    expect(onModeChange).toHaveBeenCalledWith("remote");
   });
 
   it("pre-fills the paste box with defaultText", () => {
@@ -52,18 +53,9 @@ describe("SourcePanel", () => {
     expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe('[{"a":1}]');
   });
 
-  it("shows the strategy switch in fetcher mode and reports the selected strategy", () => {
+  it("clicking static rows switches back to rows mode from remote", () => {
     const onModeChange = vi.fn();
-    render(<SourcePanel mode="offset" onModeChange={onModeChange} labels={LABELS} />);
-
-    fireEvent.click(screen.getByRole("button", { name: LABELS.page }));
-
-    expect(onModeChange).toHaveBeenCalledWith("page");
-  });
-
-  it("clicking static rows switches back to rows mode from any strategy", () => {
-    const onModeChange = vi.fn();
-    render(<SourcePanel mode="cursor" onModeChange={onModeChange} labels={LABELS} />);
+    render(<SourcePanel mode="remote" onModeChange={onModeChange} labels={LABELS} />);
 
     fireEvent.click(screen.getByRole("button", { name: LABELS.rows }));
 
@@ -72,7 +64,7 @@ describe("SourcePanel", () => {
 
   it("does not render the import UI in fetcher mode", () => {
     render(
-      <SourcePanel mode="offset" onModeChange={vi.fn()} labels={LABELS} onImport={vi.fn()} importLabels={IMPORT_LABELS} />,
+      <SourcePanel mode="remote" onModeChange={vi.fn()} labels={LABELS} onImport={vi.fn()} importLabels={IMPORT_LABELS} />,
     );
 
     expect(screen.queryByPlaceholderText(IMPORT_LABELS.paste)).toBeNull();
@@ -130,19 +122,32 @@ describe("SourcePanel", () => {
   });
 });
 
-const baseLabels = {} as never; // labels 有預設值;見 SourcePanel props
-
 describe("SourcePanel transport toggle", () => {
   it("shows a transport toggle only when remote, and reports changes", () => {
     const onTransportChange = vi.fn();
     const { rerender } = render(
-      <SourcePanel mode="rows" onModeChange={() => {}} labels={baseLabels} transport="memory" onTransportChange={onTransportChange} />,
+      <SourcePanel mode="rows" onModeChange={() => {}} labels={FULL_LABELS} transport="memory" onTransportChange={onTransportChange} />,
     );
-    expect(screen.queryByRole("button", { name: /http/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: FULL_LABELS.transportHttp })).toBeNull();
     rerender(
-      <SourcePanel mode="offset" onModeChange={() => {}} labels={baseLabels} transport="memory" onTransportChange={onTransportChange} />,
+      <SourcePanel mode="remote" onModeChange={() => {}} labels={FULL_LABELS} transport="memory" onTransportChange={onTransportChange} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /http/i }));
+    fireEvent.click(screen.getByRole("button", { name: FULL_LABELS.transportHttp }));
     expect(onTransportChange).toHaveBeenCalledWith("http");
+  });
+
+  it("fetcher toggle -> remote, no strategy row, transport labels from labels", () => {
+    const onModeChange = vi.fn();
+    render(
+      <SourcePanel mode="rows" onModeChange={onModeChange} labels={FULL_LABELS} transport="memory" onTransportChange={() => {}} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: FULL_LABELS.fetcher }));
+    expect(onModeChange).toHaveBeenCalledWith("remote");
+    expect(screen.queryByRole("button", { name: /^offset$/i })).toBeNull();
+
+    render(
+      <SourcePanel mode="remote" onModeChange={() => {}} labels={FULL_LABELS} transport="memory" onTransportChange={() => {}} />,
+    );
+    expect(screen.getByRole("button", { name: FULL_LABELS.transportHttp })).toBeTruthy();
   });
 });

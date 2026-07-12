@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ProtocolPanel } from "./protocol-panel";
+import { ProtocolPanel } from "./index";
 import type { RequestMeta, ResponseMeta } from "@rfjs/data-schema";
 
 const LABELS = {
@@ -72,6 +72,12 @@ describe("ProtocolPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "none" }));
 
     expect(onChange.mock.calls[0]![0].request.filter).toBeUndefined();
+  });
+
+  it("hides the enable Switch when showEnableToggle is false, always shows fields", () => {
+    render(<ProtocolPanel request={REQUEST} response={RESPONSE} onChange={() => {}} labels={LABELS} showEnableToggle={false} />);
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.getByDisplayValue(REQUEST.endpoint)).toBeTruthy();
   });
 });
 

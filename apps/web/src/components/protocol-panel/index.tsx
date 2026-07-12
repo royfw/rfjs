@@ -100,13 +100,16 @@ export function ProtocolPanel({
   response,
   onChange,
   labels,
+  showEnableToggle = true,
 }: {
   request: RequestMeta | undefined;
   response: ResponseMeta | undefined;
   onChange: (next: { request: RequestMeta | undefined; response: ResponseMeta | undefined }) => void;
   labels: ProtocolPanelLabels;
+  showEnableToggle?: boolean;
 }) {
   const enabled = request !== undefined && response !== undefined;
+  const showFields = showEnableToggle ? enabled : request !== undefined && response !== undefined;
 
   const [trying, setTrying] = React.useState(false);
   const [tryOut, setTryOut] = React.useState<{ rows: number; raw: string } | null>(null);
@@ -151,12 +154,14 @@ export function ProtocolPanel({
 
   return (
     <div className="flex flex-col gap-3">
-      <label className="flex items-center gap-2 text-sm">
-        <Switch checked={enabled} onCheckedChange={handleToggle} aria-label={labels.enabled} />
-        {labels.enabled}
-      </label>
+      {showEnableToggle && (
+        <label className="flex items-center gap-2 text-sm">
+          <Switch checked={enabled} onCheckedChange={handleToggle} aria-label={labels.enabled} />
+          {labels.enabled}
+        </label>
+      )}
 
-      {enabled && request && response && (
+      {showFields && request && response && (
         <div className="grid max-w-[640px] grid-cols-[140px_1fr] items-center gap-x-3 gap-y-2 text-xs">
           <span className="text-muted-foreground">{labels.endpoint}</span>
           <LabeledText label={labels.endpoint} value={request.endpoint} onChange={(v) => patchRequest({ endpoint: v })} className={`${inputClass} w-64 font-mono`} />
