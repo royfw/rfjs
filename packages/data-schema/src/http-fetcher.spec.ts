@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { RequestMeta } from '@rfjs/data-schema';
+import type { RequestMeta } from './types';
 import { makeHttpFetcher } from './http-fetcher';
 
 const getReq: RequestMeta = {
