@@ -23,6 +23,7 @@ import {
   useFilterBuilder,
   useOperatorLabels,
 } from "@/tools/_filter-builder";
+import { ToolIntro } from "@/components/shared/tool-intro";
 
 const SAMPLE = JSON.stringify(
   [
@@ -92,103 +93,120 @@ export function PgFilterBuilder() {
         : null;
 
   return (
-    <div className="flex flex-col gap-5">
-      <style>{RISE}</style>
-
-      <SampleCard
-        open={fb.sampleOpen}
-        onToggle={() => fb.setSampleOpen((v) => !v)}
-        value={fb.sampleText}
-        onChange={fb.onSample}
-        onUpload={(file) => void fb.onUpload(file)}
-        hasError={Boolean(fb.error)}
+    <div className="flex flex-col gap-4">
+      <ToolIntro
+        storageKey="tool-intro:pg-filter-builder"
+        question={t("introQuestion")}
+        tagline={t("pfbIntroTagline")}
+        concepts={[
+          { term: t("pfbIntroC1t"), desc: t("pfbIntroC1d") },
+          { term: t("pfbIntroC2t"), desc: t("pfbIntroC2d") },
+          { term: t("pfbIntroC3t"), desc: t("pfbIntroC3d") },
+        ]}
         labels={{
-          sample: t("pfbSample"),
-          invalidSample: t("pfbInvalidSample"),
-          rawCount: t("pfbRaw", { count: fb.rows.length }),
-          upload: t("pfbUpload"),
+          expand: t("introExpand"),
+          collapse: t("introCollapse"),
+          dismiss: t("introDismiss"),
         }}
-        style={{ animationDelay: "0ms" }}
       />
+      <div className="flex flex-col gap-5">
+        <style>{RISE}</style>
 
-      <section
-        className="fb-rise rounded-lg border bg-card"
-        style={{ animationDelay: "70ms" }}
-      >
-        <div className="border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("pfbFields")}
-          </span>
-        </div>
-        <div className="flex flex-col gap-2 p-4">
-          <MetadataStrip
+        <SampleCard
+          open={fb.sampleOpen}
+          onToggle={() => fb.setSampleOpen((v) => !v)}
+          value={fb.sampleText}
+          onChange={fb.onSample}
+          onUpload={(file) => void fb.onUpload(file)}
+          hasError={Boolean(fb.error)}
+          labels={{
+            sample: t("pfbSample"),
+            invalidSample: t("pfbInvalidSample"),
+            rawCount: t("pfbRaw", { count: fb.rows.length }),
+            upload: t("pfbUpload"),
+          }}
+          style={{ animationDelay: "0ms" }}
+        />
+
+        <section
+          className="fb-rise rounded-lg border bg-card"
+          style={{ animationDelay: "70ms" }}
+        >
+          <div className="border-b px-5 py-3">
+            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+              {t("pfbFields")}
+            </span>
+          </div>
+          <div className="flex flex-col gap-2 p-4">
+            <MetadataStrip
+              schema={fb.schema}
+              onChange={fb.setSchema}
+              showKind
+              labels={{
+                include: t("pfbInclude", { field: "" }).trim(),
+                type: t("pfbType", { field: "" }).trim(),
+                kind: t("pfbKind", { field: "" }).trim(),
+              }}
+            />
+            <p className="font-mono text-[11px] text-muted-foreground">
+              {t("pfbKindHint")}
+            </p>
+          </div>
+        </section>
+
+        <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+          <AiAssistBlock
             schema={fb.schema}
-            onChange={fb.setSchema}
-            showKind
+            canonicalJson={fb.canonicalJson}
+            compiled={compiled.ok ? compiled.primary : null}
+            engineId="pg-filter"
+            onApply={fb.onCanonicalChange}
+            sampleRows={fb.rows}
+            logKey="rfjs.ai.log.pg-filter-builder"
+          />
+        </div>
+
+        <section
+          className="fb-rise rounded-lg border bg-card"
+          style={{ animationDelay: "140ms" }}
+        >
+          <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
+            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+              {t("pfbFilterLogic")}
+            </span>
+          </div>
+          <div className="overflow-x-auto p-5 sm:p-6">
+            <FilterTreeEditor
+              group={fb.tree}
+              engineId="pg-filter"
+              schema={fb.schema}
+              onChange={fb.setTree}
+              onCreateField={fb.onCreateField}
+              labels={treeLabels}
+            />
+          </div>
+        </section>
+
+        <div className="fb-rise" style={{ animationDelay: "210ms" }}>
+          <QueryOutputPanel
+            primary={compiled.ok ? compiled.primary : null}
+            secondary={compiled.ok ? (compiled.secondary ?? null) : null}
+            canonicalJson={fb.canonicalJson}
+            onCanonicalChange={fb.onCanonicalChange}
             labels={{
-              include: t("pfbInclude", { field: "" }).trim(),
-              type: t("pfbType", { field: "" }).trim(),
-              kind: t("pfbKind", { field: "" }).trim(),
+              output: t("pfbOutput"),
+              primaryLabel: t("pfbWhere"),
+              secondaryLabel: t("pfbValues"),
+              canonical: t("pfbCanonical"),
+              canonicalHint: t("pfbCanonicalHint"),
+              reverseError: reverseText,
+              compileError: compiled.ok
+                ? null
+                : t("pfbCompileError", { error: compiled.error }),
+              copy: t("pfbCopy"),
             }}
           />
-          <p className="font-mono text-[11px] text-muted-foreground">
-            {t("pfbKindHint")}
-          </p>
         </div>
-      </section>
-
-      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
-        <AiAssistBlock
-          schema={fb.schema}
-          canonicalJson={fb.canonicalJson}
-          compiled={compiled.ok ? compiled.primary : null}
-          engineId="pg-filter"
-          onApply={fb.onCanonicalChange}
-          sampleRows={fb.rows}
-          logKey="rfjs.ai.log.pg-filter-builder"
-        />
-      </div>
-
-      <section
-        className="fb-rise rounded-lg border bg-card"
-        style={{ animationDelay: "140ms" }}
-      >
-        <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("pfbFilterLogic")}
-          </span>
-        </div>
-        <div className="overflow-x-auto p-5 sm:p-6">
-          <FilterTreeEditor
-            group={fb.tree}
-            engineId="pg-filter"
-            schema={fb.schema}
-            onChange={fb.setTree}
-            onCreateField={fb.onCreateField}
-            labels={treeLabels}
-          />
-        </div>
-      </section>
-
-      <div className="fb-rise" style={{ animationDelay: "210ms" }}>
-        <QueryOutputPanel
-          primary={compiled.ok ? compiled.primary : null}
-          secondary={compiled.ok ? (compiled.secondary ?? null) : null}
-          canonicalJson={fb.canonicalJson}
-          onCanonicalChange={fb.onCanonicalChange}
-          labels={{
-            output: t("pfbOutput"),
-            primaryLabel: t("pfbWhere"),
-            secondaryLabel: t("pfbValues"),
-            canonical: t("pfbCanonical"),
-            canonicalHint: t("pfbCanonicalHint"),
-            reverseError: reverseText,
-            compileError: compiled.ok
-              ? null
-              : t("pfbCompileError", { error: compiled.error }),
-            copy: t("pfbCopy"),
-          }}
-        />
       </div>
     </div>
   );

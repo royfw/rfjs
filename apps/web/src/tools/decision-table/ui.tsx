@@ -33,6 +33,7 @@ import {
 
 import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
+import { ToolIntro } from "@/components/shared/tool-intro";
 import { buildCheckPrompt, parseCheckResponse } from "./ai-check";
 import {
   buildTableAskPrompt,
@@ -177,6 +178,22 @@ export function DecisionTableTool() {
       <p className="text-xs font-semibold tracking-widest text-muted-foreground">
         {t("dtEyebrow")}
       </p>
+
+      <ToolIntro
+        storageKey="tool-intro:decision-table"
+        question={t("introQuestion")}
+        tagline={t("dctIntroTagline")}
+        concepts={[
+          { term: t("dctIntroC1t"), desc: t("dctIntroC1d") },
+          { term: t("dctIntroC2t"), desc: t("dctIntroC2d") },
+          { term: t("dctIntroC3t"), desc: t("dctIntroC3d") },
+        ]}
+        labels={{
+          expand: t("introExpand"),
+          collapse: t("introCollapse"),
+          dismiss: t("introDismiss"),
+        }}
+      />
 
       <AiPanel
         title={t("aiBlockTitle")}

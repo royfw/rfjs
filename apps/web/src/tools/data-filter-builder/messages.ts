@@ -5,10 +5,19 @@ export const messages: LocaleMessages = {
     Tools: {
       "data-filter-builder": {
         title: "Data Filter Builder",
-        description: "Visually build an in-memory filter over sample JSON and see matching rows live.",
+        description:
+          "Visually build an in-memory filter over sample JSON and see matching rows live.",
       },
     },
     ToolUI: {
+      dfbIntroTagline: "Build a filter tree → matched rows, live",
+      dfbIntroC1t: "① Build",
+      dfbIntroC1d: "Nest and/or/not groups with field conditions.",
+      dfbIntroC2t: "② Match",
+      dfbIntroC2d:
+        "@rfjs/data-filter evaluates it over the sample JSON in memory.",
+      dfbIntroC3t: "③ Live",
+      dfbIntroC3d: "Matching rows update as you edit.",
       dfbEyebrow: "DATA FILTER BUILDER",
       dfbFilterLogic: "Filter logic",
       dfbStatLabel: "matched",
@@ -26,7 +35,8 @@ export const messages: LocaleMessages = {
       dfbJson: "'{ }'",
       dfbEmpty: "no rows",
       dfbNotPreviewable: "This operator can't be previewed in the browser",
-      dfbCanonicalHint: "Canonical filter (editable) — edit to rebuild the tree",
+      dfbCanonicalHint:
+        "Canonical filter (editable) — edit to rebuild the tree",
       dfbReverseInvalidJson: "Invalid JSON",
       dfbReverseInvalidShape: "Not a valid filter group",
       dfbLogicAnd: "ALL · all match",
@@ -51,10 +61,18 @@ export const messages: LocaleMessages = {
     Tools: {
       "data-filter-builder": {
         title: "資料過濾建構器",
-        description: "在範例 JSON 上視覺化建構記憶體內過濾條件，並即時查看命中的資料列。",
+        description:
+          "在範例 JSON 上視覺化建構記憶體內過濾條件，並即時查看命中的資料列。",
       },
     },
     ToolUI: {
+      dfbIntroTagline: "建一棵篩選樹 → 即時符合的資料列",
+      dfbIntroC1t: "① 建構",
+      dfbIntroC1d: "巢狀 and/or/not 群組 + 欄位條件。",
+      dfbIntroC2t: "② 比對",
+      dfbIntroC2d: "@rfjs/data-filter 在記憶體對範例 JSON 求值。",
+      dfbIntroC3t: "③ 即時",
+      dfbIntroC3d: "邊編邊看符合的列更新。",
       dfbEyebrow: "資料過濾建構器",
       dfbFilterLogic: "篩選邏輯",
       dfbStatLabel: "命中",

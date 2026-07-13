@@ -15,4 +15,15 @@ describe("MongoQueryBuilder", () => {
     expect(screen.getByText("Fields")).toBeTruthy();
     expect(screen.getAllByText("Compiled query").length).toBeGreaterThan(0);
   });
+
+  it("renders the collapsible ToolIntro", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
+        <MongoQueryBuilder />
+      </NextIntlClientProvider>,
+    );
+    expect(
+      screen.getByRole("button", { name: /how does this tool work/i }),
+    ).toBeTruthy();
+  });
 });

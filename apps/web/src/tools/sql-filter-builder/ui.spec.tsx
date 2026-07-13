@@ -15,4 +15,15 @@ describe("SqlFilterBuilder", () => {
     expect(screen.getByText("Fields")).toBeTruthy();
     expect(screen.getAllByText("Compiled query").length).toBeGreaterThan(0);
   });
+
+  it("renders the collapsible ToolIntro", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
+        <SqlFilterBuilder />
+      </NextIntlClientProvider>,
+    );
+    expect(
+      screen.getByRole("button", { name: /how does this tool work/i }),
+    ).toBeTruthy();
+  });
 });

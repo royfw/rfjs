@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import { runMongoQuery } from "./mongo-query-generator";
 
+import { ToolIntro } from "@/components/shared/tool-intro";
 import { ToolShell } from "@/tools/_shared/tool-shell";
 
 const SAMPLE = `{
@@ -24,40 +25,52 @@ export function MongoQueryGenerator() {
   const result = runMongoQuery(text);
 
   return (
-    <ToolShell
-      operation="genFilterQuery()"
-      input={
-        <Panel title={t("filter")}>
-          <Textarea
-            aria-label={t("filter")}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            spellCheck={false}
-            rows={10}
-            className="resize-y font-mono"
-          />
-        </Panel>
-      }
-      output={
-        <Panel
-          title={t("output")}
-          action={
-            result.ok ? (
-              <CopyButton text={result.output} label={t("copy")} />
-            ) : null
-          }
-        >
-          {result.ok ? (
-            <pre className="overflow-x-auto font-mono text-sm text-foreground">
-              {result.output}
-            </pre>
-          ) : (
-            <p className="font-mono text-sm text-fault">
-              {t(`error.${result.error}`)}
-            </p>
-          )}
-        </Panel>
-      }
-    />
+    <div className="flex flex-col gap-4">
+      <ToolIntro
+        storageKey="tool-intro:mongo-query-generator"
+        question={t("introQuestion")}
+        tagline={t("mqgIntroTagline")}
+        concepts={[
+          { term: t("mqgIntroC1t"), desc: t("mqgIntroC1d") },
+          { term: t("mqgIntroC2t"), desc: t("mqgIntroC2d") },
+        ]}
+        labels={{ expand: t("introExpand"), collapse: t("introCollapse"), dismiss: t("introDismiss") }}
+      />
+      <ToolShell
+        operation="genFilterQuery()"
+        input={
+          <Panel title={t("filter")}>
+            <Textarea
+              aria-label={t("filter")}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              spellCheck={false}
+              rows={10}
+              className="resize-y font-mono"
+            />
+          </Panel>
+        }
+        output={
+          <Panel
+            title={t("output")}
+            action={
+              result.ok ? (
+                <CopyButton text={result.output} label={t("copy")} />
+              ) : null
+            }
+          >
+            {result.ok ? (
+              <pre className="overflow-x-auto font-mono text-sm text-foreground">
+                {result.output}
+              </pre>
+            ) : (
+              <p className="font-mono text-sm text-fault">
+                {t(`error.${result.error}`)}
+              </p>
+            )}
+          </Panel>
+        }
+      />
+    </div>
   );
 }

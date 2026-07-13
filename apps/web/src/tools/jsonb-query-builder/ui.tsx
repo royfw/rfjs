@@ -18,6 +18,7 @@ import {
   useFilterBuilder,
   useOperatorLabels,
 } from "@/tools/_filter-builder";
+import { ToolIntro } from "@/components/shared/tool-intro";
 
 const SAMPLE = JSON.stringify(
   [
@@ -70,98 +71,115 @@ export function JsonbQueryBuilder() {
         : null;
 
   return (
-    <div className="flex flex-col gap-5">
-      <style>{RISE}</style>
-
-      <SampleCard
-        open={fb.sampleOpen}
-        onToggle={() => fb.setSampleOpen((v) => !v)}
-        value={fb.sampleText}
-        onChange={fb.onSample}
-        onUpload={(file) => void fb.onUpload(file)}
-        hasError={Boolean(fb.error)}
+    <div className="flex flex-col gap-4">
+      <ToolIntro
+        storageKey="tool-intro:jsonb-query-builder"
+        question={t("introQuestion")}
+        tagline={t("jqbIntroTagline")}
+        concepts={[
+          { term: t("jqbIntroC1t"), desc: t("jqbIntroC1d") },
+          { term: t("jqbIntroC2t"), desc: t("jqbIntroC2d") },
+          { term: t("jqbIntroC3t"), desc: t("jqbIntroC3d") },
+        ]}
         labels={{
-          sample: t("jqbSample"),
-          invalidSample: t("jqbInvalidSample"),
-          rawCount: t("jqbRaw", { count: fb.rows.length }),
-          upload: t("jqbUpload"),
+          expand: t("introExpand"),
+          collapse: t("introCollapse"),
+          dismiss: t("introDismiss"),
         }}
-        style={{ animationDelay: "0ms" }}
       />
+      <div className="flex flex-col gap-5">
+        <style>{RISE}</style>
 
-      <section
-        className="fb-rise rounded-lg border bg-card"
-        style={{ animationDelay: "70ms" }}
-      >
-        <div className="border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("jqbFields")}
-          </span>
-        </div>
-        <div className="p-4">
-          <MetadataStrip
+        <SampleCard
+          open={fb.sampleOpen}
+          onToggle={() => fb.setSampleOpen((v) => !v)}
+          value={fb.sampleText}
+          onChange={fb.onSample}
+          onUpload={(file) => void fb.onUpload(file)}
+          hasError={Boolean(fb.error)}
+          labels={{
+            sample: t("jqbSample"),
+            invalidSample: t("jqbInvalidSample"),
+            rawCount: t("jqbRaw", { count: fb.rows.length }),
+            upload: t("jqbUpload"),
+          }}
+          style={{ animationDelay: "0ms" }}
+        />
+
+        <section
+          className="fb-rise rounded-lg border bg-card"
+          style={{ animationDelay: "70ms" }}
+        >
+          <div className="border-b px-5 py-3">
+            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+              {t("jqbFields")}
+            </span>
+          </div>
+          <div className="p-4">
+            <MetadataStrip
+              schema={fb.schema}
+              onChange={fb.setSchema}
+              labels={{
+                include: t("jqbInclude", { field: "" }).trim(),
+                type: t("jqbType", { field: "" }).trim(),
+              }}
+            />
+          </div>
+        </section>
+
+        <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+          <AiAssistBlock
             schema={fb.schema}
-            onChange={fb.setSchema}
+            canonicalJson={fb.canonicalJson}
+            compiled={compiled.ok ? compiled.primary : null}
+            engineId="jsonb"
+            onApply={fb.onCanonicalChange}
+            sampleRows={fb.rows}
+            logKey="rfjs.ai.log.jsonb-query-builder"
+          />
+        </div>
+
+        <section
+          className="fb-rise rounded-lg border bg-card"
+          style={{ animationDelay: "140ms" }}
+        >
+          <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
+            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+              {t("jqbFilterLogic")}
+            </span>
+          </div>
+          <div className="overflow-x-auto p-5 sm:p-6">
+            <FilterTreeEditor
+              group={fb.tree}
+              engineId="jsonb"
+              schema={fb.schema}
+              onChange={fb.setTree}
+              onCreateField={fb.onCreateField}
+              labels={treeLabels}
+            />
+          </div>
+        </section>
+
+        <div className="fb-rise" style={{ animationDelay: "210ms" }}>
+          <QueryOutputPanel
+            primary={compiled.ok ? compiled.primary : null}
+            secondary={compiled.ok ? (compiled.secondary ?? null) : null}
+            canonicalJson={fb.canonicalJson}
+            onCanonicalChange={fb.onCanonicalChange}
             labels={{
-              include: t("jqbInclude", { field: "" }).trim(),
-              type: t("jqbType", { field: "" }).trim(),
+              output: t("jqbOutput"),
+              primaryLabel: t("jqbWhere"),
+              secondaryLabel: t("jqbValues"),
+              canonical: t("jqbCanonical"),
+              canonicalHint: t("jqbCanonicalHint"),
+              reverseError: reverseText,
+              compileError: compiled.ok
+                ? null
+                : t("jqbCompileError", { error: compiled.error }),
+              copy: t("jqbCopy"),
             }}
           />
         </div>
-      </section>
-
-      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
-        <AiAssistBlock
-          schema={fb.schema}
-          canonicalJson={fb.canonicalJson}
-          compiled={compiled.ok ? compiled.primary : null}
-          engineId="jsonb"
-          onApply={fb.onCanonicalChange}
-          sampleRows={fb.rows}
-          logKey="rfjs.ai.log.jsonb-query-builder"
-        />
-      </div>
-
-      <section
-        className="fb-rise rounded-lg border bg-card"
-        style={{ animationDelay: "140ms" }}
-      >
-        <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("jqbFilterLogic")}
-          </span>
-        </div>
-        <div className="overflow-x-auto p-5 sm:p-6">
-          <FilterTreeEditor
-            group={fb.tree}
-            engineId="jsonb"
-            schema={fb.schema}
-            onChange={fb.setTree}
-            onCreateField={fb.onCreateField}
-            labels={treeLabels}
-          />
-        </div>
-      </section>
-
-      <div className="fb-rise" style={{ animationDelay: "210ms" }}>
-        <QueryOutputPanel
-          primary={compiled.ok ? compiled.primary : null}
-          secondary={compiled.ok ? (compiled.secondary ?? null) : null}
-          canonicalJson={fb.canonicalJson}
-          onCanonicalChange={fb.onCanonicalChange}
-          labels={{
-            output: t("jqbOutput"),
-            primaryLabel: t("jqbWhere"),
-            secondaryLabel: t("jqbValues"),
-            canonical: t("jqbCanonical"),
-            canonicalHint: t("jqbCanonicalHint"),
-            reverseError: reverseText,
-            compileError: compiled.ok
-              ? null
-              : t("jqbCompileError", { error: compiled.error }),
-            copy: t("jqbCopy"),
-          }}
-        />
       </div>
     </div>
   );

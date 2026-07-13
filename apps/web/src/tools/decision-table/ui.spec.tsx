@@ -111,6 +111,13 @@ describe("DecisionTableTool", () => {
     fireEvent.click(screen.getByRole("button", { name: /^import$/i }));
     await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
   });
+
+  it("renders the collapsible ToolIntro", () => {
+    renderTool();
+    expect(
+      screen.getByRole("button", { name: /how does this tool work/i }),
+    ).toBeTruthy();
+  });
 });
 
 describe("DecisionTableTool — AI panel", () => {

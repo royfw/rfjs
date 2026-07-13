@@ -91,6 +91,13 @@ describe("createPreviewFetcher", () => {
   });
 });
 
+describe("FormBuilderTool intro", () => {
+  it("renders the collapsible ToolIntro", () => {
+    renderTool();
+    expect(screen.getByRole("button", { name: /how does this tool work/i })).toBeTruthy();
+  });
+});
+
 describe("FormBuilderTool preview", () => {
   it("Preview tab renders the real ConfigForm with a labelled control", () => {
     renderTool();

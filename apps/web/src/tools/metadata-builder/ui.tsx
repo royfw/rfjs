@@ -243,14 +243,14 @@ export function MetadataBuilderTool() {
 
       <ToolIntro
         storageKey="tool-intro:metadata-builder"
-        question={t("tbIntroQuestion")}
+        question={t("introQuestion")}
         tagline={t("mbIntroTagline")}
         concepts={[
           { term: t("mbIntroC1t"), desc: t("mbIntroC1d") },
           { term: t("mbIntroC2t"), desc: t("mbIntroC2d") },
           { term: t("mbIntroC3t"), desc: t("mbIntroC3d") },
         ]}
-        labels={{ expand: t("tbIntroExpand"), collapse: t("tbIntroCollapse"), dismiss: t("tbIntroDismiss") }}
+        labels={{ expand: t("introExpand"), collapse: t("introCollapse"), dismiss: t("introDismiss") }}
       />
 
       <AiPanel
