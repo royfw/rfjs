@@ -111,7 +111,7 @@ export function BpmnViewerTool() {
         title={t("bpmnDiagramTitle")}
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <Select defaultValue={DEFAULT_SAMPLE_ID} onValueChange={onSelectSample}>
+            <Select value={sampleId ?? ""} onValueChange={onSelectSample}>
               <SelectTrigger className="w-48" aria-label={t("bpmnSample")}>
                 <SelectValue placeholder={t("bpmnSample")} />
               </SelectTrigger>
