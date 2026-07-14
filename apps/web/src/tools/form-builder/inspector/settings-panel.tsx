@@ -26,9 +26,9 @@ const CHOICE_COMPONENTS = new Set<Component>(["Select", "Radio", "CheckboxGroup"
 const COLS = 12;
 
 // "Has content" indicators shown on section headers.
-const Dot = () => <span className="size-1.5 rounded-full bg-[#5b8cff]" aria-label="has content" />;
+const Dot = () => <span className="size-1.5 rounded-full bg-primary" aria-label="has content" />;
 const Count = ({ n }: { n: number }) => (
-  <span className="rounded-full bg-[#5b8cff]/15 px-1.5 text-[10px] font-medium text-[#5b8cff]">{n}</span>
+  <span className="rounded-full bg-primary/15 px-1.5 text-[10px] font-medium text-primary">{n}</span>
 );
 
 export function SettingsPanel({
@@ -36,7 +36,7 @@ export function SettingsPanel({
 }: { card: Card | null; groups: Group[]; onChange: (p: Partial<Card>) => void; onRemove: () => void; siblingFields?: { key: string; dataType: string }[]; apiButtons?: { id: string; label: string }[] }) {
   if (!card) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card/20 p-6 text-center text-sm text-muted-foreground">
+      <div className="rounded-lg border border-dashed border-input p-6 text-center text-sm text-muted-foreground">
         Select a card to edit its config
       </div>
     );

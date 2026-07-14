@@ -46,6 +46,7 @@ import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
 import { ToolIntro } from "@/components/shared/tool-intro";
 import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolTabs } from "@/components/shared/tool-tabs";
+import { SectionCard } from "@/components/shared/section-card";
 import { buildNlFormPrompt, parseNlFormResponse } from "./ai-nl-form";
 import { buildFormAskPrompt, buildFormExplainPrompt } from "./ai-explain-form";
 
@@ -594,55 +595,57 @@ export function FormBuilderTool() {
 
       {tab === "canvas" ? (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            {PALETTE.map((kind) => {
-              const meta = KIND_META[kind];
-              const Icon = meta.icon;
-              return (
+          <SectionCard title={t("fblPalette")}>
+            <div className="flex flex-wrap items-center gap-2">
+              {PALETTE.map((kind) => {
+                const meta = KIND_META[kind];
+                const Icon = meta.icon;
+                return (
+                  <button
+                    key={kind}
+                    type="button"
+                    onClick={() => addCard(kind)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  >
+                    <Icon className="size-3.5" style={{ color: meta.color }} />
+                    {meta.label}
+                  </button>
+                );
+              })}
+              {COMPONENT_PALETTE.map(
+                ({ component, label, color, icon: Icon }) => (
+                  <button
+                    key={component}
+                    type="button"
+                    onClick={() => addCard("field", component)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  >
+                    <Icon className="size-3.5" style={{ color }} />
+                    {label}
+                  </button>
+                ),
+              )}
+              <div className="ml-auto flex items-center gap-2">
                 <button
-                  key={kind}
                   type="button"
-                  onClick={() => addCard(kind)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  onClick={() =>
+                    setGroups((gs) => [
+                      ...gs,
+                      {
+                        id: `g${(gseq += 1)}`,
+                        title: `Section ${gs.length + 1}`,
+                        collapsed: false,
+                      },
+                    ])
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-primary bg-card/40 px-3 py-1.5 font-mono text-xs text-primary transition-colors hover:bg-primary/10"
                 >
-                  <Icon className="size-3.5" style={{ color: meta.color }} />
-                  {meta.label}
+                  <Plus className="size-3.5" />
+                  Group
                 </button>
-              );
-            })}
-            {COMPONENT_PALETTE.map(
-              ({ component, label, color, icon: Icon }) => (
-                <button
-                  key={component}
-                  type="button"
-                  onClick={() => addCard("field", component)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                >
-                  <Icon className="size-3.5" style={{ color }} />
-                  {label}
-                </button>
-              ),
-            )}
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  setGroups((gs) => [
-                    ...gs,
-                    {
-                      id: `g${(gseq += 1)}`,
-                      title: `Section ${gs.length + 1}`,
-                      collapsed: false,
-                    },
-                  ])
-                }
-                className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-              >
-                <Plus className="size-3.5" />
-                Group
-              </button>
+              </div>
             </div>
-          </div>
+          </SectionCard>
 
           {/* Section 1: Editor (default expanded) */}
           <Section title="Editor" defaultOpen={true}>
@@ -663,7 +666,7 @@ export function FormBuilderTool() {
                       groupDrag.overIndex === index ? (
                         <div
                           data-testid="group-drop-line"
-                          className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]"
+                          className="-my-1.5 h-0.5 rounded-full bg-primary"
                         />
                       ) : null}
                       <GroupFrame
@@ -696,7 +699,7 @@ export function FormBuilderTool() {
                   {groupDrag && groupDrag.overIndex === groups.length ? (
                     <div
                       data-testid="group-drop-line"
-                      className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]"
+                      className="-my-1.5 h-0.5 rounded-full bg-primary"
                     />
                   ) : null}
                 </div>
@@ -799,37 +802,37 @@ export function FormBuilderTool() {
           </Section>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground/60">
-              Config JSON — edits rebuild the canvas
-            </span>
+        <SectionCard
+          title={t("fblJsonTitle")}
+          bodyClassName="p-0"
+          action={
             <button
               type="button"
               onClick={copyJson}
               className="inline-flex items-center gap-1.5 rounded-md border border-input bg-card/40 px-2.5 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
             >
               {copied ? (
-                <Check className="size-3.5" style={{ color: "#5b8cff" }} />
+                <Check className="size-3.5 text-primary" />
               ) : (
                 <Copy className="size-3.5" />
               )}
               {copied ? "Copied" : "Copy"}
             </button>
-          </div>
+          }
+        >
           <textarea
             aria-label="config json"
             spellCheck={false}
-            className="h-[28rem] w-full rounded-md border border-input bg-background p-4 font-mono text-[13px] leading-relaxed"
+            className="h-[28rem] w-full border-0 bg-background p-4 font-mono text-[13px] leading-relaxed focus-visible:outline-none"
             defaultValue={JSON.stringify(formConfig, null, 2)}
             onChange={(e) => applyJson(e.target.value)}
           />
           {jsonError ? (
-            <p className="text-xs text-destructive">
+            <p className="px-4 pb-3 text-xs text-destructive">
               Invalid config: {jsonError}
             </p>
           ) : null}
-        </div>
+        </SectionCard>
       )}
     </div>
   );
@@ -869,13 +872,13 @@ function GroupFrame({
   return (
     <section
       ref={sectionRef}
-      className={`overflow-hidden rounded-xl border bg-card/20 transition-[border,opacity] ${
+      className={`overflow-hidden rounded-lg border bg-card transition-[border,opacity] ${
         dropOver
-          ? "border-[#5b8cff]/70 ring-1 ring-[#5b8cff]/40"
+          ? "border-primary/70 ring-1 ring-primary/40"
           : "border-border"
       } ${dragging ? "opacity-50" : ""}`}
     >
-      <header className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2.5">
+      <header className="flex items-center gap-2 border-b border-border bg-muted/30 px-3 py-2.5">
         <button
           type="button"
           aria-label="reorder group"
@@ -895,10 +898,10 @@ function GroupFrame({
           />
         </button>
         <span className="text-[15px] font-semibold">{group.title}</span>
-        <span className="font-mono text-[11px] text-muted-foreground/50">
+        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
           {group.id}
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/45">
+        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
           {cards.length} item{cards.length === 1 ? "" : "s"}
         </span>
         <span className="ml-auto font-mono text-[10px] uppercase tracking-wide text-muted-foreground/55">
@@ -966,7 +969,7 @@ function CanvasCard({
       onPointerDown={onMoveStart}
       className={`group relative cursor-grab touch-none select-none rounded-lg border bg-card shadow-sm transition-shadow active:cursor-grabbing ${
         selected
-          ? "border-transparent ring-2 ring-[#5b8cff]"
+          ? "border-transparent ring-2 ring-primary"
           : "border-border hover:shadow-md"
       }`}
       style={{
@@ -1017,7 +1020,7 @@ function CanvasCard({
         className="absolute right-0 top-0 flex h-full w-3 cursor-col-resize items-center justify-center"
       >
         <div
-          className={`h-8 w-1 rounded-full transition-colors ${selected ? "bg-[#5b8cff]" : "bg-transparent group-hover:bg-border"}`}
+          className={`h-8 w-1 rounded-full transition-colors ${selected ? "bg-primary" : "bg-transparent group-hover:bg-border"}`}
         />
       </div>
     </div>

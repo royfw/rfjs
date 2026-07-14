@@ -11,6 +11,8 @@ export const messages: LocaleMessages = {
     },
     ToolUI: {
       fblEyebrow: "FORM BUILDER",
+      fblPalette: "Palette",
+      fblJsonTitle: "Config JSON",
       fbAiPlaceholder: "Describe a form or ask a question…",
       fbAiGenerate: "Generate form",
       fbAiExplain: "Explain form",
@@ -33,6 +35,8 @@ export const messages: LocaleMessages = {
     },
     ToolUI: {
       fblEyebrow: "表單建構器",
+      fblPalette: "元件",
+      fblJsonTitle: "設定 JSON",
       fbAiPlaceholder: "描述表單或提出問題…",
       fbAiGenerate: "產生表單",
       fbAiExplain: "解釋表單",
