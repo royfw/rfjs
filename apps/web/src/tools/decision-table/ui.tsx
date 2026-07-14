@@ -298,6 +298,7 @@ export function DecisionTableTool() {
             </Button>
           </div>
         }
+        bodyClassName="p-0"
       >
         <ul className="divide-y" data-testid="dt-rules-list">
           {table.rules.map((rule, i) => (
