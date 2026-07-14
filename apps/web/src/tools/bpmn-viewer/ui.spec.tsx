@@ -23,12 +23,13 @@ vi.mock("@rfjs/bpmn-ui", () => ({
   }),
 }));
 
-import { messages } from "./messages";
+import { assembleMessages } from "@/i18n/messages";
+
 import { BpmnViewerTool } from "./ui";
 
 function renderTool() {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages.en as Record<string, unknown>}>
+    <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
       <BpmnViewerTool />
     </NextIntlClientProvider>,
   );
