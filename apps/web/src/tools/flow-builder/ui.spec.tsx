@@ -64,12 +64,12 @@ vi.mock("@rfjs/bpmn-ui", () => ({
   BpmnViewer: ({ xml }: { xml: string }) => <div data-testid="bpmn-viewer">{xml}</div>,
 }));
 
-import { messages } from "./messages";
+import { assembleMessages } from "@/i18n/messages";
 import { FlowBuilderTool } from "./ui";
 
 function renderTool() {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages.en as Record<string, unknown>}>
+    <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
       <FlowBuilderTool />
     </NextIntlClientProvider>,
   );
