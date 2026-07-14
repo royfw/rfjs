@@ -384,15 +384,17 @@ export function TableBuilderTool() {
             preview={preview}
             onPreviewChange={setPreview}
           />
-          <ProtocolPanel
-            request={request}
-            response={response}
-            onChange={(n) => {
-              setRequest(n.request);
-              setResponse(n.response);
-            }}
-            labels={protocolLabels}
-          />
+          <SectionCard title={t("tbProtocolTitle")}>
+            <ProtocolPanel
+              request={request}
+              response={response}
+              onChange={(n) => {
+                setRequest(n.request);
+                setResponse(n.response);
+              }}
+              labels={protocolLabels}
+            />
+          </SectionCard>
         </>
       ) : null}
       {tab === "columns" ? (
