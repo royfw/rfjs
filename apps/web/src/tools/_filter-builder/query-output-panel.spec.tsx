@@ -39,8 +39,17 @@ describe("QueryOutputPanel", () => {
         labels={labels}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "{ }" }));
+    // labels.output names BOTH the chevron (collapseLabel) and the output tab —
+    // disambiguate via aria-selected (only tab buttons carry it).
+    const outputTab = screen
+      .getAllByRole("button", { name: labels.output })
+      .find((el) => el.hasAttribute("aria-selected"));
+    const canonicalTab = screen.getByRole("button", { name: "{ }" });
+    expect(outputTab?.getAttribute("aria-selected")).toBe("true");
+    expect(canonicalTab.getAttribute("aria-selected")).toBe("false");
+    fireEvent.click(canonicalTab);
     expect(screen.getByRole("textbox")).toBeDefined();
+    expect(canonicalTab.getAttribute("aria-selected")).toBe("true");
   });
 
   it("renders the compile error in place of the output", () => {
