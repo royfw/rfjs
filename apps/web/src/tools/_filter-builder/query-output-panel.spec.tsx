@@ -55,4 +55,21 @@ describe("QueryOutputPanel", () => {
     );
     expect(screen.getByText("Could not compile: boom")).toBeDefined();
   });
+
+  it("collapses: toggling the header hides the primary output", () => {
+    render(
+      <QueryOutputPanel
+        primary={"data #>> '{name}' = $1"}
+        secondary={null}
+        canonicalJson="{}"
+        onCanonicalChange={vi.fn()}
+        labels={labels}
+      />,
+    );
+    const toggle = screen.getByRole("button", { expanded: true });
+    expect(screen.getByText("data #>> '{name}' = $1")).toBeTruthy();
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("data #>> '{name}' = $1")).toBeNull();
+  });
 });

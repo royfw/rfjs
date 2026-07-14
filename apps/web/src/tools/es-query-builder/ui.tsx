@@ -18,6 +18,8 @@ import {
   useFilterBuilder,
   useOperatorLabels,
 } from "@/tools/_filter-builder";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
 
 const SAMPLE = JSON.stringify(
@@ -72,6 +74,7 @@ export function EsQueryBuilder() {
 
   return (
     <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("eqbEyebrow")}</ToolEyebrow>
       <ToolIntro
         storageKey="tool-intro:es-query-builder"
         question={t("introQuestion")}
@@ -87,99 +90,86 @@ export function EsQueryBuilder() {
           dismiss: t("introDismiss"),
         }}
       />
-      <div className="flex flex-col gap-5">
-        <style>{RISE}</style>
+      <style>{RISE}</style>
 
-        <SampleCard
-          open={fb.sampleOpen}
-          onToggle={() => fb.setSampleOpen((v) => !v)}
-          value={fb.sampleText}
-          onChange={fb.onSample}
-          onUpload={(file) => void fb.onUpload(file)}
-          hasError={Boolean(fb.error)}
+      <SampleCard
+        open={fb.sampleOpen}
+        onToggle={() => fb.setSampleOpen((v) => !v)}
+        value={fb.sampleText}
+        onChange={fb.onSample}
+        onUpload={(file) => void fb.onUpload(file)}
+        hasError={Boolean(fb.error)}
+        labels={{
+          sample: t("eqbSample"),
+          invalidSample: t("eqbInvalidSample"),
+          rawCount: t("eqbRaw", { count: fb.rows.length }),
+          upload: t("eqbUpload"),
+        }}
+        style={{ animationDelay: "0ms" }}
+      />
+
+      <SectionCard
+        title={t("eqbFields")}
+        className="fb-rise"
+        style={{ animationDelay: "70ms" }}
+      >
+        <MetadataStrip
+          schema={fb.schema}
+          onChange={fb.setSchema}
           labels={{
-            sample: t("eqbSample"),
-            invalidSample: t("eqbInvalidSample"),
-            rawCount: t("eqbRaw", { count: fb.rows.length }),
-            upload: t("eqbUpload"),
+            include: t("eqbInclude", { field: "" }).trim(),
+            type: t("eqbType", { field: "" }).trim(),
           }}
-          style={{ animationDelay: "0ms" }}
         />
+      </SectionCard>
 
-        <section
-          className="fb-rise rounded-lg border bg-card"
-          style={{ animationDelay: "70ms" }}
-        >
-          <div className="border-b px-5 py-3">
-            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-              {t("eqbFields")}
-            </span>
-          </div>
-          <div className="p-4">
-            <MetadataStrip
-              schema={fb.schema}
-              onChange={fb.setSchema}
-              labels={{
-                include: t("eqbInclude", { field: "" }).trim(),
-                type: t("eqbType", { field: "" }).trim(),
-              }}
-            />
-          </div>
-        </section>
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={compiled.ok ? compiled.primary : null}
+          engineId="es-query"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.es-query-builder"
+        />
+      </div>
 
-        <div className="fb-rise" style={{ animationDelay: "140ms" }}>
-          <AiAssistBlock
-            schema={fb.schema}
-            canonicalJson={fb.canonicalJson}
-            compiled={compiled.ok ? compiled.primary : null}
-            engineId="es-query"
-            onApply={fb.onCanonicalChange}
-            sampleRows={fb.rows}
-            logKey="rfjs.ai.log.es-query-builder"
-          />
-        </div>
+      <SectionCard
+        title={t("eqbFilterLogic")}
+        className="fb-rise"
+        style={{ animationDelay: "140ms" }}
+        bodyClassName="overflow-x-auto p-5 sm:p-6"
+      >
+        <FilterTreeEditor
+          group={fb.tree}
+          engineId="es-query"
+          schema={fb.schema}
+          onChange={fb.setTree}
+          onCreateField={fb.onCreateField}
+          labels={treeLabels}
+        />
+      </SectionCard>
 
-        <section
-          className="fb-rise rounded-lg border bg-card"
-          style={{ animationDelay: "140ms" }}
-        >
-          <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-              {t("eqbFilterLogic")}
-            </span>
-          </div>
-          <div className="overflow-x-auto p-5 sm:p-6">
-            <FilterTreeEditor
-              group={fb.tree}
-              engineId="es-query"
-              schema={fb.schema}
-              onChange={fb.setTree}
-              onCreateField={fb.onCreateField}
-              labels={treeLabels}
-            />
-          </div>
-        </section>
-
-        <div className="fb-rise" style={{ animationDelay: "210ms" }}>
-          <QueryOutputPanel
-            primary={compiled.ok ? compiled.primary : null}
-            secondary={compiled.ok ? (compiled.secondary ?? null) : null}
-            canonicalJson={fb.canonicalJson}
-            onCanonicalChange={fb.onCanonicalChange}
-            labels={{
-              output: t("eqbOutput"),
-              primaryLabel: t("eqbQuery"),
-              secondaryLabel: "",
-              canonical: t("eqbCanonical"),
-              canonicalHint: t("eqbCanonicalHint"),
-              reverseError: reverseText,
-              compileError: compiled.ok
-                ? null
-                : t("eqbCompileError", { error: compiled.error }),
-              copy: t("eqbCopy"),
-            }}
-          />
-        </div>
+      <div className="fb-rise" style={{ animationDelay: "210ms" }}>
+        <QueryOutputPanel
+          primary={compiled.ok ? compiled.primary : null}
+          secondary={compiled.ok ? (compiled.secondary ?? null) : null}
+          canonicalJson={fb.canonicalJson}
+          onCanonicalChange={fb.onCanonicalChange}
+          labels={{
+            output: t("eqbOutput"),
+            primaryLabel: t("eqbQuery"),
+            secondaryLabel: "",
+            canonical: t("eqbCanonical"),
+            canonicalHint: t("eqbCanonicalHint"),
+            reverseError: reverseText,
+            compileError: compiled.ok
+              ? null
+              : t("eqbCompileError", { error: compiled.error }),
+            copy: t("eqbCopy"),
+          }}
+        />
       </div>
     </div>
   );
