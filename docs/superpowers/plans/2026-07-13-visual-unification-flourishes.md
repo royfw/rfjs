@@ -172,8 +172,9 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
     </SectionCard>
 ```
 - 移除 body 內的 output/canonical `<Button>` 對(切換移到表頭 tab-strip);`tab`/`setTab` 保留。
+- **移除變成 dead 的 `import { Button } from "@rfjs/web-ui/components/button";`(line 3)**(Button 對拔掉後它無其他用途 → 不移除 lint 會掛 `no-unused-vars`);`import { CopyButton }` 保留(primary pre 的 copy 仍用)。
 - import `FragmentBar`。
-- `query-output-panel.spec.tsx` 更新:output/canonical 現在是表頭 tab(仍 `getByRole("button", {name})` 可查,因 tab-strip 是 plain button);collapse 斷言改查 `getByRole("button", {name: labels.output})`(chevron 的 aria-label=collapseLabel=labels.output)—— 注意:表頭同時有 aria-label=labels.output 的 chevron 與 label=labels.output 的 tab,兩個同名 button → 用更精確的查法(如 `getByRole("button",{name})` 取 `[0]`,或斷 tab 用 aria-selected、斷 collapse 用 `{expanded}`)。用 `screen.getByRole("button", { expanded: true })` 抓 chevron(唯一有 aria-expanded 的),點它後斷 primary 文字消失 + `{expanded:false}`。
+- `query-output-panel.spec.tsx` 更新:**tab 切換**用 `getByRole("button", { name })` + `aria-selected` 斷(tab-strip 是 plain button;例:點 Canonical → primary pre 消失、CanonicalEditor 出現)。**collapse** 斷言避開同名衝突(表頭同時有 aria-label=collapseLabel 的 chevron 與同標籤的 tab)——用 `screen.getByRole("button", { expanded: true })` 抓 chevron(它是唯一帶 `aria-expanded` 的),點它後斷 primary 文字消失 + `{ expanded: false }`。**勿用 `getByRole("button", { name: labels.output })`**(chevron 與 output tab 同名 → Found multiple elements)。
 
 - [ ] **Step 1:** 改 query-output-panel.tsx(tab-strip + FragmentBar,collapse 保留)。
 - [ ] **Step 2:** 更新 spec(tab 切換 + collapse via `{expanded}` selector);跑 `pnpm -F web exec vitest run src/tools/_filter-builder/query-output-panel` 綠。
@@ -186,22 +187,26 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 **Files:** 6 filter builder 的 ui.tsx(Filter Logic 卡);jsonb-query-generator / mongo-query-generator 的 ui.tsx(輸出);decision-table 的 ui.tsx(求值結果)。
 
-1. **6 filter builder 的 Filter Logic 卡**:現為 `<SectionCard title=… bodyClassName="overflow-x-auto p-5 sm:p-6"><FilterTreeEditor/></SectionCard>`。改為 body 內包一層 dashed:
+1. **6 filter builder 的 Filter Logic 卡** —— **body-only 編輯,勿重寫整個 SectionCard open-tag**(每張卡的既有 props:`title`/`className="fb-rise"`/`style`,**以及 data-filter-builder 獨有的 `action`** 都要原封保留)。對每張卡只做兩件事:
+   - (a) 把 `bodyClassName` 由 `"overflow-x-auto p-5 sm:p-6"` 改為 `"p-4"`;
+   - (b) 把既有的 `<FilterTreeEditor …/>` child 包一層 dashed:`<div className="overflow-x-auto rounded-lg border border-dashed border-input p-4"><FilterTreeEditor …/></div>`。
 ```tsx
+    // 一般(5 個):
     <SectionCard title={t("<pfx>FilterLogic")} className="fb-rise" style={{ animationDelay: "…" }} bodyClassName="p-4">
       <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
         <FilterTreeEditor … />
       </div>
     </SectionCard>
 ```
-(dashed 容器保留 `overflow-x-auto`;card body 回 `p-4`。tree 仍可橫向捲動、不裁切。)
+(`overflow-x-auto` 移到 dashed 容器,tree 仍可橫向捲動、不裁切。)
+   - **data-filter-builder 例外(唯一帶 action 的)**:其 Filter Logic 卡有 `action={<span…>{live.count} / {fb.rows.length} {t("dfbStatLabel")}</span>}`(即時 match 統計,ui.tsx:144-156)—— **原封保留該 `action`**,只做上述 (a)(b)。無 spec 覆蓋此 stat(ui.spec 只斷 DataPanel 的「raw N · matched N」),故 F4 截圖須含 data-filter-builder、目視確認 stat 還在。
 
-2. **jsonb-query-generator / mongo-query-generator 的輸出**:在其輸出卡(產生的查詢字串)的 pre 之前加一條 `<FragmentBar>◆ {輸出種類標籤}</FragmentBar>`(如 "JSONB WHERE" / "Mongo query" —— 用該工具既有的輸出標籤字串,無新 i18n 則沿用既有 label)。
+2. **jsonb-query-generator / mongo-query-generator 的輸出**:在其輸出卡(產生的查詢字串)的 pre 之前加 `<FragmentBar>◆ {t("<新 key>")}</FragmentBar>`。**需新增專屬 i18n key**(不重用既有 label —— 重用會與該工具已渲染的標籤重複;也不硬編英文):各工具 `messages.ts` 的 `ToolUI` 加(en + zh,唯一前綴):`jqgFragment` = "JSONB WHERE" / "JSONB WHERE";`mqgFragment` = "Mongo query" / "Mongo 查詢"。
 
-3. **decision-table 求值結果**:single-eval / batch-eval 的結果區(命中規則 / 輸出)頂加 `<FragmentBar>◆ {命中/結果標籤}</FragmentBar>`(用既有結果標籤)。
+3. **decision-table 求值結果**:single-eval / batch-eval 的結果區頂各加 `<FragmentBar>◆ {t("<新 key>")}</FragmentBar>`。**新增專屬 key**(與既有 `dtMatched` 等不重複):`messages.ts` 加 `dctFragmentMatched` = "Matched rule" / "命中規則"(single-eval)、`dctFragmentBatch` = "Batch results" / "批次結果"(batch-eval),en + zh。
 
 - [ ] **Step 1:** 6 filter builder Filter Logic → dashed 容器;跑各工具 vitest(斷言若查 tree 容器 class 則更新)。
-- [ ] **Step 2:** 2 generators + decision-table 輸出加 FragmentBar;跑其 vitest。
+- [ ] **Step 2:** 先在 3 個工具的 `messages.ts` 加上述 FragmentBar 專屬 key(en + zh,兩 locale key 集相等);再於 2 generators + decision-table 輸出加 `<FragmentBar>`;跑其 vitest。
 - [ ] **Step 3:** check-types/lint;commit `feat(web): dashed filter-logic canvas + gold fragment bars on generator/eval outputs`(+ trailer)。
 
 ---
