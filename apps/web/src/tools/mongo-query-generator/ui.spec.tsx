@@ -13,5 +13,6 @@ describe("MongoQueryGenerator", () => {
       </NextIntlClientProvider>,
     );
     expect(screen.getByRole("button", { name: /how does this tool work/i })).toBeTruthy();
+    expect(screen.getByText("FILTER → MONGO QUERY")).toBeTruthy();
   });
 });

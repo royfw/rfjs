@@ -1,13 +1,14 @@
 "use client";
 
 import { CopyButton } from "@rfjs/web-ui/components/copy-button";
-import { Panel } from "@rfjs/web-ui/components/panel";
 import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { runMongoQuery } from "./mongo-query-generator";
 
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
 import { ToolShell } from "@/tools/_shared/tool-shell";
 
@@ -26,6 +27,7 @@ export function MongoQueryGenerator() {
 
   return (
     <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("mqgEyebrow")}</ToolEyebrow>
       <ToolIntro
         storageKey="tool-intro:mongo-query-generator"
         question={t("introQuestion")}
@@ -39,7 +41,7 @@ export function MongoQueryGenerator() {
       <ToolShell
         operation="genFilterQuery()"
         input={
-          <Panel title={t("filter")}>
+          <SectionCard title={t("filter")}>
             <Textarea
               aria-label={t("filter")}
               value={text}
@@ -48,10 +50,10 @@ export function MongoQueryGenerator() {
               rows={10}
               className="resize-y font-mono"
             />
-          </Panel>
+          </SectionCard>
         }
         output={
-          <Panel
+          <SectionCard
             title={t("output")}
             action={
               result.ok ? (
@@ -68,7 +70,7 @@ export function MongoQueryGenerator() {
                 {t(`error.${result.error}`)}
               </p>
             )}
-          </Panel>
+          </SectionCard>
         }
       />
     </div>

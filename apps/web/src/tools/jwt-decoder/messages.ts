@@ -9,6 +9,7 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      jwtEyebrow: "JWT DECODER",
       token: "JWT",
       header: "Header",
       payload: "Payload",
@@ -30,6 +31,7 @@ export const messages: LocaleMessages = {
       "jwt-decoder": { title: "JWT 解碼器", description: "解碼 JWT 的 header 與 payload，並顯示即時有效期狀態。" },
     },
     ToolUI: {
+      jwtEyebrow: "JWT 解碼器",
       token: "JWT",
       header: "Header",
       payload: "Payload",

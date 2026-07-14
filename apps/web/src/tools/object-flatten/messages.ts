@@ -9,6 +9,7 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      oflEyebrow: "OBJECT FLATTEN / UNFLATTEN",
       jsonInput: "JSON",
       oflIntroTagline: "Nested object ⇄ dot-path keys",
       oflIntroC1t: "① Flatten",
@@ -22,6 +23,7 @@ export const messages: LocaleMessages = {
       "object-flatten": { title: "物件壓平 / 還原", description: "把巢狀物件壓平成點路徑鍵,並可還原。" },
     },
     ToolUI: {
+      oflEyebrow: "物件壓平 / 還原",
       jsonInput: "JSON",
       oflIntroTagline: "巢狀物件 ⇄ 點路徑鍵",
       oflIntroC1t: "① 壓平",

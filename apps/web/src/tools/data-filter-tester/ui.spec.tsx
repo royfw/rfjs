@@ -13,5 +13,6 @@ describe("DataFilterTester", () => {
       </NextIntlClientProvider>,
     );
     expect(screen.getByRole("button", { name: /how does this tool work/i })).toBeTruthy();
+    expect(screen.getByText("JSONPATH FILTER TESTER")).toBeTruthy();
   });
 });

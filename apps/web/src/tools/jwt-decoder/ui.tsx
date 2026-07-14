@@ -1,12 +1,13 @@
 "use client";
 
-import { Panel } from "@rfjs/web-ui/components/panel";
 import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { decodeJwt, describeExp, formatDuration, type DecodeResult } from "./jwt-decoder";
 
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
 import { ToolShell } from "@/tools/_shared/tool-shell";
 
@@ -55,6 +56,7 @@ export function JwtDecoder() {
 
   return (
     <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("jwtEyebrow")}</ToolEyebrow>
       <ToolIntro
         storageKey="tool-intro:jwt-decoder"
         question={t("introQuestion")}
@@ -69,7 +71,7 @@ export function JwtDecoder() {
       <ToolShell
         operation="decodeComplete()"
         input={
-          <Panel title={t("token")}>
+          <SectionCard title={t("token")}>
             <Textarea
               aria-label={t("token")}
               value={token}
@@ -78,10 +80,10 @@ export function JwtDecoder() {
               rows={8}
               className="resize-y break-all font-mono"
             />
-          </Panel>
+          </SectionCard>
         }
         output={
-          <Panel title={t("output")}>
+          <SectionCard title={t("output")}>
             {result === null ? null : !result.ok ? (
               <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>
             ) : (
@@ -103,7 +105,7 @@ export function JwtDecoder() {
                 </div>
               </div>
             )}
-          </Panel>
+          </SectionCard>
         }
       />
     </div>

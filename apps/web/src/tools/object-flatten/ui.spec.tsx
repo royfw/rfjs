@@ -13,5 +13,6 @@ describe("ObjectFlatten", () => {
       </NextIntlClientProvider>,
     );
     expect(screen.getByRole("button", { name: /how does this tool work/i })).toBeTruthy();
+    expect(screen.getByText("OBJECT FLATTEN / UNFLATTEN")).toBeTruthy();
   });
 });

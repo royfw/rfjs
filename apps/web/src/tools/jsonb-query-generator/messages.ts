@@ -9,6 +9,7 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      jqgEyebrow: "FILTER → JSONB SQL",
       column: "Column",
       dialect: "Dialect",
       jqgIntroTagline: "Filter metadata → PostgreSQL JSONB query",
@@ -23,6 +24,7 @@ export const messages: LocaleMessages = {
       "jsonb-query-generator": { title: "篩選 → JSONB SQL", description: "從篩選 metadata 產生 PostgreSQL JSONB 查詢。" },
     },
     ToolUI: {
+      jqgEyebrow: "篩選 → JSONB SQL",
       column: "欄位",
       dialect: "方言",
       jqgIntroTagline: "篩選 metadata → PostgreSQL JSONB 查詢",
