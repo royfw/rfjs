@@ -121,26 +121,33 @@ export function AiPanel({
   );
 
   return (
-    <section className="flex flex-col rounded-lg border bg-card">
+    <section className="flex flex-col overflow-hidden rounded-lg border bg-card">
+      {/* Header matches the studio SectionCard slab (bg-muted/30 · px-4 py-2.5 · border-b when
+          open). The collapse chevron is kept in its own segment, gap-3 from the AI identity
+          cluster (sparkle + title), so the arrow no longer reads as cramped against the icon. */}
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex items-center gap-2 px-5 py-3 text-muted-foreground transition-colors hover:text-foreground"
+        className={`flex items-center gap-3 bg-muted/30 px-4 py-2.5 text-left text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50${
+          open ? " border-b" : ""
+        }`}
       >
         {open ? (
-          <ChevronDown className="size-4" />
+          <ChevronDown className="size-4 shrink-0" />
         ) : (
-          <ChevronRight className="size-4" />
+          <ChevronRight className="size-4 shrink-0" />
         )}
-        <Sparkles className="size-4" />
-        <span className="font-mono text-xs uppercase tracking-wide">
-          {title}
+        <span className="flex items-center gap-2">
+          <Sparkles className="size-4" />
+          <span className="font-mono text-xs uppercase tracking-wide">
+            {title}
+          </span>
         </span>
       </button>
 
       {open ? (
-        <div className="flex flex-col gap-2 border-t p-4">
+        <div className="flex flex-col gap-2 p-4">
           <div className="flex flex-wrap items-start gap-2">
             <Textarea
               rows={1}
