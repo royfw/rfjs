@@ -92,4 +92,25 @@ describe("SectionCard", () => {
     );
     expect(screen.queryByText("payload")).toBeNull();
   });
+  it("collapsible + tabs: renders a chevron toggle AND the tab-strip; tabs switch, chevron collapses", () => {
+    const onTabChange = vi.fn();
+    render(
+      <SectionCard
+        collapsible
+        collapseLabel="Toggle output"
+        tabs={[{ id: "out", label: "Compiled SQL" }, { id: "canon", label: "Canonical" }]}
+        activeTab="out"
+        onTabChange={onTabChange}
+      ><p>payload</p></SectionCard>,
+    );
+    const chevron = screen.getByRole("button", { name: "Toggle output" });
+    expect(chevron.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: "Compiled SQL" }).getAttribute("aria-selected")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Canonical" }));
+    expect(onTabChange).toHaveBeenCalledWith("canon");   // tab click switches, does NOT collapse
+    expect(screen.getByText("payload")).toBeTruthy();
+    fireEvent.click(chevron);                              // chevron collapses
+    expect(chevron.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("payload")).toBeNull();
+  });
 });

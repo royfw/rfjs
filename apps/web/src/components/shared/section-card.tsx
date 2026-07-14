@@ -21,6 +21,7 @@ export function SectionCard({
   onTabChange,
   action,
   collapsible,
+  collapseLabel,
   defaultOpen = true,
   open,
   onOpenChange,
@@ -35,6 +36,7 @@ export function SectionCard({
   onTabChange?: (id: string) => void;
   action?: React.ReactNode;
   collapsible?: boolean;
+  collapseLabel?: string;
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -86,18 +88,34 @@ export function SectionCard({
     >
       {hasHeader ? (
         collapsible ? (
-          <div className="flex items-center gap-2 border-b bg-muted/30 px-4 py-2.5">
-            <button
-              type="button"
-              onClick={toggle}
-              aria-expanded={isOpen}
-              className="flex flex-1 items-center gap-2 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-            >
-              {isOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-              {titleEl}
-            </button>
-            {action}
-          </div>
+          tabs && tabs.length > 0 ? (
+            <div className="flex items-stretch border-b bg-muted/30">
+              <button
+                type="button"
+                onClick={toggle}
+                aria-expanded={isOpen}
+                aria-label={collapseLabel}
+                className="flex items-center px-3 text-muted-foreground outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                {isOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+              </button>
+              {tabStrip}
+              {action ? <div className="ml-auto flex items-center px-4">{action}</div> : null}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 border-b bg-muted/30 px-4 py-2.5">
+              <button
+                type="button"
+                onClick={toggle}
+                aria-expanded={isOpen}
+                className="flex flex-1 items-center gap-2 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                {isOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                {titleEl}
+              </button>
+              {action}
+            </div>
+          )
         ) : tabStrip ? (
           <div className="flex items-stretch border-b bg-muted/30">
             {tabStrip}
