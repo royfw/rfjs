@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import type { FieldFormat, LocalizedLabel, ScalarType, TableColumnConfig } from "@rfjs/table-builder";
+import { SectionCard } from "@/components/shared/section-card";
 
 export interface ColumnsPanelLabels {
   title: string;
@@ -116,8 +117,7 @@ export function ColumnsPanel({ columns, onChange, labels }: ColumnsPanelProps) {
   }
 
   return (
-    <div className="rounded-md border p-3">
-      <p className="mb-2 text-sm font-semibold">{labels.title}</p>
+    <SectionCard title={labels.title}>
       <div className="flex flex-col gap-1">
         {columns.map((column, index) => {
           const formatOptions = FORMAT_OPTIONS_BY_TYPE[column.dataType];
@@ -194,6 +194,6 @@ export function ColumnsPanel({ columns, onChange, labels }: ColumnsPanelProps) {
           );
         })}
       </div>
-    </div>
+    </SectionCard>
   );
 }

@@ -5,6 +5,9 @@ import * as React from "react";
 import { parseDataResourceMeta } from "@rfjs/data-schema";
 import type { DataResourceMeta } from "@rfjs/data-schema";
 
+import { FragmentBar } from "@/components/shared/fragment-bar";
+import { SectionCard } from "@/components/shared/section-card";
+
 import { parseImport } from "./import";
 import type { ImportFormat } from "./import";
 
@@ -134,8 +137,7 @@ export function ResourcePanel({
   const accept = seed === "meta" ? ".json" : ".json,.csv";
 
   return (
-    <div className="rounded-md border p-3">
-      <p className="mb-2 text-sm font-semibold">{labels.title}</p>
+    <SectionCard title={labels.title}>
       <div className="flex flex-col gap-2">
         <div className="flex gap-1">
           {(
@@ -236,7 +238,10 @@ export function ResourcePanel({
         ) : null}
 
         <div className="flex flex-col gap-1 border-t pt-2">
-          <span className="text-xs text-muted-foreground">{labels.fieldsSummary}</span>
+          <FragmentBar>
+            <span aria-hidden="true">◆</span>
+            <span>{labels.fieldsSummary}</span>
+          </FragmentBar>
           <span className="text-xs text-muted-foreground">{labels.protoHint}</span>
           {hasProtocol ? (
             <div className="mt-1 flex items-center gap-2">
@@ -261,6 +266,6 @@ export function ResourcePanel({
           ) : null}
         </div>
       </div>
-    </div>
+    </SectionCard>
   );
 }

@@ -6,8 +6,10 @@ import { tableConfigToResourceMeta } from "@rfjs/table-builder";
 import type { TableConfig } from "@rfjs/table-builder";
 import type { RequestMeta, ResponseMeta } from "@rfjs/data-schema";
 import { Button } from "@rfjs/web-ui/components/button";
+import { SectionCard } from "@/components/shared/section-card";
 
 export interface MetadataPanelLabels {
+  title?: string;
   hint: string;
   copy: string;
   copied: string;
@@ -67,22 +69,29 @@ export function MetadataPanel({
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="flex-1 text-xs text-muted-foreground">{labels.hint}</p>
-        <Button size="sm" variant="outline" onClick={() => void onCopy()}>
-          {copied ? labels.copied : labels.copy}
-        </Button>
-        <Button size="sm" variant="outline" onClick={onDownload}>
-          {labels.download}
-        </Button>
+    <SectionCard
+      title={labels.title}
+      action={
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => void onCopy()}>
+            {copied ? labels.copied : labels.copy}
+          </Button>
+          <Button size="sm" variant="outline" onClick={onDownload}>
+            {labels.download}
+          </Button>
+        </div>
+      }
+      bodyClassName="p-0"
+    >
+      <div className="flex flex-col gap-2 p-3">
+        <p className="text-xs text-muted-foreground">{labels.hint}</p>
+        <pre
+          data-testid="metadata-json"
+          className="max-h-80 overflow-auto rounded-md bg-muted/30 p-3 font-mono text-xs"
+        >
+          {json}
+        </pre>
       </div>
-      <pre
-        data-testid="metadata-json"
-        className="max-h-80 overflow-auto rounded-md bg-muted/30 p-3 font-mono text-xs"
-      >
-        {json}
-      </pre>
-    </div>
+    </SectionCard>
   );
 }

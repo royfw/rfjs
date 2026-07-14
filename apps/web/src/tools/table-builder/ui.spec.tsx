@@ -113,7 +113,7 @@ describe("TableBuilderTool", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Columns" }));
     expect(screen.queryByText("Data resource")).toBeNull();
-    expect(screen.getByText("Columns", { selector: "p" })).toBeTruthy();
+    expect(screen.getByText("Columns", { selector: "h2" })).toBeTruthy();
     // preview still rendered
     await waitFor(() => expect(screen.getAllByRole("row").length).toBeGreaterThan(1));
   });
