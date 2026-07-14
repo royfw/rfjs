@@ -140,7 +140,7 @@ export function DataFilterBuilder() {
         title={t("dfbFilterLogic")}
         className="fb-rise"
         style={{ animationDelay: "140ms" }}
-        bodyClassName="overflow-x-auto p-5 sm:p-6"
+        bodyClassName="p-4"
         action={
           <span className="flex items-baseline gap-1.5 tabular-nums">
             <span className="font-mono text-2xl font-semibold text-intake">
@@ -155,14 +155,16 @@ export function DataFilterBuilder() {
           </span>
         }
       >
-        <FilterTreeEditor
-          group={fb.tree}
-          engineId="data-filter"
-          schema={fb.schema}
-          onChange={fb.setTree}
-          onCreateField={fb.onCreateField}
-          labels={treeLabels}
-        />
+        <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
+          <FilterTreeEditor
+            group={fb.tree}
+            engineId="data-filter"
+            schema={fb.schema}
+            onChange={fb.setTree}
+            onCreateField={fb.onCreateField}
+            labels={treeLabels}
+          />
+        </div>
       </SectionCard>
 
       {/* Data panel (collapsible) */}

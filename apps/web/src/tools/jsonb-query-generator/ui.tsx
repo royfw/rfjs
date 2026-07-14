@@ -17,6 +17,7 @@ import { useState } from "react";
 
 import { JSONB_DIALECTS, runJsonbQuery, type JsonbDialect } from "./jsonb-query-generator";
 
+import { FragmentBar } from "@/components/shared/fragment-bar";
 import { SectionCard } from "@/components/shared/section-card";
 import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
@@ -104,6 +105,7 @@ export function JsonbQueryGenerator() {
           >
             {result.ok ? (
               <div className="flex flex-col gap-2">
+                <FragmentBar>◆ {t("jqgFragment")}</FragmentBar>
                 <pre className="overflow-x-auto font-mono text-sm text-foreground">{result.where}</pre>
                 <pre className="overflow-x-auto font-mono text-xs text-muted-foreground">{result.values}</pre>
               </div>

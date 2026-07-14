@@ -139,16 +139,18 @@ export function EsQueryBuilder() {
         title={t("eqbFilterLogic")}
         className="fb-rise"
         style={{ animationDelay: "140ms" }}
-        bodyClassName="overflow-x-auto p-5 sm:p-6"
+        bodyClassName="p-4"
       >
-        <FilterTreeEditor
-          group={fb.tree}
-          engineId="es-query"
-          schema={fb.schema}
-          onChange={fb.setTree}
-          onCreateField={fb.onCreateField}
-          labels={treeLabels}
-        />
+        <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
+          <FilterTreeEditor
+            group={fb.tree}
+            engineId="es-query"
+            schema={fb.schema}
+            onChange={fb.setTree}
+            onCreateField={fb.onCreateField}
+            labels={treeLabels}
+          />
+        </div>
       </SectionCard>
 
       <div className="fb-rise" style={{ animationDelay: "210ms" }}>

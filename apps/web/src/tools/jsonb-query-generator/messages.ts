@@ -17,6 +17,7 @@ export const messages: LocaleMessages = {
       jqgIntroC1d: "Supply filter metadata (fields, operators, values).",
       jqgIntroC2t: "② Generate",
       jqgIntroC2d: "@rfjs/jsonb-query compiles it to a JSONB WHERE / ORDER BY.",
+      jqgFragment: "JSONB WHERE",
     },
   },
   "zh-TW": {
@@ -32,6 +33,7 @@ export const messages: LocaleMessages = {
       jqgIntroC1d: "給篩選 metadata(欄位、運算子、值)。",
       jqgIntroC2t: "② 產生",
       jqgIntroC2d: "@rfjs/jsonb-query 編成 JSONB WHERE / ORDER BY。",
+      jqgFragment: "JSONB WHERE",
     },
   },
 };

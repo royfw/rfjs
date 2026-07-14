@@ -15,6 +15,7 @@ export const messages: LocaleMessages = {
       mqgIntroC1d: "Supply filter metadata (fields, operators, values).",
       mqgIntroC2t: "② Generate",
       mqgIntroC2d: "@rfjs/mongo-query compiles it to a query object.",
+      mqgFragment: "Mongo query",
     },
   },
   "zh-TW": {
@@ -28,6 +29,7 @@ export const messages: LocaleMessages = {
       mqgIntroC1d: "給篩選 metadata(欄位、運算子、值)。",
       mqgIntroC2t: "② 產生",
       mqgIntroC2d: "@rfjs/mongo-query 編成查詢物件。",
+      mqgFragment: "Mongo 查詢",
     },
   },
 };

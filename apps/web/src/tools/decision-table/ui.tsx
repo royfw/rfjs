@@ -33,6 +33,7 @@ import {
 
 import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
+import { FragmentBar } from "@/components/shared/fragment-bar";
 import { SectionCard } from "@/components/shared/section-card";
 import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
@@ -378,7 +379,8 @@ export function DecisionTableTool() {
               </p>
             ) : null}
             {singleResult ? (
-              <div data-testid="dt-single-result">
+              <div data-testid="dt-single-result" className="space-y-2">
+                <FragmentBar>◆ {t("dctFragmentMatched")}</FragmentBar>
                 <ResultView result={singleResult} t={t} />
               </div>
             ) : null}
@@ -407,27 +409,30 @@ export function DecisionTableTool() {
               </p>
             ) : null}
             {batchResults ? (
-              <ul className="space-y-1 text-xs">
-                {batchResults.map((r, i) => (
-                  <li
-                    key={i}
-                    data-testid="dt-batch-row"
-                    className="rounded border px-2 py-1"
-                  >
-                    <span className="text-muted-foreground">
-                      {JSON.stringify(r.context)}
-                    </span>
-                    {" → "}
-                    <span className="font-medium">
-                      {r.result.matched.length > 0
-                        ? r.result.matched.join(",")
-                        : t("dtNoMatch")}
-                    </span>
-                    {" · "}
-                    <span>{JSON.stringify(r.result.outputs)}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="space-y-2">
+                <FragmentBar>◆ {t("dctFragmentBatch")}</FragmentBar>
+                <ul className="space-y-1 text-xs">
+                  {batchResults.map((r, i) => (
+                    <li
+                      key={i}
+                      data-testid="dt-batch-row"
+                      className="rounded border px-2 py-1"
+                    >
+                      <span className="text-muted-foreground">
+                        {JSON.stringify(r.context)}
+                      </span>
+                      {" → "}
+                      <span className="font-medium">
+                        {r.result.matched.length > 0
+                          ? r.result.matched.join(",")
+                          : t("dtNoMatch")}
+                      </span>
+                      {" · "}
+                      <span>{JSON.stringify(r.result.outputs)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
           </div>
         </SectionCard>
