@@ -10,6 +10,7 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      ecdEyebrow: "ES CLIENT RUNNER",
       ecdIntroTagline: "Filter → ES search body → run it (mock transport)",
       ecdIntroC1t: "① Build",
       ecdIntroC1d:
@@ -66,6 +67,7 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      ecdEyebrow: "ES Client 執行器",
       ecdIntroTagline: "篩選 → ES 搜尋 body → 實跑(mock transport)",
       ecdIntroC1t: "① 建構",
       ecdIntroC1d: "建篩選 → 編成 ES/OpenSearch 搜尋 body。",
