@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studio sweep — table / form / flow / bpmn — 2026-07-14</title>
+<style>
+  :root{--bg:#f7f7f5;--card:#fff;--border:#e4e4e0;--text:#1a1a18;--muted:#6b6b66;--accent:#b8860b;--accent-soft:#f5ead1;--slab:#efefec;--codebg:#f0f0ed;--canvas:#fafaf8;}
+  .dark{--bg:#0b0b0d;--card:#161619;--border:#2a2a30;--text:#e8e8e4;--muted:#8f8f89;--accent:#d4a017;--accent-soft:#3a2f14;--slab:#1f1f24;--codebg:#0e0e10;--canvas:#101014;}
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--text);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.5;padding:28px 20px 90px}
+  .wrap{max-width:1240px;margin:0 auto}
+  h1{font-size:22px;letter-spacing:-.01em}.sub{color:var(--muted);font-size:13px;margin-top:5px;max-width:80ch}
+  h2.tool{font-size:16px;margin:34px 0 4px;padding-top:22px;border-top:1px solid var(--border)}
+  h2.tool .k{font-family:ui-monospace,monospace;font-size:11px;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:99px;margin-left:8px;vertical-align:middle}
+  .desc{color:var(--muted);font-size:12.5px;margin-bottom:12px}
+  .toggle{position:fixed;top:14px;right:14px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 13px;cursor:pointer;color:var(--text);font-size:13px;z-index:20}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media(max-width:900px){.cols{grid-template-columns:1fr}}
+  .tag{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:99px;margin-bottom:9px;display:inline-block;font-family:ui-monospace,monospace;letter-spacing:.04em}
+  .t-now{background:var(--slab);color:var(--muted)}.t-d2{background:var(--accent-soft);color:var(--accent)}
+
+  /* studio primitives (mirror @rfjs/web-ui tokens) */
+  .eyebrow{font-family:ui-monospace,monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);margin-bottom:9px}
+  .eyebrow.bad{letter-spacing:.14em;text-transform:none;font-family:inherit;font-weight:600}
+  .intro{border:1px solid var(--border);border-radius:7px;padding:7px 11px;font-size:12.5px;display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .intro .i{display:inline-flex;width:19px;height:19px;align-items:center;justify-content:center;border-radius:5px;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:11px}
+  .intro .q{font-weight:600}.intro .tl{color:var(--muted);font-size:11.5px}.intro .x{margin-left:auto;color:var(--muted);font-size:11px}
+
+  .card{border:1px solid var(--border);border-radius:10px;background:var(--card);overflow:hidden;margin-bottom:10px}
+  .slab{border-bottom:1px solid var(--border);background:var(--slab);padding:8px 15px;font-family:ui-monospace,monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;align-items:center;gap:11px}
+  .slab .chev{font-size:11px}
+  .slab .act{margin-left:auto;text-transform:none;letter-spacing:0}
+  .bd{padding:13px 15px}
+  .tabhd{display:flex;border-bottom:1px solid var(--border);background:var(--slab)}
+  .tabhd .chev{padding:9px 0 9px 14px;color:var(--muted);font-size:11px}
+  .tabhd .t{font-size:12px;padding:9px 15px;color:var(--muted);border-bottom:2px solid transparent;cursor:default}
+  .tabhd .t.on{color:var(--accent);font-weight:600;background:var(--card);border-bottom:2px solid var(--accent)}
+  .tabhd .act{margin-left:auto;display:flex;align-items:center;padding:0 12px;gap:6px}
+
+  /* segmented pill bar (ToolTabs) */
+  .pills{display:inline-flex;gap:2px;border:1px solid var(--border);background:var(--slab);border-radius:9px;padding:3px}
+  .pills b{font-size:12px;padding:5px 12px;border-radius:6px;color:var(--muted);font-weight:500}
+  .pills b.on{background:var(--card);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.25)}
+
+  /* bad (current) card recipe */
+  .cardbad{border:1px solid var(--border);border-radius:6px;padding:11px;margin-bottom:10px;background:transparent}
+  .cardbad .h{font-size:13px;font-weight:600;margin-bottom:7px}
+  .segbar{display:inline-flex;gap:5px;margin-bottom:9px}
+  .seg{border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);font-family:ui-monospace,monospace;font-size:11px;padding:5px 11px}
+  .seg.on{background:var(--card);color:var(--text)}
+
+  .fragbar{background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:4px 10px;font-size:10.5px;font-family:ui-monospace,monospace;margin-bottom:9px;display:inline-flex;align-items:center;gap:6px}
+  .dashed{border:1px dashed var(--border);border-radius:8px;padding:12px;background:transparent}
+  .canvas{height:120px;border:1px solid var(--border);border-radius:8px;background:var(--canvas);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;position:relative;background-image:radial-gradient(var(--border) 1px,transparent 0);background-size:14px 14px}
+  .canvas.plain{border-radius:6px}
+  .row{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  .btn{border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--muted);font-family:ui-monospace,monospace;font-size:11px;padding:5px 10px;display:inline-flex;gap:5px;align-items:center}
+  .btn.gold{background:var(--accent);color:#111;border-color:var(--accent);font-family:inherit;font-weight:600}
+  .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:11px;background:var(--card)}
+  .chip .ty{font-family:ui-monospace,monospace;font-size:10px;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:4px}
+  .grpbad{border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.02);overflow:hidden}
+  .grpbad .gh{border-bottom:1px solid var(--border);background:rgba(120,120,140,.14);padding:9px 12px;font-size:15px;font-weight:600;display:flex;gap:9px;align-items:center}
+  .grpgood{border:1px solid var(--border);border-radius:10px;background:var(--card);overflow:hidden}
+  .grpgood .gh{border-bottom:1px solid var(--border);background:var(--slab);padding:9px 13px;display:flex;gap:9px;align-items:center;font-size:14px;font-weight:600}
+  .grpgood .gh .id{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .pre{font-family:ui-monospace,monospace;font-size:11px;white-space:pre;color:var(--text);background:var(--codebg);border-radius:6px;padding:9px 11px;overflow:auto}
+  .zoom{display:inline-flex;gap:4px}.zoom .z{width:26px;height:26px;border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
+  .sel{border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:11.5px;background:var(--card);color:var(--text)}
+  .note{background:var(--accent-soft);border-radius:9px;padding:12px 16px;font-size:12.5px;margin:26px 0 8px;border:1px solid color-mix(in srgb,var(--accent) 30%,transparent)}
+  .note b{color:var(--accent)}
+  ul{padding-left:19px;font-size:12.5px;margin-top:6px}li{margin:4px 0}
+  code{background:var(--slab);border-radius:4px;padding:1px 5px;font-family:ui-monospace,monospace;font-size:11px}
+  .callout{font-size:11.5px;color:var(--muted);margin:5px 0 0;padding-left:2px}
+  .callout b{color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">☀ / ☾</button>
+<div class="wrap">
+  <h1>Studio sweep — 讓 table / form / flow / bpmn 靠攏 Metadata 建構器</h1>
+  <p class="sub">2026-07-14 · 左=現況（你截圖看到的樣子），右=套用 studio 語言後的目標。studio 語言＝ <b>eyebrow（mono 大寫）→ ToolIntro →〔AiPanel〕→ SectionCard slab 卡（<code>bg-muted/30</code> mono 大寫表頭）/ tab-strip 卡 → gold fragment bar → 金色 primary accent（取代寫死的 <code>#5b8cff</code>）</b>。像素以 @rfjs/web-ui token 為準。</p>
+
+  <!-- ============ TABLE BUILDER ============ -->
+  <h2 class="tool">1 · Table Builder <span class="k">mostly mechanical</span></h2>
+  <p class="desc">現況：eyebrow 少了 <code>uppercase</code>；分頁列、四個面板（資料資源 / 欄位 / 分頁 / Metadata）與預覽卡都是手刻的 <code>rounded-md border p-3 + text-sm font-semibold</code>，不是 SectionCard。目標：換 ToolEyebrow / ToolTabs，四面板＋預覽卡改 SectionCard slab，狀態列改 FragmentBar。</p>
+  <div class="cols">
+    <div>
+      <span class="tag t-now">現況</span>
+      <div class="eyebrow bad">Table Builder</div>
+      <div class="segbar"><span class="seg on">Resource</span><span class="seg">Columns</span><span class="seg">Pagination</span><span class="seg">Metadata</span></div>
+      <div class="cardbad"><div class="h">Data resource</div><div class="row"><span class="chip">meta.json</span><span class="chip">rows</span><span class="chip">sample</span></div></div>
+      <div class="cardbad"><div class="h">Preview</div><div class="pre">id   name    active
+1    Ann     true
+2    Bob     false</div></div>
+    </div>
+    <div>
+      <span class="tag t-d2">目標 studio</span>
+      <div class="eyebrow">Table Builder</div>
+      <div class="pills"><b class="on">Resource</b><b>Columns</b><b>Pagination</b><b>Metadata</b></div>
+      <div style="height:9px"></div>
+      <div class="card"><div class="slab">Data resource<span class="act"><span class="seg on" style="padding:2px 8px">rows</span></span></div><div class="bd"><span class="fragbar">◆ 18 rows · offset paging</span><div class="row"><span class="chip">meta.json</span><span class="chip">rows</span><span class="chip">sample</span></div></div></div>
+      <div class="card"><div class="slab"><span class="chev">▾</span> Preview</div><div class="bd"><div class="pre">id   name    active
+1    Ann     true
+2    Bob     false</div></div></div>
+    </div>
+  </div>
+
+  <!-- ============ FORM BUILDER ============ -->
+  <h2 class="tool">2 · Form Builder <span class="k">shell OK, internals off</span></h2>
+  <p class="desc">現況：外殼已是 studio（ToolEyebrow / ToolIntro / ToolTabs / AiPanel / Section）。缺口在內部：<b>浮空的元件調色盤</b>、GroupFrame 表頭色調（<code>bg-muted/40 · text-[15px]</code>）、寫死的 <code>#5b8cff</code> 選取環與 drop line、以及手刻的 JSON 分頁。</p>
+  <div class="cols">
+    <div>
+      <span class="tag t-now">現況</span>
+      <div class="row" style="margin-bottom:9px"><span class="btn">T Field</span><span class="btn">▭ Content</span><span class="btn">— Divider</span><span class="btn">✧ AI Note</span><span class="btn" style="margin-left:auto">+ Group</span></div>
+      <div class="grpbad"><div class="gh">▾ Account <span style="font-family:ui-monospace,monospace;font-size:10px;color:var(--muted)">sec_account · 6 items</span></div><div style="padding:11px"><span class="chip" style="box-shadow:inset 3px 0 0 #5b8cff">Name · input</span> <span class="chip" style="box-shadow:inset 3px 0 0 #5b8cff">Email · email</span></div></div>
+    </div>
+    <div>
+      <span class="tag t-d2">目標 studio</span>
+      <div class="card"><div class="slab">Palette<span class="act"></span></div><div class="bd"><div class="row"><span class="btn">T Field</span><span class="btn">▭ Content</span><span class="btn">— Divider</span><span class="btn">✧ AI Note</span><span class="btn gold" style="margin-left:auto">+ Group</span></div></div></div>
+      <div class="grpgood"><div class="gh">▾ Account <span class="id">sec_account · 6 items</span></div><div style="padding:11px"><span class="chip" style="box-shadow:inset 3px 0 0 var(--accent)">Name · input</span> <span class="chip" style="box-shadow:inset 3px 0 0 var(--accent)">Email · email</span></div></div>
+      <p class="callout"><b>判斷 A：</b>群組表頭保留使用者命名「Account」的可讀大小寫（不轉 mono 大寫 slab）—— 只對齊色調 <code>bg-muted/30</code>、圓角、id 用 mono。系統級卡（Palette / JSON）才用 mono 大寫 slab。</p>
+    </div>
+  </div>
+  <div class="cols" style="margin-top:14px">
+    <div>
+      <span class="tag t-now">現況 · JSON 分頁</span>
+      <div style="font-family:ui-monospace,monospace;font-size:10px;letter-spacing:.15em;color:var(--muted);margin-bottom:5px">CONFIG JSON &nbsp; <span class="btn" style="padding:2px 8px">copy</span></div>
+      <div class="pre" style="border:1px solid var(--border)">{ "version": 1, "sections": [ … ] }</div>
+    </div>
+    <div>
+      <span class="tag t-d2">目標 · SectionCard slab</span>
+      <div class="card"><div class="slab">Config JSON<span class="act"><span class="btn" style="padding:2px 8px">copy</span></span></div><div class="bd" style="padding:0"><div class="pre" style="border-radius:0;background:var(--codebg)">{ "version": 1, "sections": [ … ] }</div></div></div>
+    </div>
+  </div>
+
+  <!-- ============ FLOW BUILDER ============ -->
+  <h2 class="tool">3 · Flow Builder <span class="k">canvas · bespoke</span></h2>
+  <p class="desc">現況：eyebrow、無 intro、Edit/BPMN 手刻切換、浮空 node-add 列、<code>h-[560px] rounded-md border</code> 畫布、手刻 Flow JSON。目標：<b>Edit/BPMN 做進 SectionCard 的 tab-strip 表頭</b>（＝metadata-builder 的 tab 卡樣式），node-add 變卡內工具列，畫布是卡片 body，Flow JSON 改 slab 卡＋FragmentBar 節點數。</p>
+  <div class="cols">
+    <div>
+      <span class="tag t-now">現況</span>
+      <div class="eyebrow bad">Flow Builder</div>
+      <div class="segbar"><span class="seg on">Edit</span><span class="seg">BPMN</span></div>
+      <div class="row" style="margin:8px 0"><span class="btn">+ Form</span><span class="btn">+ Condition</span><span class="btn">+ Action</span><span class="btn">+ End</span></div>
+      <div class="canvas plain">React Flow canvas · h-560</div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin:9px 0 4px">Flow JSON</div>
+      <div class="pre" style="background:var(--slab)">{ "version": 1, "nodes": [ … ] }</div>
+    </div>
+    <div>
+      <span class="tag t-d2">目標 studio</span>
+      <div class="eyebrow">Flow Builder</div>
+      <div class="intro"><span class="i">i</span><span class="q">這個工具怎麼運作？</span><span class="tl">拖節點串接流程 → 即時 flow JSON</span><span class="x">展開 ✕</span></div>
+      <div class="card">
+        <div class="tabhd"><span class="chev">▾</span><span class="t on">Edit</span><span class="t">BPMN</span></div>
+        <div class="bd">
+          <div class="row" style="margin-bottom:10px"><span class="btn">+ Form</span><span class="btn">+ Condition</span><span class="btn">+ Action</span><span class="btn">+ End</span></div>
+          <div class="canvas">React Flow canvas · h-560</div>
+        </div>
+      </div>
+      <div class="card"><div class="slab"><span class="chev">▾</span> Flow JSON</div><div class="bd" style="padding:0"><div style="padding:8px 15px"><span class="fragbar">◆ 5 nodes · 4 edges</span></div><div class="pre" style="border-radius:0">{ "version": 1, "nodes": [ … ] }</div></div></div>
+      <p class="callout"><b>判斷 B：</b>畫布是 SectionCard body（實心框，非虛線）—— 虛線是「可編輯樹」的語言（filter logic），rich canvas 用實心較乾淨。<b>判斷 C：</b>幫 flow / bpmn 補 ToolIntro（比照 reference，需新增 i18n concepts）。</p>
+    </div>
+  </div>
+
+  <!-- ============ BPMN VIEWER ============ -->
+  <h2 class="tool">4 · BPMN Viewer <span class="k">canvas · bespoke</span></h2>
+  <p class="desc">現況：eyebrow、無 intro、控制列（sample select / upload / zoom）浮在畫布上方、<code>h-[600px] rounded-md border</code> 檢視器、裸的 XML 貼上區。目標：畫布包進 SectionCard（控制列做進表頭 <code>action</code>、狀態走 FragmentBar），XML 區改 slab 卡。</p>
+  <div class="cols">
+    <div>
+      <span class="tag t-now">現況</span>
+      <div class="eyebrow bad">BPMN Viewer</div>
+      <div class="row" style="margin-bottom:8px"><span class="sel">leave-request ▾</span><span class="btn">⬆ Upload</span><span class="zoom" style="margin-left:auto"><span class="z">+</span><span class="z">−</span><span class="z">⟲</span><span class="z">⤢</span></span></div>
+      <div class="canvas plain" style="background:#d4d4d4;color:#555;background-image:none">bpmn-js diagram · h-600</div>
+      <div style="font-size:13px;font-weight:500;margin:9px 0 4px">Paste BPMN XML</div>
+      <div class="pre" style="border:1px solid var(--border)">&lt;bpmn:definitions …&gt;</div>
+    </div>
+    <div>
+      <span class="tag t-d2">目標 studio</span>
+      <div class="eyebrow">BPMN Viewer</div>
+      <div class="intro"><span class="i">i</span><span class="q">這個工具怎麼運作？</span><span class="tl">貼 BPMN XML → 互動檢視流程圖</span><span class="x">展開 ✕</span></div>
+      <div class="card">
+        <div class="slab">Diagram<span class="act"><span class="sel" style="padding:2px 8px">leave-request ▾</span><span class="btn" style="padding:3px 8px">⬆</span><span class="zoom"><span class="z" style="width:22px;height:22px">+</span><span class="z" style="width:22px;height:22px">−</span><span class="z" style="width:22px;height:22px">⤢</span></span></span></div>
+        <div class="bd" style="padding:0"><div style="padding:8px 15px"><span class="fragbar">◆ leave-request · 6 elements</span></div><div class="canvas plain" style="border:0;border-radius:0;background:#d4d4d4;color:#555;background-image:none">bpmn-js diagram · h-600</div></div>
+      </div>
+      <div class="card"><div class="slab">BPMN XML<span class="act"><span class="btn gold" style="padding:3px 10px">Render</span></span></div><div class="bd"><div class="pre">&lt;bpmn:definitions …&gt;</div></div></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>本輪範圍與判斷點（請確認）</b>
+    <ul>
+      <li><b>共用元件</b>：table-builder / flow-builder / bpmn-viewer 全採用 <code>ToolEyebrow / ToolTabs / SectionCard / FragmentBar</code>；form-builder 已有外殼，補內部（palette 卡、group 表頭色調、hex→金色 primary、JSON slab 卡）。</li>
+      <li><b>判斷 A（內容 vs 系統表頭）</b>：使用者命名的區塊（form 的 Account/Profile 群組、submission 的 Metadata/Data）保留可讀大小寫、只對齊色調圓角；工具系統卡才用 mono 大寫 slab。</li>
+      <li><b>判斷 B（畫布外框）</b>：canvas 走實心 SectionCard body，不套虛線（虛線＝可編輯樹語言）。</li>
+      <li><b>判斷 C（canvas 補 ToolIntro）</b>：flow / bpmn 比照 reference 補「這個工具怎麼運作？」callout（需新增 i18n concepts，en + zh-TW）。</li>
+      <li><b>不動</b>：React Flow / bpmn-js 畫布內部（節點樣式、diagram 反白），只動外圍 chrome。既有測試全綠（roles / names / testids / aria 不變；columns-panel 標題 <code>&lt;p&gt;→&lt;h2&gt;</code> 需同步改該測試 selector）。</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
