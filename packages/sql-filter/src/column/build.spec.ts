@@ -17,7 +17,7 @@ describe('buildColumnQuery', () => {
         { column: 'createdAt', operator: 'gte', value: '2026-01-01' },
       ],
     });
-    expect(r.where).toBe('"name" ilike \'%\' || $1 || \'%\' and "created_at" >= $2');
+    expect(r.where).toBe('"name" like \'%\' || $1 || \'%\' escape \'\\\' and "created_at" >= $2');
     expect(r.values).toEqual(['sales', '2026-01-01']);
   });
 

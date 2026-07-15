@@ -33,6 +33,11 @@ const COMPARATORS: Partial<Record<ColumnOperator, string>> = {
   lte: '<=',
 };
 
+// Escape LIKE metacharacters so the bound term matches verbatim (paired with ESCAPE '\').
+function escapeLike(v: string): string {
+  return v.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+}
+
 export function renderColumnCondition(
   quotedColumn: string,
   type: ColumnType,
@@ -56,10 +61,10 @@ export function renderColumnCondition(
     throw new ColumnQueryError(`Operator "${operator}" requires a value`, 'INVALID_VALUE');
   }
   if (operator === 'contains') {
-    return `${quotedColumn} ilike '%' || ${params.add(value)} || '%'`;
+    return `${quotedColumn} like '%' || ${params.add(escapeLike(String(value)))} || '%' escape '\\'`;
   }
   if (operator === 'startswith') {
-    return `${quotedColumn} ilike ${params.add(value)} || '%'`;
+    return `${quotedColumn} like ${params.add(escapeLike(String(value)))} || '%' escape '\\'`;
   }
   const comparator = COMPARATORS[operator];
   if (comparator === undefined) {

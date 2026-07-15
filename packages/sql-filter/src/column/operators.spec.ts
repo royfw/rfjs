@@ -20,9 +20,12 @@ describe('renderColumnCondition', () => {
     expect(render('text', 'neq', 'y')).toEqual({ sql: '"name" <> $1', values: ['y'] });
   });
 
-  it('renders text contains/startswith as parameterized ILIKE', () => {
-    expect(render('text', 'contains', 'ab')).toEqual({ sql: "\"name\" ilike '%' || $1 || '%'", values: ['ab'] });
-    expect(render('text', 'startswith', 'ab')).toEqual({ sql: "\"name\" ilike $1 || '%'", values: ['ab'] });
+  it('renders text contains/startswith as case-sensitive escaped LIKE', () => {
+    expect(render('text', 'contains', 'ab')).toEqual({ sql: "\"name\" like '%' || $1 || '%' escape '\\'", values: ['ab'] });
+    expect(render('text', 'startswith', 'ab')).toEqual({ sql: "\"name\" like $1 || '%' escape '\\'", values: ['ab'] });
+  });
+  it('escapes LIKE metacharacters in the term', () => {
+    expect(render('text', 'contains', '50%_a')).toEqual({ sql: "\"name\" like '%' || $1 || '%' escape '\\'", values: ['50\\%\\_a'] });
   });
 
   it('renders nullary operators without a param', () => {
