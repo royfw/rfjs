@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/es-query",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Elasticsearch / OpenSearch query builder — compile a filter-tree to Query DSL bool queries",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

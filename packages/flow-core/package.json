@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/flow-core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Framework-agnostic flow document contract + pure state-machine runtime for approval/workflow flows",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

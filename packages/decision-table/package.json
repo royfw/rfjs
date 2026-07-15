@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/decision-table",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "DMN-style decision table over the @rfjs stack: rules are filter-builder condition trees, outputs are constants or data-expr \"=\" expressions, with first/collect hit policies",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -13,7 +13,9 @@
     }
   },
   "sideEffects": false,
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "pnpm exec npm-run-all --parallel clean:dist clean:types",
     "clean:types": "pnpm exec rimraf ./types",
@@ -26,13 +28,26 @@
     "test": "pnpm run vitest:run",
     "vitest:run": "vitest --passWithNoTests --run"
   },
-  "keywords": ["decision-table", "dmn", "rules", "routing", "filter"],
+  "keywords": [
+    "decision-table",
+    "dmn",
+    "rules",
+    "routing",
+    "filter"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
-  "repository": { "type": "git", "url": "git+https://github.com/royfw/rfjs.git", "directory": "packages/decision-table" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/decision-table"
+  },
   "bugs": "https://github.com/royfw/rfjs/issues",
   "homepage": "https://github.com/royfw/rfjs/tree/main/packages/decision-table#readme",
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "dependencies": {
     "@rfjs/data-expr": "workspace:*",
     "@rfjs/filter-builder": "workspace:*",

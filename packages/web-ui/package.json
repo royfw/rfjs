@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/web-ui",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Design tokens, Tailwind preset, and shared UI components for the rfjs web app",
   "type": "module",
   "private": true,

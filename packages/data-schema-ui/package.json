@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/data-schema-ui",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Shared styled protocol editor (React) over @rfjs/data-schema; labels-as-props, consumed via transpilePackages",
   "type": "module",
   "private": true,
