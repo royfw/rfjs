@@ -23,6 +23,7 @@ import { flowToJson } from "@rfjs/flow-core";
 import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
 import { SectionCard } from "@/components/shared/section-card";
+import { ToolTabs } from "@/components/shared/tool-tabs";
 import { FragmentBar } from "@/components/shared/fragment-bar";
 
 import { nodeTypes } from "./nodes";
@@ -102,17 +103,18 @@ function FlowBuilderInner() {
         labels={{ expand: t("introExpand"), collapse: t("introCollapse"), dismiss: t("introDismiss") }}
       />
 
-      <SectionCard
+      <ToolTabs
         tabs={[
           { id: "edit", label: t("flowTabEdit") },
           { id: "bpmn", label: t("flowTabBpmn") },
         ]}
-        activeTab={view}
-        onTabChange={(v) => {
+        active={view}
+        onChange={(v) => {
           setView(v as "edit" | "bpmn");
           if (v === "bpmn") setSelectedId(null); // BPMN 唯讀:關 inspector
         }}
-      >
+      />
+      <SectionCard>
         {view === "edit" ? (
           <>
             <div className="mb-3 flex flex-wrap items-center gap-2">
