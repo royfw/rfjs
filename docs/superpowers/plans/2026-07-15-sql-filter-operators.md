@@ -15,6 +15,7 @@
 - **D2 (locked):** per-type additions — `text`: `endswith, terms, ieq, ineq, icontains, istartswith, iendswith` (NO `range`); `numeric`+`timestamp`: `terms, range`; `uuid`: `terms`; `boolean`: none.
 - **LIKE escaping:** literal terms in `LIKE`/`ILIKE` must be escaped and use an `ESCAPE '\'` clause. In JS source the SQL backslash is written `\\` (so the emitted SQL text reads `escape '\'`), and `escapeLike` prefixes `\`, `%`, `_` with a backslash.
 - `terms` value = non-empty array; `range` value = 2-element array; else throw `ColumnQueryError(..., 'INVALID_VALUE')`.
+- **Typecheck command is `typecheck`** (`tsc --noEmit`) for these packages — NOT `check-types` (that's an apps/web script). And package typecheck resolves `@rfjs/*` deps from their built `dist`, so a fresh worktree must `pnpm build:packages` once (orchestrator does this before Task 3) or `filter-builder`/`pg-filter` typecheck fails `TS2307`.
 - TDD: write/adjust the failing test first, then implement. Do not weaken existing tests except the D1-mandated `ilike`→`like` updates.
 - Changeset per changed workspace package (see Task 4). Commit messages English, conventional, lowercase-lead subject, trailer `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`. Do NOT push; HOLD PR.
 
@@ -227,7 +228,7 @@ expect(ops).toContain("icontains"); // text columns now offer the ci iX family
 ```
   Optionally add `expect(ops).toContain("endswith"); expect(ops).toContain("terms");`. **Leave the "returns ok:false when a column gets an unsupported operator" test (lines 65-69)** unchanged — it uses `numeric` + `contains`, which is still unsupported (D2: numeric gains only `terms`/`range`, not `contains`).
 
-- [ ] **Step 4: Run tests** — `pnpm -F @rfjs/filter-builder vitest:run` → all PASS; `pnpm -F @rfjs/filter-builder check-types`.
+- [ ] **Step 4: Run tests** — `pnpm -F @rfjs/filter-builder vitest:run` → all PASS; `pnpm -F @rfjs/filter-builder typecheck` (dists already built by the orchestrator).
 
 - [ ] **Step 5: Commit.**
 ```bash
@@ -274,9 +275,9 @@ Column-target leaves transitively gain the new sql-filter operators
 ```
 
 - [ ] **Step 3: Full verify.** Run and confirm green:
-  - `pnpm -F @rfjs/sql-filter vitest:run` + `check-types`
-  - `pnpm -F @rfjs/filter-builder vitest:run` + `check-types`
-  - `pnpm -F @rfjs/pg-filter vitest:run` (+ `vitest:e2e:run` if present) + `check-types` — **regression check** that mixing column + jsonb leaves still works and the new column ops flow through.
+  - `pnpm -F @rfjs/sql-filter vitest:run` + `typecheck`
+  - `pnpm -F @rfjs/filter-builder vitest:run` + `typecheck`
+  - `pnpm -F @rfjs/pg-filter vitest:run` (+ `vitest:e2e:run` if present) + `typecheck` — **regression check** that mixing column + jsonb leaves still works and the new column ops flow through.
 
 - [ ] **Step 4: Commit.**
 ```bash
