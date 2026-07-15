@@ -2,8 +2,11 @@
 
 import type { SectionTab } from "./section-card";
 
-/** Top-level panel switcher (segmented pill bar). Plain <button>s (role=button) so
- * consumers' getByRole("button", …) tab queries keep working. Dedupes the copied bar. */
+/** Top-level panel switcher: a gold-underline tab bar. Shares the active-state language
+ * with SectionCard's in-card tab-strip (text-primary + a primary underline), but stands
+ * on the page rather than inside a card header — signalling a whole-tool mode switch
+ * (e.g. Canvas / Preview / JSON) rather than an in-card view switch. Plain <button>s
+ * (role=button) so consumers' getByRole("button", …) tab queries keep working. */
 export function ToolTabs({
   tabs,
   active,
@@ -16,15 +19,17 @@ export function ToolTabs({
   ariaLabel?: string;
 }) {
   return (
-    <div aria-label={ariaLabel} className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
+    <div aria-label={ariaLabel} className="flex w-full gap-1 border-b border-border">
       {tabs.map((t) => (
         <button
           key={t.id}
           type="button"
           aria-selected={active === t.id}
           onClick={() => onChange(t.id)}
-          className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-            active === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          className={`-mb-px border-b-2 px-4 py-2 text-[13px] font-medium transition-colors ${
+            active === t.id
+              ? "border-primary font-semibold text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           {t.label}
