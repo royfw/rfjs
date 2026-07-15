@@ -9,6 +9,7 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      jqgEyebrow: "FILTER → JSONB SQL",
       column: "Column",
       dialect: "Dialect",
       jqgIntroTagline: "Filter metadata → PostgreSQL JSONB query",
@@ -16,6 +17,7 @@ export const messages: LocaleMessages = {
       jqgIntroC1d: "Supply filter metadata (fields, operators, values).",
       jqgIntroC2t: "② Generate",
       jqgIntroC2d: "@rfjs/jsonb-query compiles it to a JSONB WHERE / ORDER BY.",
+      jqgFragment: "JSONB WHERE",
     },
   },
   "zh-TW": {
@@ -23,6 +25,7 @@ export const messages: LocaleMessages = {
       "jsonb-query-generator": { title: "篩選 → JSONB SQL", description: "從篩選 metadata 產生 PostgreSQL JSONB 查詢。" },
     },
     ToolUI: {
+      jqgEyebrow: "篩選 → JSONB SQL",
       column: "欄位",
       dialect: "方言",
       jqgIntroTagline: "篩選 metadata → PostgreSQL JSONB 查詢",
@@ -30,6 +33,7 @@ export const messages: LocaleMessages = {
       jqgIntroC1d: "給篩選 metadata(欄位、運算子、值)。",
       jqgIntroC2t: "② 產生",
       jqgIntroC2d: "@rfjs/jsonb-query 編成 JSONB WHERE / ORDER BY。",
+      jqgFragment: "JSONB WHERE",
     },
   },
 };

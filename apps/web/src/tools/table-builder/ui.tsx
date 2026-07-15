@@ -18,6 +18,9 @@ import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
 import { ProtocolPanel, type ProtocolPanelLabels } from "@rfjs/data-schema-ui";
 import { ToolIntro } from "@/components/shared/tool-intro";
+import { SectionCard, type SectionTab } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
+import { ToolTabs } from "@/components/shared/tool-tabs";
 
 import { SAMPLE_CONFIG, SAMPLE_META, SAMPLE_ROWS } from "./sample";
 import { makeFakeFetcher } from "./fake-fetcher";
@@ -200,6 +203,7 @@ export function TableBuilderTool() {
 
   const metadataPanelLabels: MetadataPanelLabels = React.useMemo(
     () => ({
+      title: t("tbTabMetadata"),
       hint: t("tbMetaHint"),
       copy: t("tbMetaCopy"),
       copied: t("tbMetaCopied"),
@@ -283,11 +287,16 @@ export function TableBuilderTool() {
     }
   }
 
+  const TABS: SectionTab[] = [
+    { id: "source", label: t("tbTabResource") },
+    { id: "columns", label: t("tbTabColumns") },
+    { id: "pagination", label: t("tbTabPagination") },
+    { id: "metadata", label: t("tbTabMetadata") },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-xs font-semibold tracking-widest text-muted-foreground">
-        {t("tbEyebrow")}
-      </p>
+      <ToolEyebrow>{t("tbEyebrow")}</ToolEyebrow>
 
       <ToolIntro
         storageKey="tool-intro:table-builder"
@@ -360,30 +369,7 @@ export function TableBuilderTool() {
           preview below stays mounted no matter which tab is active. Panels are conditionally
           rendered — all editor state lives in this component or panel props, except the resource
           panel's paste boxes (internal state, reset on tab switch; accepted v1). */}
-      <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
-        {(
-          [
-            { id: "source", label: t("tbTabResource") },
-            { id: "columns", label: t("tbTabColumns") },
-            { id: "pagination", label: t("tbTabPagination") },
-            { id: "metadata", label: t("tbTabMetadata") },
-          ] as { id: EditorTab; label: string }[]
-        ).map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => setTab(item.id)}
-            aria-selected={tab === item.id}
-            className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-              tab === item.id
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <ToolTabs tabs={TABS} active={tab} onChange={(id) => setTab(id as EditorTab)} />
 
       {tab === "source" ? (
         <>
@@ -398,15 +384,17 @@ export function TableBuilderTool() {
             preview={preview}
             onPreviewChange={setPreview}
           />
-          <ProtocolPanel
-            request={request}
-            response={response}
-            onChange={(n) => {
-              setRequest(n.request);
-              setResponse(n.response);
-            }}
-            labels={protocolLabels}
-          />
+          <SectionCard title={t("tbProtocolTitle")}>
+            <ProtocolPanel
+              request={request}
+              response={response}
+              onChange={(n) => {
+                setRequest(n.request);
+                setResponse(n.response);
+              }}
+              labels={protocolLabels}
+            />
+          </SectionCard>
         </>
       ) : null}
       {tab === "columns" ? (
@@ -434,8 +422,7 @@ export function TableBuilderTool() {
         />
       ) : null}
 
-      <div className="rounded-md border p-3">
-        <p className="mb-2 text-sm font-semibold">{t("tbPreviewTitle")}</p>
+      <SectionCard title={t("tbPreviewTitle")}>
         {/* `key` forces a remount when the pagination-panel's `pageSize`, the source strategy, or
             the imported dataset changes -- `useConfigTable` only reads `config.pagination.pageSize`
             as its initial `useState` value (design constraint: only this tool's files, not
@@ -450,7 +437,7 @@ export function TableBuilderTool() {
           labels={labels}
           filterLabels={filterLabels}
         />
-      </div>
+      </SectionCard>
     </div>
   );
 }

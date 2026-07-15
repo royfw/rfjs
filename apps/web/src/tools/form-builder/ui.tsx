@@ -39,11 +39,14 @@ import { SAMPLE_CONFIG, sampleUploader, sampleFetcher } from "./sample";
 import { resolveCards, moveItem } from "./layout-grid";
 import { SettingsPanel } from "./inspector/settings-panel";
 import { Section } from "./inspector/section";
-import { ResponsivePreview } from "./responsive-preview";
+import { ResponsivePreview, DESKTOP_WIDTH } from "./responsive-preview";
 import { SubmissionPanel } from "./submission-panel";
 import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
 import { ToolIntro } from "@/components/shared/tool-intro";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
+import { ToolTabs } from "@/components/shared/tool-tabs";
+import { SectionCard } from "@/components/shared/section-card";
 import { buildNlFormPrompt, parseNlFormResponse } from "./ai-nl-form";
 import { buildFormAskPrompt, buildFormExplainPrompt } from "./ai-explain-form";
 
@@ -221,7 +224,7 @@ export function FormBuilderTool() {
   // the action payload instead of leaving the user to find the toggle themselves.
   const [actionSeen, setActionSeen] = React.useState(false);
   const [previewW, setPreviewW] = React.useState(1100);
-  const [canvasW, setCanvasW] = React.useState(390);
+  const [canvasW, setCanvasW] = React.useState(DESKTOP_WIDTH); // Canvas-mode LIVE PREVIEW defaults to Desktop
   const [copied, setCopied] = React.useState(false);
   const [dropGroup, setDropGroup] = React.useState<string | null>(null);
   const bodyRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
@@ -497,14 +500,15 @@ export function FormBuilderTool() {
     "button",
     "result",
   ];
-  const TABS = [
+  const TABS: Array<{ id: "canvas" | "preview" | "json"; label: string }> = [
     { id: "canvas", label: "Canvas" },
     { id: "preview", label: "Preview" },
     { id: "json", label: "JSON" },
-  ] as const;
+  ];
 
   return (
     <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("fblEyebrow")}</ToolEyebrow>
       <ToolIntro
         storageKey="tool-intro:form-builder"
         question={t("introQuestion")}
@@ -516,98 +520,82 @@ export function FormBuilderTool() {
         ]}
         labels={{ expand: t("introExpand"), collapse: t("introCollapse"), dismiss: t("introDismiss") }}
       />
-      <div className="flex flex-col gap-4">
-        <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
-          {TABS.map((tabItem) => (
-            <button
-              key={tabItem.id}
-              type="button"
-              onClick={() => setTab(tabItem.id)}
-              aria-selected={tab === tabItem.id}
-              className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                tab === tabItem.id
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tabItem.label}
-            </button>
-          ))}
-        </div>
+      <ToolTabs tabs={TABS} active={tab} onChange={(id) => setTab(id as "canvas" | "preview" | "json")} />
 
-        <AiPanel
-          title={t("aiBlockTitle")}
-          placeholder={t("fbAiPlaceholder")}
-          logKey="rfjs.ai.log.form-builder"
-          ai={ai}
-          labels={aiLabels}
-          onReapply={(e) => applyJson(e.appliedJson ?? "")}
-          appliedSummary={(e) => {
-            let n = 0;
-            try {
-              const parsed = JSON.parse(e.appliedJson ?? "") as {
-                fields?: unknown[];
-              };
-              n = Array.isArray(parsed.fields) ? parsed.fields.length : 0;
-            } catch {
-              n = 0;
-            }
-            return t("fbAiApplied", { count: n });
-          }}
-          actions={[
-            {
-              key: "generate",
-              label: t("fbAiGenerate"),
-              needsInput: true,
-              primary: true,
-              run: async (input) => {
-                const out = await ai.run(
-                  { ...buildNlFormPrompt(input), json: true },
-                  parseNlFormResponse,
-                );
-                if (out === null) return null;
-                const { groups: g, cards: c } = jsonToCards(out);
-                setGroups(g);
-                setCards(c);
-                return { kind: "generate", prompt: input, appliedJson: out };
-              },
+      <AiPanel
+        title={t("aiBlockTitle")}
+        placeholder={t("fbAiPlaceholder")}
+        logKey="rfjs.ai.log.form-builder"
+        ai={ai}
+        labels={aiLabels}
+        onReapply={(e) => applyJson(e.appliedJson ?? "")}
+        appliedSummary={(e) => {
+          let n = 0;
+          try {
+            const parsed = JSON.parse(e.appliedJson ?? "") as {
+              fields?: unknown[];
+            };
+            n = Array.isArray(parsed.fields) ? parsed.fields.length : 0;
+          } catch {
+            n = 0;
+          }
+          return t("fbAiApplied", { count: n });
+        }}
+        actions={[
+          {
+            key: "generate",
+            label: t("fbAiGenerate"),
+            needsInput: true,
+            primary: true,
+            run: async (input) => {
+              const out = await ai.run(
+                { ...buildNlFormPrompt(input), json: true },
+                parseNlFormResponse,
+              );
+              if (out === null) return null;
+              const { groups: g, cards: c } = jsonToCards(out);
+              setGroups(g);
+              setCards(c);
+              return { kind: "generate", prompt: input, appliedJson: out };
             },
-            {
-              key: "ask",
-              label: t("aiAsk"),
-              needsInput: true,
-              run: async (input) => {
-                const out = await ai.runStream(
-                  buildFormAskPrompt(
-                    { configJson: JSON.stringify(formConfig, null, 2), locale },
-                    input,
-                  ),
-                  (raw) => raw.trim(),
-                );
-                return out === null
-                  ? null
-                  : { kind: "ask", prompt: input, answer: out };
-              },
+          },
+          {
+            key: "ask",
+            label: t("aiAsk"),
+            needsInput: true,
+            run: async (input) => {
+              const out = await ai.runStream(
+                buildFormAskPrompt(
+                  { configJson: JSON.stringify(formConfig, null, 2), locale },
+                  input,
+                ),
+                (raw) => raw.trim(),
+              );
+              return out === null
+                ? null
+                : { kind: "ask", prompt: input, answer: out };
             },
-            {
-              key: "explain",
-              label: t("fbAiExplain"),
-              run: async () => {
-                const out = await ai.runStream(
-                  buildFormExplainPrompt({
-                    configJson: JSON.stringify(formConfig, null, 2),
-                    locale,
-                  }),
-                  (raw) => raw.trim(),
-                );
-                return out === null ? null : { kind: "explain", answer: out };
-              },
+          },
+          {
+            key: "explain",
+            label: t("fbAiExplain"),
+            run: async () => {
+              const out = await ai.runStream(
+                buildFormExplainPrompt({
+                  configJson: JSON.stringify(formConfig, null, 2),
+                  locale,
+                }),
+                (raw) => raw.trim(),
+              );
+              return out === null ? null : { kind: "explain", answer: out };
             },
-          ]}
-        />
+          },
+        ]}
+      />
 
-        {tab === "canvas" ? (
-          <>
+      {tab === "canvas" ? (
+        <>
+          <SectionCard title={t("fblPalette")}>
             <div className="flex flex-wrap items-center gap-2">
               {PALETTE.map((kind) => {
                 const meta = KIND_META[kind];
@@ -650,202 +638,202 @@ export function FormBuilderTool() {
                       },
                     ])
                   }
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-primary bg-card/40 px-3 py-1.5 font-mono text-xs text-primary transition-colors hover:bg-primary/10"
                 >
                   <Plus className="size-3.5" />
                   Group
                 </button>
               </div>
             </div>
+          </SectionCard>
 
-            {/* Section 1: Editor (default expanded) */}
-            <Section title="Editor" defaultOpen={true}>
-              {/* Canvas + inspector (RWD: stacks below lg) */}
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-                <div
-                  className="min-w-0 flex-1"
-                  onPointerDown={() => {
-                    setSelected(null);
-                    setMobileConfigOpen(false);
-                  }}
-                >
-                  <div className="flex flex-col gap-4">
-                    {groups.map((group, index) => (
-                      <React.Fragment key={group.id}>
-                        {groupDrag &&
-                        groupDrag.id !== group.id &&
-                        groupDrag.overIndex === index ? (
-                          <div
-                            data-testid="group-drop-line"
-                            className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]"
-                          />
-                        ) : null}
-                        <GroupFrame
-                          group={group}
-                          cards={cards.filter((c) => c.groupId === group.id)}
-                          selected={selected}
-                          dropOver={dropGroup === group.id}
-                          dragging={groupDrag?.id === group.id}
-                          sectionRef={(el) => {
-                            groupElRefs.current[group.id] = el;
-                          }}
-                          bodyRef={(el) => {
-                            bodyRefs.current[group.id] = el;
-                          }}
-                          onToggle={() =>
-                            setGroups((gs) =>
-                              gs.map((g) =>
-                                g.id === group.id
-                                  ? { ...g, collapsed: !g.collapsed }
-                                  : g,
-                              ),
-                            )
-                          }
-                          onReorderStart={beginGroupReorder}
-                          onMoveStart={beginDrag}
-                          onResizeStart={beginDrag}
-                        />
-                      </React.Fragment>
-                    ))}
-                    {groupDrag && groupDrag.overIndex === groups.length ? (
-                      <div
-                        data-testid="group-drop-line"
-                        className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]"
-                      />
-                    ) : null}
-                  </div>
-                </div>
-
-                <aside className="shrink-0 lg:w-[420px]">
-                  {/* Mobile: full-screen overlay only after a confirmed tap (mobileConfigOpen);
-                      Desktop: always inline when a card is selected (lg: classes). */}
-                  <div
-                    data-testid="card-inspector"
-                    className={
-                      selectedCard && mobileConfigOpen
-                        ? "fixed inset-0 z-50 overflow-y-auto bg-background p-4 lg:static lg:z-auto lg:bg-transparent lg:p-0"
-                        : "hidden lg:block"
-                    }
-                  >
-                    {selectedCard ? (
-                      <button
-                        type="button"
-                        onClick={() => setMobileConfigOpen(false)}
-                        className="mb-3 text-xs text-muted-foreground hover:text-foreground lg:hidden"
-                      >
-                        ← Back to canvas
-                      </button>
-                    ) : null}
-                    <SettingsPanel
-                      card={selectedCard}
-                      groups={groups}
-                      siblingFields={siblingFields}
-                      apiButtons={cards
-                        .filter(
-                          (c) => c.kind === "button" && c.action?.type === "api",
-                        )
-                        .map((c) => ({ id: c.id, label: cardLabel(c.label) }))}
-                      onChange={(p) =>
-                        selectedCard && updateCard(selectedCard.id, p)
-                      }
-                      onRemove={() => {
-                        if (!selectedCard) return;
-                        setCards(
-                          (cs) =>
-                            resolveCards(
-                              cs.filter(
-                                (c) => c.id !== selectedCard.id,
-                              ) as Card[],
-                              "",
-                              COLS,
-                            ) as Card[],
-                        );
-                        setSelected(null);
-                        setMobileConfigOpen(false);
-                      }}
-                    />
-                  </div>
-                </aside>
-              </div>
-            </Section>
-
-            {/* Section 2: Live Preview (default collapsed) */}
-            <Section title="Live Preview" defaultOpen={false}>
-              <div className="flex flex-col gap-4">
-                <ResponsivePreview
-                  compact
-                  width={canvasW}
-                  onWidthChange={setCanvasW}
-                >
-                  <ConfigForm
-                    config={formConfig}
-                    locale="en"
-                    fetcher={previewFetcher}
-                    uploadHandler={sampleUploader}
-                    onPayloadChange={setPayload}
-                    onSubmit={handleSubmit}
-                    onAction={handleAction}
-                  />
-                </ResponsivePreview>
-                <SubmissionPanel compact payload={payload} />
-              </div>
-            </Section>
-          </>
-        ) : tab === "preview" ? (
-          <div className="flex flex-col gap-4">
-            <ResponsivePreview width={previewW} onWidthChange={setPreviewW}>
-              <ConfigForm
-                config={formConfig}
-                locale="en"
-                fetcher={previewFetcher}
-                uploadHandler={sampleUploader}
-                onPayloadChange={setPayload}
-                onSubmit={handleSubmit}
-                onAction={handleAction}
-              />
-            </ResponsivePreview>
-            <Section
-              key={actionSeen ? "submission-open" : "submission-closed"}
-              title="Submission"
-              defaultOpen={actionSeen}
-            >
-              <SubmissionPanel payload={payload} />
-            </Section>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground/60">
-                Config JSON — edits rebuild the canvas
-              </span>
-              <button
-                type="button"
-                onClick={copyJson}
-                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-card/40 px-2.5 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+          {/* Section 1: Editor (default expanded) */}
+          <Section title="Editor" defaultOpen={true}>
+            {/* Canvas + inspector (RWD: stacks below lg) */}
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+              <div
+                className="min-w-0 flex-1"
+                onPointerDown={() => {
+                  setSelected(null);
+                  setMobileConfigOpen(false);
+                }}
               >
-                {copied ? (
-                  <Check className="size-3.5" style={{ color: "#5b8cff" }} />
-                ) : (
-                  <Copy className="size-3.5" />
-                )}
-                {copied ? "Copied" : "Copy"}
-              </button>
+                <div className="flex flex-col gap-4">
+                  {groups.map((group, index) => (
+                    <React.Fragment key={group.id}>
+                      {groupDrag &&
+                      groupDrag.id !== group.id &&
+                      groupDrag.overIndex === index ? (
+                        <div
+                          data-testid="group-drop-line"
+                          className="-my-1.5 h-0.5 rounded-full bg-primary"
+                        />
+                      ) : null}
+                      <GroupFrame
+                        group={group}
+                        cards={cards.filter((c) => c.groupId === group.id)}
+                        selected={selected}
+                        dropOver={dropGroup === group.id}
+                        dragging={groupDrag?.id === group.id}
+                        sectionRef={(el) => {
+                          groupElRefs.current[group.id] = el;
+                        }}
+                        bodyRef={(el) => {
+                          bodyRefs.current[group.id] = el;
+                        }}
+                        onToggle={() =>
+                          setGroups((gs) =>
+                            gs.map((g) =>
+                              g.id === group.id
+                                ? { ...g, collapsed: !g.collapsed }
+                                : g,
+                            ),
+                          )
+                        }
+                        onReorderStart={beginGroupReorder}
+                        onMoveStart={beginDrag}
+                        onResizeStart={beginDrag}
+                      />
+                    </React.Fragment>
+                  ))}
+                  {groupDrag && groupDrag.overIndex === groups.length ? (
+                    <div
+                      data-testid="group-drop-line"
+                      className="-my-1.5 h-0.5 rounded-full bg-primary"
+                    />
+                  ) : null}
+                </div>
+              </div>
+
+              <aside className="shrink-0 lg:w-[420px]">
+                {/* Mobile: full-screen overlay only after a confirmed tap (mobileConfigOpen);
+                    Desktop: always inline when a card is selected (lg: classes). */}
+                <div
+                  data-testid="card-inspector"
+                  className={
+                    selectedCard && mobileConfigOpen
+                      ? "fixed inset-0 z-50 overflow-y-auto bg-background p-4 lg:static lg:z-auto lg:bg-transparent lg:p-0"
+                      : "hidden lg:block"
+                  }
+                >
+                  {selectedCard ? (
+                    <button
+                      type="button"
+                      onClick={() => setMobileConfigOpen(false)}
+                      className="mb-3 text-xs text-muted-foreground hover:text-foreground lg:hidden"
+                    >
+                      ← Back to canvas
+                    </button>
+                  ) : null}
+                  <SettingsPanel
+                    card={selectedCard}
+                    groups={groups}
+                    siblingFields={siblingFields}
+                    apiButtons={cards
+                      .filter(
+                        (c) => c.kind === "button" && c.action?.type === "api",
+                      )
+                      .map((c) => ({ id: c.id, label: cardLabel(c.label) }))}
+                    onChange={(p) =>
+                      selectedCard && updateCard(selectedCard.id, p)
+                    }
+                    onRemove={() => {
+                      if (!selectedCard) return;
+                      setCards(
+                        (cs) =>
+                          resolveCards(
+                            cs.filter(
+                              (c) => c.id !== selectedCard.id,
+                            ) as Card[],
+                            "",
+                            COLS,
+                          ) as Card[],
+                      );
+                      setSelected(null);
+                      setMobileConfigOpen(false);
+                    }}
+                  />
+                </div>
+              </aside>
             </div>
-            <textarea
-              aria-label="config json"
-              spellCheck={false}
-              className="h-[28rem] w-full rounded-md border border-input bg-background p-4 font-mono text-[13px] leading-relaxed"
-              defaultValue={JSON.stringify(formConfig, null, 2)}
-              onChange={(e) => applyJson(e.target.value)}
+          </Section>
+
+          {/* Section 2: Live Preview (default collapsed) */}
+          <Section title="Live Preview" defaultOpen={false}>
+            <div className="flex flex-col gap-4">
+              <ResponsivePreview
+                compact
+                width={canvasW}
+                onWidthChange={setCanvasW}
+              >
+                <ConfigForm
+                  config={formConfig}
+                  locale="en"
+                  fetcher={previewFetcher}
+                  uploadHandler={sampleUploader}
+                  onPayloadChange={setPayload}
+                  onSubmit={handleSubmit}
+                  onAction={handleAction}
+                />
+              </ResponsivePreview>
+              <SubmissionPanel compact payload={payload} />
+            </div>
+          </Section>
+        </>
+      ) : tab === "preview" ? (
+        <div className="flex flex-col gap-4">
+          <ResponsivePreview width={previewW} onWidthChange={setPreviewW}>
+            <ConfigForm
+              config={formConfig}
+              locale="en"
+              fetcher={previewFetcher}
+              uploadHandler={sampleUploader}
+              onPayloadChange={setPayload}
+              onSubmit={handleSubmit}
+              onAction={handleAction}
             />
-            {jsonError ? (
-              <p className="text-xs text-destructive">
-                Invalid config: {jsonError}
-              </p>
-            ) : null}
-          </div>
-        )}
-      </div>
+          </ResponsivePreview>
+          <Section
+            key={actionSeen ? "submission-open" : "submission-closed"}
+            title="Submission"
+            defaultOpen={actionSeen}
+          >
+            <SubmissionPanel payload={payload} />
+          </Section>
+        </div>
+      ) : (
+        <SectionCard
+          title={t("fblJsonTitle")}
+          bodyClassName="p-0"
+          action={
+            <button
+              type="button"
+              onClick={copyJson}
+              className="inline-flex items-center gap-1.5 rounded-md border border-input bg-card/40 px-2.5 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+            >
+              {copied ? (
+                <Check className="size-3.5 text-primary" />
+              ) : (
+                <Copy className="size-3.5" />
+              )}
+              {copied ? "Copied" : "Copy"}
+            </button>
+          }
+        >
+          <textarea
+            aria-label="config json"
+            spellCheck={false}
+            className="h-[28rem] w-full border-0 bg-background p-4 font-mono text-[13px] leading-relaxed focus-visible:outline-none"
+            defaultValue={JSON.stringify(formConfig, null, 2)}
+            onChange={(e) => applyJson(e.target.value)}
+          />
+          {jsonError ? (
+            <p className="px-4 pb-3 text-xs text-destructive">
+              Invalid config: {jsonError}
+            </p>
+          ) : null}
+        </SectionCard>
+      )}
     </div>
   );
 }
@@ -884,13 +872,13 @@ function GroupFrame({
   return (
     <section
       ref={sectionRef}
-      className={`overflow-hidden rounded-xl border bg-card/20 transition-[border,opacity] ${
+      className={`overflow-hidden rounded-lg border bg-card transition-[border,opacity] ${
         dropOver
-          ? "border-[#5b8cff]/70 ring-1 ring-[#5b8cff]/40"
+          ? "border-primary/70 ring-1 ring-primary/40"
           : "border-border"
       } ${dragging ? "opacity-50" : ""}`}
     >
-      <header className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2.5">
+      <header className="flex items-center gap-2 border-b border-border bg-muted/30 px-3 py-2.5">
         <button
           type="button"
           aria-label="reorder group"
@@ -910,10 +898,10 @@ function GroupFrame({
           />
         </button>
         <span className="text-[15px] font-semibold">{group.title}</span>
-        <span className="font-mono text-[11px] text-muted-foreground/50">
+        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
           {group.id}
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/45">
+        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
           {cards.length} item{cards.length === 1 ? "" : "s"}
         </span>
         <span className="ml-auto font-mono text-[10px] uppercase tracking-wide text-muted-foreground/55">
@@ -981,7 +969,7 @@ function CanvasCard({
       onPointerDown={onMoveStart}
       className={`group relative cursor-grab touch-none select-none rounded-lg border bg-card shadow-sm transition-shadow active:cursor-grabbing ${
         selected
-          ? "border-transparent ring-2 ring-[#5b8cff]"
+          ? "border-transparent ring-2 ring-primary"
           : "border-border hover:shadow-md"
       }`}
       style={{
@@ -1032,7 +1020,7 @@ function CanvasCard({
         className="absolute right-0 top-0 flex h-full w-3 cursor-col-resize items-center justify-center"
       >
         <div
-          className={`h-8 w-1 rounded-full transition-colors ${selected ? "bg-[#5b8cff]" : "bg-transparent group-hover:bg-border"}`}
+          className={`h-8 w-1 rounded-full transition-colors ${selected ? "bg-primary" : "bg-transparent group-hover:bg-border"}`}
         />
       </div>
     </div>

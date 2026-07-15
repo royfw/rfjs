@@ -54,7 +54,7 @@ export function SubmissionPanel({ payload, compact = false }: SubmissionPanelPro
       {/* Metadata Block */}
       <div
         className={cn(
-          "rounded-lg border border-border bg-card p-4",
+          "rounded-lg border bg-card p-4",
           compact && "p-3",
         )}
       >
@@ -139,7 +139,7 @@ export function SubmissionPanel({ payload, compact = false }: SubmissionPanelPro
       {/* Data Block */}
       <div
         className={cn(
-          "rounded-lg border border-border bg-card p-4",
+          "rounded-lg border bg-card p-4",
           compact && "p-3",
         )}
       >

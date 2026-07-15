@@ -19,6 +19,7 @@ export const messages: LocaleMessages = {
         "@rfjs/pg-filter (sql-filter + jsonb-query) emits one unified WHERE.",
       pfbIntroC3t: "③ Live",
       pfbIntroC3d: "The unified SQL updates live.",
+      pfbEyebrow: "PG FILTER BUILDER",
       pfbFilterLogic: "Filter logic",
       pfbFields: "Fields",
       pfbKindHint:
@@ -72,6 +73,7 @@ export const messages: LocaleMessages = {
       pfbIntroC2d: "@rfjs/pg-filter(sql-filter + jsonb-query)產出單一 WHERE。",
       pfbIntroC3t: "③ 即時",
       pfbIntroC3d: "統一的 SQL 即時更新。",
+      pfbEyebrow: "PG 篩選建構器",
       pfbFilterLogic: "篩選邏輯",
       pfbFields: "欄位",
       pfbKindHint: "切換 col / json，決定每個欄位是 SQL 欄位還是 JSONB 路徑。",

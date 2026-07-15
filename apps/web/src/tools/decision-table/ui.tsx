@@ -33,6 +33,9 @@ import {
 
 import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
+import { FragmentBar } from "@/components/shared/fragment-bar";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
 import { buildCheckPrompt, parseCheckResponse } from "./ai-check";
 import {
@@ -175,9 +178,7 @@ export function DecisionTableTool() {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-xs font-semibold tracking-widest text-muted-foreground">
-        {t("dtEyebrow")}
-      </p>
+      <ToolEyebrow>{t("dtEyebrow")}</ToolEyebrow>
 
       <ToolIntro
         storageKey="tool-intro:decision-table"
@@ -260,9 +261,9 @@ export function DecisionTableTool() {
       />
 
       {/* 規則表 */}
-      <div className="rounded-md border">
-        <div className="flex items-center justify-between border-b px-3 py-2">
-          <p className="text-sm font-semibold">{t("dtRules")}</p>
+      <SectionCard
+        title={t("dtRules")}
+        action={
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
               {t("dtHitPolicy")}
@@ -297,7 +298,9 @@ export function DecisionTableTool() {
               {t("dtAddRule")}
             </Button>
           </div>
-        </div>
+        }
+        bodyClassName="p-0"
+      >
         <ul className="divide-y" data-testid="dt-rules-list">
           {table.rules.map((rule, i) => (
             <li
@@ -351,120 +354,127 @@ export function DecisionTableTool() {
             </li>
           ))}
         </ul>
-      </div>
+      </SectionCard>
 
       {/* 單筆試算 */}
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="space-y-2 rounded-md border p-3">
-          <p className="text-sm font-semibold">{t("dtSingleEval")}</p>
-          <label htmlFor="dt-context" className="text-xs text-muted-foreground">
-            {t("dtContextLabel")}
-          </label>
-          <textarea
-            id="dt-context"
-            rows={4}
-            value={contextText}
-            onChange={(e) => setContextText(e.target.value)}
-            className="w-full rounded-md border bg-background p-2 font-mono text-xs"
-          />
-          <Button size="sm" onClick={runSingle}>
-            {t("dtRun")}
-          </Button>
-          {singleError ? (
-            <p role="alert" className="text-xs text-destructive">
-              {singleError}
-            </p>
-          ) : null}
-          {singleResult ? (
-            <div data-testid="dt-single-result">
-              <ResultView result={singleResult} t={t} />
-            </div>
-          ) : null}
-        </div>
+        <SectionCard title={t("dtSingleEval")}>
+          <div className="space-y-2">
+            <label htmlFor="dt-context" className="text-xs text-muted-foreground">
+              {t("dtContextLabel")}
+            </label>
+            <textarea
+              id="dt-context"
+              rows={4}
+              value={contextText}
+              onChange={(e) => setContextText(e.target.value)}
+              className="w-full rounded-md border bg-background p-2 font-mono text-xs"
+            />
+            <Button size="sm" onClick={runSingle}>
+              {t("dtRun")}
+            </Button>
+            {singleError ? (
+              <p role="alert" className="text-xs text-destructive">
+                {singleError}
+              </p>
+            ) : null}
+            {singleResult ? (
+              <div data-testid="dt-single-result" className="space-y-2">
+                <FragmentBar>◆ {t("dctFragmentMatched")}</FragmentBar>
+                <ResultView result={singleResult} t={t} />
+              </div>
+            ) : null}
+          </div>
+        </SectionCard>
 
         {/* 批次試算 */}
-        <div className="space-y-2 rounded-md border p-3">
-          <p className="text-sm font-semibold">{t("dtBatchEval")}</p>
-          <label htmlFor="dt-batch" className="text-xs text-muted-foreground">
-            {t("dtBatchLabel")}
-          </label>
-          <textarea
-            id="dt-batch"
-            rows={4}
-            value={batchText}
-            onChange={(e) => setBatchText(e.target.value)}
-            className="w-full rounded-md border bg-background p-2 font-mono text-xs"
-          />
-          <Button size="sm" onClick={runBatch}>
-            {t("dtRun")}
-          </Button>
-          {batchError ? (
-            <p role="alert" className="text-xs text-destructive">
-              {batchError}
-            </p>
-          ) : null}
-          {batchResults ? (
-            <ul className="space-y-1 text-xs">
-              {batchResults.map((r, i) => (
-                <li
-                  key={i}
-                  data-testid="dt-batch-row"
-                  className="rounded border px-2 py-1"
-                >
-                  <span className="text-muted-foreground">
-                    {JSON.stringify(r.context)}
-                  </span>
-                  {" → "}
-                  <span className="font-medium">
-                    {r.result.matched.length > 0
-                      ? r.result.matched.join(",")
-                      : t("dtNoMatch")}
-                  </span>
-                  {" · "}
-                  <span>{JSON.stringify(r.result.outputs)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
+        <SectionCard title={t("dtBatchEval")}>
+          <div className="space-y-2">
+            <label htmlFor="dt-batch" className="text-xs text-muted-foreground">
+              {t("dtBatchLabel")}
+            </label>
+            <textarea
+              id="dt-batch"
+              rows={4}
+              value={batchText}
+              onChange={(e) => setBatchText(e.target.value)}
+              className="w-full rounded-md border bg-background p-2 font-mono text-xs"
+            />
+            <Button size="sm" onClick={runBatch}>
+              {t("dtRun")}
+            </Button>
+            {batchError ? (
+              <p role="alert" className="text-xs text-destructive">
+                {batchError}
+              </p>
+            ) : null}
+            {batchResults ? (
+              <div className="space-y-2">
+                <FragmentBar>◆ {t("dctFragmentBatch")}</FragmentBar>
+                <ul className="space-y-1 text-xs">
+                  {batchResults.map((r, i) => (
+                    <li
+                      key={i}
+                      data-testid="dt-batch-row"
+                      className="rounded border px-2 py-1"
+                    >
+                      <span className="text-muted-foreground">
+                        {JSON.stringify(r.context)}
+                      </span>
+                      {" → "}
+                      <span className="font-medium">
+                        {r.result.matched.length > 0
+                          ? r.result.matched.join(",")
+                          : t("dtNoMatch")}
+                      </span>
+                      {" · "}
+                      <span>{JSON.stringify(r.result.outputs)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </SectionCard>
       </div>
 
       {/* JSON 面板 */}
-      <div className="space-y-2 rounded-md border p-3">
-        <p className="text-sm font-semibold">{t("dtJson")}</p>
-        <pre className="max-h-56 overflow-auto rounded-md border bg-muted/30 p-2 text-[11px]">
-          {tableToJson(table)}
-        </pre>
-        <label htmlFor="dt-import" className="text-xs text-muted-foreground">
-          {t("dtImport")}
-        </label>
-        <textarea
-          id="dt-import"
-          rows={3}
-          value={importText}
-          onChange={(e) => setImportText(e.target.value)}
-          className="w-full rounded-md border bg-background p-2 font-mono text-xs"
-        />
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            try {
-              setTable(parseTable(importText));
-              setImportError(null);
-            } catch {
-              setImportError(t("dtImportInvalid"));
-            }
-          }}
-        >
-          {t("dtImport")}
-        </Button>
-        {importError ? (
-          <p role="alert" className="text-xs text-destructive">
-            {importError}
-          </p>
-        ) : null}
-      </div>
+      <SectionCard title={t("dtJson")}>
+        <div className="space-y-2">
+          <pre className="max-h-56 overflow-auto rounded-md border bg-muted/30 p-2 text-[11px]">
+            {tableToJson(table)}
+          </pre>
+          <label htmlFor="dt-import" className="text-xs text-muted-foreground">
+            {t("dtImport")}
+          </label>
+          <textarea
+            id="dt-import"
+            rows={3}
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+            className="w-full rounded-md border bg-background p-2 font-mono text-xs"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              try {
+                setTable(parseTable(importText));
+                setImportError(null);
+              } catch {
+                setImportError(t("dtImportInvalid"));
+              }
+            }}
+          >
+            {t("dtImport")}
+          </Button>
+          {importError ? (
+            <p role="alert" className="text-xs text-destructive">
+              {importError}
+            </p>
+          ) : null}
+        </div>
+      </SectionCard>
 
       {/* 規則編輯 sheet */}
       {editingRule ? (

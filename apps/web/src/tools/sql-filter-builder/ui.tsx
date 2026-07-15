@@ -18,6 +18,8 @@ import {
   useFilterBuilder,
   useOperatorLabels,
 } from "@/tools/_filter-builder";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
 
 const SAMPLE = JSON.stringify(
@@ -72,6 +74,7 @@ export function SqlFilterBuilder() {
 
   return (
     <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("sfbEyebrow")}</ToolEyebrow>
       <ToolIntro
         storageKey="tool-intro:sql-filter-builder"
         question={t("introQuestion")}
@@ -87,99 +90,88 @@ export function SqlFilterBuilder() {
           dismiss: t("introDismiss"),
         }}
       />
-      <div className="flex flex-col gap-5">
-        <style>{RISE}</style>
+      <style>{RISE}</style>
 
-        <SampleCard
-          open={fb.sampleOpen}
-          onToggle={() => fb.setSampleOpen((v) => !v)}
-          value={fb.sampleText}
-          onChange={fb.onSample}
-          onUpload={(file) => void fb.onUpload(file)}
-          hasError={Boolean(fb.error)}
+      <SampleCard
+        open={fb.sampleOpen}
+        onToggle={() => fb.setSampleOpen((v) => !v)}
+        value={fb.sampleText}
+        onChange={fb.onSample}
+        onUpload={(file) => void fb.onUpload(file)}
+        hasError={Boolean(fb.error)}
+        labels={{
+          sample: t("sfbSample"),
+          invalidSample: t("sfbInvalidSample"),
+          rawCount: t("sfbRaw", { count: fb.rows.length }),
+          upload: t("sfbUpload"),
+        }}
+        style={{ animationDelay: "0ms" }}
+      />
+
+      <SectionCard
+        title={t("sfbFields")}
+        className="fb-rise"
+        style={{ animationDelay: "70ms" }}
+      >
+        <MetadataStrip
+          schema={fb.schema}
+          onChange={fb.setSchema}
           labels={{
-            sample: t("sfbSample"),
-            invalidSample: t("sfbInvalidSample"),
-            rawCount: t("sfbRaw", { count: fb.rows.length }),
-            upload: t("sfbUpload"),
+            include: t("sfbInclude", { field: "" }).trim(),
+            type: t("sfbType", { field: "" }).trim(),
           }}
-          style={{ animationDelay: "0ms" }}
         />
+      </SectionCard>
 
-        <section
-          className="fb-rise rounded-lg border bg-card"
-          style={{ animationDelay: "70ms" }}
-        >
-          <div className="border-b px-5 py-3">
-            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-              {t("sfbFields")}
-            </span>
-          </div>
-          <div className="p-4">
-            <MetadataStrip
-              schema={fb.schema}
-              onChange={fb.setSchema}
-              labels={{
-                include: t("sfbInclude", { field: "" }).trim(),
-                type: t("sfbType", { field: "" }).trim(),
-              }}
-            />
-          </div>
-        </section>
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={compiled.ok ? compiled.primary : null}
+          engineId="sql-filter"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.sql-filter-builder"
+        />
+      </div>
 
-        <div className="fb-rise" style={{ animationDelay: "140ms" }}>
-          <AiAssistBlock
-            schema={fb.schema}
-            canonicalJson={fb.canonicalJson}
-            compiled={compiled.ok ? compiled.primary : null}
+      <SectionCard
+        title={t("sfbFilterLogic")}
+        className="fb-rise"
+        style={{ animationDelay: "140ms" }}
+        bodyClassName="p-4"
+      >
+        <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
+          <FilterTreeEditor
+            group={fb.tree}
             engineId="sql-filter"
-            onApply={fb.onCanonicalChange}
-            sampleRows={fb.rows}
-            logKey="rfjs.ai.log.sql-filter-builder"
+            schema={fb.schema}
+            onChange={fb.setTree}
+            onCreateField={fb.onCreateField}
+            labels={treeLabels}
           />
         </div>
+      </SectionCard>
 
-        <section
-          className="fb-rise rounded-lg border bg-card"
-          style={{ animationDelay: "140ms" }}
-        >
-          <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-              {t("sfbFilterLogic")}
-            </span>
-          </div>
-          <div className="overflow-x-auto p-5 sm:p-6">
-            <FilterTreeEditor
-              group={fb.tree}
-              engineId="sql-filter"
-              schema={fb.schema}
-              onChange={fb.setTree}
-              onCreateField={fb.onCreateField}
-              labels={treeLabels}
-            />
-          </div>
-        </section>
-
-        <div className="fb-rise" style={{ animationDelay: "210ms" }}>
-          <QueryOutputPanel
-            primary={compiled.ok ? compiled.primary : null}
-            secondary={compiled.ok ? (compiled.secondary ?? null) : null}
-            canonicalJson={fb.canonicalJson}
-            onCanonicalChange={fb.onCanonicalChange}
-            labels={{
-              output: t("sfbOutput"),
-              primaryLabel: t("sfbWhere"),
-              secondaryLabel: t("sfbValues"),
-              canonical: t("sfbCanonical"),
-              canonicalHint: t("sfbCanonicalHint"),
-              reverseError: reverseText,
-              compileError: compiled.ok
-                ? null
-                : t("sfbCompileError", { error: compiled.error }),
-              copy: t("sfbCopy"),
-            }}
-          />
-        </div>
+      <div className="fb-rise" style={{ animationDelay: "210ms" }}>
+        <QueryOutputPanel
+          primary={compiled.ok ? compiled.primary : null}
+          secondary={compiled.ok ? (compiled.secondary ?? null) : null}
+          canonicalJson={fb.canonicalJson}
+          onCanonicalChange={fb.onCanonicalChange}
+          labels={{
+            output: t("sfbOutput"),
+            primaryLabel: t("sfbWhere"),
+            secondaryLabel: t("sfbValues"),
+            canonical: t("sfbCanonical"),
+            canonicalHint: t("sfbCanonicalHint"),
+            reverseError: reverseText,
+            compileError: compiled.ok
+              ? null
+              : t("sfbCompileError", { error: compiled.error }),
+            copy: t("sfbCopy"),
+          }}
+        />
       </div>
     </div>
   );

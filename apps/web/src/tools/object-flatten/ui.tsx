@@ -1,13 +1,14 @@
 "use client";
 
 import { CopyButton } from "@rfjs/web-ui/components/copy-button";
-import { Panel } from "@rfjs/web-ui/components/panel";
 import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { flattenJson } from "./object-flatten";
 
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
 import { ToolShell } from "@/tools/_shared/tool-shell";
 
@@ -26,6 +27,7 @@ export function ObjectFlatten() {
 
   return (
     <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("oflEyebrow")}</ToolEyebrow>
       <ToolIntro
         storageKey="tool-intro:object-flatten"
         question={t("introQuestion")}
@@ -39,7 +41,7 @@ export function ObjectFlatten() {
       <ToolShell
         operation="flatten()"
         input={
-          <Panel title={t("jsonInput")}>
+          <SectionCard title={t("jsonInput")}>
             <Textarea
               aria-label={t("jsonInput")}
               value={text}
@@ -48,10 +50,10 @@ export function ObjectFlatten() {
               rows={10}
               className="resize-y font-mono"
             />
-          </Panel>
+          </SectionCard>
         }
         output={
-          <Panel
+          <SectionCard
             title={t("output")}
             action={result.ok ? <CopyButton text={result.output} label={t("copy")} /> : null}
           >
@@ -60,7 +62,7 @@ export function ObjectFlatten() {
             ) : (
               <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>
             )}
-          </Panel>
+          </SectionCard>
         }
       />
     </div>

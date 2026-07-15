@@ -13,5 +13,6 @@ describe("JwtDecoder", () => {
       </NextIntlClientProvider>,
     );
     expect(screen.getByRole("button", { name: /how does this tool work/i })).toBeTruthy();
+    expect(screen.getByText("JWT DECODER")).toBeTruthy();
   });
 });

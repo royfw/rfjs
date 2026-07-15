@@ -10,7 +10,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@rfjs/web-ui/components/dropdown-menu";
-import { Panel } from "@rfjs/web-ui/components/panel";
 import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -18,6 +17,9 @@ import { useState } from "react";
 
 import { JSONB_DIALECTS, runJsonbQuery, type JsonbDialect } from "./jsonb-query-generator";
 
+import { FragmentBar } from "@/components/shared/fragment-bar";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
 import { ToolShell } from "@/tools/_shared/tool-shell";
 
@@ -37,6 +39,7 @@ export function JsonbQueryGenerator() {
 
   return (
     <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("jqgEyebrow")}</ToolEyebrow>
       <ToolIntro
         storageKey="tool-intro:jsonb-query-generator"
         question={t("introQuestion")}
@@ -50,7 +53,7 @@ export function JsonbQueryGenerator() {
       <ToolShell
         operation="buildJsonbQuery()"
         input={
-          <Panel title={t("input")}>
+          <SectionCard title={t("input")}>
             <div className="flex flex-col gap-4">
               <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                 {t("column")}
@@ -93,19 +96,23 @@ export function JsonbQueryGenerator() {
                 />
               </label>
             </div>
-          </Panel>
+          </SectionCard>
         }
         output={
-          <Panel title={t("output")} action={result.ok ? <CopyButton text={result.where} label={t("copy")} /> : null}>
+          <SectionCard
+            title={t("output")}
+            action={result.ok ? <CopyButton text={result.where} label={t("copy")} /> : null}
+          >
             {result.ok ? (
               <div className="flex flex-col gap-2">
+                <FragmentBar>◆ {t("jqgFragment")}</FragmentBar>
                 <pre className="overflow-x-auto font-mono text-sm text-foreground">{result.where}</pre>
                 <pre className="overflow-x-auto font-mono text-xs text-muted-foreground">{result.values}</pre>
               </div>
             ) : (
               <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>
             )}
-          </Panel>
+          </SectionCard>
         }
       />
     </div>

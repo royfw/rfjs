@@ -13,5 +13,6 @@ describe("JsonbQueryGenerator", () => {
       </NextIntlClientProvider>,
     );
     expect(screen.getByRole("button", { name: /how does this tool work/i })).toBeTruthy();
+    expect(screen.getByText("FILTER → JSONB SQL")).toBeTruthy();
   });
 });

@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import type { LocalizedLabel, TablePaginationConfig } from "@rfjs/table-builder";
+import { SectionCard } from "@/components/shared/section-card";
 
 export interface PaginationPanelLabels {
   title: string;
@@ -31,8 +32,7 @@ export function PaginationPanel({
   labels,
 }: PaginationPanelProps) {
   return (
-    <div className="rounded-md border p-3">
-      <p className="mb-2 text-sm font-semibold">{labels.title}</p>
+    <SectionCard title={labels.title}>
       <div className="flex flex-col gap-2">
         <label className="flex items-center gap-2 text-xs">
           <span>{labels.pageSize}</span>
@@ -58,6 +58,6 @@ export function PaginationPanel({
           />
         </label>
       </div>
-    </div>
+    </SectionCard>
   );
 }

@@ -18,6 +18,8 @@ import {
   useFilterBuilder,
   useOperatorLabels,
 } from "@/tools/_filter-builder";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
 
 const SAMPLE = JSON.stringify(
@@ -72,6 +74,7 @@ export function MongoQueryBuilder() {
 
   return (
     <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("mqbEyebrow")}</ToolEyebrow>
       <ToolIntro
         storageKey="tool-intro:mongo-query-builder"
         question={t("introQuestion")}
@@ -87,101 +90,90 @@ export function MongoQueryBuilder() {
           dismiss: t("introDismiss"),
         }}
       />
-      <div className="flex flex-col gap-5">
-        <style>{RISE}</style>
+      <style>{RISE}</style>
 
-        <SampleCard
-          open={fb.sampleOpen}
-          onToggle={() => fb.setSampleOpen((v) => !v)}
-          value={fb.sampleText}
-          onChange={fb.onSample}
-          onUpload={(file) => void fb.onUpload(file)}
-          hasError={Boolean(fb.error)}
+      <SampleCard
+        open={fb.sampleOpen}
+        onToggle={() => fb.setSampleOpen((v) => !v)}
+        value={fb.sampleText}
+        onChange={fb.onSample}
+        onUpload={(file) => void fb.onUpload(file)}
+        hasError={Boolean(fb.error)}
+        labels={{
+          sample: t("mqbSample"),
+          invalidSample: t("mqbInvalidSample"),
+          rawCount: t("mqbRaw", { count: fb.rows.length }),
+          upload: t("mqbUpload"),
+        }}
+        style={{ animationDelay: "0ms" }}
+      />
+
+      <SectionCard
+        title={t("mqbFields")}
+        className="fb-rise"
+        style={{ animationDelay: "70ms" }}
+      >
+        <MetadataStrip
+          schema={fb.schema}
+          onChange={fb.setSchema}
           labels={{
-            sample: t("mqbSample"),
-            invalidSample: t("mqbInvalidSample"),
-            rawCount: t("mqbRaw", { count: fb.rows.length }),
-            upload: t("mqbUpload"),
+            include: t("mqbInclude", { field: "" }).trim(),
+            type: t("mqbType", { field: "" }).trim(),
           }}
-          style={{ animationDelay: "0ms" }}
         />
+      </SectionCard>
 
-        <section
-          className="fb-rise rounded-lg border bg-card"
-          style={{ animationDelay: "70ms" }}
-        >
-          <div className="border-b px-5 py-3">
-            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-              {t("mqbFields")}
-            </span>
-          </div>
-          <div className="p-4">
-            <MetadataStrip
-              schema={fb.schema}
-              onChange={fb.setSchema}
-              labels={{
-                include: t("mqbInclude", { field: "" }).trim(),
-                type: t("mqbType", { field: "" }).trim(),
-              }}
-            />
-          </div>
-        </section>
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={compiled.ok ? compiled.primary : null}
+          engineId="mongo"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.mongo-query-builder"
+        />
+      </div>
 
-        <div className="fb-rise" style={{ animationDelay: "140ms" }}>
-          <AiAssistBlock
-            schema={fb.schema}
-            canonicalJson={fb.canonicalJson}
-            compiled={compiled.ok ? compiled.primary : null}
+      <SectionCard
+        title={t("mqbFilterLogic")}
+        className="fb-rise"
+        style={{ animationDelay: "140ms" }}
+        bodyClassName="p-4"
+      >
+        <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
+          <FilterTreeEditor
+            group={fb.tree}
             engineId="mongo"
-            onApply={fb.onCanonicalChange}
-            sampleRows={fb.rows}
-            logKey="rfjs.ai.log.mongo-query-builder"
+            schema={fb.schema}
+            onChange={fb.setTree}
+            onCreateField={fb.onCreateField}
+            labels={treeLabels}
           />
         </div>
+      </SectionCard>
 
-        <section
-          className="fb-rise rounded-lg border bg-card"
-          style={{ animationDelay: "140ms" }}
-        >
-          <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-              {t("mqbFilterLogic")}
-            </span>
-          </div>
-          <div className="overflow-x-auto p-5 sm:p-6">
-            <FilterTreeEditor
-              group={fb.tree}
-              engineId="mongo"
-              schema={fb.schema}
-              onChange={fb.setTree}
-              onCreateField={fb.onCreateField}
-              labels={treeLabels}
-            />
-          </div>
-        </section>
-
-        <div className="fb-rise" style={{ animationDelay: "210ms" }}>
-          <QueryOutputPanel
-            primary={compiled.ok ? compiled.primary : null}
-            secondary={compiled.ok ? (compiled.secondary ?? null) : null}
-            canonicalJson={fb.canonicalJson}
-            onCanonicalChange={fb.onCanonicalChange}
-            labels={{
-              output: t("mqbOutput"),
-              primaryLabel: t("mqbQuery"),
-              secondaryLabel: "",
-              canonical: t("mqbCanonical"),
-              canonicalHint: t("mqbCanonicalHint"),
-              reverseError: reverseText,
-              compileError: compiled.ok
-                ? null
-                : compiled.error === "mongoNoNot"
-                  ? t("mqbNoNot")
-                  : t("mqbCompileError", { error: compiled.error }),
-              copy: t("mqbCopy"),
-            }}
-          />
-        </div>
+      <div className="fb-rise" style={{ animationDelay: "210ms" }}>
+        <QueryOutputPanel
+          primary={compiled.ok ? compiled.primary : null}
+          secondary={compiled.ok ? (compiled.secondary ?? null) : null}
+          canonicalJson={fb.canonicalJson}
+          onCanonicalChange={fb.onCanonicalChange}
+          labels={{
+            output: t("mqbOutput"),
+            primaryLabel: t("mqbQuery"),
+            secondaryLabel: "",
+            canonical: t("mqbCanonical"),
+            canonicalHint: t("mqbCanonicalHint"),
+            reverseError: reverseText,
+            compileError: compiled.ok
+              ? null
+              : compiled.error === "mongoNoNot"
+                ? t("mqbNoNot")
+                : t("mqbCompileError", { error: compiled.error }),
+            copy: t("mqbCopy"),
+          }}
+        />
       </div>
     </div>
   );

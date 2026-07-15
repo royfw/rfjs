@@ -9,9 +9,9 @@ import {
   TableHeader,
   TableRow,
 } from "@rfjs/web-ui/components/table";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
+import { SectionCard } from "@/components/shared/section-card";
 import { CanonicalEditor } from "@/tools/_filter-builder";
 
 export interface DataPanelLabels {
@@ -85,7 +85,6 @@ export function DataPanel({
   error: string | null;
   labels: DataPanelLabels;
 }) {
-  const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("matched");
 
   const counts = labels.counts
@@ -93,64 +92,53 @@ export function DataPanel({
     .replace("{matched}", String(matched.length));
 
   return (
-    <section className="rounded-lg border bg-card text-card-foreground">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-      >
-        <span className="flex items-center gap-2">
-          {open ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {labels.data}
-          </span>
-        </span>
-        <span className="font-mono text-xs text-muted-foreground">{counts}</span>
-      </button>
-
-      {open ? (
-        <div className="flex flex-col gap-3 border-t p-4">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              size="xs"
-              variant={tab === "matched" ? "default" : "outline"}
-              onClick={() => setTab("matched")}
-            >
-              {labels.matched}
-            </Button>
-            <Button
-              type="button"
-              size="xs"
-              variant={tab === "raw" ? "default" : "outline"}
-              onClick={() => setTab("raw")}
-            >
-              {labels.raw}
-            </Button>
-            <Button
-              type="button"
-              size="xs"
-              variant={tab === "json" ? "default" : "outline"}
-              onClick={() => setTab("json")}
-            >
-              {labels.json}
-            </Button>
-          </div>
-
-          {tab === "matched" ? <RowsTable rows={asRows(matched)} empty={labels.empty} /> : null}
-          {tab === "raw" ? <RowsTable rows={asRows(rows)} empty={labels.empty} /> : null}
-          {tab === "json" ? (
-            <div className="flex flex-col gap-3">
-              <CanonicalEditor
-                value={canonicalJson}
-                onChange={onCanonicalChange}
-                error={error}
-                labels={{ canonicalHint: labels.canonicalHint, copy: labels.copy }}
-              />
-            </div>
-          ) : null}
+    <SectionCard
+      title={labels.data}
+      collapsible
+      defaultOpen={false}
+      action={<span className="font-mono text-xs text-muted-foreground">{counts}</span>}
+    >
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="xs"
+            variant={tab === "matched" ? "default" : "outline"}
+            onClick={() => setTab("matched")}
+          >
+            {labels.matched}
+          </Button>
+          <Button
+            type="button"
+            size="xs"
+            variant={tab === "raw" ? "default" : "outline"}
+            onClick={() => setTab("raw")}
+          >
+            {labels.raw}
+          </Button>
+          <Button
+            type="button"
+            size="xs"
+            variant={tab === "json" ? "default" : "outline"}
+            onClick={() => setTab("json")}
+          >
+            {labels.json}
+          </Button>
         </div>
-      ) : null}
-    </section>
+
+        {tab === "matched" ? <RowsTable rows={asRows(matched)} empty={labels.empty} /> : null}
+        {tab === "raw" ? <RowsTable rows={asRows(rows)} empty={labels.empty} /> : null}
+        {tab === "json" ? (
+          <div className="flex flex-col gap-3">
+            <CanonicalEditor
+              value={canonicalJson}
+              onChange={onCanonicalChange}
+              error={error}
+              labels={{ canonicalHint: labels.canonicalHint, copy: labels.copy }}
+            />
+          </div>
+        ) : null}
+      </div>
+    </SectionCard>
   );
 }

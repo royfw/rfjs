@@ -11,13 +11,14 @@ import {
   DropdownMenuTrigger,
 } from "@rfjs/web-ui/components/dropdown-menu";
 import { Input } from "@rfjs/web-ui/components/input";
-import { Panel } from "@rfjs/web-ui/components/panel";
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { convertType, CONVERT_TYPES } from "./type-converter";
 
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
 import { ToolIntro } from "@/components/shared/tool-intro";
 import { ToolShell } from "@/tools/_shared/tool-shell";
 
@@ -29,6 +30,7 @@ export function TypeConverter() {
 
   return (
     <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("tcvEyebrow")}</ToolEyebrow>
       <ToolIntro
         storageKey="tool-intro:type-converter"
         question={t("introQuestion")}
@@ -42,7 +44,7 @@ export function TypeConverter() {
       <ToolShell
         operation="typeTransfer()"
         input={
-          <Panel title={t("input")}>
+          <SectionCard title={t("input")}>
             <div className="flex flex-col gap-2">
               <Input
                 aria-label={t("inputValue")}
@@ -71,10 +73,10 @@ export function TypeConverter() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          </Panel>
+          </SectionCard>
         }
         output={
-          <Panel
+          <SectionCard
             title={t("output")}
             action={result.ok ? <CopyButton text={result.output} label={t("copy")} /> : null}
           >
@@ -86,7 +88,7 @@ export function TypeConverter() {
             ) : (
               <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>
             )}
-          </Panel>
+          </SectionCard>
         }
       />
     </div>

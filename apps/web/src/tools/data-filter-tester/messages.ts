@@ -9,6 +9,7 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      dftEyebrow: "JSONPATH FILTER TESTER",
       dftIntroTagline: "Test @rfjs/data-filter conditions against sample data",
       dftIntroC1t: "① Write",
       dftIntroC1d: "A data-filter condition (JSONPath-style).",
@@ -26,6 +27,7 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      dftEyebrow: "JSONPath 篩選測試器",
       dftIntroTagline: "拿 @rfjs/data-filter 條件對範例資料試跑",
       dftIntroC1t: "① 撰寫",
       dftIntroC1d: "一條 data-filter 條件(JSONPath 風格)。",

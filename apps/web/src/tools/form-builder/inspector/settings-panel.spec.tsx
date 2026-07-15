@@ -34,6 +34,8 @@ describe("SettingsPanel", () => {
   it("shows a count badge on Options for a Select field with options", () => {
     const sel: Card = { ...field, component: "Select", options: [{ label: "A", value: "a" }, { label: "B", value: "b" }] };
     render(<SettingsPanel card={sel} groups={[{ id: "g1", title: "G", collapsed: false }]} onChange={() => {}} onRemove={() => {}} />);
-    expect(screen.getByRole("button", { name: /options/i }).textContent).toContain("2");
+    // The count badge sits beside (not inside) the SectionCard toggle button — assert on their shared header.
+    const header = screen.getByRole("button", { name: /options/i }).parentElement!;
+    expect(header.textContent).toContain("2");
   });
 });

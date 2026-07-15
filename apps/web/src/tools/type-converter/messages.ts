@@ -9,6 +9,7 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      tcvEyebrow: "DATA TYPE CONVERTER",
       inputValue: "Value",
       targetType: "Target type",
       tcvIntroTagline: "Convert a value between string / number / boolean / date",
@@ -26,6 +27,7 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      tcvEyebrow: "資料型別轉換器",
       inputValue: "值",
       targetType: "目標型別",
       tcvIntroTagline: "在 string / number / boolean / date 間轉換值",
