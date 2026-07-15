@@ -105,10 +105,10 @@ export function renderColumnCondition(
     return `${quotedColumn} ilike '%' || ${params.add(escapeLike(String(value)))} escape '\\'`;
   }
   if (operator === 'ieq') {
-    return `lower(${quotedColumn}) = lower(${params.add(value)})`;
+    return `lower(${quotedColumn}) = lower(${params.add(String(value))})`;
   }
   if (operator === 'ineq') {
-    return `lower(${quotedColumn}) <> lower(${params.add(value)})`;
+    return `lower(${quotedColumn}) <> lower(${params.add(String(value))})`;
   }
   if (operator === 'terms') {
     if (!Array.isArray(value) || value.length === 0) {
