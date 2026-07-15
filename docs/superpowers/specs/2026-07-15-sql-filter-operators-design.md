@@ -120,7 +120,7 @@ nullary/undefined 檢查風格）。
 - 手動驗證一個含 `%`/`_` 的 `contains` 不再誤配；`terms`/`range`/`endswith`/`iX` 產出正確 SQL。
 - 不 push、不動 primary checkout；HOLD PR 直到使用者說「PR」。
 
-## 待你確認的決策
-- **D1**：`contains`/`startswith`/`endswith` 改**大小寫敏感**（ci 交給 `iX`）—— 同意？
-- **D2**：每型別新增運算子集合（見表）—— text 是否也要 `range`？uuid 只加 `terms` 可否？
-- 型別收斂（`operator: string`→union）這次**不做**、列後續 —— 同意？
+## 已定案的決策（2026-07-15 使用者確認）
+- **D1 ✅**：`contains`/`startswith`/`endswith` 改**大小寫敏感**（`LIKE`），ci 交給新增的 `iX`（`ILIKE`）。
+- **D2 ✅**：每型別新增運算子照上表 —— text **不加** `range`；uuid 只加 `terms`；boolean 不加。
+- **型別收斂加購**（`operator: string`→union）：**這次不做**，列為獨立後續。
