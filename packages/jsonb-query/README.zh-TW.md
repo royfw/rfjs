@@ -73,6 +73,75 @@ qb.andWhere(where, params); // TypeORM QueryBuilder / knex.whereRaw(where, param
 這是 naive 的位置型 `?` 轉換做不到的。若要轉換既有的位置型結果，可使用
 底層的 `toNamedParams(result, prefix?)`。
 
+## 錯誤
+
+每個來自呼叫端輸入的問題都會丟出帶有穩定 `code` 的 `JsonbQueryError`；丟出其他型別代表內部 bug。
+
+```typescript
+import { JsonbQueryError } from '@rfjs/jsonb-query';
+
+try {
+  buildJsonbQuery('data', filter);
+} catch (e) {
+  if (e instanceof JsonbQueryError) {
+    // e.code: 'INVALID_COLUMN' | 'INVALID_DIALECT' | 'UNSUPPORTED_OPERATOR'
+    //       | 'INVALID_ELEMENT_TYPE' | 'INVALID_SCALAR_VALUE' | 'INVALID_ARRAY_VALUE'
+    //       | 'INVALID_OBJECT_VALUE' | 'EMPTY_FILTER_GROUP' | 'INVALID_PREFIX'
+    //       | 'PARAM_MISMATCH' | 'INVALID_SORT'
+  }
+}
+```
+
+## 索引
+
+| 運算子 | 有幫助的索引 |
+| --- | --- |
+| 物件 `contains`/`containsall`（`@>`）、`haskey`/`hasanykey`/`hasallkeys`（`?`/`?\|`/`?&`） | 預設 `GIN (col jsonb_ops)` |
+| `jsonpath` 方言述詞（`@?` / `@@`） | `GIN (col jsonb_path_ops)` |
+| 熱路徑上的 `legacy` 純量比較 | b-tree **expression** 索引，例如 `CREATE INDEX ON t ((data #>> '{status}'))` |
+
+`contains` / `icontains` / `startswith` / `istartswith` / `endswith` /
+`iendswith` **不**走索引（全表掃描）；大量子字串搜尋請改用 `pg_trgm` GIN 索引。
+jsonpath 的 `elemmatch` SQL-fallback 片段（物件或 `containsall` leaf）不會被
+`jsonb_path_ops` GIN 索引服務。
+
+## 排序
+
+`buildJsonbOrderBy` 把排序中繼資料轉成參數化的 `ORDER BY` 片段，重用與 `WHERE`
+建構器相同的路徑萃取與型別轉換。它**與方言無關**（排序一律萃取純量，jsonpath
+沒有排序構造），所以不接受 `dialect` 選項。用 `paramOffset` 接在 `WHERE` 之後組合：
+
+```typescript
+import { buildJsonbQuery, buildJsonbOrderBy } from '@rfjs/jsonb-query';
+
+const { where, values } = buildJsonbQuery('data', filter);
+const ob = buildJsonbOrderBy('data', [
+  { field: 'age', dataType: 'numeric', direction: 'desc', nulls: 'last' },
+  { field: 'name', dataType: 'string' }, // direction 預設 'asc'
+], { paramOffset: values.length });
+// ob.orderBy: '("data" #>> $3)::numeric desc nulls last, ("data" #>> $4) asc'
+await client.query(
+  `SELECT * FROM t WHERE ${where} ORDER BY ${ob.orderBy}`,
+  [...values, ...ob.values],
+);
+```
+
+`nulls` 可省略；省略則用 PostgreSQL 預設（`asc` → `NULLS LAST`，`desc` →
+`NULLS FIRST`）。空的 `sorts` 會回傳空字串 `orderBy`（直接省略 `ORDER BY`）。
+只有純量 `dataType` 可排序；不合法的 `dataType` / `direction` / `nulls` 會丟
+`JsonbQueryError`（code `INVALID_SORT`）。
+
+對具名綁定的查詢層（TypeORM QueryBuilder、Knex），用 `buildNamedJsonbOrderBy`
+（`:pN` 輸出）—— 即 `buildNamedJsonbQuery` 的 ORDER BY 對應版：
+
+```typescript
+const { orderBy, params } = buildNamedJsonbOrderBy('data', [
+  { field: 'age', dataType: 'numeric', direction: 'desc' },
+], { prefix: 'o' });
+// orderBy: '("data" #>> :o1)::numeric desc'   params: { o1: ['age'] }
+qb.addOrderBy(orderBy).setParameters(params);
+```
+
 ## 安全性
 
 條件的**值**與**欄位路徑**一律透過參數化處理，永遠不會插值到 SQL 中。**column** 引數是由開發者提供的識別符：系統會對其進行驗證並加上引號（`data`、`t.payload`），任何不符合純（選擇性限定）欄位參考的輸入都會被拒絕。
@@ -86,12 +155,12 @@ qb.andWhere(where, params); // TypeORM QueryBuilder / knex.whereRaw(where, param
 
 | dataType                          | operators                                                                  |
 | --------------------------------- | -------------------------------------------------------------------------- |
-| `string`                          | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `terms` |
+| `string`                          | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `terms` `icontains` `istartswith` `iendswith` `ieq` `ineq` |
 | `numeric`                         | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms`      |
 | `date`                            | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `range` `terms`      |
 | `boolean`                         | `eq` `neq` `isnull` `isnotnull`                                            |
-| `object`                          | `eq` `neq` `contains` `isnull` `isnotnull`                                 |
-| `array` + 純量 `elementType`      | 元素運算子（見下方）+ `containsall` + `isnull` `isnotnull`                 |
+| `object`                          | `eq` `neq` `contains` `isnull` `isnotnull` `haskey` `hasanykey` `hasallkeys` |
+| `array` + 純量 `elementType`      | 元素運算子（見下方，`neq` = 值不存在）+ `containsall` + `isempty` `isnotempty` + `isnull` `isnotnull` |
 | `array` + `elementType: 'object'` | `elemmatch`                                                                |
 
 `range` 接受 2 個元素的 `[lo, hi]` 陣列；`terms` 接受非空陣列。
@@ -108,6 +177,40 @@ qb.andWhere(where, params); // TypeORM QueryBuilder / knex.whereRaw(where, param
 
 物件條件在兩種方言中產生相同 SQL（SQL/JSON path 述詞無法比較非純量值），
 且 `@>` 可使用 GIN 索引。
+
+### 物件鍵存在
+
+`haskey` / `hasanykey` / `hasallkeys` 測試物件**鍵**是否存在（jsonb `?` / `?|`
+/ `?&`），不論該鍵的值 —— 與測試「值」的 `isnotnull` 不同（鍵存在但值為 JSON
+`null` 時，`haskey: true` 但 `isnotnull: false`）。三者皆可用 GIN 索引。
+
+```typescript
+{ field: 'profile', dataType: 'object', operator: 'haskey', value: 'vip' }
+//  (("data" #> $1) ? $2)              values: [['profile'], 'vip']
+{ field: 'profile', dataType: 'object', operator: 'hasanykey', value: ['vip','premium'] }
+//  (("data" #> $1) ?| $2::text[])
+{ field: 'profile', dataType: 'object', operator: 'hasallkeys', value: ['vip','level'] }
+//  (("data" #> $1) ?& $2::text[])
+```
+
+> **`?` 佔位符衝突：**這些運算子會在 SQL 裡輸出字面的 `?` / `?|` / `?&`。
+> node-postgres 用 `$N` 佔位符，所以沒問題。把 `?` 當綁定佔位符的查詢層
+> （如 Knex `whereRaw`）會誤判 —— 請改用 `buildNamedJsonbQuery`（`:pN` 輸出），
+> 或使用 `$N` 的驅動。
+
+### 不分大小寫文字
+
+`icontains` / `istartswith` / `iendswith` / `ieq` / `ineq` 以不分大小寫比對字串。
+legacy 方言對兩側做 `lower()`；jsonpath 方言用 `like_regex … flag "i"`。
+
+> 兩種方言在非 ASCII 文字上的大小寫折疊略有差異：`lower()` 依資料庫 `LC_CTYPE`，
+> jsonpath `flag "i"` 用自己的 Unicode 規則。ASCII 文字結果相同。
+
+### 陣列是否為空
+
+`isempty` / `isnotempty` 測試純量元素陣列欄位是否有零個 / 至少一個元素
+（`jsonb_array_length`）。欄位不存在或非陣列值則**兩者皆非**（兩個運算子都回
+false）。兩種方言產生相同 SQL。
 
 ### JSON 陣列（純量元素）
 

@@ -1,0 +1,78 @@
+import type { LocaleMessages } from "@/tools/types";
+
+export const messages: LocaleMessages = {
+  en: {
+    Tools: {
+      "bpmn-viewer": {
+        title: "BPMN Viewer",
+        description:
+          "Render read-only BPMN 2.0 process diagrams from XML — pick a sample, paste XML, or upload a .bpmn file, then zoom and fit.",
+      },
+    },
+    ToolUI: {
+      bpmnEyebrow: "BPMN VIEWER",
+      bpmnSample: "Sample",
+      bpmnUpload: "Upload .bpmn",
+      bpmnPasteLabel: "Paste BPMN XML",
+      bpmnApply: "Render",
+      bpmnZoomIn: "Zoom in",
+      bpmnZoomOut: "Zoom out",
+      bpmnReset: "Reset",
+      bpmnFit: "Fit",
+      bpmnErrExtension: "Unsupported file type — use .bpmn or .xml",
+      bpmnErrSize: "File too large (max 1 MB)",
+      bpmnErrEmpty: "File is empty",
+      bpmnErrImport: "Could not render this diagram — the XML may be invalid",
+      bpmnErrRead: "Could not read the file",
+      bpmnDiagramLabel: "BPMN process diagram",
+      bpmnIntroTagline: "Paste BPMN XML → interactive diagram",
+      bpmnIntroC1t: "Diagram",
+      bpmnIntroC1d: "bpmn-js renders the process; pan and zoom",
+      bpmnIntroC2t: "Samples",
+      bpmnIntroC2d: "Built-in leave-request and order-approval flows",
+      bpmnIntroC3t: "XML source",
+      bpmnIntroC3d: "Paste your own BPMN 2.0 XML to render",
+      bpmnDiagramTitle: "Diagram",
+      bpmnSourceTitle: "BPMN XML",
+      bpmnStatusSample: "sample · {name}",
+      bpmnStatusCustom: "custom XML",
+    },
+  },
+  "zh-TW": {
+    Tools: {
+      "bpmn-viewer": {
+        title: "BPMN 檢視器",
+        description:
+          "從 XML 渲染唯讀的 BPMN 2.0 流程圖 —— 選範例、貼上 XML 或上傳 .bpmn 檔,再縮放與 fit。",
+      },
+    },
+    ToolUI: {
+      bpmnEyebrow: "BPMN 檢視器",
+      bpmnSample: "範例",
+      bpmnUpload: "上傳 .bpmn",
+      bpmnPasteLabel: "貼上 BPMN XML",
+      bpmnApply: "渲染",
+      bpmnZoomIn: "放大",
+      bpmnZoomOut: "縮小",
+      bpmnReset: "重設",
+      bpmnFit: "符合畫面",
+      bpmnErrExtension: "不支援的檔案類型 —— 請用 .bpmn 或 .xml",
+      bpmnErrSize: "檔案過大(上限 1 MB)",
+      bpmnErrEmpty: "檔案是空的",
+      bpmnErrImport: "無法渲染此圖 —— XML 可能無效",
+      bpmnErrRead: "無法讀取檔案",
+      bpmnDiagramLabel: "BPMN 流程圖",
+      bpmnIntroTagline: "貼上 BPMN XML → 互動流程圖",
+      bpmnIntroC1t: "圖",
+      bpmnIntroC1d: "bpmn-js 繪製流程圖;可平移縮放",
+      bpmnIntroC2t: "範例",
+      bpmnIntroC2d: "內建請假與訂單審核範例",
+      bpmnIntroC3t: "XML 來源",
+      bpmnIntroC3d: "貼上你自己的 BPMN 2.0 XML 來檢視",
+      bpmnDiagramTitle: "圖",
+      bpmnSourceTitle: "BPMN XML",
+      bpmnStatusSample: "範例 · {name}",
+      bpmnStatusCustom: "自訂 XML",
+    },
+  },
+};

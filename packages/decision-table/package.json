@@ -1,0 +1,68 @@
+{
+  "name": "@rfjs/decision-table",
+  "version": "0.1.0",
+  "description": "DMN-style decision table over the @rfjs stack: rules are filter-builder condition trees, outputs are constants or data-expr \"=\" expressions, with first/collect hit policies",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "clean": "pnpm exec npm-run-all --parallel clean:dist clean:types",
+    "clean:types": "pnpm exec rimraf ./types",
+    "clean:dist": "pnpm exec rimraf ./dist",
+    "build": "pnpm run build:tsdown",
+    "build:tsdown": "pnpm run clean && tsdown --config-loader unrun",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "test": "pnpm run vitest:run",
+    "vitest:run": "vitest --passWithNoTests --run"
+  },
+  "keywords": [
+    "decision-table",
+    "dmn",
+    "rules",
+    "routing",
+    "filter"
+  ],
+  "author": "Roy Chuang",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/decision-table"
+  },
+  "bugs": "https://github.com/royfw/rfjs/issues",
+  "homepage": "https://github.com/royfw/rfjs/tree/main/packages/decision-table#readme",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "@rfjs/data-expr": "workspace:*",
+    "@rfjs/filter-builder": "workspace:*",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.5.1",
+    "rimraf": "^6.0.1",
+    "tsdown": "0.17.0-beta.6",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vitest": "^3.2.3"
+  }
+}

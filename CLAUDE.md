@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **rfjs** is a Turborepo monorepo that serves as a template collection for the `start-ts-by` CLI (npm package). It contains production-ready TypeScript project templates for various use cases — apps, libraries, CLIs, docs sites, ORM wrappers, and full monorepo scaffolds.
 
 The repo has three content types:
-1. **Apps** (`apps/`) — runnable demo applications (api, web, orm-app)
-2. **Packages/Libs** (`packages/`, `libs/`) — shared libraries published to npm
+1. **Apps** (`apps/`) — runnable applications: `api`, `web`, and `workbench`. Beyond demos, `web` + `workbench` + `api` + `libs/core` + `libs/db` form a real working product — a **dataset explorer** with a visual query builder (see "Workbench Stack" and "Web App" below).
+2. **Packages/Libs** (`packages/`, `libs/`) — shared libraries; the publishable ones go to npm under `@rfjs/*`, the rest are private workspace deps.
 3. **Templates** (`templates/`) — standalone project templates distributed via `start-ts-by` CLI, registered in `templates/registry.json`
 
 ## Environment
@@ -25,13 +25,16 @@ All root-level commands delegate to Turborepo. Run from repo root unless noted.
 pnpm install              # install dependencies (use --frozen-lockfile in CI)
 pnpm build                # build all apps and packages
 pnpm build:packages       # build only @rfjs/* packages
-pnpm dev                  # start all dev servers
+pnpm dev                  # start the app dev servers (apps/*); see note below
+pnpm dev -F web           # start only one app/package's dev server
 pnpm test                 # run all tests
 pnpm lint                 # lint all packages
 pnpm typecheck            # type check all packages
 pnpm format               # prettier write
 pnpm commit               # commitizen (conventional commits)
 ```
+
+`pnpm dev` runs `scripts/dev.mjs`: with no filter it scopes to the app dev servers (`--filter=./apps/*`) so the ~25 package/lib watchers don't all start at once (that trips the inotify watch limit); pass `-F`/`--filter` and it steps aside so turbo scopes to exactly what you asked (`pnpm dev -F web` → only `web`). All run with `--concurrency=22`. `pnpm dev:all` still starts every package's watcher. Dev ports: `web` → 3000, `workbench` → 3001, `api` → `PORT` (default 3000) — so set `PORT` on `api` when running it alongside `web`; `workbench` reaches `api` via its API base URL (default `http://localhost:3000`).
 
 ### Per-package commands
 
@@ -42,7 +45,7 @@ Each package/app has its own `package.json` with tasks. Common patterns:
 
 ### Testing
 
-Tests use **Vitest** across the monorepo. Each package has its own `vitest.config.mts` (unit) and `vitest.config.e2e.mts` (E2E).
+Tests use **Vitest** across the monorepo. Most testable packages have a `vitest.config.mts` (unit); a handful (e.g. `pg-toolkit`, `jsonb-query`, the ORM libs) also have a `vitest.config.e2e.mts` (E2E). The Next.js apps (`web`, `workbench`) run `vitest run` directly.
 
 ```bash
 pnpm test                 # run all tests via turbo
@@ -54,31 +57,35 @@ pnpm -F <pkg> vitest      # interactive watch mode
 ## Repository Structure
 
 ```
-apps/                     # Demo applications
-  api/                    # Fastify REST API (esbuild)
-  orm-app/                # ORM integration demo (tsdown) — consumes all 4 ORM libs
-  web/                    # Next.js web app (turbopack)
+apps/                     # Runnable applications
+  api/                    # Fastify REST API (esbuild) — serves the workbench dataset endpoints
+  web/                    # Next.js web app (port 3000) — package/tool showcase
+  workbench/              # Next.js admin app (port 3001) — dataset explorer w/ visual query builder
 
 packages/                 # Shared internal packages + publishable libs
-  data-expr/              # Safe JSON expression engine (JSONata wrapper) — npm (@rfjs/data-expr)
-  data-filter/            # In-memory filtering & mapping (object/array/elemmatch, computed `=` expressions) — npm (@rfjs/data-filter)
-  data-label/             # Compose display label strings from data paths/maps/templates — npm (@rfjs/data-label)
-  data-transform/         # Data type transformation utilities — npm (@rfjs/data-transform)
-  jsonb-query/            # PostgreSQL JSONB query builder — npm (@rfjs/jsonb-query)
-  jwt/                    # JWT sign/verify/decode helper — npm (@rfjs/jwt)
-  mongo-query/            # MongoDB query builder — npm (@rfjs/mongo-query)
-  object-utils/           # Object manipulation utilities — npm (@rfjs/object-utils)
-  pg-toolkit/             # PostgreSQL utilities — npm (@rfjs/pg-toolkit)
-  retry/                  # Retry helper with configurable delay — npm (@rfjs/retry)
-  tpl-toolkit/            # Shared config factories for project templates — npm (@rfjs/tpl-toolkit)
-  web-core/               # apps/web tool/package registry + zod schemas (@rfjs/web-core, private)
-  web-ui/                 # apps/web Tailwind tokens + shadcn components (@rfjs/web-ui, private)
+  # --- publishable @rfjs/* (npm) ---
+  data-expr/              # Safe JSON expression engine (JSONata wrapper)
+  data-filter/            # In-memory filtering & mapping (object/array/elemmatch, computed `=` expressions)
+  data-label/             # Compose display label strings from data paths/maps/templates
+  data-transform/         # Data type transformation utilities
+  jsonb-query/            # PostgreSQL JSONB WHERE/ORDER BY builder (legacy + jsonpath dialects)
+  sql-filter/             # Generic boolean filter-group → parameterized SQL, pluggable leaf renderers
+  pg-filter/              # Unified PG filter: nests column + jsonb conditions in one tree (uses sql-filter + jsonb-query)
+  filter-builder/         # Framework-agnostic canonical filter-tree: edit model, schema inference, reverse parse, compile to engines
+  mongo-query/            # MongoDB query builder
+  jwt/                    # JWT sign/verify/decode helper
+  object-utils/           # Object manipulation utilities
+  pg-toolkit/             # PostgreSQL admin utilities (seed history, DB/schema creation)
+  retry/                  # Retry helper with configurable delay
+  tpl-toolkit/            # Shared config factories for project templates
+  # --- private workspace deps ---
+  web-core/               # apps/web + workbench tool/package registry + zod schemas (@rfjs/web-core)
+  web-ui/                 # Tailwind preset + design tokens + shadcn components for web/workbench (@rfjs/web-ui)
+  filter-builder-ui/      # React filter-tree editor over @rfjs/filter-builder (@rfjs/filter-builder-ui)
 
-libs/                     # ORM wrapper libraries (private, consumed by orm-app)
-  orm-drizzle/            # Drizzle ORM wrapper
-  orm-kysely/             # Kysely ORM wrapper
-  orm-prisma/             # Prisma ORM wrapper
-  orm-typeorm/            # TypeORM wrapper
+libs/                     # Private workspace libs
+  core/                   # Workbench business logic — per-module schema/repository/usecase (@rfjs/core)
+  db/                     # Workbench Drizzle plumbing — connection, schema, migrations, seed (@rfjs/db)
 
 templates/                # Standalone project templates (start-ts-by CLI)
   apps/                   # App templates: app-esbuild, app-tsdown, fastify-*, koa-esbuild
@@ -105,6 +112,22 @@ Conventions that hold regardless of shape:
 
 When a package outgrows flat, group by **what changes together** (responsibility/sub-domain), not by technical layer.
 
+## Filter / Query-Builder Package Stack
+
+Several packages compose into one filter pipeline (they are **layered, not redundant**). The shared mental model is a **filter tree** — nested `and`/`or`/`nor`/`not` groups whose leaves are field conditions — that gets *built* in the UI and *compiled* to different execution targets.
+
+Execution engines (low level, each independently usable):
+- **`sql-filter`** — the generic core. Walks a `FilterGroup<L>` tree and emits parameterized SQL, delegating each leaf to a pluggable `renderLeaf`. Zero deps. Knows tree/logic, not what a leaf means.
+- **`jsonb-query`** — JSONB specialist. Compiles filter metadata into PG `WHERE`/`ORDER BY` over a JSONB column (`legacy` `#>>`+cast dialect or `jsonpath` for PG12+). Zero deps, standalone.
+- **`pg-filter`** — composes `sql-filter` + `jsonb-query`. A single tree mixes `target: 'column'` leaves (plain SQL columns) and `target: 'jsonb'` leaves (paths into a JSONB column); `buildPgFilter` emits unified `where`/`orderBy`/`limit`/`offset`/`values`.
+- **`data-filter`** — the in-memory engine (not SQL): evaluates the same tree shape against JS objects.
+
+Orchestration (high level):
+- **`filter-builder`** — framework-agnostic **canonical tree** with stable node IDs (`BuilderGroup`/`BuilderCondition`) for editing. Provides tree-ops (add/remove/update), schema inference from data, **reverse parse** (compiled result → tree), live in-memory match, and a registry of **engines** (`getEngine('pg-filter'|'jsonb'|'data-filter')`) that compile the tree to each target. `treeToFilterGroup` strips IDs to the shared `FilterGroupLike`; `treeToPgFilterGroup` produces a `pg-filter` group.
+- **`filter-builder-ui`** — thin React layer over `filter-builder`: `<FilterTreeEditor>` + `useFilterTree()` hook, styled with `@rfjs/web-ui`, labels-as-props. It edits/holds tree state only; compilation/execution stays in `filter-builder`. Consumed via Next.js `transpilePackages` (no build step).
+
+Rule of thumb: **edit** with `filter-builder(-ui)`, **execute** with `pg-filter`/`jsonb-query`/`sql-filter`/`data-filter`. Don't reach into an engine directly from UI code; go through `filter-builder`'s engine registry.
+
 ## Template Architecture
 
 Each template in `templates/` is a **standalone project** with its own `package.json`, `node_modules`, and build config. They are NOT part of the pnpm workspace. Templates are registered in `templates/registry.json` and consumed by the `start-ts-by` CLI.
@@ -117,13 +140,35 @@ When modifying a template, work inside the template's directory directly (e.g., 
 - **Rollup**: `lib-rollup`
 - **Rolldown**: `lib-rolldown`
 
-## API App Architecture
+## Workbench Stack (workbench → api → core → db)
 
-The `apps/api/` follows a layered Fastify architecture:
-- `src/delivery/` — HTTP layer (routes, modules)
-- `src/infrastructures/` — Fastify app setup, plugin registration, server bootstrap
-- `src/helpers/` — Fastify route helpers, pino transport config
-- `src/utils/` — Shared utilities
+The dataset explorer is a four-tier stack. **`apps/workbench` is a pure REST client — it never imports `@rfjs/core` or `@rfjs/db`**; all data flows through `apps/api`.
+
+```
+apps/workbench (Next.js)  ──fetch──▶  apps/api (Fastify)  ──▶  @rfjs/core  ──▶  @rfjs/db  ──▶  PostgreSQL
+  visual query builder        REST: /datasets,            usecase →        Drizzle conn,
+  (filter-builder-ui)         /datasets/query            repository       schema, migrate, seed
+```
+
+- **`apps/api`** — layered Fastify:
+  - `src/delivery/` — HTTP layer (routes, handlers per module, e.g. `dataset/`)
+  - `src/infrastructures/` — Fastify app/plugin/server bootstrap; `infrastructures/datasource/` wires `createDb()` → `makeDatasetRepository(db)` → usecases
+  - `src/helpers/` — route helpers, pino transport config; `src/utils/` — shared utils
+- **`libs/core` (`@rfjs/core`)** — business logic, **one folder per module** (currently `dataset`) following **schema → repository → usecase**:
+  - `schema.ts` (Zod domain + input schemas), `query-schema.ts` (validates pg-filter trees + sort)
+  - `repository.ts` — interface + `make<X>Repository(db)` factory; complex `query()` builds SQL via `@rfjs/pg-filter` and runs raw `db.$client.query()` (faster than Drizzle's builder for arbitrary filter trees), then maps rows → domain
+  - `usecase/*.ts` — curried `(deps:{repo}) => (input) => Promise<…>`, validating at the boundary. **No DB access here** — it's injected via the repo.
+- **`libs/db` (`@rfjs/db`)** — Drizzle plumbing for PostgreSQL: `createDb(connStr, schema?, useClient?)`, table defs under `src/schema/<module>/table.ts` (datasets use a `jsonb` `data` column), and `src/scripts/` for migrate/seed/`check-and-create-db|schema`. Migrations generated with `pnpm -F @rfjs/db generate` into `./drizzle/`.
+
+**Adding a module** (e.g. `reports`): table + migration in `@rfjs/db` → `schema/repository/usecase` folder in `@rfjs/core` → instantiate repo+usecases in `api/.../datasource` and add handlers/routes → (optionally) a `workbench` page that fetches the new endpoints.
+
+## Web App Architecture (`apps/web`, `apps/workbench`)
+
+Both Next.js apps are **registry-driven**. `@rfjs/web-core` holds the single source of truth: `toolRegistry` (feature "tools", each with `id`/`category`/`surface`/`status`/`relatedPackages`) and `packageRegistry` (the `@rfjs/*` catalog), all Zod-validated. Nav and routing are derived from these registries — there's no hardcoded menu.
+
+- **`apps/web`** — public showcase. Each tool lives in `src/tools/<tool>/` as a self-contained module: `index.ts` (a `ToolModule` descriptor), `ui.tsx` (`"use client"`), pure logic file, `messages.ts` (i18n), and co-located `*.spec.ts`. Tools mount dynamically by slug. A tool's `surface` is `web` (sidebar/package-tree driven) or `workbench` (standalone).
+- **`apps/workbench`** — admin surface: `[locale]` routing (next-intl, en + zh-TW), a `(shell)` layout (sidebar/topbar/command-menu, Zustand stores), PWA manifest/icons, and the `dataset-explorer` (composes `filter-builder-ui` + `pg-filter`).
+- **UI/config packages**: `@rfjs/web-ui` is the shared design system (Tailwind preset + tokens + shadcn/Radix components) consumed by both apps; `@rfjs/filter-builder-ui` is the editor component. Private `@rfjs/*` UI packages are pulled in via Next.js **`transpilePackages`** (dev-time, no build/publish step). ESLint config is currently app-local.
 
 ## CI/CD
 

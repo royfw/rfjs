@@ -1,5 +1,3 @@
-import { Seam } from "@rfjs/web-ui/components/seam";
-
 const INPUT = `{
   "user": {
     "name": "Ada",
@@ -36,17 +34,17 @@ function SpecimenPane({ tone, direction, label, code, status }: SpecimenPaneProp
       />
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
         <span
-          className={`font-mono text-[10px] font-medium uppercase tracking-[0.14em] ${
+          className={`font-mono text-[10px] font-medium uppercase tracking-wide ${
             isIntake ? "text-intake" : "text-yield"
           }`}
         >
           {direction === "before" ? `${label} ▸` : `▸ ${label}`}
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
           json
         </span>
       </div>
-      <pre className="overflow-x-auto p-3 font-mono text-xs leading-relaxed text-signal">
+      <pre className="overflow-x-auto p-3 font-mono text-xs leading-relaxed text-foreground">
         {code}
       </pre>
       <div className="mt-auto flex items-center gap-2 border-t border-border px-3 py-1.5">
@@ -63,7 +61,7 @@ function SpecimenPane({ tone, direction, label, code, status }: SpecimenPaneProp
 export function HeroSpecimen() {
   return (
     <figure className="flex flex-col gap-0">
-      <div className="flex flex-col items-stretch gap-3 lg:flex-row">
+      <div className="flex flex-col items-stretch gap-4 lg:flex-row">
         <SpecimenPane
           tone="intake"
           direction="before"
@@ -71,20 +69,6 @@ export function HeroSpecimen() {
           code={INPUT}
           status="4 nested keys"
         />
-        <div className="flex shrink-0 items-center justify-center py-1 lg:px-1 lg:py-0">
-          <Seam
-            state="current"
-            operation="flatten()"
-            orientation="horizontal"
-            className="lg:hidden"
-          />
-          <Seam
-            state="current"
-            operation="flatten()"
-            orientation="vertical"
-            className="hidden lg:flex"
-          />
-        </div>
         <SpecimenPane
           tone="yield"
           direction="after"

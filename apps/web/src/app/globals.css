@@ -1,1 +1,11 @@
 @import "@rfjs/web-ui/globals.css";
+
+/* @rfjs/filter-builder-ui, @rfjs/form-builder-ui and @rfjs/data-schema-ui ship their own Tailwind
+   classes (the filter-tree editor / the form builder + its tabs / the protocol panel) rendered here
+   via transpilePackages. Tailwind only generates CSS for classes it can find by
+   scanning source, so each package src must be an explicit @source — otherwise
+   classes unique to a package (the condition-row grid, the logic badges, or the
+   form-builder's `px-3.5` tab control) produce no CSS. */
+@source "../../../../packages/filter-builder-ui/src";
+@source "../../../../packages/form-builder-ui/src";
+@source "../../../../packages/data-schema-ui/src";

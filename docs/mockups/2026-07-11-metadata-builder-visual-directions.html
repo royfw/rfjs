@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metadata Builder 視覺方向 A/B/C — 2026-07-11</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a18; --muted: #6b6b66; --border: #e4e4e0; --card: #ffffff;
+    --input: #d4d4d0; --accent: #b8860b; --accent-soft: rgba(184,134,11,.12); --soft: #f5f5f3;
+    --code: #f4f4f2; --ok: #15803d; --info: #1d4ed8; --jsonb: #7c3aed; --jsonb-soft: rgba(124,58,237,.12);
+    --col: #0e7490; --col-soft: rgba(14,116,144,.12);
+  }
+  .dark {
+    --bg: #0d1117; --fg: #e6e6e2; --muted: #99998f; --border: #26262b; --card: #14141a;
+    --input: #3a3a40; --accent: #d4a017; --accent-soft: rgba(212,160,23,.14); --soft: #1a1a20;
+    --code: #101016; --ok: #4ade80; --info: #60a5fa; --jsonb: #a78bfa; --jsonb-soft: rgba(167,139,250,.14);
+    --col: #22d3ee; --col-soft: rgba(34,211,238,.12);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--fg); font-family: system-ui, "Noto Sans TC", sans-serif; font-size: 14px; line-height: 1.55; padding: 36px 20px 100px; }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  .toggle { position: fixed; top: 14px; right: 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; color: var(--fg); font-size: 12px; z-index: 9; }
+  h1 { font-size: 22px; } .lede { color: var(--muted); font-size: 13.5px; margin: 4px 0 8px; }
+  .dir { margin-top: 44px; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .dir > header { display: flex; align-items: baseline; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--soft); }
+  .dir > header .tag { font-family: ui-monospace, monospace; font-weight: 700; color: var(--accent); font-size: 16px; }
+  .dir > header .name { font-weight: 700; }
+  .dir > header .pitch { color: var(--muted); font-size: 12.5px; }
+  .stage { padding: 22px; }
+  .mono { font-family: ui-monospace, "SF Mono", monospace; }
+  .eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: .16em; color: var(--muted); }
+
+  /* shared atoms */
+  .in { border: 1px solid var(--input); background: transparent; color: var(--fg); border-radius: 7px; padding: 4px 9px; font-size: 12.5px; font-family: inherit; }
+  .in.mono { font-family: ui-monospace, monospace; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--input); background: var(--card); color: var(--fg); border-radius: 8px; padding: 5px 13px; font-size: 12.5px; cursor: pointer; }
+  .btn.p { background: var(--accent); color: #14141a; border-color: var(--accent); font-weight: 600; }
+  .btn.ghost { border-color: transparent; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 99px; padding: 1px 10px; font-size: 11px; font-weight: 600; font-family: ui-monospace, monospace; }
+  .pill.col { background: var(--col-soft); color: var(--col); }
+  .pill.jsonb { background: var(--jsonb-soft); color: var(--jsonb); }
+  .pill.off { background: var(--soft); color: var(--muted); border: 1px dashed var(--input); }
+  .kbadge { font-size: 10px; padding: 0 7px; border-radius: 5px; font-family: ui-monospace, monospace; }
+
+  /* ═══════════ Direction A: Bench(欄位卡片 + 右側常駐產物欄)═══════════ */
+  .a-layout { display: grid; grid-template-columns: 1fr 360px; gap: 18px; }
+  .a-field { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); border-left: 3px solid var(--col); background: var(--card); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+  .a-field.jsonb { border-left-color: var(--jsonb); }
+  .a-field.plain { border-left-color: var(--input); }
+  .a-top { display: flex; align-items: center; gap: 10px; }
+  .a-key { font-family: ui-monospace, monospace; font-weight: 700; font-size: 13.5px; }
+  .a-type { color: var(--muted); font-size: 11.5px; font-family: ui-monospace, monospace; }
+  .a-flags { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  .a-sub { display: flex; gap: 14px; align-items: center; color: var(--muted); font-size: 12px; flex-wrap: wrap; }
+  .a-sub .lab { display: flex; gap: 6px; align-items: center; }
+  .a-opts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chipopt { border: 1px solid var(--input); border-radius: 99px; padding: 1px 10px; font-size: 11px; background: var(--soft); }
+  .a-rail { border: 1px solid var(--border); border-radius: 12px; background: var(--card); overflow: hidden; align-self: start; position: sticky; top: 16px; }
+  .a-rail .rail-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .a-rail .rail-tabs span { flex: 1; text-align: center; padding: 8px 0; font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: .08em; color: var(--muted); cursor: pointer; }
+  .a-rail .rail-tabs span.on { color: var(--accent); border-bottom: 2px solid var(--accent); }
+  .a-rail pre { background: var(--code); margin: 0; padding: 12px 14px; font-size: 11px; line-height: 1.6; max-height: 300px; overflow: auto; }
+  .a-rail footer { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
+
+  /* ═══════════ Direction B: Ledger(專業資料網格)═══════════ */
+  .b-grid { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .b-grid table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .b-grid th { background: var(--soft); color: var(--muted); font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
+  .b-grid td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .b-grid tr:nth-child(even) td { background: color-mix(in srgb, var(--soft) 45%, transparent); }
+  .b-grid tr:last-child td { border-bottom: none; }
+  .b-key { font-family: ui-monospace, monospace; font-weight: 650; }
+  .b-key small { display: block; color: var(--muted); font-weight: 400; font-size: 11px; }
+  .dot { width: 7px; height: 7px; border-radius: 99px; display: inline-block; margin-right: 6px; }
+  .dot.on { background: var(--ok); } .dot.offd { background: var(--input); }
+  .b-belowbar { display: flex; align-items: center; gap: 10px; padding: 10px 4px; color: var(--muted); font-size: 12px; }
+  .b-artifacts { margin-top: 14px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .b-artifacts .bar { display: flex; align-items: center; gap: 14px; background: var(--soft); border-bottom: 1px solid var(--border); padding: 8px 14px; }
+  .b-artifacts .bar .t { font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: .1em; color: var(--muted); cursor: pointer; padding: 2px 2px; }
+  .b-artifacts .bar .t.on { color: var(--fg); border-bottom: 2px solid var(--accent); }
+  .b-artifacts .bar .spacer { margin-left: auto; display: flex; gap: 8px; }
+  .b-artifacts pre { background: var(--code); margin: 0; padding: 14px 18px; font-size: 11.5px; line-height: 1.65; max-height: 240px; overflow: auto; }
+
+  /* ═══════════ Direction C: Studio(左編輯右程式碼的分割 IDE 感)═══════════ */
+  .c-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; min-height: 360px; }
+  .c-left { padding: 16px 18px; border-right: 1px solid var(--border); }
+  .c-right { background: var(--code); display: flex; flex-direction: column; }
+  .c-right .rt { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .c-right .rt span { padding: 8px 16px; font-size: 11px; font-family: ui-monospace, monospace; color: var(--muted); border-right: 1px solid var(--border); cursor: pointer; }
+  .c-right .rt span.on { color: var(--accent); background: var(--bg); }
+  .c-right pre { margin: 0; padding: 14px 16px; font-size: 11.5px; line-height: 1.7; overflow: auto; flex: 1; }
+  .c-item { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 9px 6px; border-radius: 8px; }
+  .c-item:hover { background: var(--soft); }
+  .c-item.sel { background: var(--accent-soft); outline: 1px solid var(--accent); }
+  .c-gutter { color: var(--muted); font-family: ui-monospace, monospace; font-size: 11px; padding-top: 2px; }
+  .c-main { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .c-inspector { margin-top: 14px; border-top: 1px dashed var(--border); padding-top: 12px; }
+  .c-inspector .row { display: grid; grid-template-columns: 110px 1fr; gap: 8px 12px; align-items: center; font-size: 12.5px; padding: 3px 0; }
+  .c-inspector .row .k { color: var(--muted); font-size: 11.5px; }
+  .seg { display: inline-flex; gap: 2px; border: 1px solid var(--input); border-radius: 8px; padding: 2px; background: var(--soft); }
+  .seg span { padding: 2px 10px; border-radius: 6px; font-size: 11.5px; color: var(--muted); cursor: pointer; }
+  .seg span.on { background: var(--bg); color: var(--fg); }
+  /* syntax-ish colors */
+  .k1 { color: var(--info); } .s1 { color: var(--ok); } .p1 { color: var(--muted); }
+
+  .verdict { margin-top: 10px; padding: 10px 16px; background: var(--accent-soft); border-radius: 10px; font-size: 12.5px; }
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">☀ / ☾</button>
+<div class="wrap">
+  <h1>Metadata Builder — 視覺方向 A / B / C</h1>
+  <p class="lede">針對最弱的兩塊:欄位編輯(現況=裸 input 表格)與衍生產物(現況=兩塊 JSON 硬擠)。三個方向刻意拉開差距;結構與功能不變,只換視覺語言。</p>
+
+  <!-- ═══════════════════ A ═══════════════════ -->
+  <section class="dir">
+    <header><span class="tag">A</span><span class="name">Bench 工作台</span><span class="pitch">欄位=卡片(kind 用左緣色帶+徽章說話),產物收進右側常駐窄欄(頁籤切 meta / schema / 試篩)—— 主視線留給宣告本身</span></header>
+    <div class="stage">
+      <div class="a-layout">
+        <div>
+          <p class="eyebrow" style="margin-bottom:10px">FIELDS · 7</p>
+          <div class="a-field">
+            <div class="a-top">
+              <span class="a-key">price</span><span class="a-type">numeric · currency</span>
+              <span class="pill col">column</span>
+              <div class="a-flags"><span class="kbadge" style="background:var(--accent-soft);color:var(--accent)">sortable</span><span class="kbadge" style="background:var(--accent-soft);color:var(--accent)">filterable</span><span class="btn ghost">✕</span></div>
+            </div>
+            <div class="a-sub">
+              <span class="lab">label <input class="in" value="Price" size="8"> <input class="in" value="價格" size="6"></span>
+            </div>
+          </div>
+          <div class="a-field jsonb">
+            <div class="a-top">
+              <span class="a-key">author.name</span><span class="a-type">string</span>
+              <span class="pill jsonb">jsonb</span>
+              <div class="a-flags"><span class="kbadge" style="background:var(--accent-soft);color:var(--accent)">sortable</span><span class="kbadge" style="background:var(--accent-soft);color:var(--accent)">filterable</span><span class="btn ghost">✕</span></div>
+            </div>
+            <div class="a-sub"><span class="lab">label <input class="in" value="Author" size="8"> <input class="in" placeholder="zh-TW" size="6"></span></div>
+          </div>
+          <div class="a-field">
+            <div class="a-top">
+              <span class="a-key">status</span><span class="a-type">string · enum</span>
+              <span class="pill col">column</span>
+              <div class="a-flags"><span class="kbadge" style="background:var(--accent-soft);color:var(--accent)">filterable</span><span class="btn ghost">✕</span></div>
+            </div>
+            <div class="a-sub">
+              <span class="a-opts">
+                <span class="chipopt">draft · Draft</span><span class="chipopt">published · Published</span><span class="chipopt">archived · Archived</span><span class="chipopt" style="border-style:dashed">+ option</span>
+              </span>
+            </div>
+          </div>
+          <div class="a-field plain">
+            <div class="a-top">
+              <span class="a-key">createdAt</span><span class="a-type">date · date</span>
+              <span class="pill off">kind —</span>
+              <div class="a-flags"><span class="kbadge" style="background:var(--accent-soft);color:var(--accent)">sortable</span><span class="btn ghost">✕</span></div>
+            </div>
+          </div>
+          <button class="btn" style="margin-top:4px">+ 欄位</button>
+        </div>
+        <aside class="a-rail">
+          <div class="rail-tabs"><span class="on">META</span><span>SCHEMA</span><span>試篩</span></div>
+          <pre class="mono">{
+  <span class="k1">"fields"</span>: [
+    { <span class="k1">"key"</span>: <span class="s1">"price"</span>,
+      <span class="k1">"dataType"</span>: <span class="s1">"numeric"</span>,
+      <span class="k1">"format"</span>: <span class="s1">"currency"</span>,
+      <span class="k1">"filterable"</span>: true,
+      <span class="k1">"kind"</span>: <span class="s1">"column"</span> },
+    …
+  ],
+  <span class="k1">"request"</span>: { … }
+}</pre>
+          <footer><button class="btn">Copy</button><button class="btn">下載</button><button class="btn ghost">Reset</button></footer>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ B ═══════════════════ -->
+  <section class="dir">
+    <header><span class="tag">B</span><span class="name">Ledger 資料網格</span><span class="pitch">擁抱表格但做成專業 data-grid:斑馬紋、緊湊密度、狀態點取代 checkbox、kind 用色彩 pill;產物改為單一面板+頁籤(不再兩欄硬擠)</span></header>
+    <div class="stage">
+      <div class="b-grid">
+        <table>
+          <tr><th style="width:170px">key</th><th>label(en / zh-TW)</th><th style="width:130px">type · format</th><th style="width:70px">sortable</th><th style="width:70px">filterable</th><th style="width:100px">kind</th><th style="width:90px">options</th><th style="width:36px"></th></tr>
+          <tr>
+            <td class="b-key">price</td>
+            <td><input class="in" value="Price" size="8"> <input class="in" value="價格" size="6"></td>
+            <td class="mono" style="color:var(--muted)">numeric · currency</td>
+            <td><span class="dot on"></span></td><td><span class="dot on"></span></td>
+            <td><span class="pill col">column</span></td>
+            <td style="color:var(--muted)">—</td><td>✕</td>
+          </tr>
+          <tr>
+            <td class="b-key">author.name<small>巢狀路徑</small></td>
+            <td><input class="in" value="Author" size="8"> <input class="in" placeholder="zh-TW" size="6"></td>
+            <td class="mono" style="color:var(--muted)">string</td>
+            <td><span class="dot on"></span></td><td><span class="dot on"></span></td>
+            <td><span class="pill jsonb">jsonb</span></td>
+            <td style="color:var(--muted)">—</td><td>✕</td>
+          </tr>
+          <tr>
+            <td class="b-key">status</td>
+            <td><input class="in" value="Status" size="8"> <input class="in" placeholder="zh-TW" size="6"></td>
+            <td class="mono" style="color:var(--muted)">string</td>
+            <td><span class="dot offd"></span></td><td><span class="dot on"></span></td>
+            <td><span class="pill col">column</span></td>
+            <td><span class="kbadge" style="background:var(--accent-soft);color:var(--accent)">3 值</span></td><td>✕</td>
+          </tr>
+          <tr>
+            <td class="b-key">createdAt</td>
+            <td><input class="in" value="Created" size="8"> <input class="in" placeholder="zh-TW" size="6"></td>
+            <td class="mono" style="color:var(--muted)">date · date</td>
+            <td><span class="dot on"></span></td><td><span class="dot offd"></span></td>
+            <td><span class="pill off">—</span></td>
+            <td style="color:var(--muted)">—</td><td>✕</td>
+          </tr>
+        </table>
+      </div>
+      <div class="b-belowbar"><button class="btn">+ 欄位</button><span>7 欄 · 4 filterable · 1 未指定 kind</span></div>
+      <div class="b-artifacts">
+        <div class="bar">
+          <span class="t on">META.JSON</span><span class="t">FIELD SCHEMA</span><span class="t">試篩</span>
+          <span class="spacer"><button class="btn">Copy</button><button class="btn">下載</button><button class="btn ghost">Reset</button></span>
+        </div>
+        <pre class="mono">{
+  <span class="k1">"fields"</span>: [
+    { <span class="k1">"key"</span>: <span class="s1">"id"</span>, <span class="k1">"label"</span>: <span class="s1">"ID"</span>, <span class="k1">"dataType"</span>: <span class="s1">"string"</span>, <span class="k1">"sortable"</span>: true, <span class="k1">"kind"</span>: <span class="s1">"column"</span> },
+    { <span class="k1">"key"</span>: <span class="s1">"price"</span>, <span class="k1">"label"</span>: { <span class="k1">"en"</span>: <span class="s1">"Price"</span>, <span class="k1">"zh-TW"</span>: <span class="s1">"價格"</span> }, <span class="k1">"dataType"</span>: <span class="s1">"numeric"</span>, <span class="k1">"format"</span>: <span class="s1">"currency"</span>, … },
+    …
+  ]
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ C ═══════════════════ -->
+  <section class="dir">
+    <header><span class="tag">C</span><span class="name">Studio 分割檢視</span><span class="pitch">IDE 感:左=欄位清單(點選展開檢視器編輯),右=永遠亮著的程式碼面板(meta/schema/試篩 頁籤)—— 「編輯↔產物」的因果一眼可見</span></header>
+    <div class="stage">
+      <div class="c-layout">
+        <div class="c-left">
+          <p class="eyebrow" style="margin-bottom:8px">FIELDS</p>
+          <div class="c-item"><span class="c-gutter">1</span><div class="c-main"><span class="b-key">id</span><span class="a-type">string</span><span class="pill col">column</span></div></div>
+          <div class="c-item sel"><span class="c-gutter">2</span><div class="c-main"><span class="b-key">price</span><span class="a-type">numeric</span><span class="pill col">column</span><span class="kbadge" style="background:var(--accent-soft);color:var(--accent)">filterable</span></div></div>
+          <div class="c-item"><span class="c-gutter">3</span><div class="c-main"><span class="b-key">author.name</span><span class="a-type">string</span><span class="pill jsonb">jsonb</span></div></div>
+          <div class="c-item"><span class="c-gutter">4</span><div class="c-main"><span class="b-key">status</span><span class="a-type">enum·3</span><span class="pill col">column</span></div></div>
+          <button class="btn" style="margin-top:8px">+ 欄位</button>
+          <div class="c-inspector">
+            <p class="eyebrow" style="margin-bottom:6px">INSPECTOR · price</p>
+            <div class="row"><span class="k">label en / zh</span><span><input class="in" value="Price" size="8"> <input class="in" value="價格" size="6"></span></div>
+            <div class="row"><span class="k">dataType</span><span class="seg"><span>string</span><span class="on">numeric</span><span>date</span><span>bool</span></span></div>
+            <div class="row"><span class="k">format</span><span class="seg"><span>—</span><span>int</span><span>dec</span><span class="on">currency</span></span></div>
+            <div class="row"><span class="k">kind</span><span class="seg"><span>—</span><span class="on">column</span><span>jsonb</span></span></div>
+            <div class="row"><span class="k">flags</span><span><label><input type="checkbox" checked> sortable</label> <label style="margin-left:10px"><input type="checkbox" checked> filterable</label></span></div>
+          </div>
+        </div>
+        <div class="c-right">
+          <div class="rt"><span class="on">meta.json</span><span>schema</span><span>試篩</span><span style="margin-left:auto;border-right:0"><button class="btn" style="margin:4px">Copy</button></span></div>
+          <pre class="mono">{
+  <span class="k1">"key"</span>: <span class="s1">"price"</span>,
+  <span class="k1">"label"</span>: { <span class="k1">"en"</span>: <span class="s1">"Price"</span>, <span class="k1">"zh-TW"</span>: <span class="s1">"價格"</span> },
+  <span class="k1">"dataType"</span>: <span class="s1">"numeric"</span>,
+  <span class="k1">"format"</span>: <span class="s1">"currency"</span>,
+  <span class="k1">"sortable"</span>: true,
+  <span class="k1">"filterable"</span>: true,
+  <span class="k1">"kind"</span>: <span class="s1">"column"</span>
+}
+<span class="p1">// 選中欄位高亮對應片段;無選取時顯示整份 meta</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="verdict"><b>我的推薦:B(Ledger)</b> —— 它保住現有 DOM 結構與測試(仍是 table+inputs,改造成本最低、可直接進 #242),同時把「密度=專業」做成風格;A 最好看但重寫欄位列版面(成本中);C 最有識別度但互動模型改變(選取+檢視器,成本最高,適合當未來獨立設計器的形態)。</div>
+</div>
+</body>
+</html>

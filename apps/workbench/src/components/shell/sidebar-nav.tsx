@@ -8,7 +8,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { NAV } from "./nav-items";
 
 const linkClass =
-  "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-intake aria-[current=page]:text-signal";
+  "flex items-center gap-2 rounded-md border-l-2 border-transparent px-2 py-1.5 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-intake aria-[current=page]:border-intake aria-[current=page]:bg-accent aria-[current=page]:font-medium aria-[current=page]:text-signal [&[aria-current=page]_svg]:text-intake";
 
 export function SidebarNav({
   collapsed = false,
@@ -30,7 +30,7 @@ export function SidebarNav({
             aria-current={active ? "page" : undefined}
             title={t(key)}
             onClick={onNavigate}
-            className={linkClass}
+            className={`${linkClass} ${collapsed ? "justify-center px-0" : ""}`}
           >
             <Icon className="size-4 shrink-0" />
             {collapsed ? <span className="sr-only">{t(key)}</span> : t(key)}
@@ -41,7 +41,9 @@ export function SidebarNav({
         title={t("adminLocked")}
         aria-disabled="true"
         aria-label={t("adminLocked")}
-        className="flex cursor-not-allowed items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground/60"
+        className={`flex cursor-not-allowed items-center gap-2 rounded-md border-l-2 border-transparent px-2 py-1.5 text-sm text-muted-foreground/60 ${
+          collapsed ? "justify-center px-0" : ""
+        }`}
       >
         <Lock className="size-4 shrink-0" />
         {collapsed ? <span className="sr-only">{t("admin")}</span> : t("admin")}

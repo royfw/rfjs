@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/shared/page-header";
-import { TOOL_COMPONENTS } from "@/components/tools/registry";
+import { TOOL_COMPONENTS } from "@/tools";
 
 export function generateStaticParams() {
   return toolRegistry

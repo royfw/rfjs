@@ -1,0 +1,178 @@
+"use client";
+
+import { getEngine, treeToFilterGroup } from "@rfjs/filter-builder";
+import {
+  FilterTreeEditor,
+  type FilterTreeLabels,
+} from "@rfjs/filter-builder-ui";
+import { useTranslations } from "next-intl";
+import { useMemo } from "react";
+
+import {
+  AiAssistBlock,
+  MetadataStrip,
+  QueryOutputPanel,
+  RISE,
+  SampleCard,
+  toCompileContext,
+  useFilterBuilder,
+  useOperatorLabels,
+} from "@/tools/_filter-builder";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
+import { ToolIntro } from "@/components/shared/tool-intro";
+
+const SAMPLE = JSON.stringify(
+  [
+    { status: "open", age: 36, active: true, tags: ["ml", "math"] },
+    { status: "closed", age: 12, active: false, tags: ["games"] },
+  ],
+  null,
+  2,
+);
+
+export function EsQueryBuilder() {
+  const t = useTranslations("ToolUI");
+  const operatorLabels = useOperatorLabels();
+  const fb = useFilterBuilder({ sample: SAMPLE });
+
+  const treeLabels: FilterTreeLabels = {
+    logic: {
+      and: t("eqbLogicAnd"),
+      or: t("eqbLogicOr"),
+      nor: t("eqbLogicNor"),
+      not: t("eqbLogicNot"),
+    },
+    addCondition: t("eqbAddCondition"),
+    addGroup: t("eqbAddGroup"),
+    removeGroup: t("eqbRemoveGroup"),
+    removeCondition: t("eqbRemoveCondition"),
+    elemMatch: t("eqbElemMatch"),
+    valueHint: t("eqbValueHint"),
+    toggleGroup: t("eqbToggleGroup"),
+    collapsedConditions: t("eqbCollapsedConditions"),
+    collapsedGroups: t("eqbCollapsedGroups"),
+    collapsedEmpty: t("eqbCollapsedEmpty"),
+    operatorLabels,
+  };
+
+  const compiled = useMemo(
+    () =>
+      getEngine("es-query").compile(
+        treeToFilterGroup(fb.tree),
+        toCompileContext(fb.schema),
+      ),
+    [fb.tree, fb.schema],
+  );
+
+  const reverseText =
+    fb.reverseError === "invalidJson"
+      ? t("eqbReverseInvalidJson")
+      : fb.reverseError === "invalidShape"
+        ? t("eqbReverseInvalidShape")
+        : null;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("eqbEyebrow")}</ToolEyebrow>
+      <ToolIntro
+        storageKey="tool-intro:es-query-builder"
+        question={t("introQuestion")}
+        tagline={t("eqbIntroTagline")}
+        concepts={[
+          { term: t("eqbIntroC1t"), desc: t("eqbIntroC1d") },
+          { term: t("eqbIntroC2t"), desc: t("eqbIntroC2d") },
+          { term: t("eqbIntroC3t"), desc: t("eqbIntroC3d") },
+        ]}
+        labels={{
+          expand: t("introExpand"),
+          collapse: t("introCollapse"),
+          dismiss: t("introDismiss"),
+        }}
+      />
+      <style>{RISE}</style>
+
+      <SampleCard
+        open={fb.sampleOpen}
+        onToggle={() => fb.setSampleOpen((v) => !v)}
+        value={fb.sampleText}
+        onChange={fb.onSample}
+        onUpload={(file) => void fb.onUpload(file)}
+        hasError={Boolean(fb.error)}
+        labels={{
+          sample: t("eqbSample"),
+          invalidSample: t("eqbInvalidSample"),
+          rawCount: t("eqbRaw", { count: fb.rows.length }),
+          upload: t("eqbUpload"),
+        }}
+        style={{ animationDelay: "0ms" }}
+      />
+
+      <SectionCard
+        title={t("eqbFields")}
+        className="fb-rise"
+        style={{ animationDelay: "70ms" }}
+      >
+        <MetadataStrip
+          schema={fb.schema}
+          onChange={fb.setSchema}
+          labels={{
+            include: t("eqbInclude", { field: "" }).trim(),
+            type: t("eqbType", { field: "" }).trim(),
+          }}
+        />
+      </SectionCard>
+
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={compiled.ok ? compiled.primary : null}
+          engineId="es-query"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.es-query-builder"
+        />
+      </div>
+
+      <SectionCard
+        title={t("eqbFilterLogic")}
+        className="fb-rise"
+        style={{ animationDelay: "140ms" }}
+        bodyClassName="p-4"
+      >
+        <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
+          <FilterTreeEditor
+            group={fb.tree}
+            engineId="es-query"
+            schema={fb.schema}
+            onChange={fb.setTree}
+            onCreateField={fb.onCreateField}
+            labels={treeLabels}
+          />
+        </div>
+      </SectionCard>
+
+      <div className="fb-rise" style={{ animationDelay: "210ms" }}>
+        <QueryOutputPanel
+          primary={compiled.ok ? compiled.primary : null}
+          secondary={compiled.ok ? (compiled.secondary ?? null) : null}
+          canonicalJson={fb.canonicalJson}
+          onCanonicalChange={fb.onCanonicalChange}
+          labels={{
+            output: t("eqbOutput"),
+            primaryLabel: t("eqbQuery"),
+            secondaryLabel: "",
+            canonical: t("eqbCanonical"),
+            canonicalHint: t("eqbCanonicalHint"),
+            reverseError: reverseText,
+            compileError: compiled.ok
+              ? null
+              : t("eqbCompileError", { error: compiled.error }),
+            copy: t("eqbCopy"),
+          }}
+        />
+      </div>
+    </div>
+  );
+}

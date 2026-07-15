@@ -26,6 +26,7 @@ export const metadata: Metadata = {
   title: "rfjs — RoyFW's TypeScript utility toolkit",
   description:
     "Utilities, playgrounds, and developer data tools for JSON, objects, filters, and query workflows.",
+  icons: { apple: "/icon-192.png" },
 };
 
 export function generateStaticParams() {

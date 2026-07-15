@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rfjs 主題分派表 — 2026-07-10</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --border: #e4e4e0; --text: #1a1a18; --muted: #6b6b66;
+    --accent: #b8860b; --accent-soft: #f5ead1; --ok: #15803d; --ok-soft: #dcfce7;
+    --warn: #b45309; --warn-soft: #fef3c7; --info: #1d4ed8; --info-soft: #dbeafe;
+    --wire-bg: #fafaf8; --wire-border: #d4d4d0; --code-bg: #f4f4f2;
+  }
+  .dark {
+    --bg: #111113; --card: #1a1a1e; --border: #2e2e33; --text: #e8e8e4; --muted: #9a9a94;
+    --accent: #d4a017; --accent-soft: #3a2f14; --ok: #4ade80; --ok-soft: #14361f;
+    --warn: #fbbf24; --warn-soft: #3a2e10; --info: #60a5fa; --info-soft: #172a4a;
+    --wire-bg: #202024; --wire-border: #3a3a40; --code-bg: #232327;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Noto Sans TC", system-ui, sans-serif; line-height: 1.65; padding: 40px 20px 80px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 26px; } h2 { font-size: 18px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .toggle { position: fixed; top: 18px; right: 18px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; cursor: pointer; color: var(--text); font-size: 13px; }
+  .section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px 26px; margin-top: 22px; }
+  .who { display: inline-flex; padding: 2px 12px; border-radius: 99px; font-size: 12.5px; font-weight: 700; }
+  .w-here { background: var(--accent-soft); color: var(--accent); }
+  .w-peer { background: var(--info-soft); color: var(--info); }
+  .w-bg { background: var(--ok-soft); color: var(--ok); }
+  .w-wait { background: var(--warn-soft); color: var(--warn); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+  th, td { border-bottom: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  td.n { color: var(--muted); width: 34px; } td.s { width: 60px; } td.st { width: 200px; color: var(--muted); }
+  code { background: var(--code-bg); border-radius: 4px; padding: 1px 6px; font-family: ui-monospace, monospace; font-size: 12px; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 9px; border-radius: 99px; }
+  .b-s { background: var(--ok-soft); color: var(--ok); } .b-m { background: var(--warn-soft); color: var(--warn); } .b-l { background: var(--info-soft); color: var(--info); }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 4px; font-size: 12.5px; }
+  .flow .node { background: var(--wire-bg); border: 1px solid var(--wire-border); border-radius: 8px; padding: 6px 12px; font-family: ui-monospace, monospace; font-size: 11.5px; }
+  .flow .node.hot { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .flow .arr { color: var(--muted); }
+  .note { background: var(--accent-soft); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 14px; }
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">☀ / ☾</button>
+<div class="wrap">
+  <h1>rfjs 主題分派表</h1>
+  <p class="sub">2026-07-10 · 依「誰來做」分組;規模 S/M/L;npm 發佈依決策排最後</p>
+
+  <div class="section">
+    <h2><span class="who w-here">本 session · data/table 線</span></h2>
+    <table>
+      <tr><th>#</th><th>主題</th><th>規模</th><th>狀態</th></tr>
+      <tr><td class="n">1</td><td><b>api filter:契約 + table-builder-ui remote 篩選</b> + web 假 fetcher 示範</td><td class="s"><span class="badge b-m">M</span></td><td class="st">進行中 · 等切法 A/A′</td></tr>
+      <tr><td class="n">2</td><td><b>workbench dogfood 會合輪</b>:ConfigTable 打真 <code>/datasets/query</code> + metadata 面板組裝</td><td class="s"><span class="badge b-m">M</span></td><td class="st">排在 #1 之後</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2><span class="who w-peer">另一個 rfjs session · 可立即交辦</span></h2>
+    <table>
+      <tr><th>#</th><th>主題</th><th>規模</th><th>狀態</th></tr>
+      <tr><td class="n">3</td><td><b>BPM 第一個簽核場景 brainstorm</b>(該 session 已自薦;純討論、不碰檔案)</td><td class="s"><span class="badge b-m">M</span></td><td class="st">ready</td></tr>
+      <tr><td class="n">4</td><td><b>metadata 宣告面板</b>(kind/operators/enum 值域編輯 + 匯入匯出)—— 僅 A′ 切法時外派</td><td class="s"><span class="badge b-m">M</span></td><td class="st">等 #1 契約 PR merge</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2><span class="who w-bg">新 session 或背景 agent · 獨立 worktree 零衝突</span></h2>
+    <table>
+      <tr><th>#</th><th>主題</th><th>規模</th><th>狀態</th></tr>
+      <tr><td class="n">5</td><td><b>form result <code>mode:'table'</code> 接線</b>(#235 留的縫掛 ConfigTable)</td><td class="s"><span class="badge b-s">S</span></td><td class="st">ready</td></tr>
+      <tr><td class="n">6</td><td><b>雜項清理</b>:<code>@rfjs/db</code> lint、form-builder tsconfig、<code>.superpowers</code> 誤入版控</td><td class="s"><span class="badge b-s">S</span></td><td class="st">ready · 最適合背景 agent</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2><span class="who w-peer">hq session</span></h2>
+    <table>
+      <tr><th>#</th><th>主題</th><th>規模</th><th>狀態</th></tr>
+      <tr><td class="n">7</td><td><b>proposal-visual-aid skill 落地</b>(交接檔:scratchpad <code>hq-handoff/</code> 兩檔)</td><td class="s"><span class="badge b-s">S</span></td><td class="st">ready</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2><span class="who w-wait">等前置 · 現在不動</span></h2>
+    <table>
+      <tr><th>#</th><th>主題</th><th>規模</th><th>前置</th></tr>
+      <tr><td class="n">8</td><td><b>npm 發佈一波</b>(data-schema/table-builder/form-builder/decision-table/flow/filter-builder 首發)</td><td class="s"><span class="badge b-m">M</span></td><td class="st">#1/#5/#6 落定 + UI 套件發佈決策</td></tr>
+      <tr><td class="n">9</td><td><b>AI Wave 3:抽 <code>@rfjs/ai-assist</code></b>(AI retry/AuthStrategy)+ chat dock</td><td class="s"><span class="badge b-l">M/L</span></td><td class="st">排 npm 前後;retry 歸屬已定案</td></tr>
+      <tr><td class="n">10</td><td><b>BPM 新 repo 開工</b>(組裝 npm 積木的產品)</td><td class="s"><span class="badge b-l">L</span></td><td class="st">#3 場景定案 + #8 npm</td></tr>
+      <tr><td class="n">11</td><td>flow Phase 2 導航 runtime</td><td class="s"><span class="badge b-l">L</span></td><td class="st">#3 場景定案</td></tr>
+      <tr><td class="n">12</td><td>form Group 3 / 視覺大改(後備)</td><td class="s"><span class="badge b-l">M/L</span></td><td class="st">無硬前置 · 排隊</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>依賴主鏈</h2>
+    <div class="flow">
+      <span class="node hot">#1 api filter stack</span><span class="arr">→</span>
+      <span class="node">#2/#4 workbench dogfood + metadata 面板</span><span class="arr">→</span>
+      <span class="node">#8 npm 發佈</span><span class="arr">→</span>
+      <span class="node">#10 BPM 新 repo</span>
+    </div>
+    <div class="flow">
+      <span class="node hot">#3 BPM 場景 brainstorm(平行)</span><span class="arr">→</span>
+      <span class="node">#10 / #11 的輸入</span>
+    </div>
+    <div class="note"><b>可立即並行的最大配置:</b>本 session(#1)+ 另一 rfjs session(#3)+ 背景 agent(#6)+ hq(#7);#5 想加速可再開一條。</div>
+  </div>
+</div>
+</body>
+</html>

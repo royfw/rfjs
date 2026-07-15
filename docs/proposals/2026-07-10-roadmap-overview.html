@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rfjs 後續路線圖 — 2026-07-10</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --border: #e4e4e0; --text: #1a1a18; --muted: #6b6b66;
+    --accent: #b8860b; --accent-soft: #f5ead1; --ok: #15803d; --ok-soft: #dcfce7;
+    --warn: #b45309; --warn-soft: #fef3c7; --info: #1d4ed8; --info-soft: #dbeafe;
+    --wire-bg: #fafaf8; --wire-border: #d4d4d0; --code-bg: #f4f4f2;
+  }
+  .dark {
+    --bg: #111113; --card: #1a1a1e; --border: #2e2e33; --text: #e8e8e4; --muted: #9a9a94;
+    --accent: #d4a017; --accent-soft: #3a2f14; --ok: #4ade80; --ok-soft: #14361f;
+    --warn: #fbbf24; --warn-soft: #3a2e10; --info: #60a5fa; --info-soft: #172a4a;
+    --wire-bg: #202024; --wire-border: #3a3a40; --code-bg: #232327;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Noto Sans TC", system-ui, sans-serif; line-height: 1.65; padding: 40px 20px 80px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 26px; letter-spacing: .02em; }
+  h2 { font-size: 19px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+  h3 { font-size: 14px; margin: 18px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .toggle { position: fixed; top: 18px; right: 18px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; cursor: pointer; color: var(--text); font-size: 13px; }
+  .section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; margin-top: 26px; }
+  .num { display: inline-flex; width: 28px; height: 28px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 9px; border-radius: 99px; vertical-align: 2px; }
+  .b-s { background: var(--ok-soft); color: var(--ok); } .b-m { background: var(--warn-soft); color: var(--warn); } .b-l { background: var(--info-soft); color: var(--info); }
+  .grid { display: grid; gap: 14px; } .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 760px) { .g2, .g3 { grid-template-columns: 1fr; } }
+  .card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 13.5px; }
+  .card b { display: block; margin-bottom: 4px; font-size: 14px; }
+  .card.pick { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  ul { padding-left: 20px; font-size: 14px; } li { margin: 5px 0; }
+  code { background: var(--code-bg); border-radius: 4px; padding: 1px 6px; font-family: ui-monospace, monospace; font-size: 12.5px; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; font-size: 13px; }
+  .flow .node { background: var(--wire-bg); border: 1px solid var(--wire-border); border-radius: 8px; padding: 7px 13px; font-family: ui-monospace, monospace; font-size: 12px; }
+  .flow .node.hot { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .flow .arr { color: var(--muted); }
+  /* wireframe */
+  .wire { background: var(--wire-bg); border: 1px dashed var(--wire-border); border-radius: 10px; padding: 16px; margin-top: 10px; font-size: 12px; }
+  .wire .bar { display: flex; gap: 6px; margin-bottom: 10px; }
+  .wire .chip { border: 1px solid var(--wire-border); background: var(--card); border-radius: 6px; padding: 3px 10px; }
+  .wire .chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .wire .panel { border: 1px solid var(--wire-border); background: var(--card); border-radius: 8px; padding: 10px 12px; margin-top: 8px; }
+  .wire .row { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dotted var(--wire-border); }
+  .wire .row:last-child { border-bottom: none; }
+  .wire .cell { flex: 1; } .wire .tag { border: 1px solid var(--wire-border); border-radius: 4px; padding: 0 6px; font-size: 10.5px; color: var(--muted); }
+  .wire .tag.k { color: var(--info); border-color: var(--info); }
+  .wire table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  .wire th, .wire td { border-bottom: 1px solid var(--wire-border); padding: 4px 8px; text-align: left; font-weight: normal; }
+  .wire th { color: var(--muted); font-size: 11px; }
+  .wire .btn { display: inline-block; border: 1px solid var(--wire-border); background: var(--card); border-radius: 6px; padding: 3px 12px; }
+  .wire .btn.p { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .cols { display: grid; grid-template-columns: 300px 1fr; gap: 14px; } @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+  .dep { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+  .map { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .map .m { flex: 1 1 180px; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 13px; }
+  .map .m b { display: block; font-size: 14px; }
+  .map .m span { color: var(--muted); font-size: 12px; }
+  .hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+  .note { background: var(--accent-soft); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">☀ / ☾</button>
+<div class="wrap">
+  <h1>rfjs 後續路線圖</h1>
+  <p class="sub">2026-07-10 · #239 已合併後的五個方向 —— 各自要做什麼、產出物、規模與依賴</p>
+
+  <div class="map">
+    <div class="m"><b>① api filter 輪</b><span>進行中 · 契約→UI→dogfood</span></div>
+    <div class="m"><b>② form 線收尾</b><span>接縫已留好 · 便宜</span></div>
+    <div class="m"><b>③ flow / AI 線</b><span>等場景 · 不急</span></div>
+    <div class="m"><b>④ npm 發佈</b><span>策略項 · 為新 repo 鋪路</span></div>
+    <div class="m"><b>⑤ 雜項清理</b><span>夾帶做 · 除噪音</span></div>
+  </div>
+  <p class="dep">依賴關係:①→(④ 發佈時涵蓋新套件)→ BPM 新 repo;② 依賴 ① 已就緒的 TableConfig(已滿足);③ 等 BPM 場景。</p>
+
+  <!-- ═══════════════ ① api filter ═══════════════ -->
+  <div class="section">
+    <h2><span class="num">①</span> api filter 輪 <span class="badge b-l">L · 可拆兩個 PR</span></h2>
+    <p class="sub">目標:讓設定驅動的表格把「篩選樹」編進 <b>API 請求</b>(而不是只在記憶體過濾),並以 workbench 真 API 驗證 —— 同時長出第一個 metadata 宣告面板。</p>
+
+    <div class="flow">
+      <span class="node">FilterTreeEditor(篩選樹)</span><span class="arr">→</span>
+      <span class="node hot">meta.request.filter 編碼</span><span class="arr">→</span>
+      <span class="node">POST /datasets/query<br>{filter, sort, page, pageSize}</span><span class="arr">→</span>
+      <span class="node">{items, total}</span><span class="arr">→</span>
+      <span class="node">ConfigTable 渲染</span>
+    </div>
+
+    <h3>各層要做的事</h3>
+    <div class="grid g3">
+      <div class="card"><b>契約層 @rfjs/data-schema</b>
+        · <code>RequestMeta</code> 加 <code>filter</code> 編碼宣告(v1 先支援 <code>style:'pg-body'</code> POST JSON body)<br>
+        · <code>DataFieldMeta</code> 加 <code>kind?: 'column'|'jsonb'</code> 與 <code>operators?</code><br>
+        · meta → <code>FieldSchema[]</code> 推導函式(餵 filter-builder)</div>
+      <div class="card"><b>UI 層 @rfjs/table-builder-ui</b>
+        · remote 來源解鎖篩選(現在顯示「不支援」)<br>
+        · 樹一改 → 組請求 → 重抓 → 回第 1 頁<br>
+        · <b>controlled filter-tree props</b>(NL 助手也靠它)<br>
+        · 上一輪的紅線套件,本輪正式進場</div>
+      <div class="card"><b>Dogfood(workbench)</b>
+        · datasets 頁手刻 <code>&lt;Table&gt;</code> 換 ConfigTable<br>
+        · 手寫死的 <code>DATASET_FIELD_SCHEMA</code> 換成 metadata 宣告面板產的 meta<br>
+        · 全鏈路:宣告 → 篩選 → 真 SQL 查詢</div>
+    </div>
+
+    <h3>Wireframe:workbench datasets 頁(換裝後)</h3>
+    <div class="wire">
+      <div class="cols">
+        <div>
+          <div class="panel"><b>資源欄位宣告(metadata 面板)</b>
+            <div class="row"><span class="cell">name</span><span class="tag k">column</span><span class="tag">string</span><span class="tag">eq/like</span></div>
+            <div class="row"><span class="cell">createdAt</span><span class="tag k">column</span><span class="tag">date</span><span class="tag">gte/lte</span></div>
+            <div class="row"><span class="cell">data.status</span><span class="tag k">jsonb</span><span class="tag">string</span><span class="tag">enum: 3 值</span></div>
+            <div class="row"><span class="cell">data.price</span><span class="tag k">jsonb</span><span class="tag">numeric</span><span class="tag">gte/lte</span></div>
+            <div style="margin-top:8px"><span class="btn">+ 欄位</span> <span class="btn">匯出 meta.json</span></div>
+          </div>
+          <p style="color:var(--muted);margin-top:6px">← 這就是「metadata builder」的第一次落地:宣告 kind / operators / enum 值域(infer 推不出來的東西)</p>
+        </div>
+        <div>
+          <div class="panel"><b>Filter</b> <span style="color:var(--muted)">(FilterTreeEditor,吃左邊宣告的欄位)</span>
+            <div class="row"><span class="tag">AND</span><span class="cell">data.status eq "published"</span></div>
+            <div class="row"><span class="cell" style="padding-left:20px">createdAt gte 2026-01-01</span></div>
+          </div>
+          <div class="panel"><b>ConfigTable</b>(remote:POST /datasets/query)
+            <table><tr><th>Name</th><th>Status</th><th>Created</th><th>Price</th></tr>
+              <tr><td>Dataset A</td><td>published</td><td>Jan 2</td><td>$13.50</td></tr>
+              <tr><td>Dataset B</td><td>published</td><td>Jan 5</td><td>$24.00</td></tr></table>
+            <div style="margin-top:6px;color:var(--muted)">42 rows · Page 1 of 3 · <span class="btn">Next</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>切法選項</h3>
+    <div class="grid g3">
+      <div class="card pick"><b>A. 兩輪:先 stack 後 dogfood(推薦)</b>本輪=契約+UI+web 工具假 fetcher 示範(不需 postgres 全可測);下輪=workbench 真 API+宣告面板。PR 小、可審。</div>
+      <div class="card"><b>B. 一輪全包</b>真場景最快到手;但 10+ tasks、要本機 postgres 才能完整驗證。</div>
+      <div class="card"><b>C. 直攻 workbench</b>跳過 web 工具示範,以 workbench 頁為驗證場;showcase 端暫不更新。</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ② form 線 ═══════════════ -->
+  <div class="section">
+    <h2><span class="num">②</span> form 線收尾 <span class="badge b-s">S:mode:'table' 接線</span> <span class="badge b-m">M:Group 3</span></h2>
+    <p class="sub">#235 的 result item 已留好 <code>{ mode:'table', table: TableConfig }</code> 縫(TableConfig 名字當時就為此凍結)—— 現在 table-builder 成熟,接線很便宜。</p>
+    <div class="flow">
+      <span class="node">表單送出</span><span class="arr">→</span>
+      <span class="node">action 回應 rows</span><span class="arr">→</span>
+      <span class="node hot">result item mode:'table'</span><span class="arr">→</span>
+      <span class="node">內嵌 ConfigTable 渲染</span>
+    </div>
+    <h3>Wireframe:表單結果卡</h3>
+    <div class="wire" style="max-width:560px">
+      <div class="panel"><b>查詢訂單</b>
+        <div class="row"><span class="cell">客戶名稱 [ Grace ]</span><span class="btn p">送出</span></div>
+      </div>
+      <div class="panel"><b>結果(result item · mode: table)</b>
+        <table><tr><th>訂單</th><th>金額</th><th>狀態</th></tr>
+          <tr><td>#1024</td><td>$88.00</td><td>已出貨</td></tr>
+          <tr><td>#1025</td><td>$120.00</td><td>處理中</td></tr></table>
+      </div>
+    </div>
+    <ul style="margin-top:12px">
+      <li><b>接線(S)</b>:form-builder 工具的 result 渲染分支加 <code>mode:'table'</code> → 掛 <code>&lt;ConfigTable&gt;</code>(rows 來源);TableConfig 可由回應 rows infer→derive 或手帶</li>
+      <li><b>Group 3 殘項(M)</b>:更多欄位型別 + DatePicker + dataSource 深化(記錄在案,未排)</li>
+      <li><b>視覺/UX 大改(L)</b>:記錄為 deferred,等一次專輪</li>
+      <li><b>form 骨架 ← metadata(M)</b>:meta→FormConfig 衍生 —— metadata 的第三個消費者,做了它「獨立 metadata 工具」就有正當性</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════ ③ flow / AI ═══════════════ -->
+  <div class="section">
+    <h2><span class="num">③</span> flow / AI 線 <span class="badge b-m">M · 等場景/等閒</span></h2>
+    <div class="grid g2">
+      <div class="card"><b>flow Phase 2:導航 runtime</b>
+        flow 圖從「畫出來」變「跑起來」:節點=頁面/表單,邊=轉移條件(吃 filter tree),執行游標沿圖走。<br>
+        <span style="color:var(--muted)">已定調:等 BPM 產品的具體場景再動,不預先開發。</span></div>
+      <div class="card"><b>AI Wave 3</b>
+        · 聊天 dock(跨工具的持續對話面,取代單發 AiPanel 的長對話需求)<br>
+        · 抽出 <code>@rfjs/ai-assist</code> 套件(BYOK client + hook + AuthStrategy/OAuth 介面)—— 讓新 repo 也能用,和 ④ 發佈相扣</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ④ npm 發佈 ═══════════════ -->
+  <div class="section">
+    <h2><span class="num">④</span> npm 發佈一波 <span class="badge b-m">M · 流程已在,走一遍</span></h2>
+    <p class="sub">「rfjs → publishable engines」的落地:新引擎全都還沒上過 npm,changeset 積壓在 main。</p>
+    <div class="flow">
+      <span class="node">main(changesets 積壓)</span><span class="arr">→</span>
+      <span class="node">PR → release/stable</span><span class="arr">→</span>
+      <span class="node">GH Actions 版號+回 main PR</span><span class="arr">→</span>
+      <span class="node">merge → publish/npmjs</span><span class="arr">→</span>
+      <span class="node hot">cd-publish-npmjs.yml(手動)</span>
+    </div>
+    <ul>
+      <li>待首發引擎:<code>data-schema</code>、<code>table-builder</code>、<code>form-builder</code>、<code>decision-table</code>、flow 系列、<code>filter-builder</code>(+ 既有套件的版本 bump)</li>
+      <li>發佈前檢查:各套件 README(雙語慣例)、<code>private</code> 標記正確(UI 套件走 transpile 不發佈?或一起發 —— 要決定)、peer deps</li>
+      <li>這是 <b>BPM 新 repo 的前置</b>:新 repo 以 npm 依賴組裝,不用 workspace 連結</li>
+    </ul>
+    <div class="note">要決定的一件事:<b>UI 套件(table-builder-ui / filter-builder-ui / form-builder-ui)發不發?</b>它們目前靠 Next transpilePackages 免建置;要發佈就得補 build 設定。引擎先發、UI 後發是低風險路徑。</div>
+  </div>
+
+  <!-- ═══════════════ ⑤ 雜項 ═══════════════ -->
+  <div class="section">
+    <h2><span class="num">⑤</span> 雜項清理 <span class="badge b-s">S · 夾帶做</span></h2>
+    <ul>
+      <li><code>@rfjs/db</code> lint 壞:eslint 不在 devDeps(main 上就壞)—— 全量 <code>pnpm lint</code> 永遠紅,遮真問題,<b>建議最先修</b></li>
+      <li><code>@rfjs/form-builder</code> typecheck 在 fresh install 紅:tsconfig 缺 DOM lib(<code>File</code>/<code>AbortSignal</code>)+ zod 型別不匹配 —— 同上,全量 typecheck 永遠紅</li>
+      <li><code>.superpowers/sdd/task-3-report.md</code> 誤入版控 → 移除 + 補 <code>.gitignore</code></li>
+      <li>deploy:<code>deploy/prod</code> 未接、Helm overlays 未補(等真的要部署再說)</li>
+    </ul>
+  </div>
+
+  <p class="sub" style="margin-top:26px">建議順序:⑤ 前兩項(夾在 ① 第一個 task)→ ①(A 案兩輪)→ ② mode:'table' 接線 → ④ npm 首發 → 之後分岔:BPM 新 repo vs form Group 3。</p>
+</div>
+</body>
+</html>

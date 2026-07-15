@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "private": true,
   "scripts": {
@@ -10,19 +10,43 @@
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
     "test": "vitest run",
-    "vitest:run": "vitest run"
+    "vitest:run": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@rfjs/ai-assist": "workspace:*",
+    "@rfjs/ai-assist-ui": "workspace:*",
+    "@rfjs/bpmn-ui": "workspace:*",
+    "@rfjs/decision-table": "workspace:*",
+    "@rfjs/filter-builder": "workspace:*",
+    "@rfjs/filter-builder-ui": "workspace:*",
+    "@rfjs/flow-core": "workspace:*",
+    "@rfjs/form-builder": "workspace:*",
+    "@rfjs/form-builder-ui": "workspace:*",
+    "@rfjs/data-filter": "workspace:*",
+    "@rfjs/data-schema": "workspace:*",
+    "@rfjs/data-schema-ui": "workspace:*",
+    "@rfjs/es-client": "workspace:*",
+    "@rfjs/es-query": "workspace:*",
+    "@rfjs/pg-filter": "workspace:*",
     "@rfjs/data-transform": "workspace:*",
+    "@rfjs/jsonb-query": "workspace:*",
+    "@rfjs/jwt": "workspace:*",
+    "@rfjs/mongo-query": "workspace:*",
     "@rfjs/object-utils": "workspace:*",
+    "@rfjs/table-builder": "workspace:*",
+    "@rfjs/table-builder-ui": "workspace:*",
     "@rfjs/web-core": "workspace:*",
     "@rfjs/web-ui": "workspace:*",
+    "@xyflow/react": "^12.11.1",
     "lucide-react": "^1.17.0",
     "next": "^16.2.9",
     "next-intl": "^4.13.0",
     "next-themes": "^0.4.6",
+    "papaparse": "^5.4.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "zod": "^4.0.0",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
@@ -31,7 +55,9 @@
     "@tailwindcss/postcss": "^4.3.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^25.9.3",
+    "@types/papaparse": "^5.3.14",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "eslint": "^9.20.1",
@@ -44,6 +70,7 @@
     "tailwindcss": "^4.3.0",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.61.0",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "@playwright/test": "^1.49.0"
   }
 }

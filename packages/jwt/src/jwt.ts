@@ -2,6 +2,7 @@ import {
   sign,
   verify,
   decode,
+  Jwt as DecodedJwt,
   JwtPayload,
   VerifyErrors,
   SignOptions,
@@ -76,6 +77,15 @@ export class Jwt {
 
   static initial(secret: Secret, option?: SignOptions): Jwt {
     return new Jwt(secret, option);
+  }
+
+  /**
+   * Full decode (header + payload + signature) WITHOUT verifying the signature.
+   * Static because decoding needs no secret. Returns `null` for a malformed
+   * token (`jsonwebtoken.decode` returns null rather than throwing).
+   */
+  static decodeComplete(token: string): DecodedJwt | null {
+    return decode(token, { complete: true });
   }
 
   createToken(

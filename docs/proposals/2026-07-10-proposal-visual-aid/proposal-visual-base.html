@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{標題}} — {{日期}}</title>
+<style>
+  /* ===== house tokens — 不要改這一段,只改內容 ===== */
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --border: #e4e4e0; --text: #1a1a18; --muted: #6b6b66;
+    --accent: #b8860b; --accent-soft: #f5ead1; --ok: #15803d; --ok-soft: #dcfce7;
+    --warn: #b45309; --warn-soft: #fef3c7; --info: #1d4ed8; --info-soft: #dbeafe;
+    --wire-bg: #fafaf8; --wire-border: #d4d4d0; --code-bg: #f4f4f2;
+  }
+  .dark {
+    --bg: #111113; --card: #1a1a1e; --border: #2e2e33; --text: #e8e8e4; --muted: #9a9a94;
+    --accent: #d4a017; --accent-soft: #3a2f14; --ok: #4ade80; --ok-soft: #14361f;
+    --warn: #fbbf24; --warn-soft: #3a2e10; --info: #60a5fa; --info-soft: #172a4a;
+    --wire-bg: #202024; --wire-border: #3a3a40; --code-bg: #232327;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Noto Sans TC", system-ui, sans-serif; line-height: 1.65; padding: 40px 20px 80px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 26px; letter-spacing: .02em; }
+  h2 { font-size: 19px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+  h3 { font-size: 14px; margin: 18px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .toggle { position: fixed; top: 18px; right: 18px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; cursor: pointer; color: var(--text); font-size: 13px; }
+  .section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; margin-top: 26px; }
+  .num { display: inline-flex; width: 28px; height: 28px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 9px; border-radius: 99px; vertical-align: 2px; }
+  .b-s { background: var(--ok-soft); color: var(--ok); } .b-m { background: var(--warn-soft); color: var(--warn); } .b-l { background: var(--info-soft); color: var(--info); }
+  .who { display: inline-flex; padding: 2px 12px; border-radius: 99px; font-size: 12.5px; font-weight: 700; }
+  .w-here { background: var(--accent-soft); color: var(--accent); }
+  .w-peer { background: var(--info-soft); color: var(--info); }
+  .w-bg { background: var(--ok-soft); color: var(--ok); }
+  .w-wait { background: var(--warn-soft); color: var(--warn); }
+  .grid { display: grid; gap: 14px; } .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 760px) { .g2, .g3 { grid-template-columns: 1fr; } }
+  .card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 13.5px; }
+  .card b { display: block; margin-bottom: 4px; font-size: 14px; }
+  .card.pick { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  ul { padding-left: 20px; font-size: 14px; } li { margin: 5px 0; }
+  code { background: var(--code-bg); border-radius: 4px; padding: 1px 6px; font-family: ui-monospace, monospace; font-size: 12.5px; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; font-size: 13px; }
+  .flow .node { background: var(--wire-bg); border: 1px solid var(--wire-border); border-radius: 8px; padding: 7px 13px; font-family: ui-monospace, monospace; font-size: 12px; }
+  .flow .node.hot { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .flow .arr { color: var(--muted); }
+  /* wireframe kit */
+  .wire { background: var(--wire-bg); border: 1px dashed var(--wire-border); border-radius: 10px; padding: 16px; margin-top: 10px; font-size: 12px; }
+  .wire .bar { display: flex; gap: 6px; margin-bottom: 10px; }
+  .wire .chip { border: 1px solid var(--wire-border); background: var(--card); border-radius: 6px; padding: 3px 10px; }
+  .wire .chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .wire .panel { border: 1px solid var(--wire-border); background: var(--card); border-radius: 8px; padding: 10px 12px; margin-top: 8px; }
+  .wire .row { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dotted var(--wire-border); }
+  .wire .row:last-child { border-bottom: none; }
+  .wire .cell { flex: 1; } .wire .tag { border: 1px solid var(--wire-border); border-radius: 4px; padding: 0 6px; font-size: 10.5px; color: var(--muted); }
+  .wire .tag.k { color: var(--info); border-color: var(--info); }
+  .wire table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  .wire th, .wire td { border-bottom: 1px solid var(--wire-border); padding: 4px 8px; text-align: left; font-weight: normal; }
+  .wire th { color: var(--muted); font-size: 11px; }
+  .wire .btn { display: inline-block; border: 1px solid var(--wire-border); background: var(--card); border-radius: 6px; padding: 3px 12px; }
+  .wire .btn.p { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .cols { display: grid; grid-template-columns: 300px 1fr; gap: 14px; } @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+  .dep { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+  .map { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .map .m { flex: 1 1 180px; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 13px; }
+  .map .m b { display: block; font-size: 14px; }
+  .map .m span { color: var(--muted); font-size: 12px; }
+  .hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+  .note { background: var(--accent-soft); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">☀ / ☾</button>
+<div class="wrap">
+  <h1>{{標題}}</h1>
+  <p class="sub">{{日期}} · {{一句話說明這份示意在回答什麼}}</p>
+
+  <!-- 總覽卡列(可選) -->
+  <div class="map">
+    <div class="m"><b>{{項目}}</b><span>{{狀態/一句話}}</span></div>
+  </div>
+
+  <!-- 每個方案/方向一個 section -->
+  <div class="section">
+    <h2><span class="num">①</span> {{方案名}} <span class="badge b-m">M</span></h2>
+    <p class="sub">{{目標一句話}}</p>
+
+    <div class="flow">
+      <span class="node">{{輸入}}</span><span class="arr">→</span>
+      <span class="node hot">{{本次改動的關鍵}}</span><span class="arr">→</span>
+      <span class="node">{{輸出}}</span>
+    </div>
+
+    <h3>選項比較</h3>
+    <div class="grid g3">
+      <div class="card pick"><b>A. {{推薦項}}(推薦)</b>{{理由}}</div>
+      <div class="card"><b>B. {{替代}}</b>{{取捨}}</div>
+    </div>
+
+    <!-- 佈局是討論對象時才用 wireframe -->
+    <div class="wire">
+      <div class="panel"><b>{{面板名}}</b>
+        <div class="row"><span class="cell">{{內容}}</span><span class="tag k">{{標記}}</span></div>
+        <div style="margin-top:8px"><span class="btn p">{{主按鈕}}</span> <span class="btn">{{次按鈕}}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="sub" style="margin-top:26px">{{建議順序 / 待決點}}</p>
+</div>
+</body>
+</html>

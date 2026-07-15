@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<title>form-builder result item — mockup</title>
+<style>
+  :root {
+    --bg: #f8f9fb; --card: #ffffff; --border: #e4e6eb; --fg: #1a1d24;
+    --muted: #6b7280; --muted-bg: #f3f4f6; --accent: #5b8cff; --err: #dc2626;
+    --chip: #eef2ff;
+  }
+  .dark {
+    --bg: #0e1116; --card: #161a22; --border: #262b36; --fg: #e6e8ee;
+    --muted: #8b93a3; --muted-bg: #1d222c; --accent: #6d9aff; --err: #f87171;
+    --chip: #1e2637;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { background: var(--bg); }
+  body { background: var(--bg); color: var(--fg); font: 14px/1.5 ui-sans-serif, system-ui, "Noto Sans TC", sans-serif; padding: 32px; transition: background .2s; }
+  h1 { font-size: 18px; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 12px; margin-bottom: 24px; }
+  .toggle { position: fixed; top: 24px; right: 24px; padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--fg); cursor: pointer; font-size: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; max-width: 1200px; }
+  .panel { border: 1px solid var(--border); border-radius: 12px; background: var(--card); overflow: hidden; }
+  .panel > header { padding: 8px 14px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+  .panel > header .mode { background: var(--chip); color: var(--accent); border-radius: 99px; padding: 1px 8px; font-size: 10px; letter-spacing: 0; text-transform: none; }
+  .panel > .body { padding: 14px; }
+
+  /* --- result: empty / loading / error --- */
+  .state { display: flex; align-items: center; justify-content: center; min-height: 96px; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); font-size: 13px; gap: 8px; background: color-mix(in srgb, var(--muted-bg) 40%, transparent); }
+  .state.error { color: var(--err); border-color: color-mix(in srgb, var(--err) 40%, transparent); }
+  .spin { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: r 1s linear infinite; }
+  @keyframes r { to { transform: rotate(360deg); } }
+
+  /* --- card mode --- */
+  .kv-card { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: color-mix(in srgb, var(--muted-bg) 30%, transparent); }
+  .kv-card + .kv-card { margin-top: 8px; }
+  .kv { display: flex; gap: 12px; font-size: 13px; }
+  .kv .k { flex: 0 0 96px; color: var(--muted); font-family: ui-monospace, monospace; font-size: 12px; padding-top: 1px; }
+  .kv .v { flex: 1; min-width: 0; word-break: break-word; }
+  .kv .v.num { font-variant-numeric: tabular-nums; }
+  .kv .v.obj { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .more { margin-top: 10px; text-align: center; font-size: 12px; color: var(--muted); padding: 6px; border: 1px dashed var(--border); border-radius: 8px; }
+
+  /* --- json mode --- */
+  pre.json { background: var(--muted-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font: 11.5px/1.6 ui-monospace, monospace; overflow: auto; max-height: 260px; color: var(--fg); }
+
+  /* --- table placeholder --- */
+  .placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 96px; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); font-size: 12px; gap: 4px; }
+  .placeholder b { font-size: 13px; color: var(--fg); opacity: .7; }
+
+  .note { max-width: 1200px; margin-top: 24px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">切換 dark</button>
+<h1>result item — 狀態 × 模式</h1>
+<p class="sub">form-builder 查詢型表單:api 按鈕回應的展示區。每格 = 一個 result item 的一種狀態。</p>
+
+<div class="grid">
+
+  <div class="panel">
+    <header>空狀態(尚未查詢)<span class="mode">card</span></header>
+    <div class="body"><div class="state">No result yet</div></div>
+  </div>
+
+  <div class="panel">
+    <header>Loading(綁定按鈕 pending)<span class="mode">card</span></header>
+    <div class="body"><div class="state"><span class="spin"></span> Loading…</div></div>
+  </div>
+
+  <div class="panel">
+    <header>錯誤(api 失敗且無舊結果)<span class="mode">card</span></header>
+    <div class="body"><div class="state error">Request failed</div></div>
+  </div>
+
+  <div class="panel">
+    <header>card — 物件(單筆)<span class="mode">card · dataPath: received.data</span></header>
+    <div class="body">
+      <div class="kv-card">
+        <div class="kv"><span class="k">name</span><span class="v">王小明</span></div>
+        <div class="kv"><span class="k">email</span><span class="v">ming@example.com</span></div>
+        <div class="kv"><span class="k">days</span><span class="v num">3</span></div>
+        <div class="kv"><span class="k">approved</span><span class="v">true</span></div>
+        <div class="kv"><span class="k">detail</span><span class="v obj">{"dept":"HR","level":2}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <header>card — 陣列(maxItems 截斷)<span class="mode">card · dataPath: data.items</span></header>
+    <div class="body">
+      <div class="kv-card">
+        <div class="kv"><span class="k">id</span><span class="v num">1001</span></div>
+        <div class="kv"><span class="k">applicant</span><span class="v">王小明</span></div>
+        <div class="kv"><span class="k">status</span><span class="v">approved</span></div>
+      </div>
+      <div class="kv-card">
+        <div class="kv"><span class="k">id</span><span class="v num">1002</span></div>
+        <div class="kv"><span class="k">applicant</span><span class="v">林美慧</span></div>
+        <div class="kv"><span class="k">status</span><span class="v">pending</span></div>
+      </div>
+      <div class="kv-card">
+        <div class="kv"><span class="k">id</span><span class="v num">1003</span></div>
+        <div class="kv"><span class="k">applicant</span><span class="v">陳建宏</span></div>
+        <div class="kv"><span class="k">status</span><span class="v">rejected</span></div>
+      </div>
+      <div class="more">+ 7 more</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <header>json 模式<span class="mode">json</span></header>
+    <div class="body">
+<pre class="json">{
+  "echoedAt": "2026-07-08T10:32:11.204Z",
+  "received": {
+    "data": { "keyword": "王", "days": 3 },
+    "meta": {
+      "formId": "leave-form",
+      "action": { "type": "api" },
+      "valid": true
+    }
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div class="panel">
+    <header>table 模式(v1 占位)<span class="mode">table</span></header>
+    <div class="body">
+      <div class="placeholder"><b>Table view</b><span>pending @rfjs/table-builder</span></div>
+    </div>
+  </div>
+
+</div>
+
+<p class="note">
+  規則:card 值為非 scalar → 單行 monospace 截斷;陣列超過 maxItems(預設 10)→「+N more」;
+  dataPath 取不到 → 空狀態;綁定按鈕被刪 → 空狀態。樣式對齊 web-ui tokens(實作時用實際 CSS 變數)。
+</p>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
   "name": "workbench",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "private": true,
   "scripts": {
@@ -13,6 +13,11 @@
     "vitest:run": "vitest run"
   },
   "dependencies": {
+    "@rfjs/filter-builder": "workspace:*",
+    "@rfjs/filter-builder-ui": "workspace:*",
+    "@rfjs/form-builder": "workspace:*",
+    "@rfjs/form-builder-ui": "workspace:*",
+    "@rfjs/pg-filter": "workspace:*",
     "@rfjs/web-core": "workspace:*",
     "@rfjs/web-ui": "workspace:*",
     "cmdk": "^1.1.1",

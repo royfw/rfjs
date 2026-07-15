@@ -2,8 +2,7 @@ import { packageRegistry, toolRegistry } from "@rfjs/web-core";
 import { describe, expect, it } from "vitest";
 
 import { packageSlug } from "./i18n-content";
-import en from "../messages/en.json";
-import zhTW from "../messages/zh-TW.json";
+import { assembleMessages } from "../i18n/messages";
 
 type Catalog = {
   Tools?: Record<string, { title?: string; description?: string } | undefined>;
@@ -11,7 +10,10 @@ type Catalog = {
 };
 
 describe("registry content keys exist in every catalog", () => {
-  const catalogs: Record<string, Catalog> = { en, "zh-TW": zhTW };
+  const catalogs: Record<string, Catalog> = {
+    en: assembleMessages("en") as Catalog,
+    "zh-TW": assembleMessages("zh-TW") as Catalog,
+  };
 
   it("every tool id has title + description in both locales", () => {
     for (const [loc, msg] of Object.entries(catalogs)) {
