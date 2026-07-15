@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/ai-assist",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "BYOK edit-time AI capability layer (OpenAI-compatible): settings, client (complete + SSE stream), auth strategies, storage adapter, server proxy handler, interaction log — isomorphic, framework-free",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -14,7 +14,9 @@
   },
   "sideEffects": false,
   "private": false,
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "clean": "pnpm exec npm-run-all --parallel clean:dist clean:types",
     "clean:types": "pnpm exec rimraf ./types",
@@ -28,13 +30,30 @@
     "test": "pnpm run vitest:run",
     "vitest:run": "vitest --passWithNoTests --run"
   },
-  "keywords": ["ai", "byok", "openai-compatible", "llm", "sse", "streaming", "litellm", "ollama"],
+  "keywords": [
+    "ai",
+    "byok",
+    "openai-compatible",
+    "llm",
+    "sse",
+    "streaming",
+    "litellm",
+    "ollama"
+  ],
   "author": "Roy Chuang",
   "license": "ISC",
-  "repository": { "type": "git", "url": "git+https://github.com/royfw/rfjs.git", "directory": "packages/ai-assist" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royfw/rfjs.git",
+    "directory": "packages/ai-assist"
+  },
   "bugs": "https://github.com/royfw/rfjs/issues",
   "homepage": "https://github.com/royfw/rfjs/tree/main/packages/ai-assist#readme",
-  "files": ["dist", "README.md", "README.zh-TW.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "README.zh-TW.md"
+  ],
   "devDependencies": {
     "@eslint/js": "^9.20.0",
     "eslint": "^9.20.1",

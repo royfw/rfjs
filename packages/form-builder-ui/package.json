@@ -1,10 +1,12 @@
 {
   "name": "@rfjs/form-builder-ui",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Config-driven form renderer (React) over @rfjs/form-builder; consumed via transpilePackages",
   "type": "module",
   "private": true,
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",

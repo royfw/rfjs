@@ -1,5 +1,11 @@
 # @rfjs/jwt
 
+## 0.2.0
+
+### Minor Changes
+
+- 029af65: Add `Jwt.decodeComplete(token)` — a static, no-secret full decode returning `{ header, payload, signature } | null` (wraps `jsonwebtoken.decode` with `{ complete: true }`).
+
 ## 0.1.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/es-client",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Elasticsearch / OpenSearch execution layer — client-agnostic search, pagination, highlight over @rfjs/es-query",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
