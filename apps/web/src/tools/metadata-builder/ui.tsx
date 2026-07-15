@@ -15,6 +15,8 @@ import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
 import { buildMetaAskPrompt, buildNlMetaPrompt, parseNlMetaResponse } from "./ai-nl-meta";
 import { ToolIntro } from "@/components/shared/tool-intro";
+import { ToolTabs } from "@/components/shared/tool-tabs";
+import { SectionCard } from "@/components/shared/section-card";
 
 const STORAGE_KEY = "rfjs.metadata-builder.meta";
 const CODE_OPEN_KEY = "rfjs.metadata-builder.code-open";
@@ -298,42 +300,26 @@ export function MetadataBuilderTool() {
         ]}
       />
 
-      {/* 一塊一塊的縱向節奏(比照 form-builder):Editor 區塊卡在上、code panel 區塊卡在下,
-          兩塊同語言 —— 頁籤都做在卡片標題列(soft 底、active 金色底線)。 */}
-      <div className="min-w-0 overflow-hidden rounded-md border">
-        <div className="flex items-stretch border-b bg-muted/30">
-          {TABS.map((tabItem) => (
-            <button
-              key={tabItem.id}
-              type="button"
-              onClick={() => setTab(tabItem.id)}
-              aria-selected={tab === tabItem.id}
-              className={`px-4 py-2 text-[13px] font-medium transition-colors ${
-                tab === tabItem.id
-                  ? "bg-card font-semibold text-primary shadow-[inset_0_-2px_0_0_hsl(var(--primary))]"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tabItem.label}
-            </button>
-          ))}
-        </div>
-        <div className="p-4">
-          {tab === "fields" && (
-            <FieldsPanel
-              rows={rows}
-              onChange={handleFieldsChange}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              labels={{ ...fieldsLabels, fieldSummary }}
-            />
-          )}
-          {tab === "protocol" && (
-            <ProtocolPanel request={meta.request} response={meta.response} onChange={handleProtocolChange} labels={protocolLabels} />
-          )}
-          {tab === "import" && <ImportPanel onMeta={handleImportMeta} onFields={handleImportFields} labels={importLabels} />}
-        </div>
-      </div>
+      {/* Editor: a top-level ToolTabs bar (Fields / Protocol / Import) chooses the view,
+          the active panel sits in a titleless studio card below, and the code panel stays
+          persistent underneath — the same tab↔output relationship as table-builder (tabs on
+          top, output card always below). The code panel keeps its own in-card sub-tabs. */}
+      <ToolTabs tabs={TABS} active={tab} onChange={(id) => setTab(id as Tab)} />
+      <SectionCard>
+        {tab === "fields" && (
+          <FieldsPanel
+            rows={rows}
+            onChange={handleFieldsChange}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            labels={{ ...fieldsLabels, fieldSummary }}
+          />
+        )}
+        {tab === "protocol" && (
+          <ProtocolPanel request={meta.request} response={meta.response} onChange={handleProtocolChange} labels={protocolLabels} />
+        )}
+        {tab === "import" && <ImportPanel onMeta={handleImportMeta} onFields={handleImportFields} labels={importLabels} />}
+      </SectionCard>
 
       <div className="min-w-0">
         {codeOpen ? (
