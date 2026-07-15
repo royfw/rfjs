@@ -8,9 +8,12 @@ describe("sqlFilterEngine.operators", () => {
   it("offers text ops (incl. contains/startswith) for string columns", () => {
     const ops = sqlFilterEngine.operators("string").map((o) => o.op);
     expect(ops).toEqual(
-      expect.arrayContaining(["eq", "neq", "contains", "startswith", "gt", "lt", "isnull"]),
+      expect.arrayContaining([
+        "eq", "neq", "contains", "startswith", "gt", "lt", "isnull",
+        "endswith", "icontains", "ieq",
+      ]),
     );
-    expect(ops).not.toContain("terms"); // sql-filter column layer has no IN list
+    expect(ops).toContain("terms"); // text columns now offer terms (= ANY)
   });
 
   it("offers comparison ops for numeric/date columns", () => {
