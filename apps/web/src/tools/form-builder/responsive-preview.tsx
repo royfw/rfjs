@@ -21,7 +21,10 @@ export interface ResponsivePreviewProps {
 
 const MOBILE_WIDTH = 375;
 const TABLET_WIDTH = 768;
-const DEFAULT_MAX = 1280;
+/** The Desktop preset width; also the default `max`. Exported so consumers can seed a
+ *  width state that lands exactly on the Desktop preset (keeps it aria-pressed). */
+export const DESKTOP_WIDTH = 1280;
+const DEFAULT_MAX = DESKTOP_WIDTH;
 const DEFAULT_MIN = 320;
 
 export function ResponsivePreview({

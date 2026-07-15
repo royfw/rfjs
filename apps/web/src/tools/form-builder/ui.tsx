@@ -39,7 +39,7 @@ import { SAMPLE_CONFIG, sampleUploader, sampleFetcher } from "./sample";
 import { resolveCards, moveItem } from "./layout-grid";
 import { SettingsPanel } from "./inspector/settings-panel";
 import { Section } from "./inspector/section";
-import { ResponsivePreview } from "./responsive-preview";
+import { ResponsivePreview, DESKTOP_WIDTH } from "./responsive-preview";
 import { SubmissionPanel } from "./submission-panel";
 import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
 import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
@@ -224,7 +224,7 @@ export function FormBuilderTool() {
   // the action payload instead of leaving the user to find the toggle themselves.
   const [actionSeen, setActionSeen] = React.useState(false);
   const [previewW, setPreviewW] = React.useState(1100);
-  const [canvasW, setCanvasW] = React.useState(390);
+  const [canvasW, setCanvasW] = React.useState(DESKTOP_WIDTH); // Canvas-mode LIVE PREVIEW defaults to Desktop
   const [copied, setCopied] = React.useState(false);
   const [dropGroup, setDropGroup] = React.useState<string | null>(null);
   const bodyRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
