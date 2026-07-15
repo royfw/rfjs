@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { emptyFlow, flowDocSchema, type FlowDoc } from "@rfjs/flow-core";
+
 import { toReactFlow, toFlowDoc, newNode, nextNodeId, defaultConfig, findFreePosition } from "./model";
-import { emptyFlow, flowDocSchema, type FlowDoc } from "./schema";
 
 describe("nextNodeId", () => {
   it("starts at 1 on an empty canvas", () => {

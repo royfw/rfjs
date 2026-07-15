@@ -498,3 +498,116 @@ describe('FormConfig responsive', () => {
     expect(formConfigSchema.safeParse({ version: 1, sections: [{ id: 's', title: 'S', rows: [] }] }).success).toBe(true);
   });
 });
+
+describe('button items', () => {
+  const base = { version: 1, sections: [{ id: 's1', rows: [{ id: 'r1', items: [] as unknown[] }] }] };
+  const withItem = (item: unknown) => ({ ...base, sections: [{ id: 's1', rows: [{ id: 'r1', items: [item] }] }] });
+
+  it('accepts each action variant', () => {
+    const actions = [
+      { type: 'submit' },
+      { type: 'reset' },
+      { type: 'clear', fields: ['a'] },
+      { type: 'custom', name: 'save-draft' },
+      { type: 'api', url: '/x', method: 'PATCH', fields: ['a'], responseMap: { 'r.total': 'total' }, messages: { success: 'ok', error: { en: 'no', 'zh-TW': '失敗' } } },
+    ];
+    for (const action of actions) {
+      const r = formConfigSchema.safeParse(withItem({ id: 'b1', kind: 'button', label: 'Go', action }));
+      expect(r.success, JSON.stringify(action)).toBe(true);
+    }
+  });
+
+  it('rejects invalid buttons: clear w/o fields, custom empty name, api w/o url, unknown type', () => {
+    const bad = [
+      { type: 'clear', fields: [] },
+      { type: 'custom', name: '' },
+      { type: 'api' },
+      { type: 'nope' },
+    ];
+    for (const action of bad) {
+      const r = formConfigSchema.safeParse(withItem({ id: 'b1', kind: 'button', label: 'Go', action }));
+      expect(r.success, JSON.stringify(action)).toBe(false);
+    }
+  });
+
+  it('accepts optional variant/validate and top-level id/meta', () => {
+    const cfg = {
+      ...withItem({ id: 'b1', kind: 'button', label: 'Go', action: { type: 'submit' }, variant: 'outline', validate: false }),
+      id: 'leave-form',
+      meta: { source: 'web' },
+    };
+    const r = formConfigSchema.safeParse(cfg);
+    expect(r.success).toBe(true);
+  });
+});
+
+describe('result items', () => {
+  const withItem = (item: unknown) => ({
+    version: 1,
+    sections: [{ id: 's1', rows: [{ id: 'r1', items: [item] }] }],
+  });
+
+  it('accepts minimal and full result items', () => {
+    const minimal = { id: 'res1', kind: 'result', mode: 'json' };
+    const full = {
+      id: 'res2', kind: 'result', mode: 'card',
+      sourceId: 'btn1', dataPath: 'data.items', maxItems: 5,
+      table: { columns: [{ key: 'name', label: 'Name', dataType: 'string' }], pagination: { pageSize: 10 } },
+      emptyText: { en: 'Nothing', 'zh-TW': '沒有資料' },
+    };
+    for (const item of [minimal, full]) {
+      const r = formConfigSchema.safeParse(withItem(item));
+      expect(r.success, JSON.stringify(item)).toBe(true);
+    }
+  });
+
+  it('rejects invalid result items: missing mode, unknown mode, non-positive maxItems', () => {
+    const bad = [
+      { id: 'x', kind: 'result' },
+      { id: 'x', kind: 'result', mode: 'grid' },
+      { id: 'x', kind: 'result', mode: 'card', maxItems: 0 },
+    ];
+    for (const item of bad) {
+      const r = formConfigSchema.safeParse(withItem(item));
+      expect(r.success, JSON.stringify(item)).toBe(false);
+    }
+  });
+});
+
+describe('result item table (mode:table)', () => {
+  const withTable = {
+    version: 1,
+    sections: [
+      {
+        id: 's1',
+        title: 'S',
+        rows: [
+          {
+            id: 'r1',
+            items: [
+              {
+                id: 'res',
+                kind: 'result',
+                mode: 'table',
+                table: {
+                  columns: [{ key: 'name', label: 'Name', dataType: 'string' }],
+                  pagination: { pageSize: 10 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  it('accepts a result item carrying a valid TableConfig', () => {
+    expect(parseFormConfig(withTable)).toEqual(withTable);
+  });
+
+  it('rejects a result item whose table has no columns', () => {
+    const bad = JSON.parse(JSON.stringify(withTable));
+    bad.sections[0].rows[0].items[0].table.columns = [];
+    expect(FormConfigSchema.safeParse(bad).success).toBe(false);
+  });
+});

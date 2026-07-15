@@ -2,6 +2,8 @@
 import * as React from "react";
 import { Trash2 } from "lucide-react";
 import { Section } from "./section";
+import { ActionSection } from "./action";
+import { ResultSection } from "./result";
 import { OptionsSection } from "./options";
 import { ValidationSection } from "./validation";
 import { AiNoteSection, ContentSection, SpacerSection } from "./misc-sections";
@@ -24,22 +26,24 @@ const CHOICE_COMPONENTS = new Set<Component>(["Select", "Radio", "CheckboxGroup"
 const COLS = 12;
 
 // "Has content" indicators shown on section headers.
-const Dot = () => <span className="size-1.5 rounded-full bg-[#5b8cff]" aria-label="has content" />;
+const Dot = () => <span className="size-1.5 rounded-full bg-primary" aria-label="has content" />;
 const Count = ({ n }: { n: number }) => (
-  <span className="rounded-full bg-[#5b8cff]/15 px-1.5 text-[10px] font-medium text-[#5b8cff]">{n}</span>
+  <span className="rounded-full bg-primary/15 px-1.5 text-[10px] font-medium text-primary">{n}</span>
 );
 
 export function SettingsPanel({
-  card, groups, onChange, onRemove, siblingFields = [],
-}: { card: Card | null; groups: Group[]; onChange: (p: Partial<Card>) => void; onRemove: () => void; siblingFields?: { key: string; dataType: string }[] }) {
+  card, groups, onChange, onRemove, siblingFields = [], apiButtons = [],
+}: { card: Card | null; groups: Group[]; onChange: (p: Partial<Card>) => void; onRemove: () => void; siblingFields?: { key: string; dataType: string }[]; apiButtons?: { id: string; label: string }[] }) {
   if (!card) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card/20 p-6 text-center text-sm text-muted-foreground">
+      <div className="rounded-lg border border-dashed border-input p-6 text-center text-sm text-muted-foreground">
         Select a card to edit its config
       </div>
     );
   }
   const isField = card.kind === "field";
+  const isButton = card.kind === "button";
+  const isResult = card.kind === "result";
   const comp = card.component;
   return (
     <div className="flex flex-col gap-3">
@@ -95,6 +99,18 @@ export function SettingsPanel({
       </Section>
 
       {/* Common config: expanded by default. Advanced: collapsed with a "has content" badge. */}
+      {isButton ? (
+        <Section title="Action">
+          <ActionSection card={card} onChange={onChange} siblingFields={siblingFields} />
+        </Section>
+      ) : null}
+
+      {isResult ? (
+        <Section title="Result">
+          <ResultSection card={card} onChange={onChange} apiButtons={apiButtons} />
+        </Section>
+      ) : null}
+
       {isField ? (
         <Section title="Validation" badge={card.validation && Object.keys(card.validation).length ? <Count n={Object.keys(card.validation).length} /> : undefined}>
           <ValidationSection card={card} onChange={onChange} />

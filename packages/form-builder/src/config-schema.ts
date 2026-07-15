@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ZodType, ZodTypeAny } from 'zod';
+import { tableConfigSchema } from '@rfjs/table-builder';
 
 import type { FormConfig } from './types';
 
@@ -26,7 +27,7 @@ const conditionalSchema: ZodTypeAny = z.object({
 const dataSourceSchema = z.object({
   request: z.object({
     url: z.string(),
-    method: z.enum(['GET', 'POST', 'PUT', 'DELETE']).optional(),
+    method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).optional(),
     headers: z.record(z.string(), z.string()).optional(),
     body: z.unknown().optional(),
   }),
@@ -140,12 +141,49 @@ const aiNoteItemSchema = z.object({
   text: z.string(),
 });
 
+const buttonActionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('submit') }),
+  z.object({ type: z.literal('reset') }),
+  z.object({ type: z.literal('clear'), fields: z.array(z.string().min(1)).min(1) }),
+  z.object({ type: z.literal('custom'), name: z.string().min(1) }),
+  z.object({
+    type: z.literal('api'),
+    url: z.string().min(1),
+    method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).optional(),
+    fields: z.array(z.string().min(1)).optional(),
+    responseMap: z.record(z.string(), z.string()).optional(),
+    messages: z.object({ success: localizedLabelSchema.optional(), error: localizedLabelSchema.optional() }).optional(),
+  }),
+]);
+
+const buttonItemSchema = z.object({
+  id: z.string().min(1),
+  kind: z.literal('button'),
+  label: localizedLabelSchema,
+  action: buttonActionSchema,
+  variant: z.enum(['primary', 'outline', 'ghost', 'destructive']).optional(),
+  validate: z.boolean().optional(),
+});
+
+const resultItemSchema = z.object({
+  id: z.string().min(1),
+  kind: z.literal('result'),
+  mode: z.enum(['card', 'json', 'table']),
+  sourceId: z.string().min(1).optional(),
+  dataPath: z.string().min(1).optional(),
+  maxItems: z.number().int().positive().optional(),
+  table: tableConfigSchema.optional(),
+  emptyText: localizedLabelSchema.optional(),
+});
+
 const formItemSchema = z.discriminatedUnion('kind', [
   fieldItemSchema,
   contentItemSchema,
   dividerItemSchema,
   spacerItemSchema,
   aiNoteItemSchema,
+  buttonItemSchema,
+  resultItemSchema,
 ]);
 const gridPlacementSchema = z.object({
   itemId: z.string().min(1),
@@ -170,6 +208,8 @@ const formSectionSchema = z.object({
 export const FormConfigSchema: ZodType<FormConfig> = z
   .object({
     version: z.number().int(),
+    id: z.string().min(1).optional(),
+    meta: z.record(z.string(), z.unknown()).optional(),
     fields: z.array(fieldConfigSchema).optional(),
     sections: z.array(formSectionSchema).optional(),
     columns: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),

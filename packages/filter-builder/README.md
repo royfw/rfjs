@@ -155,12 +155,12 @@ engine's behaviour.
 | `eq` | one | ✓ | ✓ | ✓ | ✓ | equals (mongo: `$eq`) |
 | `neq` | one | ✓ | ✓ | ✓ | ✓ | not equals |
 | `gt` `gte` `lt` `lte` | one | ✓ | ✓ | ✓ | ✓ | comparisons |
-| `range` | two `[min,max]` | ✓ | ✓ | – | ✓ | inclusive between |
-| `contains` | one² | ✓ | ✓ | ✓ | ✓ | substring (sql: `ILIKE`; mongo: `$regex`) |
+| `range` | two `[min,max]` | ✓ | ✓ | ✓⁴ | ✓ | inclusive between |
+| `contains` | one² | ✓ | ✓ | ✓ | ✓ | substring (sql: case-sensitive `LIKE`; mongo: `$regex`) |
 | `startswith` | one | ✓ | ✓ | ✓ | ✓ | prefix |
-| `endswith` | one | ✓ | ✓ | – | ✓ | suffix (sql column layer has no suffix op) |
-| `icontains` `istartswith` `iendswith` `ieq` `ineq` | one | – | ✓ | – | – | case-insensitive variants |
-| `terms` | list | ✓ | ✓ | – | ✓ | in a set (sql: —; mongo: `$in`) |
+| `endswith` | one | ✓ | ✓ | ✓⁴ | ✓ | suffix |
+| `icontains` `istartswith` `iendswith` `ieq` `ineq` | one | – | ✓ | ✓⁴ | – | case-insensitive variants |
+| `terms` | list | ✓ | ✓ | ✓⁴ | ✓ | in a set (sql: `= ANY`; mongo: `$in`) |
 | `nin` | list | – | – | – | ✓ | not in a set (`$nin`) |
 | `containsall` | list | ✓ | ✓ | – | – | array contains every value |
 | `isnull` `isnotnull` | none | ✓ | ✓ | ✓ | ✓ | null checks (mongo: `$eq`/`$ne null`) |
@@ -178,6 +178,11 @@ above; a leaf with `target: 'jsonb'` uses the **jsonb-query** set.
 
 ³ `elemmatch` carries a nested `BuilderGroup` (in `condition.filters`) rather
 than a scalar value.
+
+⁴ **sql-filter**'s column layer gates `range`/`terms`/the `iX` family per column
+`type` — e.g. `range` is numeric/timestamp only (not `text`), `terms` is
+unavailable on `boolean`; see the per-type table in
+[@rfjs/sql-filter](../sql-filter#column-operators--types).
 
 Arity comes from the shared `arity.ts` (the single source of truth); the
 per-engine ✓ marks are maintained against each engine's `operators()`. A

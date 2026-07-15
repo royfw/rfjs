@@ -20,7 +20,7 @@ npm i @rfjs/pg-filter
 
 ```
  one PgFilterGroup (and/or/nor/not, nested)
- ├─ { target: 'column', column, operator, value }   ──▶ @rfjs/sql-filter  →  "name" ILIKE …
+ ├─ { target: 'column', column, operator, value }   ──▶ @rfjs/sql-filter  →  "name" LIKE …
  └─ { target: 'jsonb',  field,  operator, value }    ──▶ @rfjs/jsonb-query →  ("data" #>> …)::numeric > …
                          │
                          ▼
@@ -79,7 +79,7 @@ type PgSort = { target: "column"; column: string; direction?: "asc"|"desc"; null
 
 `pg-filter` does **not** define its own operators — each leaf uses its target engine's set:
 
-- `target: 'column'` → the **scalar column** operators of [@rfjs/sql-filter](../sql-filter#column-operators--types) (`eq`/`neq`/`contains`/`startswith`/`gt`/`gte`/`lt`/`lte`/`isnull`/`isnotnull`; no `IN`, no range).
+- `target: 'column'` → the **scalar column** operators of [@rfjs/sql-filter](../sql-filter#column-operators--types) (`eq`/`neq`/`contains`/`startswith`/`endswith`/the case-insensitive `iX` family/`gt`/`gte`/`lt`/`lte`/`isnull`/`isnotnull`, plus `terms` (`= ANY`) and `range` (`BETWEEN`) on the types that support them — see sql-filter's per-type table).
 - `target: 'jsonb'` → the full [@rfjs/jsonb-query](../jsonb-query) set (`terms`, `range`, `containsall`, case-insensitive variants, `haskey…`, `elemmatch`, …).
 
 See the cross-engine matrix in [@rfjs/filter-builder](../filter-builder#operator-matrix).

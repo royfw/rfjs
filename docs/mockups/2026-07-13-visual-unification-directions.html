@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>視覺統一 — 3 方向 — 2026-07-13</title>
+<style>
+  :root{--bg:#f7f7f5;--card:#fff;--border:#e4e4e0;--text:#1a1a18;--muted:#6b6b66;--accent:#b8860b;--accent-soft:#f5ead1;--slab:#efefec;--wire-bg:#fafaf8;}
+  .dark{--bg:#111113;--card:#1a1a1e;--border:#2e2e33;--text:#e8e8e4;--muted:#9a9a94;--accent:#d4a017;--accent-soft:#3a2f14;--slab:#232327;--wire-bg:#161619;}
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--text);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.55;padding:34px 20px 90px}
+  .wrap{max-width:1120px;margin:0 auto}
+  h1{font-size:22px}h2{font-size:16px;margin:0}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .toggle{position:fixed;top:16px;right:16px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 13px;cursor:pointer;color:var(--text);font-size:13px}
+  .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:18px}
+  @media(max-width:960px){.cols{grid-template-columns:1fr}}
+  .col{min-width:0}
+  .dirhead{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+  .dirtag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+  .dirname{font-size:14px;font-weight:700}
+  .dirnote{font-size:11.5px;color:var(--muted);margin-bottom:10px;min-height:32px}
+  /* the mock page frame */
+  .frame{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+  .eyebrow{font-size:9.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .h1t{font-size:16px;font-weight:700}
+  .desc{font-size:11px;color:var(--muted)}
+  .intro{border:1px solid var(--border);border-radius:9px;padding:8px 11px;display:flex;align-items:center;gap:8px;font-size:11.5px;background:var(--card)}
+  .intro .ic{width:17px;height:17px;border-radius:5px;background:var(--accent-soft);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+  .intro .chev{margin-left:auto;color:var(--muted);font-size:10px}
+  .muted{color:var(--muted)}.mono{font-family:ui-monospace,monospace}
+  .rowlabel{font-size:11px}
+  .chip{display:inline-block;border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10.5px;background:var(--card)}
+  .field{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:10.5px;background:var(--card);font-family:ui-monospace,monospace}
+  .pre{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted);white-space:pre}
+
+  /* ============ D1: Panel converge (mono-uppercase header, rounded-lg) ============ */
+  .d1 .card{border:1px solid var(--border);border-radius:10px;background:var(--card);overflow:hidden}
+  .d1 .card>.hd{border-bottom:1px solid var(--border);padding:9px 14px;font-family:ui-monospace,monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .d1 .card>.bd{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .d1 .tabs{display:inline-flex;gap:2px;border:1px solid var(--border);background:var(--slab);border-radius:8px;padding:3px}
+  .d1 .tab{font-size:11px;padding:3px 10px;border-radius:6px;color:var(--muted)}
+  .d1 .tab.on{background:var(--card);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.15);font-weight:600}
+
+  /* ============ D2: Studio (tab-strip header, underline-active, block rhythm) ============ */
+  .d2 .card{border:1px solid var(--border);border-radius:8px;background:var(--card);overflow:hidden}
+  .d2 .card>.hd{background:var(--slab);display:flex;gap:0;border-bottom:1px solid var(--border)}
+  .d2 .card>.hd .t{font-size:10.5px;padding:8px 13px;color:var(--muted);border-bottom:2px solid transparent}
+  .d2 .card>.hd .t.on{color:var(--accent);font-weight:600;background:var(--card);border-bottom-color:var(--accent)}
+  .d2 .card>.hd .solo{font-size:10px;padding:8px 13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-family:ui-monospace,monospace}
+  .d2 .card>.bd{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .d2 .dashed{border:1px dashed var(--border);border-radius:8px;padding:10px 12px;background:transparent}
+  .d2 .fragbar{background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:5px 10px;font-size:10px}
+
+  /* ============ D3: Refined house (left-accent bar, section eyebrow chip, airy) ============ */
+  .d3 .card{position:relative;border:1px solid var(--border);border-radius:12px;background:var(--card);padding:13px 15px 14px;display:flex;flex-direction:column;gap:9px}
+  .d3 .card::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:2px;background:var(--accent);opacity:.55}
+  .d3 .seclabel{font-size:9.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+  .d3 .tabs{display:inline-flex;gap:14px;font-size:11.5px}
+  .d3 .tab{color:var(--muted);padding-bottom:3px;border-bottom:2px solid transparent}
+  .d3 .tab.on{color:var(--text);font-weight:600;border-bottom-color:var(--accent)}
+
+  .note{background:var(--accent-soft);border-radius:9px;padding:11px 15px;font-size:12.5px;margin-top:22px}
+  ul{padding-left:20px;font-size:12.5px;margin-top:6px}li{margin:3px 0}
+  code{background:var(--slab);border-radius:4px;padding:1px 5px;font-family:ui-monospace,monospace;font-size:11px}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">☀ / ☾</button>
+<div class="wrap">
+  <h1>視覺統一 —— 3 個 house-style 方向</h1>
+  <p class="sub">2026-07-13 · 同一個代表性工具(SQL Filter Builder,多區塊)套三種「唯一 SectionCard / eyebrow / tabs」外殼。真實像素以 @rfjs/web-ui token 為準;此處示意排法與卡片語彙。三方向共用:eyebrow → ToolIntro → AI → 區塊卡,block rhythm gap 一致。</p>
+
+  <div class="cols">
+    <!-- ============ D1 ============ -->
+    <div class="col d1">
+      <div class="dirhead"><span class="dirtag">D1</span><span class="dirname">Panel 收斂</span></div>
+      <div class="dirnote">沿用 web-ui 既有 <code>Panel</code>:mono-uppercase 標題 + border-b + rounded-lg。最保守、6 工具已在用,擴到全套。</div>
+      <div class="frame">
+        <div><div class="eyebrow">SQL FILTER BUILDER</div><div class="h1t">SQL Filter Builder</div><div class="desc">Visually build a filter → parameterized SQL.</div></div>
+        <div class="intro"><span class="ic">i</span><span>這個工具怎麼運作?</span><span class="chev">展開 ▾</span></div>
+        <div class="card"><div class="hd">◆ AI ASSIST</div><div class="bd"><span class="muted" style="font-size:11px">Describe a filter or ask…</span></div></div>
+        <div class="card"><div class="hd">SAMPLE JSON <span style="margin-left:auto" class="muted">raw (2)</span></div><div class="bd"><span class="pre">[ { "name": "Ada", … } ]</span></div></div>
+        <div class="card"><div class="hd">FILTER LOGIC</div><div class="bd"><div class="tabs"><span class="tab on">ALL</span><span class="tab">ANY</span></div><div><span class="chip">+ condition</span> <span class="chip">+ group</span></div></div></div>
+        <div class="card"><div class="hd">COMPILED QUERY</div><div class="bd"><span class="pre mono">WHERE true</span></div></div>
+      </div>
+    </div>
+
+    <!-- ============ D2 ============ -->
+    <div class="col d2">
+      <div class="dirhead"><span class="dirtag">D2</span><span class="dirname">Studio(向 metadata-studio 靠攏)</span></div>
+      <div class="dirnote">metadata-studio 語彙:標題=tab-strip 底線高亮、slab 表頭、dashed 次級卡、gold fragment bar。你點名的目標,最「設計感」。</div>
+      <div class="frame">
+        <div><div class="eyebrow">SQL FILTER BUILDER</div><div class="h1t">SQL Filter Builder</div><div class="desc">Visually build a filter → parameterized SQL.</div></div>
+        <div class="intro"><span class="ic">i</span><span>這個工具怎麼運作?</span><span class="chev">展開 ▾</span></div>
+        <div class="card"><div class="hd"><span class="solo">◆ AI ASSIST</span></div><div class="bd"><span class="muted" style="font-size:11px">Describe a filter or ask…</span></div></div>
+        <div class="card"><div class="hd"><span class="t on">Sample</span><span class="t">Schema</span></div><div class="bd"><span class="pre">[ { "name": "Ada", … } ]</span></div></div>
+        <div class="card"><div class="hd"><span class="solo">FILTER LOGIC</span></div><div class="bd"><div class="dashed"><span style="font-size:11px">ALL · all match &nbsp; <span class="chip">+ condition</span></span></div></div></div>
+        <div class="card"><div class="hd"><span class="t on">Compiled SQL</span><span class="t">Values</span></div><div class="bd"><div class="fragbar">WHERE clause · 0 params</div><span class="pre mono">WHERE true</span></div></div>
+      </div>
+    </div>
+
+    <!-- ============ D3 ============ -->
+    <div class="col d3">
+      <div class="dirhead"><span class="dirtag">D3</span><span class="dirname">Refined house(新統一語彙)</span></div>
+      <div class="dirnote">全新統一:左側 accent 細條 + section 小標籤(gold caps)+ 更透氣、底線式 tabs。不照抄任一舊樣,較現代。</div>
+      <div class="frame">
+        <div><div class="eyebrow">SQL FILTER BUILDER</div><div class="h1t">SQL Filter Builder</div><div class="desc">Visually build a filter → parameterized SQL.</div></div>
+        <div class="intro"><span class="ic">i</span><span>這個工具怎麼運作?</span><span class="chev">展開 ▾</span></div>
+        <div class="card"><div class="seclabel">AI Assist</div><span class="muted" style="font-size:11px">Describe a filter or ask…</span></div>
+        <div class="card"><div class="seclabel">Sample JSON</div><span class="pre">[ { "name": "Ada", … } ]</span></div>
+        <div class="card"><div class="seclabel">Filter Logic</div><div class="tabs"><span class="tab on">ALL</span><span class="tab">ANY</span></div><div><span class="chip">+ condition</span> <span class="chip">+ group</span></div></div>
+        <div class="card"><div class="seclabel">Compiled Query</div><span class="pre mono">WHERE true</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>三方向都含</b>:抽出 <code>ToolEyebrow</code>(全 15 工具都掛)、<code>SectionCard</code>(收掉 5 種手刻卡)、<code>ToolTabs</code>(收掉 3–4 份複製);統一 ToolIntro wrap;<code>AiPanel</code> 併入同一卡語彙。差別只在<b>卡片視覺語彙</b>:
+    <ul style="margin-top:8px">
+      <li><b>D1</b> = 既有 Panel(mono-uppercase 表頭列)。改動最小、最安全,但視覺提升有限。</li>
+      <li><b>D2</b> = studio(tab-strip 底線 + slab 表頭 + dashed/gold)。最貼近你點名的 metadata-studio,最有設計感,單標題卡要用 <code>solo</code> 表頭變體。</li>
+      <li><b>D3</b> = 全新(左 accent 條 + gold section 小標)。最俐落現代、辨識度高,但是「新樣」= metadata-builder/table-builder 之後也要跟著換才一致。</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

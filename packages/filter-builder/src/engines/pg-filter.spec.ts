@@ -10,7 +10,9 @@ describe("pgFilterEngine.operators", () => {
     expect(ops).toContain("contains");
     expect(ops).toContain("startswith");
     expect(ops).toContain("eq");
-    expect(ops).not.toContain("icontains");
+    expect(ops).toContain("icontains"); // text columns now offer the ci iX family
+    expect(ops).toContain("endswith");
+    expect(ops).toContain("terms");
   });
 
   it("returns jsonb operators for jsonb-kind fields", () => {

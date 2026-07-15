@@ -1,11 +1,14 @@
 import {
   parseFormConfig,
+  normalizeToSections,
   type FieldComponent, type FieldType,
   type FormConfig, type FormItem, type FormSection,
   type LocalizedLabel, type FieldOption, type FieldValidation, type ConditionalRule, type DataSource,
+  type ButtonAction,
 } from "@rfjs/form-builder";
+import type { TableConfig } from "@rfjs/table-builder";
 
-export type Kind = "field" | "content" | "divider" | "spacer" | "ai-note";
+export type Kind = "field" | "content" | "divider" | "spacer" | "ai-note" | "button" | "result";
 // Canvas Component = full engine FieldComponent union.
 export type Component = FieldComponent;
 
@@ -31,6 +34,15 @@ export interface Card {
   fileUpload?: { accept?: string; multiple?: boolean; maxSize?: number };
   locked?: boolean; // content
   size?: "sm" | "md" | "lg"; // spacer
+  action?: ButtonAction; // button
+  buttonVariant?: "primary" | "outline" | "ghost" | "destructive"; // button
+  validate?: boolean; // button
+  mode?: "card" | "json" | "table"; // result
+  sourceId?: string; // result
+  dataPath?: string; // result
+  maxItems?: number; // result
+  resultTable?: TableConfig; // result
+  emptyText?: string; // result
   col: number;
   span: number;
   row: number;
@@ -99,6 +111,22 @@ function cardToItem(c: Card): FormItem {
       return { id: c.id, kind: "divider" };
     case "spacer":
       return { id: c.id, kind: "spacer", ...(c.size ? { size: c.size } : {}) };
+    case "button":
+      return {
+        id: c.id, kind: "button", label: c.label,
+        action: c.action ?? { type: "custom", name: "action-1" },
+        ...(c.buttonVariant ? { variant: c.buttonVariant } : {}),
+        ...(c.validate !== undefined ? { validate: c.validate } : {}),
+      };
+    case "result":
+      return {
+        id: c.id, kind: "result", mode: c.mode ?? "json",
+        ...(c.sourceId ? { sourceId: c.sourceId } : {}),
+        ...(c.dataPath ? { dataPath: c.dataPath } : {}),
+        ...(c.maxItems !== undefined ? { maxItems: c.maxItems } : {}),
+        ...(c.resultTable !== undefined ? { table: c.resultTable } : {}),
+        ...(c.emptyText ? { emptyText: c.emptyText } : {}),
+      };
   }
 }
 
@@ -129,7 +157,9 @@ function labelToString(label: unknown): string {
 export function formConfigToCards(config: FormConfig): { groups: Group[]; cards: Card[] } {
   const groups: Group[] = [];
   const cards: Card[] = [];
-  for (const section of config.sections ?? []) {
+  // normalizeToSections also accepts a flat top-level fields[] config (the AI assist's
+  // simplified output shape) by wrapping it into a single default section.
+  for (const section of normalizeToSections(config)) {
     groups.push({ id: section.id, title: labelToString(section.title) || "Section", collapsed: false });
     const byId = new Map((section.layout?.placements ?? []).map((p) => [p.itemId, p]));
     for (const [i, item] of section.rows.flatMap((r) => r.items).entries()) {
@@ -147,6 +177,15 @@ export function formConfigToCards(config: FormConfig): { groups: Group[]; cards:
         });
       } else if (item.kind === "content") {
         cards.push({ ...base, kind: "content", label: item.text, locked: item.locked });
+      } else if (item.kind === "button") {
+        cards.push({ ...base, kind: "button", label: item.label, action: item.action, buttonVariant: item.variant, validate: item.validate });
+      } else if (item.kind === "result") {
+        cards.push({
+          ...base, kind: "result", label: "Result",
+          mode: item.mode, sourceId: item.sourceId, dataPath: item.dataPath,
+          maxItems: item.maxItems, resultTable: item.table,
+          emptyText: typeof item.emptyText === "string" ? item.emptyText : undefined,
+        });
       } else if (item.kind === "ai-note") {
         cards.push({ ...base, kind: "ai-note", label: item.text });
       } else {

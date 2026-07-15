@@ -1,4 +1,4 @@
-import type { FlowDoc, FlowNode, FlowNodeType } from "./schema";
+import type { FlowDoc, FlowNode, FlowNodeType } from "@rfjs/flow-core";
 
 /** XML 屬性/文字轉義(& 必須最先換)。 */
 export function escapeXml(value: string): string {

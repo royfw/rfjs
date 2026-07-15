@@ -158,4 +158,20 @@ export const packageRegistry: PackageDefinition[] = [
     github: GITHUB,
     tags: ['config', 'templates'],
   },
+  {
+    name: '@rfjs/data-schema',
+    status: 'preview',
+    href: '/packages/data-schema',
+    github: GITHUB,
+    tags: ['schema', 'metadata', 'contract'],
+    relatedTools: ['table-builder'],
+  },
+  {
+    name: '@rfjs/table-builder',
+    status: 'preview',
+    href: '/packages/table-builder',
+    github: GITHUB,
+    tags: ['table', 'builder', 'config'],
+    relatedTools: ['table-builder'],
+  },
 ];

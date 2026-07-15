@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { SubmissionMeta } from "@rfjs/form-builder-ui";
+import type { ActionMeta, SubmissionMeta } from "@rfjs/form-builder-ui";
 import { cn } from "@rfjs/web-ui/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -10,7 +10,7 @@ import { cn } from "@rfjs/web-ui/lib/utils";
 // ---------------------------------------------------------------------------
 
 export interface SubmissionPanelProps {
-  payload: { data: Record<string, unknown>; meta: SubmissionMeta } | null;
+  payload: { data: Record<string, unknown>; meta: SubmissionMeta | ActionMeta } | null;
   compact?: boolean;
 }
 
@@ -54,7 +54,7 @@ export function SubmissionPanel({ payload, compact = false }: SubmissionPanelPro
       {/* Metadata Block */}
       <div
         className={cn(
-          "rounded-lg border border-border bg-card p-4",
+          "rounded-lg border bg-card p-4",
           compact && "p-3",
         )}
       >
@@ -86,6 +86,20 @@ export function SubmissionPanel({ payload, compact = false }: SubmissionPanelPro
             </span>
           )}
         </div>
+
+        {/* Action / apiError — present only on ActionMeta (onSubmit/onAction payloads) */}
+        {'action' in meta && meta.action != null && (
+          <div className="mb-3 space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">Action:</p>
+            <p className="font-mono text-xs text-foreground">
+              {(meta as ActionMeta).action.type}
+              {(meta as ActionMeta).action.name ? ` — ${(meta as ActionMeta).action.name}` : ''}
+            </p>
+          </div>
+        )}
+        {'apiError' in meta && (meta as ActionMeta).apiError && (
+          <p className="mb-3 text-xs text-red-600 dark:text-red-400">API error: {(meta as ActionMeta).apiError}</p>
+        )}
 
         {/* Errors List — only shown when NOT in the calm Incomplete state */}
         {!showIncomplete && errorCount > 0 && (
@@ -125,7 +139,7 @@ export function SubmissionPanel({ payload, compact = false }: SubmissionPanelPro
       {/* Data Block */}
       <div
         className={cn(
-          "rounded-lg border border-border bg-card p-4",
+          "rounded-lg border bg-card p-4",
           compact && "p-3",
         )}
       >

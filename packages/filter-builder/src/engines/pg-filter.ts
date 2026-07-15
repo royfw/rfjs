@@ -7,8 +7,8 @@ import { jsonbEngine } from "./jsonb";
 import type { CompileContext, Engine, OperatorSpec } from "./types";
 
 const NULL_OPS = ["isnull", "isnotnull"];
-const COLUMN_TEXT_OPS = ["eq", "neq", "contains", "startswith", "gt", "gte", "lt", "lte", ...NULL_OPS];
-const COLUMN_NUMERIC_OPS = ["eq", "neq", "gt", "gte", "lt", "lte", ...NULL_OPS]; // numeric + date(timestamp)
+const COLUMN_TEXT_OPS = ["eq", "neq", "contains", "startswith", "endswith", "icontains", "istartswith", "iendswith", "ieq", "ineq", "terms", "gt", "gte", "lt", "lte", ...NULL_OPS];
+const COLUMN_NUMERIC_OPS = ["eq", "neq", "gt", "gte", "lt", "lte", "terms", "range", ...NULL_OPS]; // numeric + date(timestamp)
 const COLUMN_BOOL_OPS = ["eq", "neq", ...NULL_OPS];
 
 function columnOps(dataType: string): string[] {

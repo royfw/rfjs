@@ -20,6 +20,9 @@ import {
   useFilterBuilder,
   useOperatorLabels,
 } from "@/tools/_filter-builder";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
+import { ToolIntro } from "@/components/shared/tool-intro";
 
 import { extractTerms, makeMockTransport } from "./mock-transport";
 
@@ -167,7 +170,23 @@ export function EsClientDemo() {
         : null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("ecdEyebrow")}</ToolEyebrow>
+      <ToolIntro
+        storageKey="tool-intro:es-client-demo"
+        question={t("introQuestion")}
+        tagline={t("ecdIntroTagline")}
+        concepts={[
+          { term: t("ecdIntroC1t"), desc: t("ecdIntroC1d") },
+          { term: t("ecdIntroC2t"), desc: t("ecdIntroC2d") },
+          { term: t("ecdIntroC3t"), desc: t("ecdIntroC3d") },
+        ]}
+        labels={{
+          expand: t("introExpand"),
+          collapse: t("introCollapse"),
+          dismiss: t("introDismiss"),
+        }}
+      />
       <style>{RISE}</style>
 
       <SampleCard
@@ -186,31 +205,28 @@ export function EsClientDemo() {
         style={{ animationDelay: "0ms" }}
       />
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "70ms" }}>
-        <div className="border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("ecdFields")}
-          </span>
-        </div>
-        <div className="p-4">
-          <MetadataStrip
-            schema={fb.schema}
-            onChange={fb.setSchema}
-            labels={{
-              include: t("ecdInclude", { field: "" }).trim(),
-              type: t("ecdType", { field: "" }).trim(),
-            }}
-          />
-        </div>
-      </section>
+      <SectionCard
+        title={t("ecdFields")}
+        className="fb-rise"
+        style={{ animationDelay: "70ms" }}
+      >
+        <MetadataStrip
+          schema={fb.schema}
+          onChange={fb.setSchema}
+          labels={{
+            include: t("ecdInclude", { field: "" }).trim(),
+            type: t("ecdType", { field: "" }).trim(),
+          }}
+        />
+      </SectionCard>
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "140ms" }}>
-        <div className="border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("ecdFilterLogic")}
-          </span>
-        </div>
-        <div className="overflow-x-auto p-5 sm:p-6">
+      <SectionCard
+        title={t("ecdFilterLogic")}
+        className="fb-rise"
+        style={{ animationDelay: "140ms" }}
+        bodyClassName="p-4"
+      >
+        <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
           <FilterTreeEditor
             group={fb.tree}
             engineId="es-query"
@@ -220,25 +236,18 @@ export function EsClientDemo() {
             labels={treeLabels}
           />
         </div>
-      </section>
+      </SectionCard>
 
       <div className="fb-rise grid grid-cols-1 gap-5 lg:grid-cols-2" style={{ animationDelay: "210ms" }}>
-        <section className="rounded-lg border bg-card">
-          <div className="border-b px-5 py-3">
-            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-              {t("ecdRequest")}
-            </span>
-          </div>
+        <SectionCard title={t("ecdRequest")} bodyClassName="p-0">
           <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed">
             {reverseText ?? bodyText ?? "—"}
           </pre>
-        </section>
+        </SectionCard>
 
-        <section className="rounded-lg border bg-card">
-          <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-            <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-              {t("ecdScenario")}
-            </span>
+        <SectionCard
+          title={t("ecdScenario")}
+          action={
             <div className="flex gap-1.5">
               {SCENARIOS.map((s) => (
                 <button
@@ -255,47 +264,46 @@ export function EsClientDemo() {
                 </button>
               ))}
             </div>
-          </div>
-          <div className="p-4">
-            {!compiled.ok ? (
-              <p className="font-mono text-xs text-destructive">{compiled.error}</p>
-            ) : live.uncoverable ? (
-              <p className="font-mono text-xs text-amber-600">{t("ecdUncoverable")}</p>
-            ) : !result ? (
-              <p className="font-mono text-xs text-muted-foreground">{t("ecdRunHint")}</p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <div className="font-mono text-xs text-emerald-600">
-                  {t("ecdMatched", { count: result.total })}
-                </div>
-                {result.kind === "paginate" && result.batches
-                  ? toBatches(result.batches).map(({ batch, bi, cursor }) => (
-                      <div key={bi} className="flex flex-col gap-1.5">
-                        <div className="font-mono text-[11px] text-muted-foreground">
-                          {t("ecdBatch", { n: bi + 1, cursor })}
-                        </div>
-                        {batch.map((h) => (
-                          <HitRow key={h._id} hit={h} highlight={false} />
-                        ))}
-                      </div>
-                    ))
-                  : result.hits.map((h) => (
-                      <HitRow key={h._id} hit={h} highlight={result.kind === "highlight"} />
-                    ))}
+          }
+        >
+          {!compiled.ok ? (
+            <p className="font-mono text-xs text-destructive">{compiled.error}</p>
+          ) : live.uncoverable ? (
+            <p className="font-mono text-xs text-amber-600">{t("ecdUncoverable")}</p>
+          ) : !result ? (
+            <p className="font-mono text-xs text-muted-foreground">{t("ecdRunHint")}</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="font-mono text-xs text-emerald-600">
+                {t("ecdMatched", { count: result.total })}
               </div>
-            )}
-          </div>
-        </section>
+              {result.kind === "paginate" && result.batches
+                ? toBatches(result.batches).map(({ batch, bi, cursor }) => (
+                    <div key={bi} className="flex flex-col gap-1.5">
+                      <div className="font-mono text-[11px] text-muted-foreground">
+                        {t("ecdBatch", { n: bi + 1, cursor })}
+                      </div>
+                      {batch.map((h) => (
+                        <HitRow key={h._id} hit={h} highlight={false} />
+                      ))}
+                    </div>
+                  ))
+                : result.hits.map((h) => (
+                    <HitRow key={h._id} hit={h} highlight={result.kind === "highlight"} />
+                  ))}
+            </div>
+          )}
+        </SectionCard>
       </div>
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "280ms" }}>
-        <div className="border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("ecdSnippet")}
-          </span>
-        </div>
+      <SectionCard
+        title={t("ecdSnippet")}
+        className="fb-rise"
+        style={{ animationDelay: "280ms" }}
+        bodyClassName="p-0"
+      >
         <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed">{snippet(scenario)}</pre>
-      </section>
+      </SectionCard>
     </div>
   );
 }

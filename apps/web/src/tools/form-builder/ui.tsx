@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Type,
   AlignLeft,
@@ -20,18 +21,34 @@ import {
   Mail,
   Upload,
   PenLine,
+  MousePointerClick,
+  PanelBottom,
 } from "lucide-react";
 
 import { ConfigForm } from "@rfjs/form-builder-ui";
-import type { SubmissionMeta } from "@rfjs/form-builder-ui";
+import type { ActionMeta, SubmissionMeta } from "@rfjs/form-builder-ui";
 import type { Card, Group, Kind, Component } from "./model";
-import { cardsToFormConfig, jsonToCards, cardLabel, componentDataType, formConfigToCards } from "./model";
-import { SAMPLE_CONFIG, sampleFetcher, sampleUploader } from "./sample";
+import {
+  cardsToFormConfig,
+  jsonToCards,
+  cardLabel,
+  componentDataType,
+  formConfigToCards,
+} from "./model";
+import { SAMPLE_CONFIG, sampleUploader, sampleFetcher } from "./sample";
 import { resolveCards, moveItem } from "./layout-grid";
 import { SettingsPanel } from "./inspector/settings-panel";
 import { Section } from "./inspector/section";
-import { ResponsivePreview } from "./responsive-preview";
+import { ResponsivePreview, DESKTOP_WIDTH } from "./responsive-preview";
 import { SubmissionPanel } from "./submission-panel";
+import { AiPanel, useAiAssist } from "@rfjs/ai-assist-ui";
+import { useAiPanelLabels } from "@/components/shared/ai-panel-labels";
+import { ToolIntro } from "@/components/shared/tool-intro";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
+import { ToolTabs } from "@/components/shared/tool-tabs";
+import { SectionCard } from "@/components/shared/section-card";
+import { buildNlFormPrompt, parseNlFormResponse } from "./ai-nl-form";
+import { buildFormAskPrompt, buildFormExplainPrompt } from "./ai-explain-form";
 
 // ---------------------------------------------------------------------------
 // Direction C (hybrid) — "A structure + C drag freedom", now with a builder
@@ -44,28 +61,74 @@ const COLS = 12;
 const ROW_H = 84;
 const GAP = 8;
 const DRAG_THRESHOLD = 4; // px the pointer must travel before a press becomes a drag (a click just selects)
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+const clamp = (v: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(hi, v));
+
+// Demo rows for query-shaped api-action URLs (e.g. /api/actions/query) — lets the
+// result mode:'table' snapshot/preview show a ConfigTable instead of a bare echo.
+const SAMPLE_QUERY_ROWS = [
+  { id: 1001, name: "Ada Lovelace", email: "ada@example.com", amount: 1240, status: "paid" },
+  { id: 1002, name: "Alan Turing", email: "alan@example.com", amount: 980, status: "pending" },
+  { id: 1003, name: "Grace Hopper", email: "grace@example.com", amount: 3010, status: "paid" },
+];
+
+// Merged preview fetcher: echoes api-action requests (body shaped { data, meta }),
+// otherwise delegates to sampleFetcher for dataSource requests (e.g. /api/countries).
+// Detects api-action by checking if req.body has both 'data' and 'meta' properties.
+export async function createPreviewFetcher(req: {
+  url: string;
+  body?: unknown;
+}) {
+  if (
+    req.body &&
+    typeof req.body === "object" &&
+    "data" in req.body &&
+    "meta" in req.body
+  ) {
+    // api-action request: echo it back with a timestamp; query-shaped URLs also get demo rows.
+    const echo = { echoedAt: new Date().toISOString(), received: req.body };
+    return /search|query|list/i.test(req.url) ? { ...echo, data: SAMPLE_QUERY_ROWS } : echo;
+  }
+  // dataSource request: delegate to sampleFetcher
+  return sampleFetcher(req);
+}
 
 const KIND_META: Record<
   Kind,
-  { color: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; field?: boolean }
+  {
+    color: string;
+    icon: React.ComponentType<{
+      className?: string;
+      style?: React.CSSProperties;
+    }>;
+    label: string;
+    field?: boolean;
+  }
 > = {
   field: { color: "#5b8cff", icon: Type, label: "Field", field: true },
   content: { color: "#7c5cff", icon: AlignLeft, label: "Content" },
   "ai-note": { color: "#d9a441", icon: Sparkles, label: "AI Note" },
   divider: { color: "#6b7280", icon: Minus, label: "Divider" },
   spacer: { color: "#6b7280", icon: MoveVertical, label: "Spacer" },
+  button: { color: "#10b981", icon: MousePointerClick, label: "Button" },
+  result: { color: "#0ea5e9", icon: PanelBottom, label: "Result" },
 };
 
-const fieldSub = (c: Card) => (c.kind === "field" ? `${c.key ?? "field"} · ${c.component ?? "Input"}` : undefined);
+const fieldSub = (c: Card) =>
+  c.kind === "field"
+    ? `${c.key ?? "field"} · ${c.component ?? "Input"}`
+    : undefined;
 
 // Seed the canvas from SAMPLE_CONFIG and lay it out in COLUMNS:
 // short fields pack two-per-row; long/structural items
-// (textarea, content, ai-note, divider, spacer) take the full row.
+// (textarea, content, ai-note, divider, spacer) take the full row; buttons
+// pack narrow (three comfortably fit a row) so a row of action buttons
+// doesn't force one-per-row.
 const SEED = formConfigToCards(SAMPLE_CONFIG);
 const SEED_GROUPS: Group[] = SEED.groups;
 
 const seedSpan = (c: Card): number => {
+  if (c.kind === "button") return COLS / 4; // buttons → up to four per row
   if (c.kind !== "field") return COLS; // content / ai-note / divider / spacer → full row
   if (c.component === "Textarea") return COLS; // textareas read better full-width
   return COLS / 2; // ordinary fields → two per row (the column advantage)
@@ -89,30 +152,58 @@ const packGroup = (cards: Card[]): Card[] => {
     return placed;
   });
 };
-const SEED_CARDS: Card[] = SEED.groups.flatMap((g) => packGroup(SEED.cards.filter((c) => c.groupId === g.id)));
+const SEED_CARDS: Card[] = SEED.groups.flatMap((g) =>
+  packGroup(SEED.cards.filter((c) => c.groupId === g.id)),
+);
 
 // Component-specific palette entries for field cards.
 const COMPONENT_PALETTE: Array<{
   component: Component;
   label: string;
   color: string;
-  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  icon: React.ComponentType<{
+    className?: string;
+    style?: React.CSSProperties;
+  }>;
 }> = [
   { component: "Radio", label: "Radio", color: "#5b8cff", icon: CircleDot },
-  { component: "Checkbox", label: "Checkbox", color: "#5b8cff", icon: CheckSquare },
-  { component: "CheckboxGroup", label: "Checkbox Group", color: "#5b8cff", icon: ListChecks },
+  {
+    component: "Checkbox",
+    label: "Checkbox",
+    color: "#5b8cff",
+    icon: CheckSquare,
+  },
+  {
+    component: "CheckboxGroup",
+    label: "Checkbox Group",
+    color: "#5b8cff",
+    icon: ListChecks,
+  },
   { component: "TagList", label: "Tag List", color: "#5b8cff", icon: Tags },
   { component: "Date", label: "Date", color: "#5b8cff", icon: Calendar },
   { component: "Email", label: "Email", color: "#5b8cff", icon: Mail },
-  { component: "FileUpload", label: "File Upload", color: "#5b8cff", icon: Upload },
-  { component: "Signature", label: "Signature", color: "#5b8cff", icon: PenLine },
+  {
+    component: "FileUpload",
+    label: "File Upload",
+    color: "#5b8cff",
+    icon: Upload,
+  },
+  {
+    component: "Signature",
+    label: "Signature",
+    color: "#5b8cff",
+    icon: PenLine,
+  },
 ];
 
 let seq = 100;
 let gseq = 10;
 
-
 export function FormBuilderTool() {
+  const t = useTranslations("ToolUI");
+  const locale = useLocale();
+  const ai = useAiAssist();
+  const aiLabels = useAiPanelLabels();
   const [groups, setGroups] = React.useState<Group[]>(SEED_GROUPS);
   const [cards, setCards] = React.useState<Card[]>(SEED_CARDS);
   const [selected, setSelected] = React.useState<string | null>(null);
@@ -124,17 +215,32 @@ export function FormBuilderTool() {
   const [mobileConfigOpen, setMobileConfigOpen] = React.useState(false);
   const [tab, setTab] = React.useState<"canvas" | "preview" | "json">("canvas");
   const [jsonError, setJsonError] = React.useState<string | null>(null);
-  const [payload, setPayload] = React.useState<{ data: Record<string, unknown>; meta: SubmissionMeta } | null>(null);
+  const [payload, setPayload] = React.useState<{
+    data: Record<string, unknown>;
+    meta: SubmissionMeta | ActionMeta;
+  } | null>(null);
+  // Tracks whether a submit/custom/api action has fired at least once, so the
+  // (collapsed-by-default) Preview tab "Submission" section auto-opens to reveal
+  // the action payload instead of leaving the user to find the toggle themselves.
+  const [actionSeen, setActionSeen] = React.useState(false);
   const [previewW, setPreviewW] = React.useState(1100);
-  const [canvasW, setCanvasW] = React.useState(390);
+  const [canvasW, setCanvasW] = React.useState(DESKTOP_WIDTH); // Canvas-mode LIVE PREVIEW defaults to Desktop
   const [copied, setCopied] = React.useState(false);
   const [dropGroup, setDropGroup] = React.useState<string | null>(null);
   const bodyRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
-  const drag = React.useRef<{ id: string; mode: "move" | "resize"; col: number; span: number } | null>(null);
+  const drag = React.useRef<{
+    id: string;
+    mode: "move" | "resize";
+    col: number;
+    span: number;
+  } | null>(null);
   // Group reorder (drag a group header up/down): refs to each group <section>, and the
   // live drop indicator { dragged group id, insertion index among the current order }.
   const groupElRefs = React.useRef<Record<string, HTMLElement | null>>({});
-  const [groupDrag, setGroupDrag] = React.useState<{ id: string; overIndex: number } | null>(null);
+  const [groupDrag, setGroupDrag] = React.useState<{
+    id: string;
+    overIndex: number;
+  } | null>(null);
 
   const selectedCard = cards.find((c) => c.id === selected) ?? null;
   const siblingFields = cards
@@ -142,7 +248,31 @@ export function FormBuilderTool() {
     .map((c) => ({ key: c.key!, dataType: componentDataType(c.component) }));
   // Memoize to keep a stable reference: onPayloadChange fires on config changes,
   // so an unstable formConfig would create an infinite re-render loop.
-  const formConfig = React.useMemo(() => cardsToFormConfig(groups, cards), [groups, cards]);
+  const formConfig = React.useMemo(
+    () => cardsToFormConfig(groups, cards),
+    [groups, cards],
+  );
+
+  // Memoized wrapper of createPreviewFetcher for stable reference across renders
+  const previewFetcher = React.useCallback(createPreviewFetcher, []);
+  // Shared onSubmit/onAction handler for both Preview ConfigForm instances: writes the
+  // action's payload into the same `payload` state the SubmissionPanel(s) read (an action
+  // firing overwrites the live onPayloadChange value), and reveals the Preview tab's
+  // collapsed-by-default Submission section the first time an action fires.
+  const handleSubmit = (p: {
+    data: Record<string, unknown>;
+    meta: ActionMeta;
+  }) => {
+    setPayload(p);
+    setActionSeen(true);
+  };
+  const handleAction = (
+    _name: string,
+    p: { data: Record<string, unknown>; meta: ActionMeta; response?: unknown },
+  ) => {
+    setPayload({ data: p.data, meta: p.meta });
+    setActionSeen(true);
+  };
 
   // Apply a drag/resize patch to the dragged card, then resolve overlaps (push + compact up).
   const placeDragged = (id: string, p: Partial<Card>) =>
@@ -212,7 +342,12 @@ export function FormBuilderTool() {
     for (const [gid, el] of Object.entries(bodyRefs.current)) {
       if (!el) continue;
       const r = el.getBoundingClientRect();
-      if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+      if (
+        clientX >= r.left &&
+        clientX <= r.right &&
+        clientY >= r.top &&
+        clientY <= r.bottom
+      ) {
         groupId = gid;
         rect = r;
         break;
@@ -227,7 +362,11 @@ export function FormBuilderTool() {
     };
   }
 
-  function beginDrag(e: React.PointerEvent, card: Card, mode: "move" | "resize") {
+  function beginDrag(
+    e: React.PointerEvent,
+    card: Card,
+    mode: "move" | "resize",
+  ) {
     e.preventDefault();
     e.stopPropagation();
     setSelected(card.id);
@@ -245,7 +384,11 @@ export function FormBuilderTool() {
     const onMove = (ev: PointerEvent) => {
       const d = drag.current;
       if (!d) return;
-      if (!active && Math.hypot(ev.clientX - startX, ev.clientY - startY) < DRAG_THRESHOLD) return;
+      if (
+        !active &&
+        Math.hypot(ev.clientX - startX, ev.clientY - startY) < DRAG_THRESHOLD
+      )
+        return;
       active = true;
       if (d.mode === "move") {
         const cell = cellAt(ev.clientX, ev.clientY, card.groupId);
@@ -259,7 +402,9 @@ export function FormBuilderTool() {
         const rect = body.getBoundingClientRect();
         const colW = (rect.width + GAP) / COLS;
         const rightCol = Math.round((ev.clientX - rect.left) / colW);
-        placeDragged(d.id, { span: clamp(rightCol - (d.col - 1), 1, COLS - d.col + 1) });
+        placeDragged(d.id, {
+          span: clamp(rightCol - (d.col - 1), 1, COLS - d.col + 1),
+        });
       }
     };
     const onUp = () => {
@@ -278,7 +423,9 @@ export function FormBuilderTool() {
   function addCard(kind: Kind, component?: Component) {
     const groupId = selectedCard?.groupId || groups[0]?.id;
     if (!groupId) return;
-    const maxRow = cards.filter((c) => c.groupId === groupId).reduce((m, c) => Math.max(m, c.row), 0);
+    const maxRow = cards
+      .filter((c) => c.groupId === groupId)
+      .reduce((m, c) => Math.max(m, c.row), 0);
     seq += 1;
     const id = `c${seq}`;
     const comp = kind === "field" ? (component ?? "Input") : undefined;
@@ -289,7 +436,9 @@ export function FormBuilderTool() {
         groupId,
         kind,
         label: component ?? KIND_META[kind].label,
-        ...(kind === "field" ? { key: `field_${seq}`, component: comp as Component } : {}),
+        ...(kind === "field"
+          ? { key: `field_${seq}`, component: comp as Component }
+          : {}),
         col: 1,
         span: kind === "field" ? 6 : 12,
         row: maxRow + 1,
@@ -322,7 +471,13 @@ export function FormBuilderTool() {
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement;
-      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT")) return;
+      if (
+        el &&
+        (el.tagName === "INPUT" ||
+          el.tagName === "TEXTAREA" ||
+          el.tagName === "SELECT")
+      )
+        return;
       if ((e.key === "Delete" || e.key === "Backspace") && selected) {
         e.preventDefault();
         setCards((cs) => {
@@ -336,71 +491,161 @@ export function FormBuilderTool() {
     return () => window.removeEventListener("keydown", onKey);
   }, [selected]);
 
-  const PALETTE: Kind[] = ["field", "content", "divider", "spacer", "ai-note"];
-  const TABS = [
+  const PALETTE: Kind[] = [
+    "field",
+    "content",
+    "divider",
+    "spacer",
+    "ai-note",
+    "button",
+    "result",
+  ];
+  const TABS: Array<{ id: "canvas" | "preview" | "json"; label: string }> = [
     { id: "canvas", label: "Canvas" },
     { id: "preview", label: "Preview" },
     { id: "json", label: "JSON" },
-  ] as const;
+  ];
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="inline-flex w-fit gap-0.5 rounded-lg border border-input bg-muted/30 p-1">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            aria-selected={tab === t.id}
-            className={`rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-              tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <ToolEyebrow>{t("fblEyebrow")}</ToolEyebrow>
+      <ToolIntro
+        storageKey="tool-intro:form-builder"
+        question={t("introQuestion")}
+        tagline={t("fblIntroTagline")}
+        concepts={[
+          { term: t("fblIntroC1t"), desc: t("fblIntroC1d") },
+          { term: t("fblIntroC2t"), desc: t("fblIntroC2d") },
+          { term: t("fblIntroC3t"), desc: t("fblIntroC3d") },
+        ]}
+        labels={{ expand: t("introExpand"), collapse: t("introCollapse"), dismiss: t("introDismiss") }}
+      />
+      <ToolTabs tabs={TABS} active={tab} onChange={(id) => setTab(id as "canvas" | "preview" | "json")} />
+
+      <AiPanel
+        title={t("aiBlockTitle")}
+        placeholder={t("fbAiPlaceholder")}
+        logKey="rfjs.ai.log.form-builder"
+        ai={ai}
+        labels={aiLabels}
+        onReapply={(e) => applyJson(e.appliedJson ?? "")}
+        appliedSummary={(e) => {
+          let n = 0;
+          try {
+            const parsed = JSON.parse(e.appliedJson ?? "") as {
+              fields?: unknown[];
+            };
+            n = Array.isArray(parsed.fields) ? parsed.fields.length : 0;
+          } catch {
+            n = 0;
+          }
+          return t("fbAiApplied", { count: n });
+        }}
+        actions={[
+          {
+            key: "generate",
+            label: t("fbAiGenerate"),
+            needsInput: true,
+            primary: true,
+            run: async (input) => {
+              const out = await ai.run(
+                { ...buildNlFormPrompt(input), json: true },
+                parseNlFormResponse,
+              );
+              if (out === null) return null;
+              const { groups: g, cards: c } = jsonToCards(out);
+              setGroups(g);
+              setCards(c);
+              return { kind: "generate", prompt: input, appliedJson: out };
+            },
+          },
+          {
+            key: "ask",
+            label: t("aiAsk"),
+            needsInput: true,
+            run: async (input) => {
+              const out = await ai.runStream(
+                buildFormAskPrompt(
+                  { configJson: JSON.stringify(formConfig, null, 2), locale },
+                  input,
+                ),
+                (raw) => raw.trim(),
+              );
+              return out === null
+                ? null
+                : { kind: "ask", prompt: input, answer: out };
+            },
+          },
+          {
+            key: "explain",
+            label: t("fbAiExplain"),
+            run: async () => {
+              const out = await ai.runStream(
+                buildFormExplainPrompt({
+                  configJson: JSON.stringify(formConfig, null, 2),
+                  locale,
+                }),
+                (raw) => raw.trim(),
+              );
+              return out === null ? null : { kind: "explain", answer: out };
+            },
+          },
+        ]}
+      />
 
       {tab === "canvas" ? (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            {PALETTE.map((kind) => {
-              const meta = KIND_META[kind];
-              const Icon = meta.icon;
-              return (
+          <SectionCard title={t("fblPalette")}>
+            <div className="flex flex-wrap items-center gap-2">
+              {PALETTE.map((kind) => {
+                const meta = KIND_META[kind];
+                const Icon = meta.icon;
+                return (
+                  <button
+                    key={kind}
+                    type="button"
+                    onClick={() => addCard(kind)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  >
+                    <Icon className="size-3.5" style={{ color: meta.color }} />
+                    {meta.label}
+                  </button>
+                );
+              })}
+              {COMPONENT_PALETTE.map(
+                ({ component, label, color, icon: Icon }) => (
+                  <button
+                    key={component}
+                    type="button"
+                    onClick={() => addCard("field", component)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  >
+                    <Icon className="size-3.5" style={{ color }} />
+                    {label}
+                  </button>
+                ),
+              )}
+              <div className="ml-auto flex items-center gap-2">
                 <button
-                  key={kind}
                   type="button"
-                  onClick={() => addCard(kind)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  onClick={() =>
+                    setGroups((gs) => [
+                      ...gs,
+                      {
+                        id: `g${(gseq += 1)}`,
+                        title: `Section ${gs.length + 1}`,
+                        collapsed: false,
+                      },
+                    ])
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-primary bg-card/40 px-3 py-1.5 font-mono text-xs text-primary transition-colors hover:bg-primary/10"
                 >
-                  <Icon className="size-3.5" style={{ color: meta.color }} />
-                  {meta.label}
+                  <Plus className="size-3.5" />
+                  Group
                 </button>
-              );
-            })}
-            {COMPONENT_PALETTE.map(({ component, label, color, icon: Icon }) => (
-              <button
-                key={component}
-                type="button"
-                onClick={() => addCard("field", component)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-              >
-                <Icon className="size-3.5" style={{ color }} />
-                {label}
-              </button>
-            ))}
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setGroups((gs) => [...gs, { id: `g${(gseq += 1)}`, title: `Section ${gs.length + 1}`, collapsed: false }])}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card/40 px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-              >
-                <Plus className="size-3.5" />
-                Group
-              </button>
+              </div>
             </div>
-          </div>
+          </SectionCard>
 
           {/* Section 1: Editor (default expanded) */}
           <Section title="Editor" defaultOpen={true}>
@@ -416,8 +661,13 @@ export function FormBuilderTool() {
                 <div className="flex flex-col gap-4">
                   {groups.map((group, index) => (
                     <React.Fragment key={group.id}>
-                      {groupDrag && groupDrag.id !== group.id && groupDrag.overIndex === index ? (
-                        <div data-testid="group-drop-line" className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]" />
+                      {groupDrag &&
+                      groupDrag.id !== group.id &&
+                      groupDrag.overIndex === index ? (
+                        <div
+                          data-testid="group-drop-line"
+                          className="-my-1.5 h-0.5 rounded-full bg-primary"
+                        />
                       ) : null}
                       <GroupFrame
                         group={group}
@@ -432,7 +682,13 @@ export function FormBuilderTool() {
                           bodyRefs.current[group.id] = el;
                         }}
                         onToggle={() =>
-                          setGroups((gs) => gs.map((g) => (g.id === group.id ? { ...g, collapsed: !g.collapsed } : g)))
+                          setGroups((gs) =>
+                            gs.map((g) =>
+                              g.id === group.id
+                                ? { ...g, collapsed: !g.collapsed }
+                                : g,
+                            ),
+                          )
                         }
                         onReorderStart={beginGroupReorder}
                         onMoveStart={beginDrag}
@@ -441,7 +697,10 @@ export function FormBuilderTool() {
                     </React.Fragment>
                   ))}
                   {groupDrag && groupDrag.overIndex === groups.length ? (
-                    <div data-testid="group-drop-line" className="-my-1.5 h-0.5 rounded-full bg-[#5b8cff]" />
+                    <div
+                      data-testid="group-drop-line"
+                      className="-my-1.5 h-0.5 rounded-full bg-primary"
+                    />
                   ) : null}
                 </div>
               </div>
@@ -470,10 +729,26 @@ export function FormBuilderTool() {
                     card={selectedCard}
                     groups={groups}
                     siblingFields={siblingFields}
-                    onChange={(p) => selectedCard && updateCard(selectedCard.id, p)}
+                    apiButtons={cards
+                      .filter(
+                        (c) => c.kind === "button" && c.action?.type === "api",
+                      )
+                      .map((c) => ({ id: c.id, label: cardLabel(c.label) }))}
+                    onChange={(p) =>
+                      selectedCard && updateCard(selectedCard.id, p)
+                    }
                     onRemove={() => {
                       if (!selectedCard) return;
-                      setCards((cs) => resolveCards(cs.filter((c) => c.id !== selectedCard.id) as Card[], "", COLS) as Card[]);
+                      setCards(
+                        (cs) =>
+                          resolveCards(
+                            cs.filter(
+                              (c) => c.id !== selectedCard.id,
+                            ) as Card[],
+                            "",
+                            COLS,
+                          ) as Card[],
+                      );
                       setSelected(null);
                       setMobileConfigOpen(false);
                     }}
@@ -486,14 +761,19 @@ export function FormBuilderTool() {
           {/* Section 2: Live Preview (default collapsed) */}
           <Section title="Live Preview" defaultOpen={false}>
             <div className="flex flex-col gap-4">
-              <ResponsivePreview compact width={canvasW} onWidthChange={setCanvasW}>
+              <ResponsivePreview
+                compact
+                width={canvasW}
+                onWidthChange={setCanvasW}
+              >
                 <ConfigForm
                   config={formConfig}
                   locale="en"
-                  fetcher={sampleFetcher}
+                  fetcher={previewFetcher}
                   uploadHandler={sampleUploader}
                   onPayloadChange={setPayload}
-                  onSubmit={() => {}}
+                  onSubmit={handleSubmit}
+                  onAction={handleAction}
                 />
               </ResponsivePreview>
               <SubmissionPanel compact payload={payload} />
@@ -506,40 +786,53 @@ export function FormBuilderTool() {
             <ConfigForm
               config={formConfig}
               locale="en"
-              fetcher={sampleFetcher}
+              fetcher={previewFetcher}
               uploadHandler={sampleUploader}
               onPayloadChange={setPayload}
-              onSubmit={() => {}}
+              onSubmit={handleSubmit}
+              onAction={handleAction}
             />
           </ResponsivePreview>
-          <Section title="Submission" defaultOpen={false}>
+          <Section
+            key={actionSeen ? "submission-open" : "submission-closed"}
+            title="Submission"
+            defaultOpen={actionSeen}
+          >
             <SubmissionPanel payload={payload} />
           </Section>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground/60">
-              Config JSON — edits rebuild the canvas
-            </span>
+        <SectionCard
+          title={t("fblJsonTitle")}
+          bodyClassName="p-0"
+          action={
             <button
               type="button"
               onClick={copyJson}
               className="inline-flex items-center gap-1.5 rounded-md border border-input bg-card/40 px-2.5 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
             >
-              {copied ? <Check className="size-3.5" style={{ color: "#5b8cff" }} /> : <Copy className="size-3.5" />}
+              {copied ? (
+                <Check className="size-3.5 text-primary" />
+              ) : (
+                <Copy className="size-3.5" />
+              )}
               {copied ? "Copied" : "Copy"}
             </button>
-          </div>
+          }
+        >
           <textarea
             aria-label="config json"
             spellCheck={false}
-            className="h-[28rem] w-full rounded-md border border-input bg-background p-4 font-mono text-[13px] leading-relaxed"
+            className="h-[28rem] w-full border-0 bg-background p-4 font-mono text-[13px] leading-relaxed focus-visible:outline-none"
             defaultValue={JSON.stringify(formConfig, null, 2)}
             onChange={(e) => applyJson(e.target.value)}
           />
-          {jsonError ? <p className="text-xs text-destructive">Invalid config: {jsonError}</p> : null}
-        </div>
+          {jsonError ? (
+            <p className="px-4 pb-3 text-xs text-destructive">
+              Invalid config: {jsonError}
+            </p>
+          ) : null}
+        </SectionCard>
       )}
     </div>
   );
@@ -579,11 +872,13 @@ function GroupFrame({
   return (
     <section
       ref={sectionRef}
-      className={`overflow-hidden rounded-xl border bg-card/20 transition-[border,opacity] ${
-        dropOver ? "border-[#5b8cff]/70 ring-1 ring-[#5b8cff]/40" : "border-border"
+      className={`overflow-hidden rounded-lg border bg-card transition-[border,opacity] ${
+        dropOver
+          ? "border-primary/70 ring-1 ring-primary/40"
+          : "border-border"
       } ${dragging ? "opacity-50" : ""}`}
     >
-      <header className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2.5">
+      <header className="flex items-center gap-2 border-b border-border bg-muted/30 px-3 py-2.5">
         <button
           type="button"
           aria-label="reorder group"
@@ -598,14 +893,20 @@ function GroupFrame({
           onClick={onToggle}
           className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent/60 hover:text-foreground"
         >
-          <ChevronDown className={`size-4 transition-transform ${group.collapsed ? "-rotate-90" : ""}`} />
+          <ChevronDown
+            className={`size-4 transition-transform ${group.collapsed ? "-rotate-90" : ""}`}
+          />
         </button>
         <span className="text-[15px] font-semibold">{group.title}</span>
-        <span className="font-mono text-[11px] text-muted-foreground/50">{group.id}</span>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/45">
+        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+          {group.id}
+        </span>
+        <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
           {cards.length} item{cards.length === 1 ? "" : "s"}
         </span>
-        <span className="ml-auto font-mono text-[10px] uppercase tracking-wide text-muted-foreground/55">{COLS} cols</span>
+        <span className="ml-auto font-mono text-[10px] uppercase tracking-wide text-muted-foreground/55">
+          {COLS} cols
+        </span>
       </header>
 
       {group.collapsed ? null : (
@@ -667,9 +968,15 @@ function CanvasCard({
     <div
       onPointerDown={onMoveStart}
       className={`group relative cursor-grab touch-none select-none rounded-lg border bg-card shadow-sm transition-shadow active:cursor-grabbing ${
-        selected ? "border-transparent ring-2 ring-[#5b8cff]" : "border-border hover:shadow-md"
+        selected
+          ? "border-transparent ring-2 ring-primary"
+          : "border-border hover:shadow-md"
       }`}
-      style={{ gridColumn: `${card.col} / span ${card.span}`, gridRow: card.row, boxShadow: `inset 3px 0 0 ${m.color}` }}
+      style={{
+        gridColumn: `${card.col} / span ${card.span}`,
+        gridRow: card.row,
+        boxShadow: `inset 3px 0 0 ${m.color}`,
+      }}
     >
       {card.kind === "divider" ? (
         <div className="flex h-full items-center gap-2 px-3">
@@ -686,8 +993,14 @@ function CanvasCard({
             >
               <Icon className="size-3" />
             </span>
-            <span className="truncate text-sm font-medium">{cardLabel(card.label)}</span>
-            {sub ? <span className="truncate font-mono text-[11px] text-muted-foreground/70">{sub}</span> : null}
+            <span className="truncate text-sm font-medium">
+              {cardLabel(card.label)}
+            </span>
+            {sub ? (
+              <span className="truncate font-mono text-[11px] text-muted-foreground/70">
+                {sub}
+              </span>
+            ) : null}
             {card.required ? (
               <span
                 className="ml-auto rounded px-1.5 py-px font-mono text-[10px] uppercase leading-none"
@@ -697,18 +1010,19 @@ function CanvasCard({
               </span>
             ) : null}
           </div>
-          {m.field ? <div className="h-7 rounded-md border border-input bg-background/60" /> : null}
+          {m.field ? (
+            <div className="h-7 rounded-md border border-input bg-background/60" />
+          ) : null}
         </div>
       )}
       <div
         onPointerDown={onResizeStart}
         className="absolute right-0 top-0 flex h-full w-3 cursor-col-resize items-center justify-center"
       >
-        <div className={`h-8 w-1 rounded-full transition-colors ${selected ? "bg-[#5b8cff]" : "bg-transparent group-hover:bg-border"}`} />
+        <div
+          className={`h-8 w-1 rounded-full transition-colors ${selected ? "bg-primary" : "bg-transparent group-hover:bg-border"}`}
+        />
       </div>
     </div>
   );
 }
-
-
-

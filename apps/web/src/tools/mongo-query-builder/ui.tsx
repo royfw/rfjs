@@ -1,11 +1,15 @@
 "use client";
 
 import { getEngine, treeToFilterGroup } from "@rfjs/filter-builder";
-import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui";
+import {
+  FilterTreeEditor,
+  type FilterTreeLabels,
+} from "@rfjs/filter-builder-ui";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import {
+  AiAssistBlock,
   MetadataStrip,
   QueryOutputPanel,
   RISE,
@@ -14,6 +18,9 @@ import {
   useFilterBuilder,
   useOperatorLabels,
 } from "@/tools/_filter-builder";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
+import { ToolIntro } from "@/components/shared/tool-intro";
 
 const SAMPLE = JSON.stringify(
   [
@@ -50,7 +57,11 @@ export function MongoQueryBuilder() {
   };
 
   const compiled = useMemo(
-    () => getEngine("mongo").compile(treeToFilterGroup(fb.tree), toCompileContext(fb.schema)),
+    () =>
+      getEngine("mongo").compile(
+        treeToFilterGroup(fb.tree),
+        toCompileContext(fb.schema),
+      ),
     [fb.tree, fb.schema],
   );
 
@@ -62,7 +73,23 @@ export function MongoQueryBuilder() {
         : null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("mqbEyebrow")}</ToolEyebrow>
+      <ToolIntro
+        storageKey="tool-intro:mongo-query-builder"
+        question={t("introQuestion")}
+        tagline={t("mqbIntroTagline")}
+        concepts={[
+          { term: t("mqbIntroC1t"), desc: t("mqbIntroC1d") },
+          { term: t("mqbIntroC2t"), desc: t("mqbIntroC2d") },
+          { term: t("mqbIntroC3t"), desc: t("mqbIntroC3d") },
+        ]}
+        labels={{
+          expand: t("introExpand"),
+          collapse: t("introCollapse"),
+          dismiss: t("introDismiss"),
+        }}
+      />
       <style>{RISE}</style>
 
       <SampleCard
@@ -81,31 +108,40 @@ export function MongoQueryBuilder() {
         style={{ animationDelay: "0ms" }}
       />
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "70ms" }}>
-        <div className="border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("mqbFields")}
-          </span>
-        </div>
-        <div className="p-4">
-          <MetadataStrip
-            schema={fb.schema}
-            onChange={fb.setSchema}
-            labels={{
-              include: t("mqbInclude", { field: "" }).trim(),
-              type: t("mqbType", { field: "" }).trim(),
-            }}
-          />
-        </div>
-      </section>
+      <SectionCard
+        title={t("mqbFields")}
+        className="fb-rise"
+        style={{ animationDelay: "70ms" }}
+      >
+        <MetadataStrip
+          schema={fb.schema}
+          onChange={fb.setSchema}
+          labels={{
+            include: t("mqbInclude", { field: "" }).trim(),
+            type: t("mqbType", { field: "" }).trim(),
+          }}
+        />
+      </SectionCard>
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "140ms" }}>
-        <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("mqbFilterLogic")}
-          </span>
-        </div>
-        <div className="overflow-x-auto p-5 sm:p-6">
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={compiled.ok ? compiled.primary : null}
+          engineId="mongo"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.mongo-query-builder"
+        />
+      </div>
+
+      <SectionCard
+        title={t("mqbFilterLogic")}
+        className="fb-rise"
+        style={{ animationDelay: "140ms" }}
+        bodyClassName="p-4"
+      >
+        <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
           <FilterTreeEditor
             group={fb.tree}
             engineId="mongo"
@@ -115,7 +151,7 @@ export function MongoQueryBuilder() {
             labels={treeLabels}
           />
         </div>
-      </section>
+      </SectionCard>
 
       <div className="fb-rise" style={{ animationDelay: "210ms" }}>
         <QueryOutputPanel

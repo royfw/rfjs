@@ -14,6 +14,7 @@ const EXPECTED_WEB_TOOL_IDS = [
   "mongo-query-generator",
   "jsonb-query-generator",
   "jwt-decoder",
+  "metadata-builder",
   "data-filter-builder",
   "jsonb-query-builder",
   "sql-filter-builder",
@@ -25,6 +26,7 @@ const EXPECTED_WEB_TOOL_IDS = [
   "bpmn-viewer",
   "flow-builder",
   "decision-table",
+  "table-builder",
 ].sort();
 
 describe("implementation registry", () => {

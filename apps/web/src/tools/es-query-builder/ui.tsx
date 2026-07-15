@@ -1,11 +1,15 @@
 "use client";
 
 import { getEngine, treeToFilterGroup } from "@rfjs/filter-builder";
-import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui";
+import {
+  FilterTreeEditor,
+  type FilterTreeLabels,
+} from "@rfjs/filter-builder-ui";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import {
+  AiAssistBlock,
   MetadataStrip,
   QueryOutputPanel,
   RISE,
@@ -14,6 +18,9 @@ import {
   useFilterBuilder,
   useOperatorLabels,
 } from "@/tools/_filter-builder";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
+import { ToolIntro } from "@/components/shared/tool-intro";
 
 const SAMPLE = JSON.stringify(
   [
@@ -50,7 +57,11 @@ export function EsQueryBuilder() {
   };
 
   const compiled = useMemo(
-    () => getEngine("es-query").compile(treeToFilterGroup(fb.tree), toCompileContext(fb.schema)),
+    () =>
+      getEngine("es-query").compile(
+        treeToFilterGroup(fb.tree),
+        toCompileContext(fb.schema),
+      ),
     [fb.tree, fb.schema],
   );
 
@@ -62,7 +73,23 @@ export function EsQueryBuilder() {
         : null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("eqbEyebrow")}</ToolEyebrow>
+      <ToolIntro
+        storageKey="tool-intro:es-query-builder"
+        question={t("introQuestion")}
+        tagline={t("eqbIntroTagline")}
+        concepts={[
+          { term: t("eqbIntroC1t"), desc: t("eqbIntroC1d") },
+          { term: t("eqbIntroC2t"), desc: t("eqbIntroC2d") },
+          { term: t("eqbIntroC3t"), desc: t("eqbIntroC3d") },
+        ]}
+        labels={{
+          expand: t("introExpand"),
+          collapse: t("introCollapse"),
+          dismiss: t("introDismiss"),
+        }}
+      />
       <style>{RISE}</style>
 
       <SampleCard
@@ -81,31 +108,40 @@ export function EsQueryBuilder() {
         style={{ animationDelay: "0ms" }}
       />
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "70ms" }}>
-        <div className="border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("eqbFields")}
-          </span>
-        </div>
-        <div className="p-4">
-          <MetadataStrip
-            schema={fb.schema}
-            onChange={fb.setSchema}
-            labels={{
-              include: t("eqbInclude", { field: "" }).trim(),
-              type: t("eqbType", { field: "" }).trim(),
-            }}
-          />
-        </div>
-      </section>
+      <SectionCard
+        title={t("eqbFields")}
+        className="fb-rise"
+        style={{ animationDelay: "70ms" }}
+      >
+        <MetadataStrip
+          schema={fb.schema}
+          onChange={fb.setSchema}
+          labels={{
+            include: t("eqbInclude", { field: "" }).trim(),
+            type: t("eqbType", { field: "" }).trim(),
+          }}
+        />
+      </SectionCard>
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "140ms" }}>
-        <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("eqbFilterLogic")}
-          </span>
-        </div>
-        <div className="overflow-x-auto p-5 sm:p-6">
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={compiled.ok ? compiled.primary : null}
+          engineId="es-query"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.es-query-builder"
+        />
+      </div>
+
+      <SectionCard
+        title={t("eqbFilterLogic")}
+        className="fb-rise"
+        style={{ animationDelay: "140ms" }}
+        bodyClassName="p-4"
+      >
+        <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
           <FilterTreeEditor
             group={fb.tree}
             engineId="es-query"
@@ -115,7 +151,7 @@ export function EsQueryBuilder() {
             labels={treeLabels}
           />
         </div>
-      </section>
+      </SectionCard>
 
       <div className="fb-rise" style={{ animationDelay: "210ms" }}>
         <QueryOutputPanel
@@ -130,7 +166,9 @@ export function EsQueryBuilder() {
             canonical: t("eqbCanonical"),
             canonicalHint: t("eqbCanonicalHint"),
             reverseError: reverseText,
-            compileError: compiled.ok ? null : t("eqbCompileError", { error: compiled.error }),
+            compileError: compiled.ok
+              ? null
+              : t("eqbCompileError", { error: compiled.error }),
             copy: t("eqbCopy"),
           }}
         />

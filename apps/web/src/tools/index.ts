@@ -8,11 +8,13 @@ import { tool as formBuilder } from "./form-builder";
 import { tool as bpmnViewer } from "./bpmn-viewer";
 import { tool as flowBuilder } from "./flow-builder";
 import { tool as decisionTable } from "./decision-table";
+import { tool as tableBuilder } from "./table-builder";
 import { tool as esClientDemo } from "./es-client-demo";
 import { tool as esQueryBuilder } from "./es-query-builder";
 import { tool as jsonbQueryBuilder } from "./jsonb-query-builder";
 import { tool as jsonbQueryGenerator } from "./jsonb-query-generator";
 import { tool as jwtDecoder } from "./jwt-decoder";
+import { tool as metadataBuilder } from "./metadata-builder";
 import { tool as mongoQueryBuilder } from "./mongo-query-builder";
 import { tool as mongoQueryGenerator } from "./mongo-query-generator";
 import { tool as objectFlatten } from "./object-flatten";
@@ -39,6 +41,8 @@ export const toolModules: ToolModule[] = [
   bpmnViewer,
   flowBuilder,
   decisionTable,
+  tableBuilder,
+  metadataBuilder,
 ];
 
 export const TOOL_COMPONENTS: Record<string, ComponentType> = Object.fromEntries(

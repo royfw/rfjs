@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 
+import { AiSettingsDialog } from "../shared/ai-settings-dialog";
 import { LocaleSwitcher } from "./locale-switcher";
 import { MobileNav } from "./mobile-nav";
 
@@ -34,6 +35,7 @@ export async function AppHeader() {
         </Link>
       </div>
       <div className="flex items-center gap-1">
+        <AiSettingsDialog />
         <LocaleSwitcher />
         <ThemeToggle />
         <Button variant="ghost" size="icon" asChild aria-label={t("github")}>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { FlowDoc } from "./schema";
+import type { FlowDoc } from "@rfjs/flow-core";
+
 import { sample } from "./sample";
 import { compileToBpmn, escapeXml, makeIdMapper } from "./bpmn";
 

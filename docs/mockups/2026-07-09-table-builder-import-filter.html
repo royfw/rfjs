@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<title>table-builder A+C — import + filter mockup</title>
+<style>
+  :root {
+    --bg:#f8f9fb; --card:#fff; --border:#e4e6eb; --fg:#1a1d24; --muted:#6b7280;
+    --muted-bg:#f3f4f6; --accent:#5b8cff; --accent-bg:#eef2ff; --ok:#16a34a; --chip:#eef2ff;
+  }
+  .dark {
+    --bg:#0e1116; --card:#161a22; --border:#262b36; --fg:#e6e8ee; --muted:#8b93a3;
+    --muted-bg:#1d222c; --accent:#6d9aff; --accent-bg:#1e2637; --ok:#4ade80; --chip:#1e2637;
+  }
+  *{box-sizing:border-box;margin:0}
+  html{background:var(--bg)}
+  body{background:var(--bg);color:var(--fg);font:13px/1.5 ui-sans-serif,system-ui,"Noto Sans TC",sans-serif;padding:28px}
+  .toggle{position:fixed;top:20px;right:20px;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--fg);cursor:pointer;font-size:12px}
+  h1{font-size:17px;margin-bottom:2px}
+  .sub{color:var(--muted);font-size:12px;margin-bottom:6px}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin:16px 0 10px}
+  .wrap{max-width:1180px}
+  /* top three editor panels */
+  .panels{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:16px}
+  .panel{border:1px solid var(--border);border-radius:12px;background:var(--card);padding:14px}
+  .panel h3{font-size:13px;margin-bottom:10px}
+  .seg{display:inline-flex;gap:4px}
+  .seg button{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:7px;padding:4px 10px;font-size:12px;cursor:pointer}
+  .seg button.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600}
+  .field{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+  .field label{font-size:11px;color:var(--muted)}
+  textarea,input[type=text],select,input[type=number]{border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:7px;padding:5px 8px;font-size:12px;font-family:inherit}
+  textarea{min-height:64px;font-family:ui-monospace,monospace;font-size:11px;resize:vertical}
+  .row-btns{display:flex;gap:6px;margin-top:8px}
+  .btn{border:1px solid var(--border);background:var(--card);color:var(--fg);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;display:inline-flex;gap:5px;align-items:center}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .hint{font-size:11px;color:var(--muted);margin-top:6px}
+  /* columns rows */
+  .colrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed var(--border)}
+  .colrow:last-child{border-bottom:0}
+  .grip{color:var(--muted);cursor:grab}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+  .chk input{accent-color:var(--accent)}
+  .col-label{flex:1;min-width:70px}
+  .mini{padding:2px 6px;font-size:11px}
+  .pin{border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--muted);cursor:pointer}
+  /* full-width filter section */
+  .filter-sec{margin-top:16px;border:1px solid var(--border);border-radius:12px;background:var(--card);padding:14px}
+  .filter-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .filter-head h3{font-size:13px}
+  .badge{background:var(--chip);color:var(--accent);border-radius:99px;padding:1px 9px;font-size:11px}
+  .matched{margin-left:auto;font-size:12px;color:var(--ok);font-weight:600}
+  /* a compact fake filter tree */
+  .tree{border:1px solid var(--border);border-radius:8px;padding:10px;background:color-mix(in srgb,var(--muted-bg) 40%,transparent)}
+  .logic{display:inline-flex;gap:6px;align-items:center;margin-bottom:8px}
+  .pill{border-radius:99px;padding:2px 10px;font-size:11px;font-weight:600}
+  .pill.and{background:#dbeafe;color:#1e40af}
+  .dark .pill.and{background:#1e3a5f;color:#93c5fd}
+  .cond{display:flex;gap:6px;align-items:center;margin:5px 0;flex-wrap:wrap}
+  .tok{border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:12px;background:var(--card)}
+  .tok.field{color:var(--accent);border-color:var(--accent)}
+  .addcond{color:var(--accent);font-size:12px;cursor:pointer;margin-top:4px;display:inline-block}
+  /* preview */
+  .preview{margin-top:16px;border:1px solid var(--border);border-radius:12px;background:var(--card);padding:14px}
+  .preview h3{font-size:13px;margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;color:var(--muted);font-weight:600;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+  th .arrow{color:var(--accent);margin-left:3px}
+  td{padding:8px 10px;border-bottom:1px solid var(--border)}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  th.pinned,td.pinned{position:sticky;left:0;background:var(--card);box-shadow:2px 0 0 var(--border)}
+  th.right{text-align:right}
+  .pagi{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12px;color:var(--muted)}
+  .pagi .sp{margin-left:auto}
+  .note{max-width:1180px;margin-top:22px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);padding-top:12px}
+  .note b{color:var(--fg)}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">切換 dark</button>
+<div class="wrap">
+  <h1>Table Builder — 匯入 + 過濾(A+C 版型提案)</h1>
+  <p class="sub">Config-driven data table — 匯入靜態資料(JSON/CSV)、定義欄位與顯示、記憶體過濾,即時預覽。</p>
+  <p class="eyebrow">Table Builder</p>
+
+  <div class="panels">
+    <!-- SOURCE -->
+    <div class="panel">
+      <h3>Data source</h3>
+      <div class="seg"><button class="on">Static data</button><button>Fake fetcher</button></div>
+      <div class="field">
+        <label>Paste JSON / CSV</label>
+        <textarea>[{"id":"bk-001","title":"Sample Item 1","price":13.5,...</textarea>
+      </div>
+      <div class="row-btns">
+        <button class="btn">⬆ Upload .json/.csv</button>
+        <button class="btn primary">Load</button>
+      </div>
+      <div class="seg" style="margin-top:8px"><button class="on">JSON</button><button>CSV</button></div>
+      <p class="hint">載入後自動推出欄位型別(18 rows · 7 fields)。</p>
+    </div>
+
+    <!-- COLUMNS -->
+    <div class="panel">
+      <h3>Columns</h3>
+      <div class="colrow">
+        <span class="grip">⣿</span><span class="chk"><input type="checkbox" checked>Visible</span>
+        <input type="text" class="col-label" value="ID">
+        <select class="mini"><option>None</option></select>
+        <span class="chk"><input type="checkbox" checked>Sort</span>
+        <span class="chk"><input type="checkbox">Filter</span>
+        <span class="pin">Left</span>
+      </div>
+      <div class="colrow">
+        <span class="grip">⣿</span><span class="chk"><input type="checkbox" checked>Visible</span>
+        <input type="text" class="col-label" value="Title">
+        <select class="mini"><option>None</option></select>
+        <span class="chk"><input type="checkbox" checked>Sort</span>
+        <span class="chk"><input type="checkbox" checked>Filter</span>
+        <span class="pin">None</span>
+      </div>
+      <div class="colrow">
+        <span class="grip">⣿</span><span class="chk"><input type="checkbox" checked>Visible</span>
+        <input type="text" class="col-label" value="Price">
+        <select class="mini"><option>currency</option></select>
+        <span class="chk"><input type="checkbox" checked>Sort</span>
+        <span class="chk"><input type="checkbox" checked>Filter</span>
+        <span class="pin">None</span>
+      </div>
+      <div class="colrow">
+        <span class="grip">⣿</span><span class="chk"><input type="checkbox" checked>Visible</span>
+        <input type="text" class="col-label" value="Status">
+        <select class="mini"><option>None</option></select>
+        <span class="chk"><input type="checkbox">Sort</span>
+        <span class="chk"><input type="checkbox" checked>Filter</span>
+        <span class="pin">None</span>
+      </div>
+      <p class="hint">新增的 <b>Filter</b> 勾選 = 讓該欄出現在下方過濾器的可選欄位(filterable 旗標變真)。</p>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="panel">
+      <h3>Pagination</h3>
+      <div class="field"><label>Default page size</label><input type="number" value="5" style="width:70px"></div>
+      <div class="field"><label>Empty state text</label><input type="text" placeholder="No rows"></div>
+    </div>
+  </div>
+
+  <!-- FULL-WIDTH FILTER SECTION (recommended placement) -->
+  <div class="filter-sec">
+    <div class="filter-head">
+      <h3>Filter</h3><span class="badge">in-memory</span>
+      <span class="matched">6 / 18 rows matched</span>
+    </div>
+    <div class="tree">
+      <div class="logic"><span class="pill and">AND</span></div>
+      <div class="cond">
+        <span class="tok field">price</span><span class="tok">≥</span><span class="tok">20</span>
+      </div>
+      <div class="cond">
+        <span class="tok field">status</span><span class="tok">is</span><span class="tok">Published</span>
+      </div>
+      <span class="addcond">+ condition　+ group</span>
+    </div>
+    <p class="hint" style="margin-top:8px">欄位清單只列勾了 <b>Filter</b> 的欄;過濾在工具層 <code>runLiveMatch(rows, tree)</code> 執行,結果餵給下方表格 → 回第一頁、總數變過濾後。fetcher 模式時本區停用(標「remote filter 之後」)。</p>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview">
+    <h3>Preview</h3>
+    <table>
+      <thead>
+        <tr>
+          <th class="pinned">ID</th>
+          <th>Title</th>
+          <th class="right">Price <span class="arrow">↓</span></th>
+          <th>Created</th>
+          <th>In stock</th>
+          <th>Author</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="pinned">bk-018</td><td>Sample Item 18</td><td class="num">$72.50</td><td>Jan 19, 2026</td><td>true</td><td>Ada Lovelace</td><td>Published</td></tr>
+        <tr><td class="pinned">bk-014</td><td>Sample Item 14</td><td class="num">$58.00</td><td>Jan 15, 2026</td><td>true</td><td>Grace Hopper</td><td>Published</td></tr>
+        <tr><td class="pinned">bk-009</td><td>Sample Item 9</td><td class="num">$40.50</td><td>Jan 10, 2026</td><td>true</td><td>Alan Turing</td><td>Published</td></tr>
+        <tr><td class="pinned">bk-007</td><td>Sample Item 7</td><td class="num">$33.00</td><td>Jan 8, 2026</td><td>true</td><td>Ada Lovelace</td><td>Published</td></tr>
+        <tr><td class="pinned">bk-004</td><td>Sample Item 4</td><td class="num">$24.00</td><td>Jan 5, 2026</td><td>true</td><td>Ada Lovelace</td><td>Published</td></tr>
+      </tbody>
+    </table>
+    <div class="pagi"><span>6 rows</span><span>Rows per page 5</span><span class="sp">Page 1 of 2　<span class="pin">Previous</span> <span class="pin">Next</span></span></div>
+  </div>
+
+  <p class="note">
+    <b>資料流(靜態):</b> 匯入 rows → <code>inferFieldsFromRows</code> → deriveTableConfig →
+    <b>runLiveMatch(rows, filterTree)</b> → 過濾後 rows 當 source → ConfigTable 自己 sort + paginate。<br>
+    <b>套件邊界:</b> 過濾住在 apps/web 工具層(複用現有 filter-builder-ui + runLiveMatch);<code>@rfjs/table-builder-ui</code> 零改動,保持純渲染器。<br>
+    <b>新增的 UI:</b> ① Source 面板的貼上/上傳 + JSON/CSV 切換　② Columns 每欄多一個 Filter 勾選　③ 全寬 Filter 區(此版型)。
+  </p>
+</div>
+</body>
+</html>

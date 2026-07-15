@@ -46,6 +46,10 @@ export function makeItem(kind: ItemKind, seed?: Omit<Partial<FieldItem>, 'id' | 
       return { id, kind: 'spacer' };
     case 'ai-note':
       return { id, kind: 'ai-note', text: '' };
+    case 'button':
+      return { id, kind: 'button', label: 'Button', action: { type: 'custom', name: 'action-1' } };
+    case 'result':
+      return { id, kind: 'result', mode: 'json' };
   }
 }
 

@@ -135,12 +135,12 @@ const schema = inferSchema([{ age: 36, name: "Ada" }]); // → FieldSchema[]
 | `eq` | one | ✓ | ✓ | ✓ | ✓ | 等於(mongo:`$eq`) |
 | `neq` | one | ✓ | ✓ | ✓ | ✓ | 不等於 |
 | `gt` `gte` `lt` `lte` | one | ✓ | ✓ | ✓ | ✓ | 大小比較 |
-| `range` | two `[min,max]` | ✓ | ✓ | – | ✓ | 介於(含邊界) |
-| `contains` | one² | ✓ | ✓ | ✓ | ✓ | 子字串(sql:`ILIKE`;mongo:`$regex`) |
+| `range` | two `[min,max]` | ✓ | ✓ | ✓⁴ | ✓ | 介於(含邊界) |
+| `contains` | one² | ✓ | ✓ | ✓ | ✓ | 子字串(sql:區分大小寫的 `LIKE`;mongo:`$regex`) |
 | `startswith` | one | ✓ | ✓ | ✓ | ✓ | 開頭為 |
-| `endswith` | one | ✓ | ✓ | – | ✓ | 結尾為(sql 欄位層無此 op) |
-| `icontains` `istartswith` `iendswith` `ieq` `ineq` | one | – | ✓ | – | – | 不分大小寫版本 |
-| `terms` | list | ✓ | ✓ | – | ✓ | 屬於集合(sql:—;mongo:`$in`) |
+| `endswith` | one | ✓ | ✓ | ✓⁴ | ✓ | 結尾為 |
+| `icontains` `istartswith` `iendswith` `ieq` `ineq` | one | – | ✓ | ✓⁴ | – | 不分大小寫版本 |
+| `terms` | list | ✓ | ✓ | ✓⁴ | ✓ | 屬於集合(sql:`= ANY`;mongo:`$in`) |
 | `nin` | list | – | – | – | ✓ | 不屬於集合(`$nin`) |
 | `containsall` | list | ✓ | ✓ | – | – | 陣列包含全部值 |
 | `isnull` `isnotnull` | none | ✓ | ✓ | ✓ | ✓ | null 檢查(mongo:`$eq`/`$ne null`) |
@@ -154,6 +154,8 @@ const schema = inferSchema([{ age: 36, name: "Ada" }]); // → FieldSchema[]
 ² `contains` 一般是單值,但 **data-filter** 在 `string` / 字串陣列欄位上把它視為 `list` arity(contains-**any**,任一命中)。
 
 ³ `elemmatch` 帶的是巢狀 `BuilderGroup`(在 `condition.filters`),而非純量值。
+
+⁴ **sql-filter** 的欄位層對 `range`/`terms`/`iX` 家族依欄位 `type` 有不同的允許範圍 —— 例如 `range` 只有 numeric/timestamp(`text` 沒有),`terms` 在 `boolean` 上不可用;詳見 [@rfjs/sql-filter](../sql-filter#column-operator-與型別) 的每型別對照表。
 
 arity 來自共用的 `arity.ts`(單一真相);各引擎的 ✓ 標記是依各引擎 `operators()` 維護。`@rfjs/filter-builder-ui` 裡有一個 drift-guard 測試(`operators.spec.ts`)確保任何引擎回傳的 operator 都存在於 `OPERATOR_KEYS`,所以**新增**的 operator 不會被漏掉——但表中的 ✓/– 格是人工核對,若有疑問請以各引擎自己的 README 為準。
 

@@ -1,5 +1,5 @@
 // jsdom shim: radix-ui Select uses pointer capture and scrollIntoView APIs not available in jsdom
-if (typeof Element !== 'undefined') {
+if (typeof Element !== "undefined") {
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = () => false;
   }
@@ -13,7 +13,7 @@ if (typeof Element !== 'undefined') {
     Element.prototype.scrollIntoView = () => {};
   }
 }
-if (typeof window !== 'undefined' && !window.ResizeObserver) {
+if (typeof window !== "undefined" && !window.ResizeObserver) {
   window.ResizeObserver = class ResizeObserver {
     observe() {}
     unobserve() {}
@@ -21,14 +21,86 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
   };
 }
 
-import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { FormBuilderTool } from "./ui";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+
+const mockRun = vi.fn();
+const mockCancel = vi.fn();
+let mockReady = true;
+let mockLoading = false;
+let mockError: { kind: string; message: string; detail?: string } | null = null;
+
+vi.mock("@rfjs/ai-assist-ui", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@rfjs/ai-assist-ui")>()),
+  useAiAssist: () => ({
+    ready: mockReady,
+    loading: mockLoading,
+    error: mockError,
+    cancel: mockCancel,
+    run: mockRun,
+    runStream: mockRun,
+    streamText: "",
+    streamReasoning: "",
+  }),
+}));
+
+import { FormBuilderTool, createPreviewFetcher } from "./ui";
 import { resolveCards, collides, type PlacedCard } from "./layout-grid";
+import { assembleMessages } from "@/i18n/messages";
+
+beforeEach(() => {
+  localStorage.clear();
+  mockRun.mockReset();
+  mockCancel.mockReset();
+  mockReady = true;
+  mockLoading = false;
+  mockError = null;
+});
+
+function renderTool() {
+  return render(
+    <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
+      <FormBuilderTool />
+    </NextIntlClientProvider>,
+  );
+}
+
+describe("createPreviewFetcher", () => {
+  it("echoes an api-action request (body shaped { data, meta }) instead of delegating to sampleFetcher", async () => {
+    const body = { data: { name: "Ada" }, meta: { name: "save-draft" } };
+    const result = await createPreviewFetcher({
+      url: "/api/actions/save-draft",
+      body,
+    });
+    expect(typeof (result as { echoedAt: string }).echoedAt).toBe("string");
+    expect((result as { received: unknown }).received).toEqual(body);
+    // Not sampleFetcher's canned dataSource shape (an array under `data`).
+    expect(Array.isArray((result as { data?: unknown }).data)).toBe(false);
+  });
+
+  it("delegates a dataSource request (no data/meta body) to sampleFetcher's canned response", async () => {
+    const result = await createPreviewFetcher({ url: "/api/countries" });
+    expect(result).toEqual({
+      data: [
+        { code: "tw", name: "Taiwan" },
+        { code: "jp", name: "Japan" },
+        { code: "us", name: "United States" },
+      ],
+    });
+  });
+});
+
+describe("FormBuilderTool intro", () => {
+  it("renders the collapsible ToolIntro", () => {
+    renderTool();
+    expect(screen.getByRole("button", { name: /how does this tool work/i })).toBeTruthy();
+  });
+});
 
 describe("FormBuilderTool preview", () => {
   it("Preview tab renders the real ConfigForm with a labelled control", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // The seed has a "Name" field → real <Label> + a real input render.
     expect(screen.getByText("Name")).toBeTruthy();
@@ -36,7 +108,7 @@ describe("FormBuilderTool preview", () => {
   });
 
   it("JSON tab shows a FormConfig (version + sections)", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^json$/i }));
     const ta = screen.getByLabelText(/config json/i) as HTMLTextAreaElement;
     const parsed = JSON.parse(ta.value);
@@ -56,14 +128,17 @@ describe("canvas no-overlap invariant", () => {
     const out = resolveCards(cards, "a", 12);
     for (let i = 0; i < out.length; i++)
       for (let j = i + 1; j < out.length; j++)
-        if (out[i]!.groupId === out[j]!.groupId) expect(collides(out[i]!, out[j]!)).toBe(false);
+        if (out[i]!.groupId === out[j]!.groupId)
+          expect(collides(out[i]!, out[j]!)).toBe(false);
   });
 });
 
 describe("FormBuilderTool drag threshold", () => {
   it("a sub-threshold pointer move (a click) does not move the card", () => {
-    render(<FormBuilderTool />);
-    const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
+    renderTool();
+    const card = screen
+      .getByText("Name")
+      .closest(".cursor-grab") as HTMLElement;
     const before = card.style.gridColumn;
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
     fireEvent.pointerMove(window, { clientX: 102, clientY: 101 }); // ~2px, below the 4px threshold
@@ -74,14 +149,16 @@ describe("FormBuilderTool drag threshold", () => {
 
 describe("FormBuilderTool group reorder", () => {
   it("each group has a reorder handle", () => {
-    render(<FormBuilderTool />);
-    expect(screen.getAllByRole("button", { name: /reorder group/i }).length).toBeGreaterThanOrEqual(2);
+    renderTool();
+    expect(
+      screen.getAllByRole("button", { name: /reorder group/i }).length,
+    ).toBeGreaterThanOrEqual(2);
   });
 });
 
 describe("FormBuilderTool canvas collapsible sections", () => {
   it("Canvas tab has two independent collapsible sections: Editor and Live Preview", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     // Canvas is the default tab — both section headers should be present
     expect(screen.getByRole("button", { name: /editor/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /live preview/i })).toBeTruthy();
@@ -92,7 +169,7 @@ describe("FormBuilderTool canvas collapsible sections", () => {
 
 describe("FormBuilderTool preview tab integration", () => {
   it("Preview tab renders ResponsivePreview with device controls + a submission panel", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // Device preset buttons from ResponsivePreview
     expect(screen.getByRole("button", { name: /^mobile$/i })).toBeTruthy();
@@ -104,7 +181,7 @@ describe("FormBuilderTool preview tab integration", () => {
   });
 
   it("Preview tab uses vertical stack layout (no lg:flex-row)", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // The preview tab wrapper must NOT have lg:flex-row — find the rp-frame and walk up
     const frame = screen.getByTestId("rp-frame");
@@ -122,23 +199,47 @@ describe("FormBuilderTool preview tab integration", () => {
   });
 
   it("Preview tab wraps SubmissionPanel in a collapsible Submission section (collapsed by default)", () => {
-    render(<FormBuilderTool />);
+    renderTool();
     fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
     // "Submission" section header should be present
     expect(screen.getByRole("button", { name: /submission/i })).toBeTruthy();
     // Section is collapsed by default: the inner panel content (Metadata heading) is NOT in the DOM
     expect(screen.queryByText(/^metadata$/i)).toBeNull();
   });
+
+  it("preview: clicking a custom button surfaces the action in the submission panel", async () => {
+    renderTool();
+    // Anchored (as the rest of this file does) — an unanchored /preview/i also matches
+    // the Canvas tab's "Live Preview" section toggle button.
+    fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /save draft/i }));
+    await waitFor(() =>
+      expect(screen.getAllByText(/save-draft/).length).toBeGreaterThan(0),
+    );
+  });
+
+  it("preview: query api button renders its rows as a ConfigTable in the result", async () => {
+    renderTool();
+    fireEvent.click(screen.getByRole("button", { name: /^preview$/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^query$/i }));
+    // query fetcher returns SAMPLE_QUERY_ROWS under `data`; result mode:'table' → ConfigTable headers + rows
+    const resultContainer = document.querySelector('[data-item="res_query"]') as HTMLElement;
+    await waitFor(() => expect(resultContainer.textContent).toMatch(/email/i));
+    expect(resultContainer.textContent).toMatch(/Ada Lovelace/);
+  });
 });
 
 describe("FormBuilderTool mobile config overlay (does not block canvas drag)", () => {
   // The inspector container uses the full-screen overlay classes on mobile only
   // when the mobile config is open. A press-to-drag must NOT open it.
-  const isOverlayOpen = () => screen.getByTestId("card-inspector").className.includes("fixed");
+  const isOverlayOpen = () =>
+    screen.getByTestId("card-inspector").className.includes("fixed");
 
   it("a tap (press-release without moving) opens the mobile config overlay", () => {
-    render(<FormBuilderTool />);
-    const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
+    renderTool();
+    const card = screen
+      .getByText("Name")
+      .closest(".cursor-grab") as HTMLElement;
     expect(isOverlayOpen()).toBe(false);
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
     expect(isOverlayOpen()).toBe(false); // still closed mid-press → canvas not covered
@@ -147,11 +248,57 @@ describe("FormBuilderTool mobile config overlay (does not block canvas drag)", (
   });
 
   it("a press-drag (past the threshold) does NOT open the overlay, so the canvas stays draggable", () => {
-    render(<FormBuilderTool />);
-    const card = screen.getByText("Name").closest(".cursor-grab") as HTMLElement;
+    renderTool();
+    const card = screen
+      .getByText("Name")
+      .closest(".cursor-grab") as HTMLElement;
     fireEvent.pointerDown(card, { clientX: 100, clientY: 100 });
     fireEvent.pointerMove(window, { clientX: 140, clientY: 140 }); // ~57px, past the 4px threshold → a drag
     fireEvent.pointerUp(window, { clientX: 140, clientY: 140 });
     expect(isOverlayOpen()).toBe(false);
+  });
+});
+
+// Central ToolUI keys (aiReapply, aiAsk, …) live in src/messages/*.json and are merged with
+// each tool's local fragment at runtime via assembleMessages — renderTool() above only passes
+// the tool-local slice, so a button whose label comes from a central-only key (e.g. "Re-apply")
+// would render as the raw "ToolUI.<key>" fallback. Use the assembled messages here instead.
+function renderToolWithCentralMessages() {
+  return render(
+    <NextIntlClientProvider locale="en" messages={assembleMessages("en")}>
+      <FormBuilderTool />
+    </NextIntlClientProvider>,
+  );
+}
+
+describe("FormBuilderTool — AI panel", () => {
+  it("shows the shared AI panel instead of the old ✨ generate row", () => {
+    renderTool();
+    expect(
+      screen.getByPlaceholderText(/describe a form or ask a question/i),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /^generate form$/i }),
+    ).toBeTruthy();
+  });
+
+  it("re-apply: a preloaded entry's appliedJson rebuilds the canvas via applyJson", async () => {
+    localStorage.setItem(
+      "rfjs.ai.log.form-builder",
+      JSON.stringify([
+        {
+          id: "e1",
+          kind: "generate",
+          prompt: "a form with a name field",
+          appliedJson:
+            '{"version":1,"fields":[{"key":"name","label":"Name","component":"Input","dataType":"string"}]}',
+          at: "2026-07-08T00:00:00.000Z",
+        },
+      ]),
+    );
+    renderToolWithCentralMessages();
+    const btn = await screen.findByRole("button", { name: /^re-apply$/i });
+    fireEvent.click(btn);
+    await waitFor(() => expect(screen.getByText("Name")).toBeTruthy());
   });
 });

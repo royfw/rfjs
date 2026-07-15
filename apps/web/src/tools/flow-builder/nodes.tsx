@@ -4,8 +4,9 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 
+import type { FlowNodeType } from "@rfjs/flow-core";
+
 import type { FlowNodeData } from "./model";
-import type { FlowNodeType } from "./schema";
 
 // 邊框/表頭配色:light 用淡色底深字,dark 用深色底亮字(避免全暗看不清)。
 const META: Record<FlowNodeType, { border: string; head: string }> = {

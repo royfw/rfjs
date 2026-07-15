@@ -165,6 +165,26 @@ export const SAMPLE_CONFIG: FormConfig = {
           ],
         },
         { id: "r_div", items: [{ id: "i_div", kind: "divider" }] },
+        {
+          id: "r_actions",
+          items: [
+            { id: "btn_submit", kind: "button", label: { en: "Submit request", "zh-TW": "送出申請" }, action: { type: "submit" }, variant: "primary" },
+            { id: "btn_draft", kind: "button", label: { en: "Save draft", "zh-TW": "存草稿" }, action: { type: "custom", name: "save-draft" } },
+            { id: "btn_clear", kind: "button", label: { en: "Clear", "zh-TW": "清除" }, action: { type: "clear", fields: ["name", "email"] }, variant: "ghost" },
+          ],
+        },
+        {
+          id: "r_query",
+          items: [
+            { id: "btn_query", kind: "button", label: { en: "Query", "zh-TW": "查詢" }, action: { type: "api", url: "/api/search", fields: ["name", "email"] } },
+          ],
+        },
+        {
+          id: "r_result",
+          items: [
+            { id: "res_query", kind: "result", mode: "table", sourceId: "btn_query", dataPath: "data", emptyText: "Run a query to see results" },
+          ],
+        },
       ],
     },
   ],

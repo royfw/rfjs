@@ -10,6 +10,16 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      ecdEyebrow: "ES CLIENT RUNNER",
+      ecdIntroTagline: "Filter → ES search body → run it (mock transport)",
+      ecdIntroC1t: "① Build",
+      ecdIntroC1d:
+        "A filter, compiled to an Elasticsearch / OpenSearch search body.",
+      ecdIntroC2t: "② Run",
+      ecdIntroC2d:
+        "@rfjs/es-client runs it over a mock transport that truly filters the sample data.",
+      ecdIntroC3t: "③ Inspect",
+      ecdIntroC3d: "search · paginate · highlight.",
       ecdSample: "Sample JSON",
       ecdInvalidSample: "Invalid JSON — open to fix",
       ecdRaw: "raw ({count})",
@@ -57,6 +67,14 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      ecdEyebrow: "ES Client 執行器",
+      ecdIntroTagline: "篩選 → ES 搜尋 body → 實跑(mock transport)",
+      ecdIntroC1t: "① 建構",
+      ecdIntroC1d: "建篩選 → 編成 ES/OpenSearch 搜尋 body。",
+      ecdIntroC2t: "② 執行",
+      ecdIntroC2d: "@rfjs/es-client 用 mock transport 真的對範例資料執行。",
+      ecdIntroC3t: "③ 檢視",
+      ecdIntroC3d: "搜尋 · 分頁 · 高亮。",
       ecdSample: "範例 JSON",
       ecdInvalidSample: "JSON 無效 —— 展開修正",
       ecdRaw: "原始（{count}）",

@@ -190,12 +190,24 @@ importers:
 
   apps/web:
     dependencies:
+      '@rfjs/ai-assist':
+        specifier: workspace:*
+        version: link:../../packages/ai-assist
+      '@rfjs/ai-assist-ui':
+        specifier: workspace:*
+        version: link:../../packages/ai-assist-ui
       '@rfjs/bpmn-ui':
         specifier: workspace:*
         version: link:../../packages/bpmn-ui
       '@rfjs/data-filter':
         specifier: workspace:*
         version: link:../../packages/data-filter
+      '@rfjs/data-schema':
+        specifier: workspace:*
+        version: link:../../packages/data-schema
+      '@rfjs/data-schema-ui':
+        specifier: workspace:*
+        version: link:../../packages/data-schema-ui
       '@rfjs/data-transform':
         specifier: workspace:*
         version: link:../../packages/data-transform
@@ -214,6 +226,9 @@ importers:
       '@rfjs/filter-builder-ui':
         specifier: workspace:*
         version: link:../../packages/filter-builder-ui
+      '@rfjs/flow-core':
+        specifier: workspace:*
+        version: link:../../packages/flow-core
       '@rfjs/form-builder':
         specifier: workspace:*
         version: link:../../packages/form-builder
@@ -235,6 +250,12 @@ importers:
       '@rfjs/pg-filter':
         specifier: workspace:*
         version: link:../../packages/pg-filter
+      '@rfjs/table-builder':
+        specifier: workspace:*
+        version: link:../../packages/table-builder
+      '@rfjs/table-builder-ui':
+        specifier: workspace:*
+        version: link:../../packages/table-builder-ui
       '@rfjs/web-core':
         specifier: workspace:*
         version: link:../../packages/web-core
@@ -256,6 +277,9 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      papaparse:
+        specifier: ^5.4.1
+        version: 5.5.4
       react:
         specifier: ^19.2.7
         version: 19.2.7
@@ -293,6 +317,9 @@ importers:
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
+      '@types/papaparse':
+        specifier: ^5.3.14
+        version: 5.5.2
       '@types/react':
         specifier: 19.2.17
         version: 19.2.17
@@ -516,6 +543,100 @@ importers:
         specifier: ^4.1.8
         version: 4.1.8(@types/node@25.9.3)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@7.2.4(@types/node@25.9.3)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2))
 
+  packages/ai-assist:
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.20.0
+        version: 9.39.1
+      eslint:
+        specifier: ^9.20.1
+        version: 9.39.1(jiti@2.7.0)
+      eslint-config-prettier:
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@9.39.1(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1(@noble/hashes@1.8.0)
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      prettier:
+        specifier: ^3.5.1
+        version: 3.5.3
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.1.2
+      tsdown:
+        specifier: 0.17.0-beta.6
+        version: 0.17.0-beta.6(typescript@5.8.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.24.0
+        version: 8.61.0(eslint@9.39.1(jiti@2.7.0))(typescript@5.8.3)
+      vitest:
+        specifier: ^3.2.3
+        version: 3.2.4(@types/node@25.9.3)(@vitest/ui@3.2.4)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/ai-assist-ui:
+    dependencies:
+      '@rfjs/ai-assist':
+        specifier: workspace:*
+        version: link:../ai-assist
+      '@rfjs/web-ui':
+        specifier: workspace:*
+        version: link:../web-ui
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.7)
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.20.0
+        version: 9.39.1
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      '@testing-library/react':
+        specifier: ^16.3.2
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@types/react':
+        specifier: 19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      eslint:
+        specifier: ^9.20.1
+        version: 9.39.1(jiti@2.7.0)
+      eslint-config-prettier:
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@9.39.1(jiti@2.7.0))
+      eslint-plugin-react:
+        specifier: ^7.37.4
+        version: 7.37.4(eslint@9.39.1(jiti@2.7.0))
+      eslint-plugin-react-hooks:
+        specifier: ^5.1.0
+        version: 5.1.0(eslint@9.39.1(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1(@noble/hashes@1.8.0)
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.61.0
+        version: 8.61.0(eslint@9.39.1(jiti@2.7.0))(typescript@6.0.3)
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@25.9.3)(@vitest/ui@3.2.4)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
+
   packages/bpmn-ui:
     dependencies:
       bpmn-js:
@@ -713,6 +834,98 @@ importers:
         version: 8.48.0(eslint@9.39.1(jiti@2.7.0))(typescript@5.8.3)
       vitest:
         specifier: ^3.2.3
+        version: 3.2.4(@types/node@25.9.3)(@vitest/ui@3.2.4)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/data-schema:
+    dependencies:
+      zod:
+        specifier: ^4.0.0
+        version: 4.4.3
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.20.0
+        version: 9.39.1
+      eslint:
+        specifier: ^9.20.1
+        version: 9.39.1(jiti@2.7.0)
+      eslint-config-prettier:
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@9.39.1(jiti@2.7.0))
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      prettier:
+        specifier: ^3.5.1
+        version: 3.5.3
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.1.2
+      tsdown:
+        specifier: 0.17.0-beta.6
+        version: 0.17.0-beta.6(typescript@5.8.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.24.0
+        version: 8.61.0(eslint@9.39.1(jiti@2.7.0))(typescript@5.8.3)
+      vitest:
+        specifier: ^3.2.3
+        version: 3.2.4(@types/node@25.9.3)(@vitest/ui@3.2.4)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/data-schema-ui:
+    dependencies:
+      '@rfjs/data-schema':
+        specifier: workspace:*
+        version: link:../data-schema
+      '@rfjs/web-ui':
+        specifier: workspace:*
+        version: link:../web-ui
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.20.0
+        version: 9.39.1
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      '@testing-library/react':
+        specifier: ^16.3.2
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@types/react':
+        specifier: 19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      eslint:
+        specifier: ^9.20.1
+        version: 9.39.1(jiti@2.7.0)
+      eslint-config-prettier:
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@9.39.1(jiti@2.7.0))
+      eslint-plugin-react:
+        specifier: ^7.37.4
+        version: 7.37.4(eslint@9.39.1(jiti@2.7.0))
+      eslint-plugin-react-hooks:
+        specifier: ^5.1.0
+        version: 5.1.0(eslint@9.39.1(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1(@noble/hashes@1.8.0)
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.61.0
+        version: 8.61.0(eslint@9.39.1(jiti@2.7.0))(typescript@6.0.3)
+      vitest:
+        specifier: ^3.2.4
         version: 3.2.4(@types/node@25.9.3)(@vitest/ui@3.2.4)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/data-transform:
@@ -1005,6 +1218,52 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@25.9.3)(@vitest/ui@3.2.4)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
 
+  packages/flow-core:
+    dependencies:
+      '@rfjs/data-filter':
+        specifier: workspace:*
+        version: link:../data-filter
+      zod:
+        specifier: ^4.0.0
+        version: 4.4.3
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.20.0
+        version: 9.39.1
+      '@types/node':
+        specifier: ^25.9.1
+        version: 25.9.3
+      '@vitest/coverage-istanbul':
+        specifier: ^3.2.3
+        version: 3.2.4(vitest@3.2.4)
+      eslint:
+        specifier: ^9.20.1
+        version: 9.39.1(jiti@2.7.0)
+      eslint-config-prettier:
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@9.39.1(jiti@2.7.0))
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      prettier:
+        specifier: ^3.5.1
+        version: 3.5.3
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.1.2
+      tsdown:
+        specifier: 0.17.0-beta.6
+        version: 0.17.0-beta.6(typescript@5.8.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.24.0
+        version: 8.61.0(eslint@9.39.1(jiti@2.7.0))(typescript@5.8.3)
+      vitest:
+        specifier: ^3.2.3
+        version: 3.2.4(@types/node@25.9.3)(@vitest/ui@3.2.4)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
+
   packages/form-builder:
     dependencies:
       '@rfjs/data-expr':
@@ -1016,6 +1275,9 @@ importers:
       '@rfjs/object-utils':
         specifier: workspace:*
         version: link:../object-utils
+      '@rfjs/table-builder':
+        specifier: workspace:*
+        version: link:../table-builder
       zod:
         specifier: ^4.0.0
         version: 4.4.3
@@ -1059,9 +1321,18 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.0.0
         version: 5.4.0(react-hook-form@7.80.0(react@19.2.7))
+      '@rfjs/data-schema':
+        specifier: workspace:*
+        version: link:../data-schema
       '@rfjs/form-builder':
         specifier: workspace:*
         version: link:../form-builder
+      '@rfjs/table-builder':
+        specifier: workspace:*
+        version: link:../table-builder
+      '@rfjs/table-builder-ui':
+        specifier: workspace:*
+        version: link:../table-builder-ui
       '@rfjs/web-ui':
         specifier: workspace:*
         version: link:../web-ui
@@ -1507,6 +1778,116 @@ importers:
         version: 8.61.0(eslint@9.39.1(jiti@2.7.0))(typescript@5.8.3)
       vitest:
         specifier: ^3.2.3
+        version: 3.2.4(@types/node@25.9.3)(@vitest/ui@3.2.4)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/table-builder:
+    dependencies:
+      '@rfjs/data-schema':
+        specifier: workspace:*
+        version: link:../data-schema
+      zod:
+        specifier: ^4.0.0
+        version: 4.4.3
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.20.0
+        version: 9.39.1
+      eslint:
+        specifier: ^9.20.1
+        version: 9.39.1(jiti@2.7.0)
+      eslint-config-prettier:
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@9.39.1(jiti@2.7.0))
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      prettier:
+        specifier: ^3.5.1
+        version: 3.5.3
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.1.2
+      tsdown:
+        specifier: 0.17.0-beta.6
+        version: 0.17.0-beta.6(typescript@5.8.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.24.0
+        version: 8.61.0(eslint@9.39.1(jiti@2.7.0))(typescript@5.8.3)
+      vitest:
+        specifier: ^3.2.3
+        version: 3.2.4(@types/node@25.9.3)(@vitest/ui@3.2.4)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/table-builder-ui:
+    dependencies:
+      '@rfjs/data-schema':
+        specifier: workspace:*
+        version: link:../data-schema
+      '@rfjs/filter-builder':
+        specifier: workspace:*
+        version: link:../filter-builder
+      '@rfjs/filter-builder-ui':
+        specifier: workspace:*
+        version: link:../filter-builder-ui
+      '@rfjs/pg-filter':
+        specifier: workspace:*
+        version: link:../pg-filter
+      '@rfjs/table-builder':
+        specifier: workspace:*
+        version: link:../table-builder
+      '@rfjs/web-ui':
+        specifier: workspace:*
+        version: link:../web-ui
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.7)
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.20.0
+        version: 9.39.1
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      '@testing-library/react':
+        specifier: ^16.3.2
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@types/react':
+        specifier: 19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      eslint:
+        specifier: ^9.20.1
+        version: 9.39.1(jiti@2.7.0)
+      eslint-config-prettier:
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@9.39.1(jiti@2.7.0))
+      eslint-plugin-react:
+        specifier: ^7.37.4
+        version: 7.37.4(eslint@9.39.1(jiti@2.7.0))
+      eslint-plugin-react-hooks:
+        specifier: ^5.1.0
+        version: 5.1.0(eslint@9.39.1(jiti@2.7.0))
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1(@noble/hashes@1.8.0)
+      react:
+        specifier: ^19.2.7
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.7
+        version: 19.2.7(react@19.2.7)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.61.0
+        version: 8.61.0(eslint@9.39.1(jiti@2.7.0))(typescript@6.0.3)
+      vitest:
+        specifier: ^3.2.4
         version: 3.2.4(@types/node@25.9.3)(@vitest/ui@3.2.4)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/tpl-toolkit:
@@ -4642,6 +5023,9 @@ packages:
   '@types/node@25.9.3':
     resolution: {integrity: sha512-603BddQMv3pUcr4U2dhujk83N2tTDVr/34wII2B6bJy6g+8WD6yUb11jszNs0gdi4PesVWl7ABt8nYMVpnLUcg==}
 
+  '@types/papaparse@5.5.2':
+    resolution: {integrity: sha512-gFnFp/JMzLHCwRf7tQHrNnfhN4eYBVYYI897CGX4MY1tzY9l2aLkVyx2IlKZ/SAqDbB3I1AOZW5gTMGGsqWliA==}
+
   '@types/pg-connection-string@2.0.0':
     resolution: {integrity: sha512-J1ZxH9dN0zSwnJpAlbvRlEtwYD/SYmyLMVF4DF0qfTHv0sH0HEg9WK/B24doWGjgcT8InomL0znJwcYHy3lNUw==}
     deprecated: This is a stub types definition for pg-connection-string (https://github.com/iceddev/pg-connection-string). pg-connection-string provides its own type definitions, so you don't need @types/pg-connection-string installed!
@@ -7379,6 +7763,9 @@ packages:
 
   package-manager-detector@0.2.11:
     resolution: {integrity: sha512-BEnLolu+yuz22S56CU1SUKq3XC3PkwD5wv4ikR4MfGvnRVcmzXR9DwSlW2fEamyTPyXHomBJRzgapeuBvRNzJQ==}
+
+  papaparse@5.5.4:
+    resolution: {integrity: sha512-SwzWD9gl/ElwYLCI0nUja1mFJzjq2D8ziShfNBa7zCHzkOozeOGDwHWQ+tvCzEZcewecWZ5U7kUopDnG+DFYEQ==}
 
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -11943,6 +12330,10 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
+  '@types/papaparse@5.5.2':
+    dependencies:
+      '@types/node': 25.9.3
+
   '@types/pg-connection-string@2.0.0':
     dependencies:
       pg-connection-string: 2.9.1
@@ -15280,6 +15671,8 @@ snapshots:
   package-manager-detector@0.2.11:
     dependencies:
       quansync: 0.2.11
+
+  papaparse@5.5.4: {}
 
   parent-module@1.0.1:
     dependencies:

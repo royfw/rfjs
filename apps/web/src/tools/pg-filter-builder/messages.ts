@@ -10,9 +10,20 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      pfbIntroTagline: "One tree, columns + JSONB → unified PostgreSQL WHERE",
+      pfbIntroC1t: "① Build",
+      pfbIntroC1d:
+        "A single tree mixes plain-column and JSONB-path conditions.",
+      pfbIntroC2t: "② Compile",
+      pfbIntroC2d:
+        "@rfjs/pg-filter (sql-filter + jsonb-query) emits one unified WHERE.",
+      pfbIntroC3t: "③ Live",
+      pfbIntroC3d: "The unified SQL updates live.",
+      pfbEyebrow: "PG FILTER BUILDER",
       pfbFilterLogic: "Filter logic",
       pfbFields: "Fields",
-      pfbKindHint: "Toggle col / json to choose whether each field is a SQL column or a JSONB path.",
+      pfbKindHint:
+        "Toggle col / json to choose whether each field is a SQL column or a JSONB path.",
       pfbSample: "Sample JSON",
       pfbInvalidSample: "Invalid JSON — open to fix",
       pfbRaw: "raw ({count})",
@@ -24,7 +35,8 @@ export const messages: LocaleMessages = {
       pfbWhere: "WHERE",
       pfbValues: "values",
       pfbCanonical: "'{ }'",
-      pfbCanonicalHint: "Canonical filter (editable) — edit to rebuild the tree",
+      pfbCanonicalHint:
+        "Canonical filter (editable) — edit to rebuild the tree",
       pfbReverseInvalidJson: "Invalid JSON",
       pfbReverseInvalidShape: "Not a valid filter group",
       pfbCompileError: "Could not compile: {error}",
@@ -54,6 +66,14 @@ export const messages: LocaleMessages = {
       },
     },
     ToolUI: {
+      pfbIntroTagline: "一棵樹混欄位 + JSONB → 統一 PostgreSQL WHERE",
+      pfbIntroC1t: "① 建構",
+      pfbIntroC1d: "同一棵樹混「純欄位」與「JSONB 路徑」條件。",
+      pfbIntroC2t: "② 編譯",
+      pfbIntroC2d: "@rfjs/pg-filter(sql-filter + jsonb-query)產出單一 WHERE。",
+      pfbIntroC3t: "③ 即時",
+      pfbIntroC3d: "統一的 SQL 即時更新。",
+      pfbEyebrow: "PG 篩選建構器",
       pfbFilterLogic: "篩選邏輯",
       pfbFields: "欄位",
       pfbKindHint: "切換 col / json，決定每個欄位是 SQL 欄位還是 JSONB 路徑。",

@@ -1,11 +1,24 @@
 "use client";
 
 import { runLiveMatch } from "@rfjs/filter-builder";
-import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui";
+import {
+  FilterTreeEditor,
+  type FilterTreeLabels,
+} from "@rfjs/filter-builder-ui";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
-import { MetadataStrip, RISE, SampleCard, useFilterBuilder, useOperatorLabels } from "@/tools/_filter-builder";
+import {
+  AiAssistBlock,
+  MetadataStrip,
+  RISE,
+  SampleCard,
+  useFilterBuilder,
+  useOperatorLabels,
+} from "@/tools/_filter-builder";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
+import { ToolIntro } from "@/components/shared/tool-intro";
 
 import { DataPanel } from "./ui/data-panel";
 
@@ -45,7 +58,10 @@ export function DataFilterBuilder() {
   const fb = useFilterBuilder({ sample: SAMPLE });
 
   // Live in-memory match is data-filter's unique output; it stays in this tool.
-  const live = useMemo(() => runLiveMatch(fb.rows, fb.tree), [fb.rows, fb.tree]);
+  const live = useMemo(
+    () => runLiveMatch(fb.rows, fb.tree),
+    [fb.rows, fb.tree],
+  );
 
   const reverseText =
     fb.reverseError === "invalidJson"
@@ -55,7 +71,23 @@ export function DataFilterBuilder() {
         : null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("dfbEyebrow")}</ToolEyebrow>
+      <ToolIntro
+        storageKey="tool-intro:data-filter-builder"
+        question={t("introQuestion")}
+        tagline={t("dfbIntroTagline")}
+        concepts={[
+          { term: t("dfbIntroC1t"), desc: t("dfbIntroC1d") },
+          { term: t("dfbIntroC2t"), desc: t("dfbIntroC2d") },
+          { term: t("dfbIntroC3t"), desc: t("dfbIntroC3d") },
+        ]}
+        labels={{
+          expand: t("introExpand"),
+          collapse: t("introCollapse"),
+          dismiss: t("introDismiss"),
+        }}
+      />
       <style>{RISE}</style>
 
       {/* Sample JSON — demoted to a collapsible source */}
@@ -76,39 +108,54 @@ export function DataFilterBuilder() {
       />
 
       {/* Metadata converter — framed like the hero card */}
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "70ms" }}>
-        <div className="border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("dfbFields")}
-          </span>
-        </div>
-        <div className="p-4">
-          <MetadataStrip
-            schema={fb.schema}
-            onChange={fb.setSchema}
-            labels={{
-              include: t("dfbInclude", { field: "" }).trim(),
-              type: t("dfbType", { field: "" }).trim(),
-            }}
-          />
-        </div>
-      </section>
+      <SectionCard
+        title={t("dfbFields")}
+        className="fb-rise"
+        style={{ animationDelay: "70ms" }}
+      >
+        <MetadataStrip
+          schema={fb.schema}
+          onChange={fb.setSchema}
+          labels={{
+            include: t("dfbInclude", { field: "" }).trim(),
+            type: t("dfbType", { field: "" }).trim(),
+          }}
+        />
+      </SectionCard>
 
       {/* Hero — the filter-logic canvas, with a live match stat */}
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "140ms" }}>
-        <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("dfbFilterLogic")}
-          </span>
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={null}
+          engineId="data-filter"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.data-filter-builder"
+        />
+      </div>
+
+      <SectionCard
+        title={t("dfbFilterLogic")}
+        className="fb-rise"
+        style={{ animationDelay: "140ms" }}
+        bodyClassName="p-4"
+        action={
           <span className="flex items-baseline gap-1.5 tabular-nums">
-            <span className="font-mono text-2xl font-semibold text-intake">{live.count}</span>
-            <span className="font-mono text-sm text-muted-foreground">/ {fb.rows.length}</span>
+            <span className="font-mono text-2xl font-semibold text-intake">
+              {live.count}
+            </span>
+            <span className="font-mono text-sm text-muted-foreground">
+              / {fb.rows.length}
+            </span>
             <span className="ml-1 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
               {t("dfbStatLabel")}
             </span>
           </span>
-        </div>
-        <div className="overflow-x-auto p-5 sm:p-6">
+        }
+      >
+        <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
           <FilterTreeEditor
             group={fb.tree}
             engineId="data-filter"
@@ -118,7 +165,7 @@ export function DataFilterBuilder() {
             labels={treeLabels}
           />
         </div>
-      </section>
+      </SectionCard>
 
       {/* Data panel (collapsible) */}
       <div className="fb-rise" style={{ animationDelay: "210ms" }}>

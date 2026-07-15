@@ -6,11 +6,15 @@ import {
   type FieldKind,
   type FieldSchema,
 } from "@rfjs/filter-builder";
-import { FilterTreeEditor, type FilterTreeLabels } from "@rfjs/filter-builder-ui";
+import {
+  FilterTreeEditor,
+  type FilterTreeLabels,
+} from "@rfjs/filter-builder-ui";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import {
+  AiAssistBlock,
   MetadataStrip,
   QueryOutputPanel,
   RISE,
@@ -19,11 +23,24 @@ import {
   useFilterBuilder,
   useOperatorLabels,
 } from "@/tools/_filter-builder";
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
+import { ToolIntro } from "@/components/shared/tool-intro";
 
 const SAMPLE = JSON.stringify(
   [
-    { name: "Ada", age: 36, active: true, profile: { vip: true, tier: "gold" } },
-    { name: "Bo", age: 12, active: false, profile: { vip: false, tier: "free" } },
+    {
+      name: "Ada",
+      age: 36,
+      active: true,
+      profile: { vip: true, tier: "gold" },
+    },
+    {
+      name: "Bo",
+      age: 12,
+      active: false,
+      profile: { vip: false, tier: "free" },
+    },
   ],
   null,
   2,
@@ -32,7 +49,9 @@ const SAMPLE = JSON.stringify(
 // Top-level scalars read as real SQL columns; nested paths and object/array
 // fields read as JSONB — so the tool opens on a genuinely mixed query.
 const deriveKind = (f: FieldSchema): FieldKind =>
-  f.dataType !== "object" && f.dataType !== "array" && !f.path.includes(".") ? "column" : "jsonb";
+  f.dataType !== "object" && f.dataType !== "array" && !f.path.includes(".")
+    ? "column"
+    : "jsonb";
 
 export function PgFilterBuilder() {
   const t = useTranslations("ToolUI");
@@ -60,7 +79,11 @@ export function PgFilterBuilder() {
   };
 
   const compiled = useMemo(
-    () => getEngine("pg-filter").compile(treeToFilterGroup(fb.tree), toCompileContext(fb.schema)),
+    () =>
+      getEngine("pg-filter").compile(
+        treeToFilterGroup(fb.tree),
+        toCompileContext(fb.schema),
+      ),
     [fb.tree, fb.schema],
   );
 
@@ -72,7 +95,23 @@ export function PgFilterBuilder() {
         : null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("pfbEyebrow")}</ToolEyebrow>
+      <ToolIntro
+        storageKey="tool-intro:pg-filter-builder"
+        question={t("introQuestion")}
+        tagline={t("pfbIntroTagline")}
+        concepts={[
+          { term: t("pfbIntroC1t"), desc: t("pfbIntroC1d") },
+          { term: t("pfbIntroC2t"), desc: t("pfbIntroC2d") },
+          { term: t("pfbIntroC3t"), desc: t("pfbIntroC3d") },
+        ]}
+        labels={{
+          expand: t("introExpand"),
+          collapse: t("introCollapse"),
+          dismiss: t("introDismiss"),
+        }}
+      />
       <style>{RISE}</style>
 
       <SampleCard
@@ -91,13 +130,12 @@ export function PgFilterBuilder() {
         style={{ animationDelay: "0ms" }}
       />
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "70ms" }}>
-        <div className="border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("pfbFields")}
-          </span>
-        </div>
-        <div className="flex flex-col gap-2 p-4">
+      <SectionCard
+        title={t("pfbFields")}
+        className="fb-rise"
+        style={{ animationDelay: "70ms" }}
+      >
+        <div className="flex flex-col gap-2">
           <MetadataStrip
             schema={fb.schema}
             onChange={fb.setSchema}
@@ -108,17 +146,31 @@ export function PgFilterBuilder() {
               kind: t("pfbKind", { field: "" }).trim(),
             }}
           />
-          <p className="font-mono text-[11px] text-muted-foreground">{t("pfbKindHint")}</p>
+          <p className="font-mono text-[11px] text-muted-foreground">
+            {t("pfbKindHint")}
+          </p>
         </div>
-      </section>
+      </SectionCard>
 
-      <section className="fb-rise rounded-lg border bg-card" style={{ animationDelay: "140ms" }}>
-        <div className="flex items-center justify-between gap-3 border-b px-5 py-3">
-          <span className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
-            {t("pfbFilterLogic")}
-          </span>
-        </div>
-        <div className="overflow-x-auto p-5 sm:p-6">
+      <div className="fb-rise" style={{ animationDelay: "140ms" }}>
+        <AiAssistBlock
+          schema={fb.schema}
+          canonicalJson={fb.canonicalJson}
+          compiled={compiled.ok ? compiled.primary : null}
+          engineId="pg-filter"
+          onApply={fb.onCanonicalChange}
+          sampleRows={fb.rows}
+          logKey="rfjs.ai.log.pg-filter-builder"
+        />
+      </div>
+
+      <SectionCard
+        title={t("pfbFilterLogic")}
+        className="fb-rise"
+        style={{ animationDelay: "140ms" }}
+        bodyClassName="p-4"
+      >
+        <div className="overflow-x-auto rounded-lg border border-dashed border-input p-4">
           <FilterTreeEditor
             group={fb.tree}
             engineId="pg-filter"
@@ -128,7 +180,7 @@ export function PgFilterBuilder() {
             labels={treeLabels}
           />
         </div>
-      </section>
+      </SectionCard>
 
       <div className="fb-rise" style={{ animationDelay: "210ms" }}>
         <QueryOutputPanel
@@ -143,7 +195,9 @@ export function PgFilterBuilder() {
             canonical: t("pfbCanonical"),
             canonicalHint: t("pfbCanonicalHint"),
             reverseError: reverseText,
-            compileError: compiled.ok ? null : t("pfbCompileError", { error: compiled.error }),
+            compileError: compiled.ok
+              ? null
+              : t("pfbCompileError", { error: compiled.error }),
             copy: t("pfbCopy"),
           }}
         />

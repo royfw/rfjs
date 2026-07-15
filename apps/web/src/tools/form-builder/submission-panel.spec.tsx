@@ -83,4 +83,18 @@ describe("SubmissionPanel", () => {
     // Friendly error message shown
     expect(screen.getByText(/Invalid email format/)).toBeDefined();
   });
+
+  it('shows the firing action and apiError when present', () => {
+    render(
+      <SubmissionPanel
+        payload={{
+          data: { a: 1 },
+          meta: { valid: true, errors: {}, visibleKeys: ['a'], schemaVersion: 1, timestamp: 't', action: { type: 'custom', name: 'save-draft' }, apiError: 'boom' },
+        }}
+      />,
+    );
+    expect(screen.getByText(/custom/)).toBeTruthy();
+    expect(screen.getByText(/save-draft/)).toBeTruthy();
+    expect(screen.getByText(/boom/)).toBeTruthy();
+  });
 });

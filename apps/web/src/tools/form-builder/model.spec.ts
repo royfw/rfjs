@@ -140,6 +140,19 @@ describe("full-config round-trip", () => {
   });
 });
 
+describe("formConfigToCards — flat fields[] config (AI nl-assist output shape)", () => {
+  it("normalizes a top-level fields[] config into a single default section", () => {
+    const config: FormConfig = {
+      version: 1,
+      fields: [{ key: "name", label: "Name", component: "Input", dataType: "string" }],
+    };
+    const { groups: g, cards: cs } = formConfigToCards(config);
+    expect(g).toHaveLength(1);
+    expect(cs).toHaveLength(1);
+    expect(cs[0]).toMatchObject({ groupId: g[0]!.id, key: "name", component: "Input" });
+  });
+});
+
 describe("FileUpload / Signature round-trip", () => {
   it("round-trips FileUpload config (accept/multiple/maxSize) and Signature", () => {
     const cfg = { sections: [{ id: "s", title: "S", rows: [{ id: "r", items: [
@@ -152,5 +165,68 @@ describe("FileUpload / Signature round-trip", () => {
     expect((items[0] as { component?: string }).component).toBe("FileUpload");
     expect((items[0] as { fileUpload?: unknown }).fileUpload).toEqual({ accept: "image/*", multiple: true, maxSize: 1000 });
     expect((items[1] as { component?: string }).component).toBe("Signature");
+  });
+});
+
+describe("button cards", () => {
+  it("round-trips a button card through FormConfig", () => {
+    const groups = [{ id: "g1", title: "G", collapsed: false }];
+    const cards = [{
+      id: "b1", groupId: "g1", kind: "button" as const, label: "Save draft",
+      action: { type: "custom" as const, name: "save-draft" }, buttonVariant: "outline" as const, validate: true,
+      col: 1, span: 3, row: 1,
+    }];
+    const config = cardsToFormConfig(groups, cards);
+    const item = config.sections![0]!.rows[0]!.items[0]!;
+    expect(item).toMatchObject({ kind: "button", label: "Save draft", action: { type: "custom", name: "save-draft" }, variant: "outline", validate: true });
+    const back = formConfigToCards(config);
+    expect(back.cards[0]).toMatchObject({ kind: "button", action: { type: "custom", name: "save-draft" }, buttonVariant: "outline", validate: true });
+  });
+
+  it("button card without explicit action defaults to custom", () => {
+    const groups = [{ id: "g1", title: "G", collapsed: false }];
+    const cards = [{ id: "b1", groupId: "g1", kind: "button" as const, label: "Button", col: 1, span: 3, row: 1 }];
+    const item = cardsToFormConfig(groups, cards).sections![0]!.rows[0]!.items[0]!;
+    expect(item).toMatchObject({ kind: "button", action: { type: "custom", name: "action-1" } });
+  });
+});
+
+describe('result cards', () => {
+  it('round-trips a result card through FormConfig', () => {
+    const groups = [{ id: 'g1', title: 'G', collapsed: false }];
+    const cards = [{
+      id: 'res1', groupId: 'g1', kind: 'result' as const, label: 'Result',
+      mode: 'card' as const, sourceId: 'btn1', dataPath: 'data.items', maxItems: 5, emptyText: 'Nothing',
+      col: 1, span: 12, row: 1,
+    }];
+    const config = cardsToFormConfig(groups, cards);
+    const item = config.sections![0]!.rows[0]!.items[0]!;
+    expect(item).toMatchObject({ kind: 'result', mode: 'card', sourceId: 'btn1', dataPath: 'data.items', maxItems: 5, emptyText: 'Nothing' });
+    const back = formConfigToCards(config);
+    expect(back.cards[0]).toMatchObject({ kind: 'result', mode: 'card', sourceId: 'btn1', dataPath: 'data.items', maxItems: 5, emptyText: 'Nothing' });
+  });
+
+  it('result card without mode defaults to json', () => {
+    const groups = [{ id: 'g1', title: 'G', collapsed: false }];
+    const cards = [{ id: 'res1', groupId: 'g1', kind: 'result' as const, label: 'Result', col: 1, span: 12, row: 1 }];
+    const item = cardsToFormConfig(groups, cards).sections![0]!.rows[0]!.items[0]!;
+    expect(item).toMatchObject({ kind: 'result', mode: 'json' });
+  });
+
+  it('round-trips a table-mode result item with a TableConfig', () => {
+    const table = {
+      columns: [{ key: 'name', label: 'Name', dataType: 'string' as const }],
+      pagination: { pageSize: 10 },
+    };
+    const groups = [{ id: 'g1', title: 'G', collapsed: false }];
+    const cards = [
+      { id: 'res', groupId: 'g1', kind: 'result' as const, label: 'Result', mode: 'table' as const,
+        resultTable: table, col: 1, span: 6, row: 1 },
+    ];
+    const config = cardsToFormConfig(groups, cards);
+    const back = formConfigToCards(config);
+    const res = back.cards.find((c) => c.id === 'res');
+    expect(res?.mode).toBe('table');
+    expect(res?.resultTable).toEqual(table);
   });
 });

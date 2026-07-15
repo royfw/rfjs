@@ -6,11 +6,13 @@ import { messages as formBuilder } from "./form-builder/messages";
 import { messages as bpmnViewer } from "./bpmn-viewer/messages";
 import { messages as flowBuilder } from "./flow-builder/messages";
 import { messages as decisionTable } from "./decision-table/messages";
+import { messages as tableBuilder } from "./table-builder/messages";
 import { messages as esClientDemo } from "./es-client-demo/messages";
 import { messages as esQueryBuilder } from "./es-query-builder/messages";
 import { messages as jsonbQueryBuilder } from "./jsonb-query-builder/messages";
 import { messages as jsonbQueryGenerator } from "./jsonb-query-generator/messages";
 import { messages as jwtDecoder } from "./jwt-decoder/messages";
+import { messages as metadataBuilder } from "./metadata-builder/messages";
 import { messages as mongoQueryBuilder } from "./mongo-query-builder/messages";
 import { messages as mongoQueryGenerator } from "./mongo-query-generator/messages";
 import { messages as objectFlatten } from "./object-flatten/messages";
@@ -37,4 +39,6 @@ export const toolMessages: LocaleMessages[] = [
   bpmnViewer,
   flowBuilder,
   decisionTable,
+  tableBuilder,
+  metadataBuilder,
 ];

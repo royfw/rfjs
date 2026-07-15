@@ -1,12 +1,14 @@
 "use client";
 
-import { Panel } from "@rfjs/web-ui/components/panel";
 import { Textarea } from "@rfjs/web-ui/components/textarea";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { decodeJwt, describeExp, formatDuration, type DecodeResult } from "./jwt-decoder";
 
+import { SectionCard } from "@/components/shared/section-card";
+import { ToolEyebrow } from "@/components/shared/tool-eyebrow";
+import { ToolIntro } from "@/components/shared/tool-intro";
 import { ToolShell } from "@/tools/_shared/tool-shell";
 
 const SAMPLE =
@@ -53,46 +55,60 @@ export function JwtDecoder() {
         : t("expiresIn", { duration: formatDuration(info.secondsLeft) });
 
   return (
-    <ToolShell
-      operation="decodeComplete()"
-      input={
-        <Panel title={t("token")}>
-          <Textarea
-            aria-label={t("token")}
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            spellCheck={false}
-            rows={8}
-            className="resize-y break-all font-mono"
-          />
-        </Panel>
-      }
-      output={
-        <Panel title={t("output")}>
-          {result === null ? null : !result.ok ? (
-            <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <span
-                className={`font-mono text-xs ${info.state === "expired" ? "text-fault" : "text-muted-foreground"}`}
-              >
-                {expLabel}
-              </span>
-              <JsonBlock label={t("header")} value={result.header} />
-              <JsonBlock label={t("payload")} value={result.payload} />
-              <div className="flex flex-col gap-1">
-                <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {t("signature")}
+    <div className="flex flex-col gap-4">
+      <ToolEyebrow>{t("jwtEyebrow")}</ToolEyebrow>
+      <ToolIntro
+        storageKey="tool-intro:jwt-decoder"
+        question={t("introQuestion")}
+        tagline={t("jwtIntroTagline")}
+        concepts={[
+          { term: t("jwtIntroC1t"), desc: t("jwtIntroC1d") },
+          { term: t("jwtIntroC2t"), desc: t("jwtIntroC2d") },
+          { term: t("jwtIntroC3t"), desc: t("jwtIntroC3d") },
+        ]}
+        labels={{ expand: t("introExpand"), collapse: t("introCollapse"), dismiss: t("introDismiss") }}
+      />
+      <ToolShell
+        operation="decodeComplete()"
+        input={
+          <SectionCard title={t("token")}>
+            <Textarea
+              aria-label={t("token")}
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              spellCheck={false}
+              rows={8}
+              className="resize-y break-all font-mono"
+            />
+          </SectionCard>
+        }
+        output={
+          <SectionCard title={t("output")}>
+            {result === null ? null : !result.ok ? (
+              <p className="font-mono text-sm text-fault">{t(`error.${result.error}`)}</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <span
+                  className={`font-mono text-xs ${info.state === "expired" ? "text-fault" : "text-muted-foreground"}`}
+                >
+                  {expLabel}
                 </span>
-                <pre className="overflow-x-auto break-all font-mono text-xs text-muted-foreground">
-                  {result.signature}
-                </pre>
+                <JsonBlock label={t("header")} value={result.header} />
+                <JsonBlock label={t("payload")} value={result.payload} />
+                <div className="flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {t("signature")}
+                  </span>
+                  <pre className="overflow-x-auto break-all font-mono text-xs text-muted-foreground">
+                    {result.signature}
+                  </pre>
+                </div>
               </div>
-            </div>
-          )}
-        </Panel>
-      }
-    />
+            )}
+          </SectionCard>
+        }
+      />
+    </div>
   );
 }
 

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Wave 2 — AiPanel mockup(dt / fb / 重新套用)</title>
+<style>
+  :root {
+    --bg: #0a0f1a; --card: #0f1524; --card2: #131b2e; --border: #232c42;
+    --fg: #e6e9f0; --muted: #8b93a7; --accent: #e8b44a; --accent-fg: #1a1405;
+    --fault: #e5766b; --ok: #58b98a; --chip: #1a2338;
+  }
+  html.light {
+    --bg: #f5f6f8; --card: #ffffff; --card2: #f2f4f8; --border: #dde1ea;
+    --fg: #1d2433; --muted: #667085; --accent: #b97f16; --accent-fg: #ffffff;
+    --fault: #c2453a; --ok: #257a55; --chip: #eef1f6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 20px 80px; background: var(--bg); color: var(--fg);
+    font: 14px/1.55 system-ui, "Noto Sans TC", sans-serif;
+    display: flex; flex-direction: column; align-items: center; gap: 28px; }
+  .controls { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); display:flex; gap:16px; }
+  .controls label { cursor: pointer; display: inline-flex; gap: 6px; }
+  .frame { width: min(980px, 100%); display: flex; flex-direction: column; gap: 12px; }
+  h2 { font-size: 13px; color: var(--muted); font-family: ui-monospace, monospace;
+    text-transform: uppercase; letter-spacing: .1em; margin: 8px 0 0; }
+
+  section.panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .sec-head { display: flex; align-items: center; gap: 8px; padding: 12px 20px;
+    font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); }
+  .sec-body { border-top: 1px solid var(--border); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  .ai-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+  .ai-input { flex: 1 1 260px; min-width: 200px; background: var(--card2); color: var(--fg);
+    border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; min-height: 34px; }
+  .ai-input::placeholder { color: var(--muted); }
+  .btn { border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px;
+    background: transparent; color: var(--fg); font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+  .btn.ghost { border-color: transparent; color: var(--muted); }
+  .btn.xs { padding: 2px 8px; font-size: 11px; }
+  .divider-v { width: 1px; align-self: stretch; background: var(--border); margin: 0 2px; }
+
+  .answers { border: 1px solid var(--border); border-radius: 8px; background: var(--card2); }
+  .answers-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .answers-title { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); }
+  .advisory { font-size: 11px; color: var(--muted); }
+  .entry { display: flex; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .entry:last-child { border-bottom: 0; }
+  .entry .icon { flex: none; width: 20px; text-align: center; }
+  .entry .body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+  .entry .q { color: var(--muted); font-size: 12.5px; }
+  .entry .a { white-space: pre-wrap; font-size: 13px; }
+  .tag { display: inline-block; font-family: ui-monospace, monospace; font-size: 10px;
+    background: var(--chip); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 6px; color: var(--muted); margin-right: 6px; vertical-align: 1px; }
+  .applied-row { display: flex; align-items: center; gap: 10px; }
+  .applied { color: var(--ok); font-size: 12.5px; }
+
+  .rules-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+  .rules-head .title { font-weight: 600; font-size: 14px; }
+  .rule { display: flex; gap: 10px; padding: 9px 16px; border-bottom: 1px solid var(--border); font-size: 13px; align-items: center; }
+  .rule:last-child { border-bottom: 0; }
+  .rule .n { color: var(--muted); font-family: ui-monospace, monospace; width: 18px; }
+  .rule .out { color: var(--muted); font-size: 12px; margin-left: auto; }
+  .tabs { display: flex; gap: 4px; border: 1px solid var(--border); border-radius: 8px; padding: 4px; width: fit-content; background: var(--card); }
+  .tabs .tab { padding: 6px 14px; border-radius: 6px; font-size: 13px; color: var(--muted); }
+  .tabs .tab.on { background: var(--card2); color: var(--fg); }
+  .palette { display: flex; gap: 8px; flex-wrap: wrap; }
+  .palette .pill { border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 12.5px; background: var(--card); color: var(--muted); }
+  .note { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="controls"><label><input type="checkbox" id="theme" /> light 模式</label></div>
+
+  <!-- ════ ① decision-table 新版面 ════ -->
+  <div class="frame">
+    <h2>① Decision Table — AI section(取代表頭 Check 鈕 + findings 面板)</h2>
+
+    <section class="panel">
+      <div class="sec-head">▾ ✨ AI 助理</div>
+      <div class="sec-body">
+        <div class="ai-row">
+          <input class="ai-input" placeholder="描述或提出問題…" />
+          <button class="btn primary">檢查表格</button>
+          <button class="btn">提問</button>
+          <span class="divider-v"></span>
+          <button class="btn">解釋這張表</button>
+        </div>
+        <div class="answers">
+          <div class="answers-head">
+            <span class="answers-title">AI 回答</span>
+            <span class="advisory">AI 建議,非引擎判定 · <button class="btn ghost xs">清除紀錄</button></span>
+          </div>
+          <div class="entry">
+            <span class="icon">🧪</span>
+            <div class="body">
+              <span class="q"><span class="tag">檢查</span></span>
+              <span class="a">[gap] (r2, r3) 金額 50000–80000 之間沒有規則覆蓋。
+[overlap] (r1, r2) 兩條規則在「工程部且金額 > 100000」同時成立,first 策略只會取 r1。</span>
+            </div>
+          </div>
+          <div class="entry">
+            <span class="icon">❓</span>
+            <div class="body">
+              <span class="q"><span class="tag">提問</span>金額 60000 的工程部申請會走到誰?</span>
+              <span class="a">依目前規則沒有任何一條會命中(規則缺口),評估結果會是 unmatched。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="rules-head">
+        <span class="title">Rules</span>
+        <span style="display:flex; gap:8px; align-items:center;">
+          <span class="note">Hit policy [first ▾]</span>
+          <button class="btn">+ Rule</button>
+          <!-- 舊「AI Check」按鈕移除 -->
+        </span>
+      </div>
+      <div class="rule"><span class="n">1</span> Big spend goes to the CFO <span class="out">approver: CFO</span></div>
+      <div class="rule"><span class="n">2</span> Mid-size engineering spend <span class="out">approver: VPEngineering</span></div>
+      <div class="rule"><span class="n">3</span> Finance requests <span class="out">approver: Finance Manager</span></div>
+    </section>
+  </div>
+
+  <!-- ════ ② form-builder 新版面 ════ -->
+  <div class="frame">
+    <h2>② Form Builder — AI section(取代 tabs 下方的舊 ✨ 產生列)</h2>
+
+    <div class="tabs"><span class="tab on">Canvas</span><span class="tab">Preview</span><span class="tab">JSON</span></div>
+
+    <section class="panel">
+      <div class="sec-head">▾ ✨ AI 助理</div>
+      <div class="sec-body">
+        <div class="ai-row">
+          <input class="ai-input" placeholder="描述表單或提出問題…" />
+          <button class="btn primary">產生表單</button>
+          <button class="btn">提問</button>
+          <span class="divider-v"></span>
+          <button class="btn">解釋表單</button>
+        </div>
+        <div class="answers">
+          <div class="answers-head">
+            <span class="answers-title">AI 回答</span>
+            <span class="advisory">AI 建議,非引擎判定 · <button class="btn ghost xs">清除紀錄</button></span>
+          </div>
+          <div class="entry">
+            <span class="icon">⚡</span>
+            <div class="body">
+              <span class="q"><span class="tag">產生</span>請假申請表:姓名、日期區間、事由、代理人</span>
+              <div class="applied-row">
+                <span class="applied">已套用(5 個欄位)</span>
+                <button class="btn xs">重新套用</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="palette">
+      <span class="pill">T Field</span><span class="pill">≡ Content</span><span class="pill">— Divider</span>
+      <span class="pill">↕ Spacer</span><span class="pill">✳ Button</span><span class="pill">◉ Radio</span><span class="pill">…</span>
+    </div>
+  </div>
+
+  <!-- ════ ③ filter 紀錄項的重新套用 ════ -->
+  <div class="frame">
+    <h2>③ Filter 工具 — 產生紀錄項多「重新套用」鈕(其餘不變)</h2>
+    <section class="panel">
+      <div class="sec-head">▾ ✨ AI 助理</div>
+      <div class="sec-body">
+        <div class="answers">
+          <div class="answers-head">
+            <span class="answers-title">AI 回答</span>
+            <span class="advisory">AI 建議,非引擎判定 · <button class="btn ghost xs">清除紀錄</button></span>
+          </div>
+          <div class="entry">
+            <span class="icon">⚡</span>
+            <div class="body">
+              <span class="q"><span class="tag">產生</span>30 歲以上的活躍使用者</span>
+              <div class="applied-row">
+                <span class="applied">已套用(2 個條件)</span>
+                <button class="btn xs">重新套用</button>
+              </div>
+            </div>
+          </div>
+          <div class="entry">
+            <span class="icon">📝</span>
+            <div class="body">
+              <span class="q"><span class="tag">解釋</span></span>
+              <span class="a">這組條件會選出年齡大於 30 且帳號啟用中的使用者。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <p class="note">「重新套用」= 把該次產生的完整條件樹重新載入(整棵取代,走原驗證閘門)。dt 的檢查項無套用概念,不顯示此鈕。</p>
+  </div>
+
+<script>
+  document.getElementById('theme').addEventListener('change', (e) =>
+    document.documentElement.classList.toggle('light', e.target.checked));
+</script>
+</body>
+</html>
