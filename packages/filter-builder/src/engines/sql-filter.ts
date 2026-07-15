@@ -13,8 +13,8 @@ import type { CompileContext, Engine, OperatorSpec } from "./types";
 
 const NULL_OPS = ["isnull", "isnotnull"];
 // sql-filter's column layer (ColumnOperator) is the authority on what's renderable.
-const TEXT_OPS = ["eq", "neq", "contains", "startswith", "gt", "gte", "lt", "lte", ...NULL_OPS];
-const NUMERIC_OPS = ["eq", "neq", "gt", "gte", "lt", "lte", ...NULL_OPS]; // numeric + date
+const TEXT_OPS = ["eq", "neq", "contains", "startswith", "endswith", "icontains", "istartswith", "iendswith", "ieq", "ineq", "terms", "gt", "gte", "lt", "lte", ...NULL_OPS];
+const NUMERIC_OPS = ["eq", "neq", "gt", "gte", "lt", "lte", "terms", "range", ...NULL_OPS]; // numeric + date
 const BOOL_OPS = ["eq", "neq", ...NULL_OPS];
 
 function columnOps(dataType: string): string[] {

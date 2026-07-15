@@ -16,7 +16,7 @@ npm i @rfjs/pg-filter
 
 ```
  一棵 PgFilterGroup(and/or/nor/not,可巢狀)
- ├─ { target: 'column', column, operator, value }   ──▶ @rfjs/sql-filter  →  "name" ILIKE …
+ ├─ { target: 'column', column, operator, value }   ──▶ @rfjs/sql-filter  →  "name" LIKE …
  └─ { target: 'jsonb',  field,  operator, value }    ──▶ @rfjs/jsonb-query →  ("data" #>> …)::numeric > …
                          │
                          ▼
@@ -73,7 +73,7 @@ type PgSort = { target: "column"; column: string; direction?: "asc"|"desc"; null
 
 `pg-filter` **不自己定義** operator —— 每個 leaf 用它 target 引擎的集合:
 
-- `target: 'column'` → [@rfjs/sql-filter](../sql-filter#column-operator-與型別) 的**純量欄位** operator(`eq`/`neq`/`contains`/`startswith`/`gt`/`gte`/`lt`/`lte`/`isnull`/`isnotnull`;無 `IN`、無 range)。
+- `target: 'column'` → [@rfjs/sql-filter](../sql-filter#column-operator-與型別) 的**純量欄位** operator(`eq`/`neq`/`contains`/`startswith`/`endswith`/不分大小寫的 `iX` 家族/`gt`/`gte`/`lt`/`lte`/`isnull`/`isnotnull`,對支援的型別還有 `terms`(`= ANY`)與 `range`(`BETWEEN`)—— 詳見 sql-filter 的每型別對照表)。
 - `target: 'jsonb'` → [@rfjs/jsonb-query](../jsonb-query) 的完整集合(`terms`、`range`、`containsall`、不分大小寫版本、`haskey…`、`elemmatch` 等)。
 
 跨引擎矩陣見 [@rfjs/filter-builder](../filter-builder#operator-矩陣)。

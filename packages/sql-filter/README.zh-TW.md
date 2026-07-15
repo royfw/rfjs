@@ -60,7 +60,7 @@ const { where, values } = buildColumnQuery(config, {
     { column: "createdAt", operator: "gte", value: "2026-01-01" },
   ],
 });
-// where  → "\"name\" ilike '%' || $1 || '%' and \"created_at\" >= $2"
+// where  → "\"name\" like '%' || $1 || '%' escape '\\' and \"created_at\" >= $2"
 // values → ["sales", "2026-01-01"]
 ```
 
@@ -68,15 +68,18 @@ const { where, values } = buildColumnQuery(config, {
 
 ## Column operator 與型別
 
-column 層刻意是**純量、單一值**的介面(沒有 `IN`、沒有 range —— 那些在 JSONB / Mongo 引擎)。operator 會依欄位宣告的 `type` 驗證:
+column 層是**純量**介面,但不僅限於單值相等:除了 `eq`/`neq`/比較運算子之外,對支援的型別它也會產生 IN-list 的 `= ANY`(`terms`)與 range 的 `BETWEEN`(`range`)。operator 會依欄位宣告的 `type` 驗證:
 
 | `ColumnType` | 允許的 `ColumnOperator` |
 |--------------|-------------------------|
-| `text` | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `gt` `gte` `lt` `lte` |
-| `numeric` / `timestamp` | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` |
-| `boolean` / `uuid` | `eq` `neq` `isnull` `isnotnull` |
+| `text` | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `icontains` `istartswith` `iendswith` `ieq` `ineq` `terms` `gt` `gte` `lt` `lte` |
+| `numeric` / `timestamp` | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `terms` `range` |
+| `uuid` | `eq` `neq` `isnull` `isnotnull` `terms` |
+| `boolean` | `eq` `neq` `isnull` `isnotnull` |
 
-值都是單一值(`isnull`/`isnotnull` 不帶值)。未知欄位或型別不允許的 operator 會丟 `ColumnQueryError`(`UNKNOWN_COLUMN` / `UNSUPPORTED_OPERATOR`)。
+`contains`/`startswith`/`endswith` 是**區分大小寫**的子字串/前綴/後綴比對(`LIKE`,並會跳脫 `%`/`_`/`\`,讓詞彙逐字比對而非當成萬用字元)。要不分大小寫請用 `iX` 家族:`icontains`/`istartswith`/`iendswith`(`ILIKE`,同樣的跳脫)與 `ieq`/`ineq`(`lower(欄位) = / <> lower($n)`)。`terms` 接受非空陣列,產生 `= ANY($n)`——整個陣列會綁定成**單一**參數,不是每個元素一個參數。`range` 接受 `[lo, hi]` 兩個值,產生 `BETWEEN $n AND $n+1`。
+
+值都是單一值,除了 `terms`(陣列)與 `range`(兩個值);`isnull`/`isnotnull` 不帶值。未知欄位或型別不允許的 operator 會丟 `ColumnQueryError`(`UNKNOWN_COLUMN` / `UNSUPPORTED_OPERATOR`)。
 
 > 跨引擎的 operator 全貌(哪個引擎有 `terms`/`range` 等)請見 [@rfjs/filter-builder](../filter-builder#operator-矩陣) 的矩陣。
 

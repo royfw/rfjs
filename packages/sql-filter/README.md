@@ -68,7 +68,7 @@ const { where, values } = buildColumnQuery(config, {
     { column: "createdAt", operator: "gte", value: "2026-01-01" },
   ],
 });
-// where  → "\"name\" ilike '%' || $1 || '%' and \"created_at\" >= $2"
+// where  → "\"name\" like '%' || $1 || '%' escape '\\' and \"created_at\" >= $2"
 // values → ["sales", "2026-01-01"]
 ```
 
@@ -76,18 +76,29 @@ const { where, values } = buildColumnQuery(config, {
 
 ## Column operators & types
 
-The column layer is intentionally a **scalar, single-value** surface (no `IN`,
-no range — those live in the JSONB / Mongo engines). Operators are validated
-against each column's declared `type`:
+The column layer is a **scalar** surface, but not limited to single-value
+equality: alongside `eq`/`neq`/comparisons it also emits `= ANY` for an IN-list
+(`terms`) and `BETWEEN` for a range (`range`) on the types that support them.
+Operators are validated against each column's declared `type`:
 
 | `ColumnType` | allowed `ColumnOperator` |
 |--------------|--------------------------|
-| `text` | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `gt` `gte` `lt` `lte` |
-| `numeric` / `timestamp` | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` |
-| `boolean` / `uuid` | `eq` `neq` `isnull` `isnotnull` |
+| `text` | `eq` `neq` `isnull` `isnotnull` `contains` `startswith` `endswith` `icontains` `istartswith` `iendswith` `ieq` `ineq` `terms` `gt` `gte` `lt` `lte` |
+| `numeric` / `timestamp` | `eq` `neq` `isnull` `isnotnull` `gt` `gte` `lt` `lte` `terms` `range` |
+| `uuid` | `eq` `neq` `isnull` `isnotnull` `terms` |
+| `boolean` | `eq` `neq` `isnull` `isnotnull` |
 
-Values are single-value (`isnull`/`isnotnull` take none). An unknown column or a
-type-disallowed operator throws `ColumnQueryError`
+`contains`/`startswith`/`endswith` are case-**sensitive** substring/prefix/suffix
+matches (`LIKE`, with `%`/`_`/`\` escaped so the term matches verbatim, not as
+wildcards). For case-insensitive matching use the `iX` family: `icontains`/
+`istartswith`/`iendswith` (`ILIKE`, same escaping) and `ieq`/`ineq`
+(`lower(column) = / <> lower($n)`). `terms` takes a non-empty array and renders
+`= ANY($n)` — the whole array is bound as **one** parameter, not one per
+element. `range` takes a `[lo, hi]` pair and renders `BETWEEN $n AND $n+1`.
+
+Values are single-value except `terms` (array) and `range` (2-element array);
+`isnull`/`isnotnull` take none. An unknown column or a type-disallowed operator
+throws `ColumnQueryError`
 (`UNKNOWN_COLUMN` / `UNSUPPORTED_OPERATOR`).
 
 > For the cross-engine operator picture (which engine has `terms`/`range`/etc.),
