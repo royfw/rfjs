@@ -4,7 +4,7 @@
 
 **Goal:** Fix the `@rfjs/sql-filter` column-path ILIKE wildcard bug and add the missing column operators (`endswith`, `terms`, `range`, and the case-insensitive `iX` family) so the column path reaches parity with the jsonb path.
 
-**Architecture:** All operator logic lives in `sql-filter`'s column renderer (`src/column/operators.ts`); `filter-builder`'s `sql-filter` engine adapter declares which of those the UI offers; `pg-filter` reuses `ColumnOperator` transitively (no code change). TDD per task.
+**Architecture:** All operator logic lives in `sql-filter`'s column renderer (`src/column/operators.ts`). Which operators the editor offers is declared by the filter-builder **engine adapters** — and there are **TWO** with column op-lists that must both be extended: `engines/sql-filter.ts` (`TEXT_OPS`/`NUMERIC_OPS`) AND `engines/pg-filter.ts` (its own `COLUMN_TEXT_OPS`/`COLUMN_NUMERIC_OPS`). The pg-filter adapter is the one the workbench dataset-explorer actually uses (`engineId="pg-filter"`), so skipping it would miss the spec's goal on the real surface. The `@rfjs/pg-filter` **package** reuses `ColumnOperator` transitively (no package code change). TDD per task.
 
 **Tech Stack:** TypeScript, Vitest (unit only for these packages), PostgreSQL LIKE/ILIKE semantics.
 
@@ -24,6 +24,9 @@
 - `packages/sql-filter/src/column/operators.spec.ts` — update `ilike` cases (T1); add new-op cases (T2).
 - `packages/sql-filter/src/column/build.spec.ts` — update the `ilike` where-clause assertion (T1).
 - `packages/filter-builder/src/engines/sql-filter.ts` — extend `TEXT_OPS`/`NUMERIC_OPS` (T3).
+- `packages/filter-builder/src/engines/pg-filter.ts` — extend `COLUMN_TEXT_OPS`/`COLUMN_NUMERIC_OPS` (T3) — the workbench's engine adapter.
+- `packages/filter-builder/src/engines/sql-filter.spec.ts` (line 13) + `pg-filter.spec.ts` (line 13) — flip the now-false `not.toContain` assertions (T3).
+- `packages/sql-filter/README.md` + `packages/sql-filter/README.zh-TW.md` — operator table + drop the "no IN/range" claim + contains/startswith case-sensitivity (T4).
 - `.changeset/*` — sql-filter minor, filter-builder minor, pg-filter patch (T4).
 
 ---
@@ -183,40 +186,69 @@ git commit -m "$(printf 'feat(sql-filter): add endswith/terms/range/iX column op
 
 ---
 
-### Task 3: filter-builder sql-filter adapter — offer the new operators
+### Task 3: filter-builder engine adapters (sql-filter AND pg-filter) — offer the new operators
+
+**BOTH adapters have their own column op-lists.** `engines/sql-filter.ts` (`TEXT_OPS`/`NUMERIC_OPS`) and `engines/pg-filter.ts` (`COLUMN_TEXT_OPS`/`COLUMN_NUMERIC_OPS`) are independent — extend both, or the workbench (which uses `engineId="pg-filter"`) won't offer the new column ops.
 
 **Files:**
-- Modify: `packages/filter-builder/src/engines/sql-filter.ts`
-- Test: any `packages/filter-builder/src/engines/*.spec.ts` asserting the sql-filter operator list (grep first; update if present).
+- Modify: `packages/filter-builder/src/engines/sql-filter.ts`, `packages/filter-builder/src/engines/pg-filter.ts`
+- Test: `packages/filter-builder/src/engines/sql-filter.spec.ts` (line 13), `packages/filter-builder/src/engines/pg-filter.spec.ts` (line 13).
 
-- [ ] **Step 1: Baseline** — branch check; `pnpm -F @rfjs/filter-builder vitest:run` → all PASS. Note count. `grep -rn "sql-filter\|TEXT_OPS\|columnOps" src/engines/*.spec.ts` to find any operator-list assertions.
+- [ ] **Step 1: Baseline** — branch check; `pnpm -F @rfjs/filter-builder vitest:run` → all PASS. Note count.
 
-- [ ] **Step 2: Extend the op lists** (`sql-filter.ts:16-18`):
+- [ ] **Step 2: Extend the op lists in BOTH adapters.**
+  In `engines/sql-filter.ts:16-18`:
 ```ts
 const NULL_OPS = ["isnull", "isnotnull"];
 const TEXT_OPS = ["eq", "neq", "contains", "startswith", "endswith", "icontains", "istartswith", "iendswith", "ieq", "ineq", "terms", "gt", "gte", "lt", "lte", ...NULL_OPS];
 const NUMERIC_OPS = ["eq", "neq", "gt", "gte", "lt", "lte", "terms", "range", ...NULL_OPS]; // numeric + date
 const BOOL_OPS = ["eq", "neq", ...NULL_OPS];
 ```
-  (`arityOf` already maps `terms`→list, `range`→two; the `iX` ops default to `one` — correct. No change to `arity.ts`.)
+  In `engines/pg-filter.ts:10-12` (mirror the same additions):
+```ts
+const NULL_OPS = ["isnull", "isnotnull"];
+const COLUMN_TEXT_OPS = ["eq", "neq", "contains", "startswith", "endswith", "icontains", "istartswith", "iendswith", "ieq", "ineq", "terms", "gt", "gte", "lt", "lte", ...NULL_OPS];
+const COLUMN_NUMERIC_OPS = ["eq", "neq", "gt", "gte", "lt", "lte", "terms", "range", ...NULL_OPS]; // numeric + date(timestamp)
+const COLUMN_BOOL_OPS = ["eq", "neq", ...NULL_OPS];
+```
+  (`arityOf` already maps `terms`→list, `range`→two; the `iX` ops default to `one` — correct. No `arity.ts` change.)
 
-- [ ] **Step 3: If Step 1's grep found an operator-list assertion**, update it to include the new ops. If a test drives the editor and asserts a specific operator set for a string/number field, extend it. Do not add new tests beyond keeping existing ones accurate.
+- [ ] **Step 3: Flip the now-false negative assertions (both spec files).**
+  `engines/sql-filter.spec.ts:13` — `TEXT_OPS` now includes `terms`, so change:
+```ts
+// before: expect(ops).not.toContain("terms"); // sql-filter column layer has no IN list
+expect(ops).toContain("terms"); // text columns now offer terms (= ANY)
+```
+  Optionally extend the `arrayContaining` at line 11 with e.g. `"endswith", "icontains", "ieq"`. **Leave line 20** (`numeric … not.toContain("contains")`) and **lines 24-26** (boolean exact set `["eq","neq","isnull","isnotnull"]`) unchanged — both stay valid (numeric never gains `contains`; boolean unchanged).
+  `engines/pg-filter.spec.ts:13` — `COLUMN_TEXT_OPS` now includes `icontains`, so change:
+```ts
+// before: expect(ops).not.toContain("icontains");
+expect(ops).toContain("icontains"); // text columns now offer the ci iX family
+```
+  Optionally add `expect(ops).toContain("endswith"); expect(ops).toContain("terms");`. **Leave the "returns ok:false when a column gets an unsupported operator" test (lines 65-69)** unchanged — it uses `numeric` + `contains`, which is still unsupported (D2: numeric gains only `terms`/`range`, not `contains`).
 
 - [ ] **Step 4: Run tests** — `pnpm -F @rfjs/filter-builder vitest:run` → all PASS; `pnpm -F @rfjs/filter-builder check-types`.
 
 - [ ] **Step 5: Commit.**
 ```bash
 git add packages/filter-builder/src/engines
-git commit -m "$(printf 'feat(filter-builder): offer the new sql-filter column operators in the editor\n\nExtend the sql-filter engine adapter TEXT_OPS/NUMERIC_OPS so the editor offers\nendswith/terms/iX (text) and terms/range (numeric/date), matching sql-filter\n column path parity. arity map already covers terms/range.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>')"
+git commit -m "$(printf 'feat(filter-builder): offer the new sql-filter column operators (both adapters)\n\nExtend BOTH the sql-filter and pg-filter engine adapters (TEXT_OPS/NUMERIC_OPS\nand COLUMN_TEXT_OPS/COLUMN_NUMERIC_OPS) so the editor offers endswith/terms/iX\n(text) and terms/range (numeric/date) for column fields — including the\npg-filter engine the workbench uses. Flip the now-false not.toContain\nassertions in both specs. arity map already covers terms/range.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>')"
 ```
 
 ---
 
 ### Task 4: changesets + full verification
 
-**Files:** Create `.changeset/sql-filter-operators.md`, `.changeset/filter-builder-sql-ops.md`, `.changeset/pg-filter-column-ops.md`.
+**Files:** `packages/sql-filter/README.md` + `README.zh-TW.md`; create `.changeset/sql-filter-operators.md`, `.changeset/filter-builder-sql-ops.md`, `.changeset/pg-filter-column-ops.md`.
 
-- [ ] **Step 1: Changesets.**
+- [ ] **Step 1: Update the sql-filter READMEs** (`packages/sql-filter/README.md` + `README.zh-TW.md`), which currently claim the column layer has "no IN, no range" and describe `contains`/`startswith` as case-insensitive ILIKE:
+  - Correct the "no IN, no range" claim — the column layer now emits `= ANY` (`terms`) and `BETWEEN` (`range`) for the applicable types.
+  - Update the per-type operator table to D2 (text +`endswith`/`terms`/`iX`; numeric/timestamp +`terms`/`range`; uuid +`terms`).
+  - State that `contains`/`startswith`/`endswith` are now case-**sensitive** (`LIKE`), with the `iX` family for case-insensitive.
+  - `grep -rn "ilike\|no IN\|no range\|contains" packages/filter-builder/README* packages/pg-filter/README*` and fix any stale operator claims there too.
+  Commit: `git add packages/sql-filter/README* packages/filter-builder/README* packages/pg-filter/README* 2>/dev/null; git commit -m "$(printf 'docs: update filter READMEs for the new sql-filter column operators\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>')"`
+
+- [ ] **Step 2: Changesets.**
 ```markdown
 ---
 "@rfjs/sql-filter": minor
@@ -241,12 +273,12 @@ Column-target leaves transitively gain the new sql-filter operators
 (endswith/terms/range/iX); no API change.
 ```
 
-- [ ] **Step 2: Full verify.** Run and confirm green:
+- [ ] **Step 3: Full verify.** Run and confirm green:
   - `pnpm -F @rfjs/sql-filter vitest:run` + `check-types`
   - `pnpm -F @rfjs/filter-builder vitest:run` + `check-types`
   - `pnpm -F @rfjs/pg-filter vitest:run` (+ `vitest:e2e:run` if present) + `check-types` — **regression check** that mixing column + jsonb leaves still works and the new column ops flow through.
 
-- [ ] **Step 3: Commit.**
+- [ ] **Step 4: Commit.**
 ```bash
 git add .changeset
 git commit -m "$(printf 'chore: changesets for sql-filter operator alignment\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>')"
@@ -260,4 +292,11 @@ git commit -m "$(printf 'chore: changesets for sql-filter operator alignment\n\n
 
 **Placeholder scan:** all SQL strings, escape logic, test cases, and per-type sets are concrete. The one fragility (JS `\\` → SQL `\`) is called out in Global Constraints and shown in every affected string.
 
-**Type consistency:** `ColumnOperator` union extended once (T2 Step 3) and referenced by `ALLOWED` (T2 Step 4) and the adapter's string lists (T3). `terms`→list / `range`→two arity already in `filter-builder/arity.ts` — no change needed.
+**Type consistency:** `ColumnOperator` union extended once (T2 Step 3) and referenced by `ALLOWED` (T2 Step 4) and both adapters' string lists (T3). `terms`→list / `range`→two arity already in `filter-builder/arity.ts` — no change needed.
+
+## Post-ultracode corrections (2026-07-15)
+
+Adversarial verification (5 lenses, per-finding verify) confirmed 3 distinct defects, all fixed above:
+1. **[important]** `filter-builder/src/engines/sql-filter.spec.ts:13` asserts `not.toContain("terms")`; adding `terms` to `TEXT_OPS` breaks it. T3 now explicitly flips it to `toContain` (was a vague conditional).
+2. **[important]** The filter-builder **`pg-filter` engine adapter** (`engines/pg-filter.ts`) has its OWN `COLUMN_TEXT_OPS`/`COLUMN_NUMERIC_OPS`, and it's the adapter the **workbench** uses (`engineId="pg-filter"`). T3 now extends BOTH adapters and flips `pg-filter.spec.ts:13` (`not.toContain("icontains")` → `toContain`); architecture note + file map corrected. This lives in the filter-builder package (already covered by its minor changeset — no new changeset). The numeric+`contains` ok:false test (`pg-filter.spec.ts:65-69`) stays valid.
+3. **[minor]** sql-filter READMEs (EN + zh-TW) claim "no IN/range" and describe `contains`/`startswith` as ILIKE — falsified by ①+②. T4 Step 1 now updates them (+ greps filter-builder/pg-filter READMEs).
