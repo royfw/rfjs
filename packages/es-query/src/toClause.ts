@@ -3,6 +3,11 @@ import * as c from './clauses';
 import { EsQueryError, UnsupportedClauseError } from './errors';
 import type { EsClause, EsDialect, EsFieldCondition } from './types';
 
+/** Escape ES wildcard metacharacters (`*` `?` `\`) so a literal term isn't treated as a pattern. */
+function escapeWildcard(v: string): string {
+  return v.replace(/[\\*?]/g, (ch) => `\\${ch}`);
+}
+
 /** Clauses unavailable on a given dialect. */
 const DIALECT_UNSUPPORTED: Record<EsDialect, Set<string>> = {
   elasticsearch: new Set<string>(),
@@ -49,11 +54,11 @@ export function toClause(cond: EsFieldCondition, dialect: EsDialect): EsClause {
     case 'between':
       return c.range(field, { gte: values[0], lte: values[1] });
     case 'contains':
-      return c.wildcard(field, `*${String(first)}*`);
+      return c.wildcard(field, `*${escapeWildcard(String(first))}*`);
     case 'startsWith':
       return c.prefix(field, first);
     case 'endsWith':
-      return c.wildcard(field, `*${String(first)}`);
+      return c.wildcard(field, `*${escapeWildcard(String(first))}`);
     case 'exists':
       return c.exists(field);
     case 'isNull':
