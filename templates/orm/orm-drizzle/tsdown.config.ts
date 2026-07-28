@@ -12,8 +12,12 @@ const peerDependencies: string[] = Object.keys(pkg.peerDependencies || {});
 const externalDeps = [...dependencies, ...peerDependencies];
 
 export default defineConfig({
-  // 對應你原本的 inputFile = 'src/index.ts'
-  entry: 'src/index.ts',
+  // 多入口：root barrel + 深層 `./schema` 子路徑（object 形式可鎖定輸出檔名）
+  // → dist/index.* 與 dist/schema.*，對應 package.json 的 exports 深層路徑
+  entry: {
+    index: 'src/index.ts',
+    schema: 'src/schema/index.ts',
+  },
 
   // 對應原本 distDir = 'dist'
   outDir: 'dist',
