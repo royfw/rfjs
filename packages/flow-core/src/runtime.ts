@@ -30,7 +30,7 @@ export class FlowError extends Error {
   }
 }
 
-const nodeById = (doc: FlowDoc, id: string): FlowNode => {
+const requireNode = (doc: FlowDoc, id: string): FlowNode => {
   const n = doc.nodes.find((x) => x.id === id);
   if (!n) throw new FlowError("no-path", `node not found: ${id}`);
   return n;
@@ -48,11 +48,13 @@ function awaitingFor(type: FlowNode["type"]): FlowAwaiting {
 
 /** 到達 nodeId,計算落地狀態。 */
 function land(doc: FlowDoc, nodeId: string, context: Record<string, unknown>): FlowState {
-  const node = nodeById(doc, nodeId);
+  const node = requireNode(doc, nodeId);
   if (node.type === "end") return { at: nodeId, status: "done", awaiting: null, context };
   const state: FlowState = { at: nodeId, status: "running", awaiting: awaitingFor(node.type), context };
   if (node.type === "condition") {
+    // timeout 出邊是自動逃逸路徑(escalation),不是人可選的決策選項,故排除。
     state.options = outEdges(doc, nodeId)
+      .filter((e) => e.trigger !== "timeout")
       .map((e) => e.sourceHandle)
       .filter((h): h is string => typeof h === "string");
   }
@@ -88,7 +90,7 @@ export function startFlow(doc: FlowDoc): FlowState {
 /** 走一步:事件須配得上目前節點,否則丟 FlowError。 */
 export function advance(doc: FlowDoc, state: FlowState, event: FlowEvent): FlowState {
   if (state.status !== "running") throw new FlowError("wrong-event", `flow is ${state.status}`);
-  const node = nodeById(doc, state.at);
+  const node = requireNode(doc, state.at);
   const ctx = state.context;
 
   switch (event.type) {
@@ -109,7 +111,9 @@ export function advance(doc: FlowDoc, state: FlowState, event: FlowEvent): FlowS
       return land(doc, edge.target, { ...ctx });
     }
     case "timeout":
-      if (node.type !== "form" && node.type !== "action") throw new FlowError("wrong-event", `timeout at ${node.type}`);
+      // condition 節點也支援 timeout(approval-escalation:核准步驟逾時 → 沿 trigger:'timeout' 邊逃逸)。
+      if (node.type !== "form" && node.type !== "action" && node.type !== "condition")
+        throw new FlowError("wrong-event", `timeout at ${node.type}`);
       return land(doc, timeoutTarget(doc, node.id), { ...ctx });
   }
 }

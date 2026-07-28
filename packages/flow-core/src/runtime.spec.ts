@@ -104,6 +104,62 @@ describe("advance —— timeout(含條件式)", () => {
   });
 });
 
+// #265:核准步驟(condition)逾時逃逸(approval-escalation)。
+// start → capprove(condition: yes/no + timeout→esc2)→ act1/act2 → end;esc2 為逃逸 condition。
+const escDoc: FlowDoc = {
+  version: 1,
+  nodes: [
+    { id: "start", type: "start", position: { x: 0, y: 0 } },
+    { id: "capprove", type: "condition", position: { x: 0, y: 0 } },
+    { id: "act1", type: "action", position: { x: 0, y: 0 } },
+    { id: "act2", type: "action", position: { x: 0, y: 0 } },
+    { id: "esc2", type: "condition", position: { x: 0, y: 0 } },
+    { id: "end", type: "end", position: { x: 0, y: 0 } },
+  ],
+  edges: [
+    { id: "e0", source: "start", target: "capprove" },
+    { id: "e1", source: "capprove", target: "act1", sourceHandle: "yes" },
+    { id: "e2", source: "capprove", target: "act2", sourceHandle: "no" },
+    // 逃逸邊帶 sourceHandle,用以證明 Q2 過濾:它不該出現在 options。
+    { id: "et", source: "capprove", target: "esc2", sourceHandle: "escalate", trigger: "timeout" },
+    { id: "e3", source: "esc2", target: "end", sourceHandle: "auto" },
+    { id: "e4", source: "act1", target: "end" },
+    { id: "e5", source: "act2", target: "end" },
+  ],
+};
+
+describe("advance —— condition 節點 timeout(approval-escalation, #265)", () => {
+  it("落在 condition 時 options 排除 trigger:'timeout' 邊(Q2)", () => {
+    const s = startFlow(escDoc);
+    expect(s).toMatchObject({ at: "capprove", awaiting: "decision" });
+    expect(s.options).toEqual(["yes", "no"]);
+    expect(s.options).not.toContain("escalate");
+  });
+  it("condition 節點 timeout → 沿 trigger:'timeout' 邊落在逃逸目標", () => {
+    const start = startFlow(escDoc);
+    const s = advance(escDoc, start, { type: "timeout" });
+    expect(s).toMatchObject({ at: "esc2", awaiting: "decision" });
+  });
+  it("逃逸目標仍是 condition → 新 state 列出其 options", () => {
+    const s = advance(
+      escDoc,
+      { at: "capprove", status: "running", awaiting: "decision", context: { days: 3 } },
+      { type: "timeout" },
+    );
+    expect(s.at).toBe("esc2");
+    expect(s.options).toEqual(["auto"]);
+    // context 透傳但不共享物件(與 form/action timeout 一致,不 merge 新資料)。
+    expect(s.context).toEqual({ days: 3 });
+  });
+  it("condition 無 timeout 邊 → FlowError no-edge(#265 向後相容註記:原為 wrong-event)", () => {
+    // 原 doc 的 cond1 無 timeout 邊
+    expectFlowError(
+      () => advance(doc, { at: "cond1", status: "running", awaiting: "decision", context: {} }, { type: "timeout" }),
+      "no-edge",
+    );
+  });
+});
+
 describe("advance —— 錯誤", () => {
   it("wrong-event:awaiting decision 卻餵 submit", () => {
     expectFlowError(
