@@ -65,6 +65,32 @@ const total = await client.query(`SELECT count(*) FROM datasets WHERE ${where}`,
 - `where` is never empty (`'true'` when there's no filter); `orderBy` is `''` when there's no sort.
 - `values` = WHERE params **++** ORDER BY params (for the main query). `countValues` = WHERE params only (a prefix of `values`) — use it for the `COUNT(*)` query.
 
+### Composing an app-owned fragment (`paramOffset`)
+
+Pass `paramOffset: k` to start every `$N` placeholder at `$(k + 1)` instead of `$1`,
+so you can AND an app-owned SQL fragment (RLS, multi-tenancy, visibility pushdown)
+that already consumed `$1..$k` **before** the generated `where` / `orderBy`. It only
+shifts the numbering — `values` / `countValues` are unchanged, and `limit` / `offset`
+are interpolated as SQL literals (they never enter the parameter array).
+
+```ts
+const scope = [tenantId]; // your fragment owns $1
+const { where, orderBy, values, countValues } = buildPgFilter(config, {
+  filter,
+  sort,
+  paramOffset: scope.length, // generated placeholders now start at $2
+});
+
+const rows = await client.query(
+  `SELECT * FROM datasets WHERE tenant_id = $1 AND (${where})${orderBy ? ` ORDER BY ${orderBy}` : ""}`,
+  [...scope, ...values],
+);
+const total = await client.query(
+  `SELECT count(*) FROM datasets WHERE tenant_id = $1 AND (${where})`,
+  [...scope, ...countValues],
+);
+```
+
 ## Leaf & sort shapes
 
 ```ts
