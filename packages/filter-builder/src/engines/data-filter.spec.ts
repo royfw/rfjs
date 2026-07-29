@@ -5,10 +5,11 @@ import type { BuilderGroup } from "../types";
 import { dataFilterEngine, DATA_FILTER_OPS } from "./data-filter";
 
 describe("dataFilterEngine.operators", () => {
-  it("offers substring ops but NOT case-insensitive ops for string", () => {
+  it("offers the full case-insensitive i-family for string (issues #268/#279)", () => {
     const ops = dataFilterEngine.operators("string").map((o) => o.op);
     expect(ops).toContain("contains");
-    expect(ops).not.toContain("icontains"); // data-filter has no case-insensitive
+    // data-filter now reaches cross-engine parity on the i-family
+    expect(ops).toEqual(expect.arrayContaining(["icontains", "istartswith", "iendswith", "ieq", "ineq"]));
   });
 
   it("offers comparison ops for numeric", () => {
@@ -27,9 +28,9 @@ describe("dataFilterEngine.operators", () => {
     expect(dataFilterEngine.operators("array", "object").map((o) => o.op)).toEqual(["elemmatch"]);
   });
 
-  it("exposes `contains` as a multi-value (list) op on strings (contains-any)", () => {
+  it("exposes `contains` as a single-value (one) op on strings for cross-engine parity (issue #279)", () => {
     const contains = dataFilterEngine.operators("string").find((o) => o.op === "contains");
-    expect(contains?.arity).toBe("list");
+    expect(contains?.arity).toBe("one");
   });
 
   it("keeps `contains` single-value on object fields", () => {
@@ -37,9 +38,18 @@ describe("dataFilterEngine.operators", () => {
     expect(contains?.arity).toBe("one");
   });
 
-  it("exposes `contains` as a multi-value (list) op on string-element arrays", () => {
+  it("keeps `contains` single-value on string-element arrays (issue #279)", () => {
     const contains = dataFilterEngine.operators("array", "string").find((o) => o.op === "contains");
-    expect(contains?.arity).toBe("list");
+    expect(contains?.arity).toBe("one");
+  });
+
+  it("exposes `terms` as any-membership (list) on string/numeric arrays (issue #267)", () => {
+    const strTerms = dataFilterEngine.operators("array", "string").find((o) => o.op === "terms");
+    expect(strTerms?.arity).toBe("list");
+    const numTerms = dataFilterEngine.operators("array", "numeric").find((o) => o.op === "terms");
+    expect(numTerms?.arity).toBe("list");
+    // membership operators are exact; substring `contains` is NOT membership
+    expect(dataFilterEngine.operators("array", "string").map((o) => o.op)).not.toContain("containsany");
   });
 });
 
@@ -58,9 +68,14 @@ describe("dataFilterEngine.compile", () => {
 });
 
 describe("DATA_FILTER_OPS coverage set", () => {
-  it("contains data-filter operators and excludes jsonb-only ones", () => {
+  it("contains data-filter operators including the i-family and excludes jsonb-only ones", () => {
     expect(DATA_FILTER_OPS.has("contains")).toBe(true);
-    expect(DATA_FILTER_OPS.has("icontains")).toBe(false);
+    expect(DATA_FILTER_OPS.has("icontains")).toBe(true); // added in issue #268
+    // full case-insensitive family reaches cross-engine parity (issue #279)
+    for (const op of ["istartswith", "iendswith", "ieq", "ineq"]) {
+      expect(DATA_FILTER_OPS.has(op)).toBe(true);
+    }
+    expect(DATA_FILTER_OPS.has("containsany")).toBe(false); // removed (use terms/containsall)
     expect(DATA_FILTER_OPS.has("haskey")).toBe(false);
   });
 });
