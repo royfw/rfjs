@@ -7,5 +7,6 @@ export * from './field-kind';
 export * from './field-create';
 export * from './schema-infer';
 export * from './live-match';
+export * from './validate';
 export * from './engines';
 export * from './pg-group';
