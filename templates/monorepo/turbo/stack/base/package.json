@@ -35,7 +35,7 @@
   },
   "packageManager": "pnpm@10.24.0",
   "engines": {
-    "node": ">=18",
+    "node": ">=20.9.0",
     "pnpm": ">=10.24.0 <11.0.0"
   },
   "description": "A project created by turbo-template",
