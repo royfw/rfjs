@@ -48,6 +48,14 @@ export interface PgFilterInput {
   sort?: PgSort[];
   page?: number; // 1-based; default 1
   pageSize?: number; // omit → no LIMIT
+  /**
+   * Number of parameters already consumed by an app-owned SQL fragment placed
+   * *before* this filter. Placeholders in `where`/`orderBy` then start at
+   * `$(paramOffset + 1)` instead of `$1`, so the emitted SQL + `values` can be
+   * concatenated after that fragment (RLS, multi-tenancy, visibility pushdown).
+   * Default `0`. Does not change the `values` payload, only the `$N` numbering.
+   */
+  paramOffset?: number;
 }
 
 export interface PgFilterResult {

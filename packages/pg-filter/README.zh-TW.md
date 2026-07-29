@@ -59,6 +59,31 @@ const total = await client.query(`SELECT count(*) FROM datasets WHERE ${where}`,
 - `where` 永不為空(無條件時為 `'true'`);`orderBy` 無排序時為 `''`。
 - `values` = WHERE 參數 **++** ORDER BY 參數(主查詢用);`countValues` = 只有 WHERE 參數(是 `values` 的前綴)—— 給 `COUNT(*)` 查詢用。
 
+### 疊上應用自己的片段(`paramOffset`)
+
+傳入 `paramOffset: k`,可讓每個 `$N` 佔位符從 `$(k + 1)` 開始(而非 `$1`),
+這樣你就能把應用自己、已經吃掉 `$1..$k` 的 SQL 片段(RLS、多租戶、可見性下推)
+接在產生的 `where` / `orderBy` **之前** 用 AND 串起來。它只調整編號 ——
+`values` / `countValues` 不變,`limit` / `offset` 則是以 SQL 字面值內插(永不進入參數陣列)。
+
+```ts
+const scope = [tenantId]; // 你的片段擁有 $1
+const { where, orderBy, values, countValues } = buildPgFilter(config, {
+  filter,
+  sort,
+  paramOffset: scope.length, // 產生的佔位符現在從 $2 開始
+});
+
+const rows = await client.query(
+  `SELECT * FROM datasets WHERE tenant_id = $1 AND (${where})${orderBy ? ` ORDER BY ${orderBy}` : ""}`,
+  [...scope, ...values],
+);
+const total = await client.query(
+  `SELECT count(*) FROM datasets WHERE tenant_id = $1 AND (${where})`,
+  [...scope, ...countValues],
+);
+```
+
 ## Leaf 與 sort 結構
 
 ```ts
