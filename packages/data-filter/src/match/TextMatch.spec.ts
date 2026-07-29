@@ -602,5 +602,83 @@ describe('arrayQuery', () => {
                 () => new TextMatch('s', 'endswith', '(', { s: 'test' }).isMatch,
             ).not.toThrow();
         });
+
+        describe('icontains (case-insensitive contains, issue #268)', () => {
+            it('matches regardless of casing on either side', () => {
+                expect(
+                    new TextMatch('s', 'icontains', 'eng', { s: 'Engineering' }).isMatch,
+                ).toBe(true);
+                expect(
+                    new TextMatch('s', 'icontains', 'ENG', { s: 'engineering' }).isMatch,
+                ).toBe(true);
+            });
+            it('contrasts with case-sensitive contains', () => {
+                expect(
+                    new TextMatch('s', 'contains', 'eng', { s: 'Engineering' }).isMatch,
+                ).toBe(false);
+                expect(
+                    new TextMatch('s', 'icontains', 'eng', { s: 'Engineering' }).isMatch,
+                ).toBe(true);
+            });
+            it('returns false when no case-insensitive substring is present', () => {
+                expect(
+                    new TextMatch('s', 'icontains', 'zzz', { s: 'Engineering' }).isMatch,
+                ).toBe(false);
+            });
+            it('supports contains-any over a list of values', () => {
+                expect(
+                    new TextMatch('s', 'icontains', ['nope', 'GINE'], { s: 'Engineering' }).isMatch,
+                ).toBe(true);
+            });
+        });
+
+        describe('case-insensitive family (istartswith/iendswith/ieq/ineq, issues #268/#279)', () => {
+            it('istartswith matches a prefix regardless of case where startswith does not', () => {
+                expect(new TextMatch('s', 'startswith', 'eng', { s: 'Engineering' }).isMatch).toBe(false);
+                expect(new TextMatch('s', 'istartswith', 'eng', { s: 'Engineering' }).isMatch).toBe(true);
+                expect(new TextMatch('s', 'istartswith', 'ENG', { s: 'engineering' }).isMatch).toBe(true);
+                expect(new TextMatch('s', 'istartswith', 'zzz', { s: 'Engineering' }).isMatch).toBe(false);
+            });
+            it('iendswith matches a suffix regardless of case where endswith does not', () => {
+                expect(new TextMatch('s', 'endswith', 'ING', { s: 'Engineering' }).isMatch).toBe(false);
+                expect(new TextMatch('s', 'iendswith', 'ING', { s: 'Engineering' }).isMatch).toBe(true);
+                expect(new TextMatch('s', 'iendswith', 'ring', { s: 'EngineeRING' }).isMatch).toBe(true);
+                expect(new TextMatch('s', 'iendswith', 'xyz', { s: 'Engineering' }).isMatch).toBe(false);
+            });
+            it('ieq matches equal strings regardless of case where eq does not', () => {
+                expect(new TextMatch('s', 'eq', 'admin', { s: 'ADMIN' }).isMatch).toBe(false);
+                expect(new TextMatch('s', 'ieq', 'admin', { s: 'ADMIN' }).isMatch).toBe(true);
+                expect(new TextMatch('s', 'ieq', 'admin', { s: 'administrator' }).isMatch).toBe(false);
+            });
+            it('ineq is the case-insensitive negation of ieq', () => {
+                // present (case-insensitively) → not "not-equal"
+                expect(new TextMatch('s', 'ineq', 'admin', { s: 'ADMIN' }).isMatch).toBe(false);
+                // genuinely different → matches
+                expect(new TextMatch('s', 'ineq', 'admin', { s: 'staff' }).isMatch).toBe(true);
+            });
+
+            // The i-family must never throw on non-string operands: typeTransfer(_, 'string')
+            // is a no-op, so a numeric/boolean/date value stays its type. Coercing with
+            // String(...) keeps it robust — a throw here would be caught by runLiveMatch and
+            // mislabeled `invalid` (issues #266/#268).
+            it('does NOT throw on a numeric target/value, matching String-coerced (issue #266)', () => {
+                expect(() => new TextMatch('n', 'ieq', '42', { n: 42 }).isMatch).not.toThrow();
+                expect(new TextMatch('n', 'ieq', '42', { n: 42 }).isMatch).toBe(true); // consistent with eq's 42=='42'
+                expect(new TextMatch('n', 'ieq', '43', { n: 42 }).isMatch).toBe(false);
+                expect(new TextMatch('n', 'ineq', '43', { n: 42 }).isMatch).toBe(true);
+                expect(new TextMatch('n', 'ineq', '42', { n: 42 }).isMatch).toBe(false);
+                expect(new TextMatch('n', 'icontains', '2', { n: 42 }).isMatch).toBe(true);
+                expect(new TextMatch('n', 'istartswith', '4', { n: 42 }).isMatch).toBe(true);
+                expect(new TextMatch('n', 'iendswith', '2', { n: 42 }).isMatch).toBe(true);
+            });
+            it('does NOT throw on a boolean or date target (issue #266)', () => {
+                expect(() => new TextMatch('b', 'ieq', 'true', { b: true }).isMatch).not.toThrow();
+                expect(new TextMatch('b', 'ieq', 'TRUE', { b: true }).isMatch).toBe(true);
+                // mid-year + midday so the year is 2024 in every timezone offset
+                const d = new Date('2024-06-15T12:00:00.000Z');
+                expect(() => new TextMatch('d', 'icontains', '2024', { d }).isMatch).not.toThrow();
+                expect(new TextMatch('d', 'icontains', '2024', { d }).isMatch).toBe(true);
+            });
+        });
     });
 });

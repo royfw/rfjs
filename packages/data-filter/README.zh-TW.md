@@ -79,9 +79,13 @@ resolvePath(data, 'user.missing', { fallbackOnEmpty: false }); // null instead o
 |------|--------|
 | 預設 | `eq`, `neq`, `isnull`, `isnotnull` |
 | 文字 | `contains`, `startswith`, `endswith`, `terms` |
+| 文字(不分大小寫) | `icontains`, `istartswith`, `iendswith`, `ieq`, `ineq` |
 | 數值 | `gt`, `gte`, `lt`, `lte`, `range`, `terms` |
 | 日期 | `gt`, `gte`, `lt`, `lte`, `range`, `terms` |
 | 布林 | `eq`, `neq`, `isnull`, `isnotnull` |
+
+`i*` 文字運算子是對應基礎運算子的不分大小寫版本(比對前兩側都轉小寫),與 SQL、JSONB
+引擎所提供的 `contains`／`startswith`／`endswith`／`eq`／`neq` 詞彙一致,讓過濾樹能跨引擎沿用。
 
 **邏輯運算子**：`and`, `or`, `nor`, `not`
 
@@ -114,9 +118,23 @@ matchQuery(data, wrap({
 }));
 ```
 
-陣列的元素運算子是 ∃(「某元素符合」),`containsall` 是 ∀(成員全含)。`array` 的 `neq`
-已排除(「不含」用 `not` + `eq`)。wildcard/jsonpath `field` 形式(`users[*].x`)**不支援、
-會丟錯**——用 `elemmatch`／`array` 組合,或 `=` 運算式。
+#### `array` 成員 vs 子字串——選對運算子
+
+`array` dataType 請依語意選運算子——**`contains` 是子字串,不是成員判定**:
+
+| 運算子 | 意義 | 語意 |
+|--------|------|------|
+| `eq` | 單一成員 | `∃` 某元素**完全等於**該值 |
+| `terms` | 任一成員 | `∃` 某元素完全等於**任一個**值(跨引擎可攜) |
+| `containsall` | 全部成員 | **每個**值都有一個完全相等的元素 |
+| `contains` | 逐元素子字串(**非**成員) | `∃` 某元素以**子字串**包含該值 |
+
+所以 `contains 'manager'` 會命中 `'skip_manager'` 角色(子字串),而 `terms 'manager'`／
+`eq 'manager'` 不會(精確成員)。成員判定請用 `terms`(任一)或 `containsall`(全部);
+`contains` 只保留給真正的子字串搜尋。`terms` 是能跨 SQL、JSONB 引擎沿用的成員運算子。
+
+`array` 的 `neq` 已排除(「不含」用 `not` + `eq`)。wildcard/jsonpath `field` 形式
+(`users[*].x`)**不支援、會丟錯**——用 `elemmatch`／`array` 組合,或 `=` 運算式。
 
 #### 何時用 collection dataType
 

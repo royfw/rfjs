@@ -1,11 +1,16 @@
 export const STRING_OPERATORS = [
   'eq',
   'neq',
+  'ieq',
+  'ineq',
   'isnull',
   'isnotnull',
   'contains',
+  'icontains',
   'startswith',
+  'istartswith',
   'endswith',
+  'iendswith',
   'terms',
 ] as const;
 
@@ -40,7 +45,8 @@ export const OBJECT_OPERATORS = [
 ] as const;
 
 export const STRING_ARRAY_OPERATORS = [
-  'eq', 'contains', 'startswith', 'endswith', 'terms', 'containsall', 'isnull', 'isnotnull',
+  'eq', 'contains', 'icontains', 'startswith', 'istartswith', 'endswith', 'iendswith',
+  'terms', 'containsall', 'isnull', 'isnotnull',
 ] as const;
 export const NUMERIC_ARRAY_OPERATORS = [
   'eq', 'gt', 'gte', 'lt', 'lte', 'range', 'terms', 'containsall', 'isnull', 'isnotnull',

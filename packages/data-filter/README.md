@@ -80,9 +80,15 @@ resolvePath(data, 'user.missing', { fallbackOnEmpty: false }); // null instead o
 |----------|-----------|
 | Default | `eq`, `neq`, `isnull`, `isnotnull` |
 | Text | `contains`, `startswith`, `endswith`, `terms` |
+| Text (case-insensitive) | `icontains`, `istartswith`, `iendswith`, `ieq`, `ineq` |
 | Numeric | `gt`, `gte`, `lt`, `lte`, `range`, `terms` |
 | Date | `gt`, `gte`, `lt`, `lte`, `range`, `terms` |
 | Boolean | `eq`, `neq`, `isnull`, `isnotnull` |
+
+The `i*` text operators are the case-insensitive counterparts of their base
+operators (both sides are lower-cased before comparison); they match the
+`contains`/`startswith`/`endswith`/`eq`/`neq` vocabulary exposed by the SQL and
+JSONB engines, so a filter tree stays portable across engines.
 
 **Logic operators**: `and`, `or`, `nor`, `not`
 
@@ -114,6 +120,24 @@ matchQuery(data, wrap({
   ] },
 }));
 ```
+
+#### `array` membership vs substring — pick the right operator
+
+For an `array` dataType, choose the operator by intent — **`contains` is
+substring, not membership**:
+
+| Operator | Meaning | Semantics |
+|----------|---------|-----------|
+| `eq` | single membership / 單一成員 | `∃` element **exactly equal** to the value |
+| `terms` | any-membership / 任一成員 | `∃` element exactly equal to **any** of the values (cross-engine portable) |
+| `containsall` | all-membership / 全部成員 | **every** value has an exactly-equal element |
+| `contains` | per-element substring / 逐元素子字串 (NOT membership) | `∃` element that **substring-contains** the value |
+
+So `contains 'manager'` matches a `'skip_manager'` role (substring), whereas
+`terms 'manager'` / `eq 'manager'` do not (exact membership). Use `terms` (any)
+or `containsall` (all) for membership; reserve `contains` for genuine substring
+search. `terms` is the membership operator that stays portable across the SQL
+and JSONB engines.
 
 `array` `neq` is excluded (use `not` + `eq` for "does not contain"). Wildcard/jsonpath
 `field` forms (`users[*].x`) are **not supported and throw** — compose with
