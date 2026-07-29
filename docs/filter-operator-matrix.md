@@ -5,7 +5,7 @@ identifier each engine uses for each concept, what each engine supports, and whe
 operator-name translation happens. See also the "Filter / Query-Builder Package Stack"
 section of [`CLAUDE.md`](../CLAUDE.md).
 
-> Snapshot: 2026-07-15 (`main` @ `ec0c8b2`). Regenerate if the engines' operator sets change.
+> Snapshot: 2026-07-29 (`main` @ `a16fef1`). Regenerate if the engines' operator sets change.
 
 ## How operators are wired
 
@@ -46,20 +46,20 @@ from the canonical spelling for the same concept.
 |---|---|---|---|---|---|---|
 | equals | `eq` | `eq` | `eq` | `eq` | `eq` | `eq` |
 | notEquals | `neq` | `neq` | `neq` | `neq` | `neq` | `neq` |
-| in / anyOf | `terms` | — | `terms` | `terms` | `terms` (+`term`) | **`in`** |
+| in / anyOf | `terms` | `terms` | `terms` | `terms` | `terms` (+`term`) | **`in`** |
 | notIn | `nin` | — | — | — | `nin` | **`notIn`** |
-| between | `range` | — | `range` | `range` | `range` | **`between`** |
-| contains (substring) | `contains` | `contains` ⚠ | `contains` | `contains` | →`regex` | `contains` |
-| startsWith | `startswith` | `startswith` ⚠ | `startswith` | `startswith` | →`regex` | **`startsWith`** |
-| endsWith | `endswith` | — | `endswith` | `endswith` | →`regex` | **`endsWith`** |
+| between | `range` | `range` | `range` | `range` | `range` | **`between`** |
+| contains (substring) | `contains` | `contains` | `contains` | `contains` | →`regex` | `contains` |
+| startsWith | `startswith` | `startswith` | `startswith` | `startswith` | →`regex` | **`startsWith`** |
+| endsWith | `endswith` | `endswith` | `endswith` | `endswith` | →`regex` | **`endsWith`** |
 | gt / gte / lt / lte | `gt`/`gte`/`lt`/`lte` | same | same | same | same | same |
 | isNull | `isnull` | `isnull` | `isnull` | `isnull` | →`eq` null | **`isNull`** |
 | isNotNull | `isnotnull` | `isnotnull` | `isnotnull` | `isnotnull` | →`neq` null | **`exists`** |
-| ci equals | `ieq` | — | `ieq` | — | — | — |
-| ci notEquals | `ineq` | — | `ineq` | — | — | — |
-| ci contains | `icontains` | — | `icontains` | — | — | — |
-| ci startsWith | `istartswith` | — | `istartswith` | — | — | — |
-| ci endsWith | `iendswith` | — | `iendswith` | — | — | — |
+| ci equals | `ieq` | `ieq` | `ieq` | — | — | — |
+| ci notEquals | `ineq` | `ineq` | `ineq` | — | — | — |
+| ci contains | `icontains` | `icontains` | `icontains` | — | — | — |
+| ci startsWith | `istartswith` | `istartswith` | `istartswith` | — | — | — |
+| ci endsWith | `iendswith` | `iendswith` | `iendswith` | — | — | — |
 | containsAll | `containsall` | — | `containsall` | `containsall` | — | — |
 | isEmpty | `isempty` | — | `isempty` | — | — | — |
 | isNotEmpty | `isnotempty` | — | `isnotempty` | — | — | — |
@@ -70,15 +70,16 @@ from the canonical spelling for the same concept.
 | regex | *(none)* | — | — | — | `regex` | `regex` |
 | logic | `and`/`or`/`nor`/`not` | (tree layer) | all | all | `and`/`or`/`nor` (no `not`) | all |
 
-⚠ = the `sql-filter` column path has an ILIKE-wildcard issue on `contains`/`startswith`
-(see below).
-
 ## Per-engine notes
 
 - **`sql-filter`** — the tree layer (`FilterGroup<L>`) is operator-agnostic (only `and/or/nor/not`
   + a pluggable `renderLeaf`). The built-in **column** vocabulary (`sql-filter/src/column/operators.ts`)
-  is just `eq, neq, isnull, isnotnull, contains, startswith, gt, gte, lt, lte` — no
-  `terms`/`range`/`endswith`/`iX`/object/array ops (those throw `UNSUPPORTED_OPERATOR`).
+  covers scalar comparisons (`eq, neq, gt, gte, lt, lte`), null checks (`isnull, isnotnull`), the
+  LIKE text ops (`contains, startswith, endswith`), the case-insensitive `iX` family
+  (`ieq, ineq, icontains, istartswith, iendswith`), and `terms`/`range` — all **type-scoped** via
+  `ALLOWED` (e.g. LIKE + `iX` are text-only, `range` is numeric/timestamp, `boolean` allows only
+  `eq/neq/isnull/isnotnull`). Object/array ops (`haskey`/`containsall`/`isempty`/`elemmatch`) are
+  not supported and throw `UNSUPPORTED_OPERATOR`.
 - **`jsonb-query`** — the widest set and the canonical spelling: scalar + `terms`/`range`/`iX`
   family, object ops (`haskey`/…), array ops (`containsall`/`isempty`/`elemmatch`). Two
   dialects (`legacy` `#>>`+cast, `jsonpath` for PG12+).
@@ -91,16 +92,18 @@ from the canonical spelling for the same concept.
 - **`es-query`** — deliberately divergent native vocab to match ES conventions (`in`, `notIn`,
   `between`, camelCase `startsWith/endsWith`, `isNull`/`exists`, plus `match`/`fuzzy`/… ES-only).
 
-## Known issues
+## Wildcard / LIKE escaping
 
-- **`sql-filter` column ILIKE wildcards** (`sql-filter/src/column/operators.ts`): `contains`/
-  `startswith` concatenate literal `%` wildcards around the bound term but never escape `%`/`_`
-  in the term and add no `ESCAPE` clause — so a term like `50%` or `a_b` over-matches. It also
-  uses `ilike` (case-insensitive) unconditionally, diverging from jsonb-query's case-*sensitive*
-  `contains`/`startswith` (jsonb reserves case-insensitivity to the `iX` family). `jsonb-query`
-  and `data-filter` are not affected (they don't use LIKE).
-- **`es-query` wildcards** (`es-query/src/toClause.ts`): `contains`/`endsWith` build `*term*`/
-  `*term` patterns without escaping `*`/`?` in the term — an analogous (separate) concern.
+- **`sql-filter` column** (`sql-filter/src/column/operators.ts`): the LIKE-based text ops
+  (`contains`/`startswith`/`endswith`) escape `%`/`_`/`\` in the bound term and emit an
+  `ESCAPE '\'` clause, so a term like `50%` or `a_b` matches verbatim. These three are
+  case-**sensitive** (`like`), matching jsonb-query's `contains`/`startswith`/`endswith`;
+  case-insensitivity lives in the separate `iX` family (`icontains`/`istartswith`/`iendswith`
+  → `ilike`, `ieq`/`ineq` → `lower(col) …`).
+- **`es-query`** (`es-query/src/toClause.ts`): `contains`/`endsWith` escape the ES wildcard
+  metachars (`*`/`?`/`\`) in the term before building the `*term*`/`*term` pattern (`startsWith`
+  uses a prefix query, so no wildcard escaping is needed).
+- `jsonb-query` and `data-filter` don't use SQL `LIKE` or ES wildcards, so neither concern applies.
 
 ## Where translation happens (rename blast radius)
 

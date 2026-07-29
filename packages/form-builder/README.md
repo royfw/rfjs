@@ -64,3 +64,17 @@ schema.safeParse({ name: '', agree: true, role: 'user' });
 - **Required numeric**: empty string `''` fails (preprocessed to `undefined` before `z.coerce.number()` rejects it).
 - **Optional fields**: any `''` input is coerced to `undefined`; the key is omitted from the parsed output (never `0` or `''`).
 - **Select / enum**: validated against `options` at all times; an invalid value (including `''`) always fails a required field.
+
+### Coercion vs. empty-value handling
+
+Two behaviours are easy to conflate but are deliberately separate:
+
+- **Boolean / `Switch` — no string coercion.** Only `Number` / `dataType: 'numeric'` fields get
+  `z.coerce.number()`. A `Switch` (or any `dataType: 'boolean'`) field maps to a plain `z.boolean()`,
+  which does **not** coerce strings — sending the string `"true"` fails validation. The delivery/UI
+  layer must send a real JSON boolean (e.g. back a controlled boolean value in the form), not a string.
+- **`emptyToUndefined` — built-in empty-value guard.** `configToZod` preprocesses every field so an
+  empty string `''` becomes `undefined` before validation. For a required `Number` this means
+  `'' → undefined → rejected by required`; for optional fields the key is simply omitted. This is
+  generic empty-value handling (not type coercion), so consumers **don't** need their own pre-submit
+  empty-string cleanup — the schema already covers it.
