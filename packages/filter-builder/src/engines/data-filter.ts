@@ -1,3 +1,9 @@
+import {
+  MATCH_QUERY_DATA_TYPES,
+  MATCH_QUERY_ELEMENT_TYPES,
+  supportedOperators,
+} from "@rfjs/data-filter";
+
 import type { FilterGroupLike } from "../compile";
 import { arityOf } from "./arity";
 import type { Engine, OperatorSpec } from "./types";
@@ -27,7 +33,10 @@ function arrayOps(elementType?: string): string[] {
   // For exact array membership use `terms` (any) / `containsall` (all); `contains`
   // is per-element substring by design, not membership (see issue #267 and the
   // data-filter README operator table).
-  if (elementType === "boolean") return ["eq", "containsall", ...NULL_OPS];
+  // `containsall` is string/numeric/date only — data-filter's
+  // BOOLEAN_ARRAY_OPERATORS does not carry it, and offering it here produced a
+  // condition the engine throws on (caught by the vocabulary-subset guard).
+  if (elementType === "boolean") return ["eq", ...NULL_OPS];
   if (elementType === "numeric" || elementType === "date") {
     return ["eq", "gt", "gte", "lt", "lte", "range", "terms", "containsall", ...NULL_OPS];
   }
@@ -45,11 +54,17 @@ function toSpecs(ops: string[]): OperatorSpec[] {
   return [...new Set(ops)].map((op) => ({ op, arity: arityOf(op) }));
 }
 
-// Coverage set for live match: every operator data-filter can evaluate.
+// Coverage set for live match: every operator data-filter can evaluate. Derived
+// from the engine's own exported vocabulary rather than re-listed here, so it
+// cannot drift from what `matchQuery` actually accepts.
 export const DATA_FILTER_OPS = new Set<string>([
-  ...STRING_OPS, ...COMPARABLE_OPS, ...BOOLEAN_OPS, ...OBJECT_OPS,
-  "contains", "icontains", "startswith", "istartswith", "endswith", "iendswith",
-  "ieq", "ineq", "containsall", "elemmatch",
+  ...MATCH_QUERY_DATA_TYPES.flatMap((dataType) =>
+    dataType === "array"
+      ? MATCH_QUERY_ELEMENT_TYPES.flatMap((elementType) => [
+          ...(supportedOperators(dataType, elementType) ?? []),
+        ])
+      : [...(supportedOperators(dataType) ?? [])],
+  ),
 ]);
 
 export const dataFilterEngine: Engine = {

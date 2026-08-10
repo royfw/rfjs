@@ -92,6 +92,63 @@ JSONB engines, so a filter tree stays portable across engines.
 
 **Logic operators**: `and`, `or`, `nor`, `not`
 
+### Condition vocabulary — validate before you evaluate
+
+A condition can be perfectly well-*shaped* and still name a `dataType` or
+`operator` the engine has never heard of. The evaluator throws on it, which for
+a consumer that validated at authoring time and evaluated later means a 500 at
+runtime rather than a 400 at save time:
+
+```typescript
+matchQuery(data, { logic: 'and', filters: [
+  { field: 'x', dataType: 'wat', operator: 'eq', value: 1 },
+]});
+// Error: [data-filter] unsupported dataType 'wat'
+```
+
+The vocabulary the evaluator dispatches on is exported, so a consumer checks the
+condition against the engine's own tables instead of hand-rolling a copy that
+drifts:
+
+```typescript
+import { validateCondition, validateMatchQuery, supportedOperators } from '@rfjs/data-filter';
+
+validateCondition({ field: 'x', dataType: 'wat', operator: 'eq', value: 1 });
+// { ok: false, issues: [{ code: 'unsupportedDataType',
+//                         message: "[data-filter] unsupported dataType 'wat'", path: '' }] }
+
+validateMatchQuery(tree);          // walks nested groups and elemmatch sub-groups
+supportedOperators('array', 'string');  // readonly ['eq', 'contains', …] — populate a picker
+```
+
+| Export | What it is |
+|--------|------------|
+| `validateCondition(condition)` | One leaf: `{ ok: true }` or `{ ok: false, issues }`. Descends into an `elemmatch` sub-group. |
+| `validateMatchQuery(query)` | A whole `FilterMatchQuery`: walks nested groups, also checks each group's `logic`. Every issue carries a `path` (`filters[1].filters[0]`). |
+| `supportedOperators(dataType, elementType?)` | The operators the engine accepts there, or `undefined` if the type combination itself is not evaluable. |
+| `MATCH_QUERY_DATA_TYPES` | Every `dataType` a leaf may declare — `string`, `numeric`, `date`, `boolean`, `object`, `array`. |
+| `MATCH_QUERY_ELEMENT_TYPES` | Every `elementType` an `array` leaf may declare (adds `object`). |
+| `LOGICAL_OPERATORS` | `and`, `or`, `nor`, `not`. |
+| `OPERATORS_BY_DATA_TYPE`, `ARRAY_OPERATORS_BY_ELEMENT`, `STRING_OPERATORS` … | The raw allowlists the matchers pass to `assertOperator`. |
+| `assertOperator(dataType, operator, allowed)` | The throwing check the matchers use. |
+
+These are the *same* arrays the matchers assert against, and
+`MATCH_QUERY_DATA_TYPES` is what `createMatchQuery` gates on before it
+dispatches — so the exported vocabulary cannot say "yes" to something the
+engine then rejects. The lists are `Object.keys` of presence maps typed against
+`MatchQueryMetadata`, so a dataType added to the union (and therefore to the
+`never`-exhaustive dispatch switch) fails to compile until it is listed.
+
+Scope: **vocabulary only**. It does not check the tree's shape (use
+`parseFilterGroup` from [`@rfjs/filter-builder`](../filter-builder)) nor whether
+`value` suits the operator (`range` wanting exactly two values is still a
+runtime throw).
+
+> `MatchQueryDataType` is **not** this list — it is the narrower scalar/element
+> vocabulary (`string | numeric | boolean | date`), which is what an `array`
+> condition's `elementType` may be. The leaf-level set is
+> `MatchQueryConditionDataType` (= `MatchQueryMetadata['dataType']`).
+
 ### Match Classes
 
 Under-the-hood match classes for each data type:
@@ -197,10 +254,19 @@ type FilterMatchQuery = {
   filters: (MatchQueryMetadata | FilterMatchQuery)[];
 };
 
-type MatchQueryMetadata = {
-  field: string;
-  dataType: 'string' | 'numeric' | 'boolean' | 'date';
-  operator: DefaultFilterOperator | TextFilterOperator | NumericFilterOperator | DateFilterOperator;
-  value: ValueType;
-};
+// A discriminated union, one variant per dataType — an operator invalid for its
+// dataType is a compile error. `MATCH_QUERY_DATA_TYPES` is the runtime list of
+// the discriminants below.
+type MatchQueryMetadata =
+  | StringCondition   // dataType: 'string'
+  | NumericCondition  // dataType: 'numeric'
+  | DateCondition     // dataType: 'date'
+  | BooleanCondition  // dataType: 'boolean'
+  | ObjectCondition   // dataType: 'object'
+  | StringArrayCondition | NumericArrayCondition | DateArrayCondition | BooleanArrayCondition
+  | ElemMatchCondition;  // dataType: 'array', elementType: 'object'
+
+// The scalar/element vocabulary — an `array` condition's `elementType`.
+// NOT the leaf-level dataType set; that is `MatchQueryConditionDataType`.
+type MatchQueryDataType = 'string' | 'numeric' | 'boolean' | 'date';
 ```

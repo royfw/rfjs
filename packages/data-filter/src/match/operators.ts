@@ -1,3 +1,5 @@
+import type { MatchQueryDataType } from '../types';
+
 export const STRING_OPERATORS = [
   'eq',
   'neq',
@@ -54,12 +56,39 @@ export const NUMERIC_ARRAY_OPERATORS = [
 export const DATE_ARRAY_OPERATORS = NUMERIC_ARRAY_OPERATORS;
 export const BOOLEAN_ARRAY_OPERATORS = ['eq', 'isnull', 'isnotnull'] as const;
 
-export const ARRAY_OPERATORS_BY_ELEMENT: Record<string, readonly string[]> = {
+/**
+ * Operator allowlist per **scalar** array `elementType`. Keyed by
+ * `MatchQueryDataType`, so an element type added to that union has to be listed
+ * here to compile. `elementType: 'object'` is not here — it routes to
+ * `ElemMatch` and its only operator is `elemmatch`.
+ */
+export const ARRAY_OPERATORS_BY_ELEMENT: Record<
+  MatchQueryDataType,
+  readonly string[]
+> = {
   string: STRING_ARRAY_OPERATORS,
   numeric: NUMERIC_ARRAY_OPERATORS,
   date: DATE_ARRAY_OPERATORS,
   boolean: BOOLEAN_ARRAY_OPERATORS,
 };
+
+/**
+ * Own-property lookup into {@link ARRAY_OPERATORS_BY_ELEMENT}. Returns
+ * `undefined` for an unknown element type instead of an inherited
+ * `Object.prototype` member (`constructor`, `toString`, …), which would
+ * otherwise reach `assertOperator` as a non-array `allowed` and blow up with a
+ * `TypeError` rather than a domain error.
+ */
+export function operatorsForArrayElement(
+  elementType: string,
+): readonly string[] | undefined {
+  return Object.prototype.hasOwnProperty.call(
+    ARRAY_OPERATORS_BY_ELEMENT,
+    elementType,
+  )
+    ? ARRAY_OPERATORS_BY_ELEMENT[elementType as MatchQueryDataType]
+    : undefined;
+}
 
 /**
  * Throw if `operator` is not valid for `dataType`. Guards against typos,
