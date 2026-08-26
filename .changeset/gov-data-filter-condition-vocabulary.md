@@ -21,7 +21,12 @@ counterpart at all.
   `{ ok: true } | { ok: false, issues }`, where each issue carries a stable
   `code`, the evaluator's own `message`, and a `path` naming the offending node.
   `validateMatchQuery` walks nested groups and `elemmatch` sub-groups and also
-  checks each group's `logic`.
+  checks each group's `logic`. A leaf's `field` is checked against the
+  evaluator's own path guards (`unsupportedPath`), so a wildcard or `$`-rooted
+  path is rejected at authoring time rather than throwing at evaluation; an
+  `=` expression field is left to the async api. Vocabulary membership is
+  tested against the raw value, never its rendered token — `typeof {}` is
+  `'object'`, which would otherwise pass as the legitimate `object` dataType.
 - `supportedOperators(dataType, elementType?)` — what the engine accepts there,
   or `undefined` when the type combination itself is not evaluable.
 - `MATCH_QUERY_DATA_TYPES`, `MATCH_QUERY_ELEMENT_TYPES`, `LOGICAL_OPERATORS`,

@@ -297,3 +297,83 @@ describe('validateMatchQuery', () => {
     expect(result.ok === false && result.issues[0]!.code).toBe('invalidFilters');
   });
 });
+
+// Both fixed after review: the validator blessed a leaf the evaluator throws
+// on — the exact divergence this API exists to eliminate, in the API itself.
+describe('validateCondition — non-string tokens and unresolvable fields', () => {
+  // `typeof {}` is 'object', which is a *legitimate* dataType and elementType.
+  // Rendering the token to test membership let an object through.
+  it('rejects a non-string dataType instead of reading it as `object`', () => {
+    const leaf = { field: 'x', dataType: {}, operator: 'eq', value: 1 };
+    const result = validateCondition(leaf);
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.issues[0]!.code).toBe('unsupportedDataType');
+    expect(() => createMatchQuery(ROW, leaf as unknown as MatchQueryMetadata)).toThrow(
+      /unsupported dataType/,
+    );
+  });
+
+  it('rejects a non-string elementType instead of reading it as `object`', () => {
+    const leaf = {
+      field: 'x',
+      dataType: 'array',
+      elementType: [],
+      operator: 'elemmatch',
+      filters: { logic: 'and', filters: [] },
+    };
+    const result = validateCondition(leaf);
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.issues[0]!.code).toBe('unsupportedElementType');
+    expect(() => createMatchQuery(ROW, leaf as unknown as MatchQueryMetadata)).toThrow(
+      /unsupported elementType/,
+    );
+  });
+
+  it('rejects a non-string operator', () => {
+    const result = validateCondition({ field: 'x', dataType: 'string', operator: {}, value: 'a' });
+    expect(result.ok === false && result.issues[0]!.code).toBe('unsupportedOperator');
+  });
+
+  it("rejects a wildcard field with the evaluator's own message", () => {
+    const leaf = { field: 'users[*].name', dataType: 'string', operator: 'eq', value: 'x' };
+    const result = validateCondition(leaf);
+    expect(result.ok).toBe(false);
+    expect(result.ok === false && result.issues[0]!.code).toBe('unsupportedPath');
+    expect(result.ok === false && result.issues[0]!.message).toMatch(
+      /unsupported path syntax 'users\[\*\]\.name'/,
+    );
+  });
+
+  it('rejects a `$`-rooted field', () => {
+    const result = validateCondition({ field: '$.a', dataType: 'string', operator: 'eq', value: 'x' });
+    expect(result.ok === false && result.issues[0]!.code).toBe('unsupportedPath');
+  });
+
+  it('reports the narrower wildcard wording that object and array throw', () => {
+    const obj = validateCondition({ field: 'a.*', dataType: 'object', operator: 'eq', value: 1 });
+    expect(obj.ok === false && obj.issues[0]!.message).toMatch(
+      /wildcard field is not supported for dataType 'object'/,
+    );
+    const arr = validateCondition({
+      field: 'a.*',
+      dataType: 'array',
+      elementType: 'string',
+      operator: 'eq',
+      value: 'x',
+    });
+    expect(arr.ok === false && arr.issues[0]!.message).toMatch(
+      /wildcard field is not supported for dataType 'array'/,
+    );
+  });
+
+  it('leaves an `=` expression field alone — the async api resolves it', () => {
+    expect(
+      validateCondition({ field: '=$.a + 1', dataType: 'numeric', operator: 'eq', value: 1 }),
+    ).toEqual({ ok: true });
+  });
+
+  it('rejects a non-string field', () => {
+    const result = validateCondition({ field: 42, dataType: 'string', operator: 'eq', value: 'x' });
+    expect(result.ok === false && result.issues[0]!.code).toBe('unsupportedPath');
+  });
+});

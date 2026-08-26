@@ -1,3 +1,5 @@
+import { isExpression } from '@rfjs/data-expr';
+
 import {
   BOOLEAN_OPERATORS,
   DATE_OPERATORS,
@@ -6,6 +8,7 @@ import {
   STRING_OPERATORS,
   operatorsForArrayElement,
 } from '../match/operators';
+import { assertSupportedPath, hasWildcardSyntax } from '../path/resolve';
 import type { LogicalOperator, MatchQueryMetadata } from '../types';
 
 /**
@@ -135,7 +138,8 @@ export type ConditionIssueCode =
   | 'unsupportedDataType'
   | 'missingElementType'
   | 'unsupportedElementType'
-  | 'unsupportedOperator';
+  | 'unsupportedOperator'
+  | 'unsupportedPath';
 
 export interface ConditionIssue {
   code: ConditionIssueCode;
@@ -162,6 +166,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /**
  * Render an untrusted vocabulary token for an error message. Never falls back
  * to `[object Object]` — a non-primitive is reported as its `typeof`.
+ *
+ * Rendering only. Never test membership against this: `typeof {}` is
+ * `'object'`, which collides with the legitimate `'object'` dataType and
+ * elementType — use {@link isMember}.
  */
 function token(value: unknown): string {
   if (typeof value === 'string') return value;
@@ -171,11 +179,64 @@ function token(value: unknown): string {
 }
 
 /**
+ * Membership in a vocabulary list. A non-string is never a member, however it
+ * renders — the evaluator compares the raw value, so `{ dataType: {} }` must
+ * fail here exactly as it throws there.
+ */
+function isMember(value: unknown, vocabulary: readonly string[]): boolean {
+  return typeof value === 'string' && vocabulary.includes(value);
+}
+
+/**
  * Mirrors `matchQuery`'s own group/leaf discrimination (`_.has(filter, 'logic')`)
  * so the validator walks exactly the nodes the evaluator walks.
  */
 function isGroupNode(node: Record<string, unknown>): boolean {
   return Object.prototype.hasOwnProperty.call(node, 'logic');
+}
+
+/**
+ * The evaluator's own path guards, reused rather than re-expressed — a `field`
+ * this blesses is one the matchers accept, and the wording matches the throw.
+ * Returns whether an issue was recorded.
+ *
+ * An `=` expression is not a path: `compileMatchQuery` / `matchQueryAsync`
+ * resolve it, so it is left alone here.
+ */
+function collectFieldIssue(
+  field: unknown,
+  dataType: string,
+  path: string,
+  issues: ConditionIssue[],
+): boolean {
+  const push = (message: string): true => {
+    issues.push({ code: 'unsupportedPath', message, path });
+    return true;
+  };
+  if (typeof field !== 'string') {
+    return push(`[data-filter] condition field must be a string, got ${token(field)}`);
+  }
+  if (isExpression(field)) return false;
+  // `object` and `array` reject a wildcard field with their own, narrower
+  // wording inside the dispatch switch, before the generic guard ever runs.
+  if (hasWildcardSyntax(field)) {
+    if (dataType === 'object') {
+      return push(
+        `[data-filter] wildcard field is not supported for dataType 'object'; point field at the value`,
+      );
+    }
+    if (dataType === 'array') {
+      return push(
+        `[data-filter] wildcard field is not supported for dataType 'array'; point field at the value, or compose with elemmatch`,
+      );
+    }
+  }
+  try {
+    assertSupportedPath(field);
+  } catch (error) {
+    return push(error instanceof Error ? error.message : String(error));
+  }
+  return false;
 }
 
 function collectConditionIssues(
@@ -194,7 +255,7 @@ function collectConditionIssues(
   const dataType = token(condition.dataType);
   const operator = token(condition.operator);
 
-  if (!(MATCH_QUERY_DATA_TYPES as readonly string[]).includes(dataType)) {
+  if (!isMember(condition.dataType, MATCH_QUERY_DATA_TYPES)) {
     issues.push({
       code: 'unsupportedDataType',
       message: `[data-filter] unsupported dataType '${dataType}'`,
@@ -202,6 +263,11 @@ function collectConditionIssues(
     });
     return;
   }
+
+  // After the dataType gate, mirroring the evaluator, which validates the
+  // dataType before it dispatches on it. A leaf wrong in several ways reports
+  // the path first.
+  if (collectFieldIssue(condition.field, dataType, path, issues)) return;
 
   if (dataType === 'array') {
     if (condition.elementType === undefined) {
@@ -213,9 +279,7 @@ function collectConditionIssues(
       return;
     }
     const elementType = token(condition.elementType);
-    if (
-      !(MATCH_QUERY_ELEMENT_TYPES as readonly string[]).includes(elementType)
-    ) {
+    if (!isMember(condition.elementType, MATCH_QUERY_ELEMENT_TYPES)) {
       issues.push({
         code: 'unsupportedElementType',
         message: `[data-filter] unsupported elementType '${elementType}' for dataType 'array'`,
@@ -224,7 +288,7 @@ function collectConditionIssues(
       return;
     }
     const allowed = supportedOperators(dataType, elementType);
-    if (!allowed?.includes(operator)) {
+    if (allowed === undefined || !isMember(condition.operator, allowed)) {
       issues.push({
         code: 'unsupportedOperator',
         message: `[data-filter] unsupported operator '${operator}' for dataType 'array<${elementType}>'`,
@@ -241,7 +305,7 @@ function collectConditionIssues(
   }
 
   const allowed = supportedOperators(dataType);
-  if (!allowed?.includes(operator)) {
+  if (allowed === undefined || !isMember(condition.operator, allowed)) {
     issues.push({
       code: 'unsupportedOperator',
       message: `[data-filter] unsupported operator '${operator}' for dataType '${dataType}'`,
