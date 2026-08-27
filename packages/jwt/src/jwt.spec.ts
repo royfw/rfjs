@@ -11,7 +11,12 @@ describe('helpers jwt test', () => {
 
   describe('verifyToken', () => {
     const payload1 = { id: 1 };
-    const expiredToken = jwt1.createToken(payload1, { expiresIn: 1 });
+    // Two tokens, deliberately not one. `exp` has second granularity, so a
+    // token minted with `expiresIn: 1` can be as little as a few milliseconds
+    // from expiry — asserting it is *still valid* after the preceding tests
+    // have run is a race the suite loses on a slow runner.
+    const shortLivedToken = jwt1.createToken(payload1, { expiresIn: 1 });
+    const longLivedToken = jwt1.createToken(payload1, { expiresIn: 3600 });
     const token1 = jwt1.createToken({ id: 1 });
     describe('jwt1 verify token1', () => {
       it('set same subject return success true', () => {
@@ -29,18 +34,18 @@ describe('helpers jwt test', () => {
       });
 
       it('unexpired token should return success true', () => {
-        const result = jwt1.verifyToken(expiredToken);
+        const result = jwt1.verifyToken(longLivedToken);
         expect(result.success).toBeTruthy();
       });
 
       it('expired token should return success false', async () => {
         await delay(1200);
-        const result = jwt1.verifyToken(expiredToken);
+        const result = jwt1.verifyToken(shortLivedToken);
         expect(result.success).toBeFalsy();
       });
       it('expired token should return err property TokenExpiredError', async () => {
         await delay(1200);
-        const result = jwt1.verifyToken(expiredToken);
+        const result = jwt1.verifyToken(shortLivedToken);
         expect(result.err).toHaveProperty('name', 'TokenExpiredError');
       });
 
@@ -51,12 +56,14 @@ describe('helpers jwt test', () => {
     });
 
     describe('jwt2 verify token1', () => {
+      // These assert the *secret* mismatch, so they take the long-lived token:
+      // an expired one would fail for two reasons at once.
       it('jwt2 should return success false', () => {
-        const result = jwt2.verifyToken(expiredToken);
+        const result = jwt2.verifyToken(longLivedToken);
         expect(result.success).toBeFalsy();
       });
       it('jwt2 should return jwt1 payload', () => {
-        const result = jwt2.verifyToken(expiredToken);
+        const result = jwt2.verifyToken(longLivedToken);
         expect(result.payload).toMatchObject(payload1);
       });
     });

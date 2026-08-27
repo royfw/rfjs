@@ -69,4 +69,10 @@ jobs:
           fi
 
       - name: Push git tags
+        # HUSKY=0 disables the local git hooks. The pre-push hook runs the whole
+        # turbo test suite, which CI has already run — and a single flaky test
+        # there fails this step *after* changeset publish has already shipped to
+        # npm, leaving the release untagged and only re-runnable by hand.
+        env:
+          HUSKY: 0
         run: git push origin --tags
