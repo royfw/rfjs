@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/filter-builder-ui",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Shared styled filter-tree editor (React) over @rfjs/filter-builder; labels-as-props, consumed via transpilePackages",
   "type": "module",
   "private": true,

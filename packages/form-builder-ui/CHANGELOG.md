@@ -1,5 +1,13 @@
 # @rfjs/form-builder-ui
 
+## 0.1.1
+
+### Patch Changes
+
+- Updated dependencies [78451a2]
+  - @rfjs/form-builder@0.1.1
+  - @rfjs/table-builder-ui@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/table-builder-ui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared styled config-driven data table (React) over @rfjs/table-builder; optional labels with English defaults, consumed via transpilePackages",
   "type": "module",
   "private": true,
