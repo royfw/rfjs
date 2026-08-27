@@ -1,27 +1,35 @@
 import { z } from 'zod';
-import type { ZodType, ZodTypeAny } from 'zod';
+import type { ZodType } from 'zod';
+import type { MatchQueryMetadata } from '@rfjs/data-filter';
 import { tableConfigSchema } from '@rfjs/table-builder';
 
+import type { ConditionalRule } from './conditional';
 import type { FormConfig } from './types';
 
 // Permissive structural schema for ConditionalRule (FilterMatchQuery).
-// We validate shape (logic + filters array) without deep-validating every operator.
+// We validate shape (logic + filters array) without deep-validating every operator,
+// so the runtime check is deliberately wider than the static `MatchQueryMetadata` union.
+// `.pipe(z.custom<…>())` re-states the declared output at that one boundary: the object
+// stage still parses/strips, the custom stage passes the parsed value through unchanged
+// and gives the schema the domain type the rest of the tree is written against.
 // elementType is preserved explicitly so it survives a parse/serialize round-trip.
-const conditionSchema: ZodTypeAny = z.object({
-  field: z.string(),
-  dataType: z.string(),
-  operator: z.string(),
-  value: z.unknown().optional(),
-  elementType: z.string().optional(),
-});
+const conditionSchema: ZodType<MatchQueryMetadata> = z
+  .object({
+    field: z.string(),
+    dataType: z.string(),
+    operator: z.string(),
+    value: z.unknown().optional(),
+    elementType: z.string().optional(),
+  })
+  .pipe(z.custom<MatchQueryMetadata>());
 
 // Recursive group schema: z.lazy defers the self-reference so the outer `conditionalSchema`
-// binding is resolved at evaluation time, not at declaration time.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const conditionalSchema: ZodTypeAny = z.object({
+// binding is resolved at evaluation time, not at declaration time. The explicit
+// `ZodType<ConditionalRule>` annotation is what lets the recursion type-check (and what
+// tsdown's dts output needs to name the type) — see @rfjs/tpl-toolkit's README gotcha.
+const conditionalSchema: ZodType<ConditionalRule> = z.object({
   logic: z.enum(['and', 'or', 'nor', 'not']),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  filters: z.array(z.union([conditionSchema, z.lazy(() => conditionalSchema as any)])),
+  filters: z.array(z.union([conditionSchema, z.lazy(() => conditionalSchema)])),
 });
 
 const dataSourceSchema = z.object({
