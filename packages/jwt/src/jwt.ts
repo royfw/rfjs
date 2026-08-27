@@ -1,13 +1,17 @@
-import {
-  sign,
-  verify,
-  decode,
+import jwt from 'jsonwebtoken';
+import type {
   Jwt as DecodedJwt,
   JwtPayload,
   VerifyErrors,
   SignOptions,
   VerifyOptions,
 } from 'jsonwebtoken';
+
+// `jsonwebtoken@9` is CJS-only (no `exports`, no ESM named exports), so a
+// named `import { sign, ... }` fails under Node/vitest ESM with
+// `SyntaxError: Named export 'sign' not found`. Take the default (the CJS
+// `module.exports`) and destructure the functions off it instead.
+const { sign, verify, decode } = jwt;
 
 export type Secret = string | Buffer;
 

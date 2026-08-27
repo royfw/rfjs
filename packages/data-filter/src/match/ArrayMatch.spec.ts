@@ -14,6 +14,23 @@ describe('ArrayMatch (scalar elements)', () => {
     expect(new ArrayMatch('scores', 'numeric', 'range', [50, 70], data).isMatch).toBe(true);
     expect(new ArrayMatch('tags', 'string', 'terms', ['admin', 'staff'], data).isMatch).toBe(true);
   });
+  it('terms is any-membership by exact value (the portable membership op, #267)', () => {
+    // exact equality, NOT substring: `manager` must not match `skip_manager`
+    const roles = { roles: ['skip_manager', 'staff'] };
+    expect(new ArrayMatch('roles', 'string', 'terms', 'manager', roles).isMatch).toBe(false);
+    expect(new ArrayMatch('roles', 'string', 'contains', 'manager', roles).isMatch).toBe(true); // substring, for contrast
+    // any of the wanted values present → match
+    expect(new ArrayMatch('tags', 'string', 'terms', ['x', 'staff'], data).isMatch).toBe(true);
+    expect(new ArrayMatch('tags', 'string', 'terms', ['x', 'y'], data).isMatch).toBe(false);
+  });
+  it('evaluates the ∃ substring i-ops per-element without throwing (issue #279 parity)', () => {
+    const roles = { roles: ['Engineering', 'Sales'] };
+    expect(() => new ArrayMatch('roles', 'string', 'icontains', 'GINE', roles).isMatch).not.toThrow();
+    expect(new ArrayMatch('roles', 'string', 'icontains', 'GINE', roles).isMatch).toBe(true);
+    expect(new ArrayMatch('roles', 'string', 'contains', 'GINE', roles).isMatch).toBe(false); // case-sensitive
+    expect(new ArrayMatch('roles', 'string', 'istartswith', 'eng', roles).isMatch).toBe(true);
+    expect(new ArrayMatch('roles', 'string', 'iendswith', 'ING', roles).isMatch).toBe(true);
+  });
   it('containsall requires every value present', () => {
     expect(new ArrayMatch('tags', 'string', 'containsall', ['vip', 'staff'], data).isMatch).toBe(true);
     expect(new ArrayMatch('tags', 'string', 'containsall', ['vip', 'x'], data).isMatch).toBe(false);

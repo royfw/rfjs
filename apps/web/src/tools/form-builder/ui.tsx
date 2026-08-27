@@ -520,7 +520,6 @@ export function FormBuilderTool() {
         ]}
         labels={{ expand: t("introExpand"), collapse: t("introCollapse"), dismiss: t("introDismiss") }}
       />
-      <ToolTabs tabs={TABS} active={tab} onChange={(id) => setTab(id as "canvas" | "preview" | "json")} />
 
       <AiPanel
         title={t("aiBlockTitle")}
@@ -592,6 +591,8 @@ export function FormBuilderTool() {
           },
         ]}
       />
+
+      <ToolTabs tabs={TABS} active={tab} onChange={(id) => setTab(id as "canvas" | "preview" | "json")} />
 
       {tab === "canvas" ? (
         <>

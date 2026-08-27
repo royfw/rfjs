@@ -15,6 +15,7 @@ import type {
   LogicalOperator,
 } from '../types';
 import { isExpression } from '@rfjs/data-expr';
+import { assertMatchQueryDataType } from './vocabulary';
 
 export function matchQueryArray(
   data: ObjectData[],
@@ -100,6 +101,11 @@ export function createMatchQuery(
       `[data-filter] '=' expression slots require the async api — use compileMatchQuery or matchQueryAsync`,
     );
   }
+  // Gate on the exported vocabulary rather than only on the switch's `default`
+  // arm, so `MATCH_QUERY_DATA_TYPES` is the list the engine actually dispatches
+  // through: a dataType present in the switch but missing from it stops
+  // evaluating, and every test for that dataType goes red.
+  assertMatchQueryDataType(metadata.dataType);
   switch (metadata.dataType) {
     case 'string':
       return new TextMatch(metadata.field, metadata.operator, metadata.value, data);

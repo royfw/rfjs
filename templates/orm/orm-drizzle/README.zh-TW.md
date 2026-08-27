@@ -34,10 +34,18 @@ import { migrateToLatest } from '@rfjs/orm-drizzle';
 
 await migrateToLatest({
   connectionString: process.env.DATABASE_URL,
-  schema: 'public', // 選用：指定 schema
+  schema: 'public', // 選用：指定 schema（預設為 `public`）
   migrationsFolder: 'node_modules/@rfjs/orm-drizzle/dist/drizzle', // 選用：遷移檔案路徑
 });
 ```
+
+> **Schema 一致性。** `drizzle-kit generate` 產出的 migration 會把 enum 型別與
+> FK 目標硬綁到 `public.`，因此 migration 必須在 `public` schema 下執行——這也是
+> `schema` 預設為 `public` 的原因。若在其他 `search_path` 下執行 migrate，會解析
+> 不到那些 enum/FK；再加上每個 schema 各自的 `__drizzle_migrations` 追蹤表是空的，
+> 會從 `0000` 重播所有 migration。若真的需要非 `public` 的 schema，請改用 drizzle
+> [`pgSchema()`](https://orm.drizzle.team/docs/schemas) 定義 table，讓 `generate`
+> 的輸出也綁到同一個 schema，端到端保持一致。
 
 ### 資料庫種子 (Seeding)
 

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>#267 array 成員運算子 containsany 去留 — 2026-07-29</title>
+<style>
+  /* ===== house tokens — 不要改這一段,只改內容 ===== */
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --border: #e4e4e0; --text: #1a1a18; --muted: #6b6b66;
+    --accent: #b8860b; --accent-soft: #f5ead1; --ok: #15803d; --ok-soft: #dcfce7;
+    --warn: #b45309; --warn-soft: #fef3c7; --info: #1d4ed8; --info-soft: #dbeafe;
+    --wire-bg: #fafaf8; --wire-border: #d4d4d0; --code-bg: #f4f4f2;
+  }
+  .dark {
+    --bg: #111113; --card: #1a1a1e; --border: #2e2e33; --text: #e8e8e4; --muted: #9a9a94;
+    --accent: #d4a017; --accent-soft: #3a2f14; --ok: #4ade80; --ok-soft: #14361f;
+    --warn: #fbbf24; --warn-soft: #3a2e10; --info: #60a5fa; --info-soft: #172a4a;
+    --wire-bg: #202024; --wire-border: #3a3a40; --code-bg: #232327;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Noto Sans TC", system-ui, sans-serif; line-height: 1.65; padding: 40px 20px 80px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 26px; letter-spacing: .02em; }
+  h2 { font-size: 19px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+  h3 { font-size: 14px; margin: 18px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .toggle { position: fixed; top: 18px; right: 18px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; cursor: pointer; color: var(--text); font-size: 13px; }
+  .section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; margin-top: 26px; }
+  .num { display: inline-flex; width: 28px; height: 28px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 9px; border-radius: 99px; vertical-align: 2px; }
+  .b-s { background: var(--ok-soft); color: var(--ok); } .b-m { background: var(--warn-soft); color: var(--warn); } .b-l { background: var(--info-soft); color: var(--info); }
+  .who { display: inline-flex; padding: 2px 12px; border-radius: 99px; font-size: 12.5px; font-weight: 700; }
+  .w-here { background: var(--accent-soft); color: var(--accent); }
+  .w-peer { background: var(--info-soft); color: var(--info); }
+  .w-bg { background: var(--ok-soft); color: var(--ok); }
+  .w-wait { background: var(--warn-soft); color: var(--warn); }
+  .grid { display: grid; gap: 14px; } .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 760px) { .g2, .g3 { grid-template-columns: 1fr; } }
+  .card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 13.5px; }
+  .card b { display: block; margin-bottom: 4px; font-size: 14px; }
+  .card.pick { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  ul { padding-left: 20px; font-size: 14px; } li { margin: 5px 0; }
+  code { background: var(--code-bg); border-radius: 4px; padding: 1px 6px; font-family: ui-monospace, monospace; font-size: 12.5px; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; font-size: 13px; }
+  .flow .node { background: var(--wire-bg); border: 1px solid var(--wire-border); border-radius: 8px; padding: 7px 13px; font-family: ui-monospace, monospace; font-size: 12px; }
+  .flow .node.hot { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .flow .arr { color: var(--muted); }
+  /* wireframe kit */
+  .wire { background: var(--wire-bg); border: 1px dashed var(--wire-border); border-radius: 10px; padding: 16px; margin-top: 10px; font-size: 12px; }
+  .wire .bar { display: flex; gap: 6px; margin-bottom: 10px; }
+  .wire .chip { border: 1px solid var(--wire-border); background: var(--card); border-radius: 6px; padding: 3px 10px; }
+  .wire .chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .wire .panel { border: 1px solid var(--wire-border); background: var(--card); border-radius: 8px; padding: 10px 12px; margin-top: 8px; }
+  .wire .row { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dotted var(--wire-border); }
+  .wire .row:last-child { border-bottom: none; }
+  .wire .cell { flex: 1; } .wire .tag { border: 1px solid var(--wire-border); border-radius: 4px; padding: 0 6px; font-size: 10.5px; color: var(--muted); }
+  .wire .tag.k { color: var(--info); border-color: var(--info); }
+  .wire table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  .wire th, .wire td { border-bottom: 1px solid var(--wire-border); padding: 4px 8px; text-align: left; font-weight: normal; }
+  .wire th { color: var(--muted); font-size: 11px; }
+  .wire .btn { display: inline-block; border: 1px solid var(--wire-border); background: var(--card); border-radius: 6px; padding: 3px 12px; }
+  .wire .btn.p { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .cols { display: grid; grid-template-columns: 300px 1fr; gap: 14px; } @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+  .dep { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+  .map { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .map .m { flex: 1 1 180px; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 13px; }
+  .map .m b { display: block; font-size: 14px; }
+  .map .m span { color: var(--muted); font-size: 12px; }
+  .hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+  .note { background: var(--accent-soft); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; }
+  /* 本檔額外:比較表配色(沿用 token,不新增色) */
+  .cmp { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  .cmp th, .cmp td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  .cmp th { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .cmp td code { white-space: nowrap; }
+  .yes { color: var(--ok); font-weight: 700; } .no { color: var(--warn); font-weight: 700; }
+  .dup { background: var(--accent-soft); }
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.classList.toggle('dark')">☀ / ☾</button>
+<div class="wrap">
+  <h1>#267 · array 成員運算子 <code>containsany</code> 去留</h1>
+  <p class="sub">2026-07-29 · 比較 <code>containsany</code> 與既有 <code>terms</code>/<code>contains</code>/<code>containsall</code>,決定要不要在已發布的 <code>@rfjs/data-filter</code> 上留這個新運算子。</p>
+
+  <div class="map">
+    <div class="m"><b>現況</b><span><code>containsany</code> L4 已加,只在 data-filter</span></div>
+    <div class="m"><b>既有可用</b><span><code>eq</code> / <code>terms</code> / <code>containsall</code> / <code>contains</code></span></div>
+    <div class="m"><b>疑慮</b><span>≈ <code>terms</code> 且跨引擎靜默降級</span></div>
+  </div>
+
+  <!-- ① 語意重疊 -->
+  <div class="section">
+    <h2><span class="num">①</span> 語意重疊:同一筆資料,四個運算子分別 match 什麼</h2>
+    <p class="sub">範例陣列欄位 <code>roles = ['manager', 'staff']</code>,查詢值 <code>['manager', 'vip']</code>。</p>
+
+    <table class="cmp">
+      <thead>
+        <tr><th>運算子</th><th>語意</th><th>對 <code>['manager','staff']</code> 查 <code>['manager','vip']</code></th><th>相等方式</th><th>跨引擎可用</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>contains</code></td>
+          <td>∃ element <b>含 substring</b>(逐元素子字串)</td>
+          <td>視子字串而定(例 <code>'man'</code> → <span class="yes">match</span>);<b>刻意的 substring 語意</b></td>
+          <td>子字串</td>
+          <td><span class="yes">是</span></td>
+        </tr>
+        <tr class="dup">
+          <td><code>terms</code></td>
+          <td>∃ element <b>等於</b> ∃ 查詢值</td>
+          <td><code>'manager'</code> 命中 → <span class="yes">true</span></td>
+          <td>loose <code>==</code></td>
+          <td><span class="yes">是</span>(可攜)</td>
+        </tr>
+        <tr class="dup">
+          <td><code>containsany</code> <span class="badge b-m">新</span></td>
+          <td>∃ element <b>等於</b> ∃ 查詢值</td>
+          <td><code>'manager'</code> 命中 → <span class="yes">true</span></td>
+          <td>transform-aware <code>===</code></td>
+          <td><span class="no">否 · 只有 data-filter</span></td>
+        </tr>
+        <tr>
+          <td><code>containsall</code></td>
+          <td>∀ 查詢值 ∈ elements</td>
+          <td><code>'vip'</code> 不在 → <span class="no">false</span></td>
+          <td>transform-aware <code>===</code></td>
+          <td><span class="no">否 · 只有 data-filter</span></td>
+        </tr>
+        <tr>
+          <td><code>eq</code></td>
+          <td>∃ element = 單一值(成員 of one)</td>
+          <td>查 <code>'manager'</code> → <span class="yes">true</span></td>
+          <td>transform-aware <code>===</code></td>
+          <td><span class="yes">是</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">金底兩列 = <b>結果完全相同</b>。<code>containsany</code> 與既有 <code>terms</code> 對同一輸入給同一答案,唯一差別是 <code>terms</code> 用 loose <code>==</code>、<code>containsany</code> 用 transform-aware <code>===</code>——不是新能力,是同一件事的第二個名字。</div>
+  </div>
+
+  <!-- ② 跨引擎分岔 -->
+  <div class="section">
+    <h2><span class="num">②</span> 更關鍵:<code>containsany</code> 只在 data-filter → 製造新的跨引擎分岔</h2>
+    <p class="sub">同一棵 filter tree 編到不同執行目標。用 <code>containsany</code> 的葉子:</p>
+
+    <div class="flow">
+      <span class="node hot">葉子: roles containsany ['manager']</span>
+      <span class="arr">→</span>
+      <span class="node">data-filter ✅ 正確 match</span>
+    </div>
+    <div class="flow">
+      <span class="node hot">同一葉子</span><span class="arr">→</span>
+      <span class="node">sql-filter ⚠ 不認得</span><span class="arr">·</span>
+      <span class="node">pg-filter ⚠</span><span class="arr">·</span>
+      <span class="node">jsonb ⚠</span><span class="arr">·</span>
+      <span class="node">mongo / es ⚠</span>
+    </div>
+
+    <div class="note">在 SQL/jsonb 端會 <b>靜默降級 · match 不到</b>(uncoverable / 無輸出),使用者不會看到錯誤。這正是 #279 在修的那類「跨引擎契約不一致 → 靜默失敗」的 bug——等於一邊統一 arity,一邊又新增一個 data-filter-only 詞彙把洞挖回來。用 <code>terms</code> 就沒這問題(它每個引擎都有)。</div>
+  </div>
+
+  <!-- ③ 三個選項 -->
+  <div class="section">
+    <h2><span class="num">③</span> 三個選項</h2>
+    <div class="grid g3">
+      <div class="card pick">
+        <b>A. 移除 · 改用文件解 <span class="badge b-s">S</span>(推薦)</b>
+        拿掉 <code>containsany</code>;文件講清楚:<code>terms</code>=任一成員(可跨引擎)、<code>containsall</code>=全部、<code>contains</code>=刻意 substring。
+        <hr class="hr">
+        零新詞彙 · 不製造分岔 · 正面回應 issue「精確成員其實已存在,只是不好發現」。
+      </div>
+      <div class="card">
+        <b>B. 保留 · 加文件標註 <span class="badge b-s">S</span></b>
+        留著 <code>containsany</code>,README/matrix 註明它 ≈ <code>terms</code> 且 data-filter-only。
+        <hr class="hr">
+        接受輕微重疊 + 跨引擎分岔;換得 <code>containsany</code>/<code>containsall</code> 命名對稱與更嚴格相等。
+      </div>
+      <div class="card">
+        <b>C. 所有引擎都加 <span class="badge b-l">L</span></b>
+        把 <code>containsany</code>(+ <code>containsall</code>)實作進 sql/pg/jsonb(可能還有 mongo/es)、補 arity、更新 matrix。
+        <hr class="hr">
+        真正跨引擎可用;但範圍大很多,是獨立一輪 spec,非本次 cluster。
+      </div>
+    </div>
+
+    <div class="note">建議 <b>A</b>:issue #267 真正要的是「array 精確成員」——那個能力 <code>eq</code>/<code>terms</code>/<code>containsall</code> 早就給了,缺的是可發現性與文件,不是再多一個運算子。真的想要 <code>containsany</code>/<code>containsall</code> 的對稱命名,就走 C 全引擎一起加。</div>
+  </div>
+
+  <p class="sub" style="margin-top:26px"><b>待決:</b>#267 選 A / B / C。 · <b>已定案:</b>#268 補齊全 i-family(<code>istartswith</code>/<code>iendswith</code>/<code>ieq</code>/<code>ineq</code>);#266 三態、#278 validator、#279 arity→<code>one</code> 維持不動。</p>
+</div>
+</body>
+</html>

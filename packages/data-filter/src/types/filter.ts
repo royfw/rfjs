@@ -43,7 +43,8 @@ export interface ObjectCondition {
 }
 
 export type StringArrayOperator =
-  | 'eq' | 'contains' | 'startswith' | 'endswith' | 'terms'
+  | 'eq' | 'contains' | 'icontains' | 'startswith' | 'istartswith'
+  | 'endswith' | 'iendswith' | 'terms'
   | 'containsall' | 'isnull' | 'isnotnull';
 export type NumericArrayOperator =
   | 'eq' | 'gt' | 'gte' | 'lt' | 'lte' | 'range' | 'terms'
@@ -96,8 +97,13 @@ export type DefaultFilterOperator = 'eq' | 'neq' | 'isnull' | 'isnotnull';
 
 export type TextFilterOperator =
   | 'contains'
+  | 'icontains'
   | 'startswith'
+  | 'istartswith'
   | 'endswith'
+  | 'iendswith'
+  | 'ieq'
+  | 'ineq'
   | 'terms'
   | DefaultFilterOperator;
 

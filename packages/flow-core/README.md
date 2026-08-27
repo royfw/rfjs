@@ -12,7 +12,9 @@ IO, no persistence.
 schema.ts       FlowDoc / FlowNode / FlowEdge — the zod contract, and (de)serialization
 projection.ts   projectFlow — node-type-filtering view, contracting edges through
 runtime.ts      FlowState / FlowEvent / startFlow / advance / FlowError — the engine
-condition.ts    resolveCondition / resolveHandle — optional bridge to @rfjs/data-filter
+condition.ts    resolveCondition / resolveHandle / validateFlowConditions — the
+                @rfjs/data-filter bridge (evaluate, and validate against the
+                same copy that evaluates)
 ```
 
 Originally the FlowDoc contract lived inside `apps/web`'s `flow-builder` tool;
@@ -118,6 +120,38 @@ tried in order; the first whose condition matches `context` wins; an edge
 with **no** `condition` is treated as always-true (a handy default/fallback
 branch). `resolveHandle` returns `null` if nothing matches or the node has no
 condition edges.
+
+### validateFlowConditions — reject a bad condition at save time
+
+An `edge.condition` is `unknown` in the schema, so a leaf naming a `dataType` or
+`operator` the evaluator doesn't know saves and publishes fine and then throws
+inside `resolveCondition` — at the moment a user submits, not at the moment an
+author saves. Check it before persisting:
+
+```ts
+import { validateFlowConditions } from "@rfjs/flow-core";
+
+const result = validateFlowConditions(doc);
+if (!result.ok) return badRequest(result.issues);
+// [{ edgeId: 'e2', code: 'unsupportedDataType',
+//    message: "[data-filter] unsupported dataType 'wat'", path: 'filters[0]' }]
+```
+
+flow-core also re-exports the underlying condition vocabulary —
+`validateCondition`, `validateMatchQuery`, `supportedOperators`,
+`MATCH_QUERY_DATA_TYPES`, `MATCH_QUERY_ELEMENT_TYPES`, `LOGICAL_OPERATORS`,
+`OPERATORS_BY_DATA_TYPE`, `ARRAY_OPERATORS_BY_ELEMENT`.
+
+**Import them from here, not from `@rfjs/data-filter` directly.**
+`resolveCondition` evaluates with the `@rfjs/data-filter` copy in *flow-core's*
+dependency tree. A consumer that depends on `@rfjs/data-filter` separately can
+end up resolving a different copy — pnpm will happily install both — and then
+the vocabulary it validates against is not the vocabulary that evaluates. Taking
+it from flow-core makes that physically impossible.
+
+Scope: vocabulary only. The tree's *shape* is
+[`@rfjs/filter-builder`](../filter-builder)'s `parseFilterGroup`; operator/value
+arity (`range` wanting two values) is still a runtime throw.
 
 ## Contract
 
