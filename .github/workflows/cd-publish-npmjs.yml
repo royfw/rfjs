@@ -16,7 +16,7 @@ on:
       ref:
         description: Branch to publish from (must carry the bumped versions)
         type: string
-        default: publish/npmjs
+        default: release/stable
       channel:
         description: dist-tag — stable publishes latest; others publish under that tag
         type: choice
