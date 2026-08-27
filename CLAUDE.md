@@ -187,6 +187,8 @@ See `GITLAB_CI.md` for the full CI variable, environment, and flow reference.
 - The changeset `ignore` list in `.changeset/config.json` is currently empty. To hold a package back from a release, add it there (or set `"private": true`).
 - Changelog: `@changesets/cli/changelog`
 - Release workflow: `pnpm changeset:add` → commit to `main` → PR `main → release/*` and merge (GitHub Actions versions, opens a PR back to `main`) → merge the versioned state to `publish/npmjs` → run the `cd-publish-npmjs.yml` workflow (GitHub Actions publishes to npm)
+- **Merge the release round-trip PRs with "Create a merge commit", never "Squash and merge".** Feature PRs into `main` are squashed — that is the convention and it should stay. But the release branches round-trip the *same* commits, and a squash mints a new single-parent commit with no link back to its source, so git stops seeing the branches as related: `main` and `release/stable` each report the other as "behind" while their content is byte-identical, and every release adds two more phantom commits. (`publish/npmjs` is five deep for this reason.) GitHub cannot pick a merge method per target branch, so this is a convention, not a setting — the button defaults to whatever you used last.
+- After a release, check that the sync-back did not return the consumed changesets to `main`. `changeset version` deletes them on `release/*`; if they reappear, they read as *pending*, and the next version run bumps a second time for changes that already shipped. Verify each file's entry is in its package's `CHANGELOG.md`, then delete.
 
 ## Git Hooks
 
