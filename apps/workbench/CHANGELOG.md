@@ -1,5 +1,19 @@
 # workbench
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+  - @rfjs/form-builder@0.1.1
+  - @rfjs/filter-builder@0.2.0
+  - @rfjs/pg-filter@0.1.0
+  - @rfjs/form-builder-ui@0.1.1
+  - @rfjs/filter-builder-ui@0.0.2
+
 ## 0.1.1
 
 ### Patch Changes

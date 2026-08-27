@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/form-builder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Framework-agnostic config-driven form model: config types, zod schema, and configToZod data-schema derivation",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

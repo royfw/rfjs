@@ -37,6 +37,15 @@ describe('toClause', () => {
     expect(toClause({ field: 'name', condition: 'contains', value: 'foo' }, ES))
       .toEqual({ wildcard: { name: { value: '*foo*' } } });
   });
+  it('contains/endsWith escape * and ? in the term (not treated as wildcards)', () => {
+    expect(toClause({ field: 'name', condition: 'contains', value: 'a*b?c' }, ES))
+      .toEqual({ wildcard: { name: { value: '*a\\*b\\?c*' } } });
+    expect(toClause({ field: 'name', condition: 'endsWith', value: 'a*b' }, ES))
+      .toEqual({ wildcard: { name: { value: '*a\\*b' } } });
+    // a literal backslash in the term must itself be escaped
+    expect(toClause({ field: 'name', condition: 'contains', value: 'a\\b' }, ES))
+      .toEqual({ wildcard: { name: { value: '*a\\\\b*' } } });
+  });
   it('startsWith → prefix', () => {
     expect(toClause({ field: 'name', condition: 'startsWith', value: 'fo' }, ES))
       .toEqual({ prefix: { name: 'fo' } });

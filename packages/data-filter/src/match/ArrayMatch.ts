@@ -1,6 +1,6 @@
 import { resolvePath } from '../path/resolve';
 import { typeTransfer } from '../filter/matchQuery';
-import { assertOperator, ARRAY_OPERATORS_BY_ELEMENT } from './operators';
+import { assertOperator, operatorsForArrayElement } from './operators';
 import { TextMatch } from './TextMatch';
 import { NumericMatch } from './NumericMatch';
 import { DateMatch } from './DateMatch';
@@ -51,7 +51,15 @@ export class ArrayMatch {
     value: unknown,
     data: object,
   ) {
-    assertOperator(`array<${elementType}>`, operator, ARRAY_OPERATORS_BY_ELEMENT[elementType]);
+    const allowed = operatorsForArrayElement(elementType);
+    if (!allowed) {
+      // Only reachable from untyped input (JSON off the wire). Previously this
+      // indexed the table blind and died with a TypeError inside assertOperator.
+      throw new Error(
+        `[data-filter] unsupported elementType '${elementType}' for dataType 'array'`,
+      );
+    }
+    assertOperator(`array<${elementType}>`, operator, allowed);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const raw = resolvePath(data, field);
     if (operator === 'isnull') {

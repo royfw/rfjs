@@ -1,5 +1,13 @@
 # @rfjs/filter-builder-ui
 
+## 0.0.2
+
+### Patch Changes
+
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+  - @rfjs/filter-builder@0.2.0
+
 ## 0.0.1
 
 ### Patch Changes

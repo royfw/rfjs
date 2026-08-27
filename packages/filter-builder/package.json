@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/filter-builder",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Framework-agnostic canonical filter-tree builder: editable tree model, tree-ops, schema inference, reverse parse, and compile to @rfjs SQL/data-filter engines",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

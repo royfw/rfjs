@@ -97,6 +97,125 @@ export class TextMatch {
         return isMatchCount > 0;
     }
 
+    // Case-insensitive `contains`. Same contains-any semantics as `contains`
+    // (match if any target substring-contains any value), but both sides are
+    // lower-cased before comparison. Operands are coerced with `String(...)`
+    // first so a numeric/boolean/date value never throws. See issues #268/#266.
+    private icontains() {
+        this.matchs = this.values.reduce(
+            (pre, cur) => {
+                const needle = String(cur).toLowerCase();
+                const targetMatchs = this.targets.reduce(
+                    (tarPre, target) => {
+                        const isTargetMatch = String(target)
+                            .toLowerCase()
+                            .includes(needle);
+                        if (isTargetMatch) tarPre.push(isTargetMatch);
+                        return tarPre;
+                    },
+                    <boolean[]>[],
+                );
+                const isMatch =
+                    this.targets.length > 0 && targetMatchs.length > 0;
+                if (isMatch) pre.push(cur);
+                return pre;
+            },
+            <string[]>[],
+        );
+        const isMatchCount = this.matchs.length;
+        return isMatchCount > 0;
+    }
+
+    // Case-insensitive equality (mirror of `eq`, both sides `String(...)`-coerced
+    // then lower-cased so non-string operands never throw). #268/#279/#266.
+    private ieq() {
+        this.matchs = this.values.reduce(
+            (pre, cur) => {
+                const needle = String(cur).toLowerCase();
+                const targetMatchs = this.targets.reduce(
+                    (tarPre, target) => {
+                        const isTargetMatch = String(target).toLowerCase() == needle;
+                        if (isTargetMatch) tarPre.push(isTargetMatch);
+                        return tarPre;
+                    },
+                    <boolean[]>[],
+                );
+                const isMatch =
+                    this.targets.length > 0 &&
+                    targetMatchs.length == this.targets.length;
+                if (isMatch) pre.push(cur);
+                return pre;
+            },
+            <string[]>[],
+        );
+        const isMatchCount = this.matchs.length;
+        return isMatchCount == this.values.length;
+    }
+
+    // Case-insensitive inequality (mirror of `neq`, both sides `String(...)`-coerced
+    // then lower-cased so non-string operands never throw).
+    private ineq() {
+        const lowerTargets = this.targets.map((t) => String(t).toLowerCase());
+        this.matchs = this.values.filter(
+            (value) => !lowerTargets.includes(String(value).toLowerCase()),
+        );
+        return this.matchs.length === this.values.length;
+    }
+
+    // Case-insensitive prefix match (mirror of `startswith`, both sides
+    // `String(...)`-coerced then lower-cased so non-string operands never throw).
+    private istartswith() {
+        this.matchs = this.values.reduce(
+            (pre, cur) => {
+                const needle = String(cur).toLowerCase();
+                const targetMatchs = this.targets.reduce(
+                    (tarPre, target) => {
+                        const isTargetMatch = String(target)
+                            .toLowerCase()
+                            .startsWith(needle);
+                        if (isTargetMatch) tarPre.push(isTargetMatch);
+                        return tarPre;
+                    },
+                    <boolean[]>[],
+                );
+                const isMatch =
+                    this.targets.length > 0 && targetMatchs.length > 0;
+                if (isMatch) pre.push(cur);
+                return pre;
+            },
+            <string[]>[],
+        );
+        const isMatchCount = this.matchs.length;
+        return isMatchCount > 0;
+    }
+
+    // Case-insensitive suffix match (mirror of `endswith`, both sides
+    // `String(...)`-coerced then lower-cased so non-string operands never throw).
+    private iendswith() {
+        this.matchs = this.values.reduce(
+            (pre, cur) => {
+                const needle = String(cur).toLowerCase();
+                const targetMatchs = this.targets.reduce(
+                    (tarPre, target) => {
+                        const isTargetMatch = String(target)
+                            .toLowerCase()
+                            .endsWith(needle);
+                        if (isTargetMatch) tarPre.push(isTargetMatch);
+                        return tarPre;
+                    },
+                    <boolean[]>[],
+                );
+                const isMatch =
+                    this.targets.length > 0 && targetMatchs.length > 0;
+                if (isMatch) pre.push(cur);
+                return pre;
+            },
+            <string[]>[],
+        );
+        const isMatchCount = this.matchs.length;
+        return isMatchCount > 0;
+    }
+
     private startswith() {
         this.matchs = this.values.reduce(
             (pre, cur) => {
