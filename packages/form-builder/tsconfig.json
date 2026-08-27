@@ -28,7 +28,7 @@
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": ["ESNext"]
+    "lib": ["ESNext", "DOM"]
   },
   "exclude": ["node_modules", "dist*", "test", "types", "**/*.spec.ts", "**/*.test.ts", "**/*.e2e.spec.ts", "**/*.e2e.test.ts", "*.config.*"]
 }
