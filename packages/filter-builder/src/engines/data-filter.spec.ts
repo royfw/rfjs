@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  MATCH_QUERY_DATA_TYPES,
+  MATCH_QUERY_ELEMENT_TYPES,
+  supportedOperators,
+} from "@rfjs/data-filter";
+
 import { treeToFilterGroup } from "../compile";
 import type { BuilderGroup } from "../types";
 import { dataFilterEngine, DATA_FILTER_OPS } from "./data-filter";
@@ -77,5 +83,46 @@ describe("DATA_FILTER_OPS coverage set", () => {
     }
     expect(DATA_FILTER_OPS.has("containsany")).toBe(false); // removed (use terms/containsall)
     expect(DATA_FILTER_OPS.has("haskey")).toBe(false);
+  });
+});
+
+describe("data-filter engine ↔ @rfjs/data-filter vocabulary", () => {
+  // The adapter's lists are an *editor* offer and may be a deliberate subset
+  // (e.g. `ieq`/`ineq` are withheld on string arrays). What is never allowed is
+  // offering something the engine rejects — that is the editor telling the user
+  // "this is fine" and the evaluator throwing on it later. `containsall` on a
+  // boolean array used to do exactly that.
+  const pairs: { dataType: string; elementType?: string }[] = MATCH_QUERY_DATA_TYPES.flatMap(
+    (dataType) =>
+      dataType === "array"
+        ? MATCH_QUERY_ELEMENT_TYPES.map((elementType) => ({ dataType, elementType }))
+        : [{ dataType }],
+  );
+
+  it("never offers an operator the evaluator would reject", () => {
+    const offered = pairs.flatMap(({ dataType, elementType }) =>
+      dataFilterEngine
+        .operators(dataType, elementType)
+        .map((o) => o.op)
+        .filter((op) => !(supportedOperators(dataType, elementType) ?? []).includes(op))
+        .map((op) => `${dataType}<${String(elementType)}>.${op}`),
+    );
+    expect(offered).toEqual([]);
+  });
+
+  it("covers every dataType the evaluator dispatches", () => {
+    for (const { dataType, elementType } of pairs) {
+      expect(
+        dataFilterEngine.operators(dataType, elementType).length,
+        `${dataType}<${String(elementType)}>`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("DATA_FILTER_OPS is the evaluator's own operator union", () => {
+    const fromEngine = new Set(
+      pairs.flatMap(({ dataType, elementType }) => [...(supportedOperators(dataType, elementType) ?? [])]),
+    );
+    expect([...DATA_FILTER_OPS].sort()).toEqual([...fromEngine].sort());
   });
 });

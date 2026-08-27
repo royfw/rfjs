@@ -8,7 +8,8 @@ Framework-agnostic 的 **FlowDoc 契約** + 純投影 + 純**狀態機 runtime**
 schema.ts       FlowDoc / FlowNode / FlowEdge —— zod 契約 + (反)序列化
 projection.ts   projectFlow —— 節點型別過濾投影,自動「縮線」接起邊
 runtime.ts      FlowState / FlowEvent / startFlow / advance / FlowError —— 引擎本體
-condition.ts    resolveCondition / resolveHandle —— 選配,接 @rfjs/data-filter
+condition.ts    resolveCondition / resolveHandle / validateFlowConditions —— 接
+                @rfjs/data-filter:求值,以及用「同一份 copy」的詞彙表驗證
 ```
 
 FlowDoc 契約原本住在 `apps/web` 的 `flow-builder` 工具裡;現在搬進這個套件,讓
@@ -106,6 +107,34 @@ if (handle) state = advance(doc, state, { type: "decide", handle });
 第一個 condition 成立的邊獲勝;沒有 `condition` 的邊視為恆真(可當
 default／fallback 分支用)。若都不成立、或該節點沒有出邊,`resolveHandle` 回傳
 `null`。
+
+### validateFlowConditions——存檔當下就擋掉壞條件
+
+schema 裡 `edge.condition` 是 `unknown`,所以一片寫了引擎不認得的 `dataType` 或
+`operator` 的葉節點,存得進去也發佈得出去,等到 `resolveCondition` 求值時才丟例外——
+爆的時機是使用者送出的那一刻,不是作者存檔的那一刻。存檔前先驗:
+
+```ts
+import { validateFlowConditions } from "@rfjs/flow-core";
+
+const result = validateFlowConditions(doc);
+if (!result.ok) return badRequest(result.issues);
+// [{ edgeId: 'e2', code: 'unsupportedDataType',
+//    message: "[data-filter] unsupported dataType 'wat'", path: 'filters[0]' }]
+```
+
+flow-core 也轉出底層的 condition 詞彙:`validateCondition`、`validateMatchQuery`、
+`supportedOperators`、`MATCH_QUERY_DATA_TYPES`、`MATCH_QUERY_ELEMENT_TYPES`、
+`LOGICAL_OPERATORS`、`OPERATORS_BY_DATA_TYPE`、`ARRAY_OPERATORS_BY_ELEMENT`。
+
+**請從這裡 import,不要直接從 `@rfjs/data-filter` 拿。** `resolveCondition` 是用
+**flow-core 依賴樹裡**那份 `@rfjs/data-filter` 求值的。消費端若另外自己依賴
+`@rfjs/data-filter`,可能解析到另一份(pnpm 完全可以同時裝兩份),於是驗證用的詞彙表
+和求值用的引擎分家。從 flow-core 拿,物理上就不會發生。
+
+範圍:只驗詞彙。樹的**形狀**是
+[`@rfjs/filter-builder`](../filter-builder) 的 `parseFilterGroup`;運算子與值的搭配
+(`range` 需要兩個值)仍是執行期例外。
 
 ## 契約
 
