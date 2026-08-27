@@ -1,4 +1,10 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "dist", "test", "*.config.*"]
+  "compilerOptions": {
+    // 不要在 build config 指定 declarationDir：tsdown 的 dts 產生器（TS7/tsgo 路徑）
+    // 會以 `--outDir <暫存目錄>` 呼叫編譯器，而 declarationDir 的優先權高於 outDir，
+    // 會把 .d.ts 寫到 ./types 而不是暫存目錄 → tsdown 找不到檔案而失敗。
+    "declarationDir": null
+  },
+  "exclude": ["node_modules", "dist", "test", "types", "*.config.*"]
 }
