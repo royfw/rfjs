@@ -2,6 +2,7 @@ export type ColumnQueryErrorCode =
   | 'UNKNOWN_COLUMN'
   | 'UNSUPPORTED_OPERATOR'
   | 'INVALID_VALUE'
+  | 'NON_SCALAR_VALUE'
   | 'INVALID_SORT'
   | 'INVALID_PARAM_OFFSET';
 
