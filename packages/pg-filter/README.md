@@ -110,6 +110,10 @@ type PgSort = { target: "column"; column: string; direction?: "asc"|"desc"; null
 
 See the cross-engine matrix in [@rfjs/filter-builder](../filter-builder#operator-matrix).
 
+Validation follows the same split: a `column` leaf is validated by sql-filter's column
+layer, so a single-value operator given an array/object throws `ColumnQueryError`
+(`NON_SCALAR_VALUE`) at build time rather than emitting a `String()`-coerced term.
+
 ## Public API
 
 - **`build`** — `buildPgFilter(config, input) → PgFilterResult`

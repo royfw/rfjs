@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { ColumnQueryError } from '@rfjs/sql-filter';
 import { buildPgWhere } from './filter';
 import { PgFilterError } from './errors';
 import type { PgFilterConfig, PgFilterGroup } from './types';
@@ -83,5 +84,41 @@ describe('buildPgWhere', () => {
   it('rejects an unknown column (sql-filter ColumnQueryError propagates)', () => {
     const group = { logic: 'and', filters: [{ target: 'column', column: 'nope', operator: 'eq', value: 1 }] };
     expect(() => buildPgWhere(config, group as PgFilterGroup)).toThrow();
+  });
+
+  // #288: pg-filter has no guard of its own — column leaves are rendered by sql-filter's
+  // makeColumnLeafRenderer, so the scalar check applies to a hand-built pg tree too.
+  it('rejects a non-scalar value on a scalar column operator (inherited from sql-filter)', () => {
+    const group: PgFilterGroup = {
+      logic: 'and',
+      filters: [{ target: 'column', column: 'name', operator: 'contains', value: ['a', 'b'] }],
+    };
+    expect(() => buildPgWhere(config, group)).toThrow(ColumnQueryError);
+    try {
+      buildPgWhere(config, group);
+      expect.unreachable('expected a ColumnQueryError');
+    } catch (err) {
+      expect((err as ColumnQueryError).code).toBe('NON_SCALAR_VALUE');
+    }
+  });
+
+  it('still renders list-taking column operators and jsonb array leaves with arrays', () => {
+    const group: PgFilterGroup = {
+      logic: 'and',
+      filters: [
+        { target: 'column', column: 'name', operator: 'terms', value: ['a', 'b'] },
+        {
+          target: 'jsonb',
+          field: 'tags',
+          dataType: 'array',
+          elementType: 'string',
+          operator: 'containsall',
+          value: ['x', 'y'],
+        },
+      ],
+    };
+    const { where, values } = buildPgWhere(config, group);
+    expect(where).toContain('any($1)');
+    expect(values[0]).toEqual(['a', 'b']);
   });
 });

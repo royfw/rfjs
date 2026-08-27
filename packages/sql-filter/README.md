@@ -101,6 +101,13 @@ Values are single-value except `terms` (array) and `range` (2-element array);
 throws `ColumnQueryError`
 (`UNKNOWN_COLUMN` / `UNSUPPORTED_OPERATOR`).
 
+A single-value operator handed a **non-scalar** value (array, object, function)
+throws `ColumnQueryError` (`NON_SCALAR_VALUE`) instead of coercing it. Scalar
+here means `string` / `number` / `boolean` / `bigint` / `Date` / `null`;
+`terms` and `range` are the only operators that take an array. This closes a
+silent-failure path: `contains` with `['a','b']` used to render `LIKE '%a,b%'`
+— valid SQL that runs and matches nothing.
+
 > For the cross-engine operator picture (which engine has `terms`/`range`/etc.),
 > see the matrix in [@rfjs/filter-builder](../filter-builder#operator-matrix).
 
@@ -110,7 +117,7 @@ throws `ColumnQueryError`
 - **`param-builder`** — `ParamBuilder` (`add(value) → "$N"`, `.values`)
 - **`column`** — `buildColumnQuery`, `buildColumnOrderBy`, `ColumnConfig`, `ColumnCondition`, `ColumnOperator`, `ColumnType`, `ColumnSortSpec`
 - **`types`** — `FilterGroup<L>`, `LogicalOperator`
-- **`errors`** — `ColumnQueryError` (`code`: `UNKNOWN_COLUMN` | `UNSUPPORTED_OPERATOR` | `INVALID_PARAM_OFFSET`)
+- **`errors`** — `ColumnQueryError` (`code`: `UNKNOWN_COLUMN` | `UNSUPPORTED_OPERATOR` | `INVALID_VALUE` | `NON_SCALAR_VALUE` | `INVALID_SORT` | `INVALID_PARAM_OFFSET`)
 
 ## Related
 

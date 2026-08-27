@@ -22,7 +22,48 @@ export type ColumnOperator =
   | 'lt'
   | 'lte';
 
-const NULLARY = new Set<ColumnOperator>(['isnull', 'isnotnull']);
+/** Value-parameter count of a column operator (mirrors @rfjs/filter-builder's `OperatorArity`). */
+type ColumnOperatorArity = 'none' | 'one' | 'two' | 'list';
+
+// The arity table is duplicated here on purpose: this package is zero-dependency, so it
+// cannot import @rfjs/filter-builder's `ARITY`. `Record<ColumnOperator, …>` keeps it
+// exhaustive — adding an operator to the union fails typecheck until its arity is declared.
+const ARITY: Record<ColumnOperator, ColumnOperatorArity> = {
+  eq: 'one',
+  neq: 'one',
+  isnull: 'none',
+  isnotnull: 'none',
+  contains: 'one',
+  startswith: 'one',
+  endswith: 'one',
+  icontains: 'one',
+  istartswith: 'one',
+  iendswith: 'one',
+  ieq: 'one',
+  ineq: 'one',
+  terms: 'list',
+  range: 'two',
+  gt: 'one',
+  gte: 'one',
+  lt: 'one',
+  lte: 'one',
+};
+
+// A single-value ("one") operator binds/serializes its value as one SQL scalar. Anything else
+// (array, plain object, function, symbol) would be String()-coerced into a bogus term — e.g.
+// contains + ['a','b'] → LIKE '%a,b%' — which runs, matches nothing, and signals nothing (#288).
+function isScalarValue(value: unknown): boolean {
+  if (value === null || value instanceof Date) return true;
+  const t = typeof value;
+  return t === 'string' || t === 'number' || t === 'boolean' || t === 'bigint';
+}
+
+function describeValue(value: unknown): string {
+  if (Array.isArray(value)) return `an array (${value.length} item${value.length === 1 ? '' : 's'})`;
+  const t = typeof value;
+  if (t === 'object') return 'an object';
+  return `a ${t}`;
+}
 
 const ALLOWED: Record<ColumnType, ReadonlySet<ColumnOperator>> = {
   text: new Set([
@@ -77,7 +118,7 @@ export function renderColumnCondition(
       'UNSUPPORTED_OPERATOR',
     );
   }
-  if (NULLARY.has(operator)) {
+  if (ARITY[operator] === 'none') {
     if (value !== undefined) {
       throw new ColumnQueryError(`Operator "${operator}" must not carry a value`, 'INVALID_VALUE');
     }
@@ -85,6 +126,13 @@ export function renderColumnCondition(
   }
   if (value === undefined) {
     throw new ColumnQueryError(`Operator "${operator}" requires a value`, 'INVALID_VALUE');
+  }
+  if (ARITY[operator] === 'one' && !isScalarValue(value)) {
+    throw new ColumnQueryError(
+      `Operator "${operator}" requires a single scalar value, received ${describeValue(value)}; ` +
+        `only "terms" and "range" take a non-scalar value`,
+      'NON_SCALAR_VALUE',
+    );
   }
   if (operator === 'contains') {
     return `${quotedColumn} like '%' || ${params.add(escapeLike(String(value)))} || '%' escape '\\'`;
