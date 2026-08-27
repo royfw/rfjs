@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/decision-table",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DMN-style decision table over the @rfjs stack: rules are filter-builder condition trees, outputs are constants or data-expr \"=\" expressions, with first/collect hit policies",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

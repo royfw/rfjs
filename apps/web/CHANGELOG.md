@@ -1,5 +1,35 @@
 # web
 
+## 0.1.3
+
+### Patch Changes
+
+- 78451a2: Move the form-builder AI Assist panel above the Canvas/Preview/JSON tabs, matching
+  table-builder / metadata-builder (AI panel above the tab strip) for a consistent
+  tool layout.
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+  - @rfjs/es-query@0.1.1
+  - @rfjs/data-filter@0.3.0
+  - @rfjs/form-builder@0.1.1
+  - @rfjs/filter-builder@0.2.0
+  - @rfjs/flow-core@0.2.0
+  - @rfjs/jwt@0.2.1
+  - @rfjs/pg-filter@0.1.0
+  - @rfjs/es-client@0.1.1
+  - @rfjs/form-builder-ui@0.1.1
+  - @rfjs/decision-table@0.1.1
+  - @rfjs/filter-builder-ui@0.0.2
+  - @rfjs/table-builder-ui@0.1.1
+
 ## 0.1.2
 
 ### Patch Changes

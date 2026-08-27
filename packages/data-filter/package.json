@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/data-filter",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Data filtering with JSONPath support — match query, wildcard path resolution, and logic operators",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

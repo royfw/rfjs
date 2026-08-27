@@ -1,5 +1,13 @@
 # api
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [78451a2]
+  - @rfjs/pg-filter@0.1.0
+  - @rfjs/core@0.0.2
+
 ## 0.0.3
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @rfjs/form-builder
 
+## 0.1.1
+
+### Patch Changes
+
+- 78451a2: Docs: document `configToZod`'s boolean/`Switch` coercion behaviour — `Switch` /
+  `dataType: 'boolean'` fields map to a plain `z.boolean()` with no string coercion
+  (consumers must send a real JSON boolean), and clarify the built-in
+  `emptyToUndefined` empty-value guard so consumers don't rebuild that layer.
+- Updated dependencies [78451a2]
+- Updated dependencies [78451a2]
+  - @rfjs/data-filter@0.3.0
+
 ## 0.1.0
 
 ### Minor Changes

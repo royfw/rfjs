@@ -1,6 +1,6 @@
 {
   "name": "@rfjs/form-builder-ui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Config-driven form renderer (React) over @rfjs/form-builder; consumed via transpilePackages",
   "type": "module",
   "private": true,
