@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": ".",
     "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "bundler",
