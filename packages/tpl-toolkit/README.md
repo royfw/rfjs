@@ -8,7 +8,19 @@ Shared configuration factories and build helpers for rfjs project templates.
 npm install @rfjs/tpl-toolkit
 ```
 
-## Usage
+## Version policy
+
+Depend on this package with a caret — `"@rfjs/tpl-toolkit": "^0.1.0"` — and patches arrive
+with a plain `pnpm update`. The exported factories, constants and plugins keep their
+signatures and export paths across patch releases; anything that reshapes them ships as a
+minor.
+
+This works only from `0.1.0` onward. On the earlier `0.0.x` series a caret does not widen:
+when both major and minor are `0`, `^0.0.1` matches `0.0.1` and nothing else, so every
+consumer was pinned to an exact version and had to bump it by hand to receive a fix. A
+`0.0.2` bug fix reached no one for two releases before anyone noticed. If you are still on
+a `0.0.x` specifier, move it to `^0.1.0` once — after that, patches follow on their own.
+
 
 ### `createTsdownConfig(type, options)`
 
