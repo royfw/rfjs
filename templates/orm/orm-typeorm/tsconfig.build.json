@@ -1,10 +1,16 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    // rootDir 只屬於「會 emit」的 build program：限制在 ./src，
+    // 讓 dist / types 的輸出結構維持扁平。
+    // 根目錄的 tsconfig.json（typecheck 用、--noEmit）則刻意不設 ./src，
+    // 這樣 scripts/ 等 src 之外的原始碼也會被型別檢查。
+    "rootDir": "./src",
+
     // 不要在 build config 指定 declarationDir：tsdown 的 dts 產生器（TS7/tsgo 路徑）
     // 會以 `--outDir <暫存目錄>` 呼叫編譯器，而 declarationDir 的優先權高於 outDir，
     // 會把 .d.ts 寫到 ./types 而不是暫存目錄 → tsdown 找不到檔案而失敗。
     "declarationDir": null
   },
-  "exclude": ["node_modules", "dist", "test", "types", "*.config.*"]
+  "exclude": ["node_modules", "dist", "scripts", "test", "types", "*.config.*"]
 }

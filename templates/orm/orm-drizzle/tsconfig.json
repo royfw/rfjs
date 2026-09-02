@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": ".",
     "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -30,5 +30,5 @@
     "forceConsistentCasingInFileNames": true,
     "lib": ["ESNext"]
   },
-  "exclude": ["node_modules", "dist*", "scripts", "test", "types", "**/*(spec|test).ts", "**/*e2e-(spec|test).ts", "*.config.*"]
+  "exclude": ["node_modules", "dist*", "test", "types", "**/*(spec|test).ts", "**/*e2e-(spec|test).ts", "*.config.*"]
 }

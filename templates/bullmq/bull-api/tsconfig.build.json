@@ -1,4 +1,19 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "dist", "test", "*.config.*"]
+  "compilerOptions": {
+    // rootDir 只屬於「會 emit」的 build program：限制在 ./src，
+    // 讓 dist / types 的輸出結構維持扁平。
+    // 根目錄的 tsconfig.json（typecheck 用、--noEmit）則刻意不設 ./src，
+    // 這樣 scripts/ 等 src 之外的原始碼也會被型別檢查。
+    "rootDir": "./src"
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "scripts",
+    "esbuild.build.ts",
+    "esbuild.dev.ts",
+    "*.config.*"
+  ]
 }
